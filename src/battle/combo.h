@@ -20,7 +20,10 @@ typedef struct {
     uint16_t final_power;
 } ComboResult;
 
-/* Evaluate a sequence of up to 5 cards for the specified phase */
+/* Evaluate a sequence of up to 5 cards for the specified phase.
+ * Note: To conserve Bank 0 ROM budget, combo_evaluate does not copy cards into
+ * out_result->cards[]; the caller is expected to pre-populate or alias
+ * out_result->cards[] if needed (as in battle_eval_current_combo). */
 void combo_evaluate(const Card *cards, uint8_t count, ComboPhase phase, ComboResult *out_result);
 
 #endif /* COMBO_H */

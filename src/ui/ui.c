@@ -650,7 +650,7 @@ void ui_update_battle(const Battle *battle)
         ui_draw_text_line(0, 11, r, 8);
         ui_draw_text_line(8, 11, "! PRESS [A]", 11);
     } else {
-        if (battle->phase <= BATTLE_PHASE_PLAYER_DEFEND) {
+        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
             desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
         }
         if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
