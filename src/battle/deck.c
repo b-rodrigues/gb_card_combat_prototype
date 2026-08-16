@@ -40,9 +40,16 @@ void deck_draw(Deck *d, Card *out_card)
             }
             d->count = d->discard_count;
             d->discard_count = 0;
-            /* Deterministic Fisher-Yates shuffle of recycled discard pile */
+            /* Deterministic Fisher-Yates shuffle of recycled discard pile.
+             * A plain `rng_next() & i` is only uniform when i = 2^n - 1, so
+             * mask with 0x1F (i <= 19) and reject draws above i.  The xorshift
+             * RNG is a permutation over its state and never repeats, so the
+             * retry always terminates.  Avoiding the SDCC division helper
+             * `% (i + 1)` keeps the fixed-bank budget (see make memmap). */
             for (i = (uint8_t)(d->count - 1); i > 0; i--) {
-                j = (uint8_t)(rng_next() & i);
+                do {
+                    j = (uint8_t)(rng_next() & 0x1F);
+                } while (j > i);
                 temp = d->cards[i];
                 d->cards[i] = d->cards[j];
                 d->cards[j] = temp;

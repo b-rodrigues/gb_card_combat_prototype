@@ -471,17 +471,17 @@ static void draw_digits(uint8_t val, char *d0, char *d1)
     *d1 = (char)('0' + val);
 }
 
-static void ui_hud_text_line(uint8_t y, const char *text, uint8_t max_chars)
+static void ui_hud_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
 {
     uint8_t i = 0;
     char ch;
     while (text && text[i] != '\0' && i < max_chars) {
         ch = text[i];
-        ui_hud_put_char(i, y, ch);
+        ui_hud_put_char((uint8_t)(x + i), y, ch);
         i++;
     }
     while (i < max_chars) {
-        ui_hud_put_char(i, y, ' ');
+        ui_hud_put_char((uint8_t)(x + i), y, ' ');
         i++;
     }
 }
@@ -529,14 +529,14 @@ void ui_draw_overworld_hud(const World *world)
     /* The HUD lives in the WINDOW layer (0x9C00), so the SCX/SCY-scrolled
      * background map never carries it.  Window row y -> screen row 12+y. */
     ui_hud_hline(0, '=');
-    ui_hud_text_line(1, "MAP: ", 5);
-    ui_hud_text_line(5, s_map_names[m], 5);
-    ui_hud_text_line(10, "| HP:", 5);
+    ui_hud_text_line(0, 1, "MAP: ", 5);
+    ui_hud_text_line(5, 1, s_map_names[m], 5);
+    ui_hud_text_line(10, 1, "| HP:", 5);
     ui_hud_num2(15, 1, world->player.hp);
     ui_hud_put_char(17, 1, '/');
     ui_hud_num2(18, 1, world->player.max_hp);
     for (r = 2; r <= 4; r++) ui_hud_hline(r, ' ');
-    ui_hud_text_line(5, " [D-PAD] MOVE HERO", 20);
+    ui_hud_text_line(0, 5, " [D-PAD] MOVE HERO", 20);
 }
 
 void ui_draw_world_full(const World *world)

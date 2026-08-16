@@ -53,10 +53,16 @@ void combo_evaluate(const Card *cards, uint8_t count, ComboResult *out_result)
         if (count >= 2 && straight) {
             uint8_t add = (count == 5) ? (uint8_t)sum :
                           (count == 4) ? (uint8_t)((sum >> 1) + (sum >> 2)) :
-                          (count == 3) ? (uint8_t)(sum >> 1) : (uint8_t)(sum >> 2);
+                          (count == 3) ? (uint8_t)(sum >> 1) :
+                          (uint8_t)(sum >> 2);
+            /* 2-card straight bonus is sum >> 2 (i.e. /4).  This is an
+             * intentional rebalance vs the previous exact /5, changed to
+             * avoid the SDCC runtime division helper (Bank 0 budget). */
             power += add;
             if (same_type) power += (uint8_t)(sum >> 2);
         } else if (count >= 2 && same_type) {
+            /* Flush-only bonus is sum >> 3 (i.e. /8).  Intentional rebalance
+             * vs the previous exact /10 to drop the division helper. */
             power += (uint8_t)(sum >> 3);
         }
         out_result->final_power = power;
