@@ -3,7 +3,6 @@
 #include "scene.h"
 #include <gb/gb.h>
 #include <gb/cgb.h>
-#include <gbdk/font.h>
 #include <gbdk/console.h>
 #include <stdio.h>
 
@@ -23,18 +22,8 @@ extern uint8_t console_mode;
 static void ui_put_char(uint8_t x, uint8_t y, char ch);
 static void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val);
 
-static font_t ibm_font;
-
-/* First VRAM tile the console font occupies.  font_t is a *handle* (a RAM
- * pointer to a {first_tile, font_ptr} entry, value 0xCD74), not a tile
- * base: using it directly (ibm_font + ch) renders tiles at 0x74+ch, i.e.
- * unloaded VRAM.  Cached from the handle at ui_init; the IBM font's
- * first_tile is 0.
- *
- * The console font packs its glyphs starting at space (0x20), so the tile
- * for char `ch` is base + (ch - ' ') -- never base + ch, which renders the
- * glyph for (ch + 0x20) instead.  Every tilemap write below applies that
- * offset. */
+/* First VRAM tile the font occupies.  Tile 0 is space (0x20), so the tile
+ * for char `ch` is base + (ch - ' '). */
 static uint8_t ui_font_tile_base;
 
 static const palette_color_t cgb_palette[4] = {
@@ -77,14 +66,17 @@ void ui_init(void)
      * set_bkg_data() returns immediately (it waits for VBlank otherwise).
      * The CRT0 boot already leaves the LCD off; the harness (which skips
      * CRT0) needs this too, and mGBA's debugger does not advance VBlank
-     * during single-stepping. */
-    LCDC_REG &= ~0x80;
+     * during single-stepping.  Clear bit 4 for signed 0x9000 tile addressing. */
+    LCDC_REG &= ~0x90;
 
     oam_dma_init();
-    font_init();
-    ibm_font = font_load(font_ibm);
-    font_set(ibm_font);
-    ui_font_tile_base = ((pmfont_handle)ibm_font)->first_tile;
+
+    /* Load font tiles from Bank 2 (96 tiles = 1536 bytes) using g_ui_screen_buf as temporary buffer */
+    for (p = 0; p < 96; p += 8) {
+        banked_copy(2, g_ui_screen_buf, g_intrepid_font_tiles + ((uint16_t)p << 4), 128);
+        set_bkg_data(p, 8, (const uint8_t *)g_ui_screen_buf);
+    }
+    ui_font_tile_base = 0;
 
     /* Load world background tiles from Bank 2 (16 tiles = 256 bytes) using g_ui_screen_buf as temporary buffer */
     banked_copy(2, g_ui_screen_buf, g_rpg_world_tiles, 128);

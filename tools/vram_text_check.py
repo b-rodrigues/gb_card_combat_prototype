@@ -66,15 +66,13 @@ def row_ids(tm, y, ncols=20):
 
 
 def count_map_cells(tm, y0, y1, ncols=20):
-    """The overworld map is ASCII-only on this branch: terrain and actors
-    render via the console font (tile 1-127, base + (ch - ' ')), and the
-    map occupies WORLD_VIEW_H=12 rows of the BACKGROUND.  Count non-space
-    font-range cells so a "background has map content" check can tell the
-    map from a cleared screen."""
+    """The overworld map occupies WORLD_VIEW_H=12 rows of the BACKGROUND.
+    Count non-space cells (terrain tiles >= 128 or font glyphs > 0) so a
+    'background has map content' check can tell the map from a cleared screen."""
     n = 0
     for y in range(y0, y1):
         for t in row_ids(tm, y, ncols):
-            if 0 < t < 128:
+            if t > 0:
                 n += 1
     return n
 

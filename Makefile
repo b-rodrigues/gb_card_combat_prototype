@@ -68,9 +68,14 @@ gfx:
 	@python3 tools/png2gb.py assets/RPG_interior.png --name rpg_interior_tiles \
 		--palette gb_green --tile-coords "1,1 1,0 8,4 6,3" \
 		--raw -o $(GFX_OUT_DIR)/rpg_interior_tiles.inc
-	@python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_tiles \
+	@python3 tools/png2gb.py assets/RPG_forest_tiles.png --name rpg_forest_tiles \
+		--palette gb_green --tile-coords "1,9 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc 2>/dev/null || \
+	python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_tiles \
 		--palette gb_green --tile-coords "1,9 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc
+	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
+		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

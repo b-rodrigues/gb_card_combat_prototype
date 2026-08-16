@@ -27,6 +27,7 @@
 #define RPG_TILE_BASE_FOREST         136u
 
 extern const uint8_t g_rpg_world_tiles[256];
+extern const uint8_t g_intrepid_font_tiles[1536];
 
 static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
 {
