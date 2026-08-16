@@ -80,7 +80,9 @@ void battle_screen_render(Game *g)
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
     } else if (dirty) {
+        ui_lcd_off();
         ui_update_battle(&g->battle);
+        ui_lcd_on();
     } else if (rc->prev_battle_timer_bar != timer_bar) {
         ui_draw_battle_timer(&g->battle);
     } else {
