@@ -17,9 +17,9 @@ static const char * const s_card_descs[5] = {
     "Heal: restore HP"
 };
 
-const char *card_get_description(Card card)
+const char *card_get_description(uint8_t type)
 {
-    return (card.type < 5) ? s_card_descs[card.type] : "";
+    return (type < 5) ? s_card_descs[type] : "";
 }
 
 

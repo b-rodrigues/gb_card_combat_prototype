@@ -650,13 +650,14 @@ void ui_update_battle(const Battle *battle)
         ui_draw_text_line(0, 11, r, 8);
         ui_draw_text_line(8, 11, "! PRESS [A]", 11);
     } else {
+        if (battle->phase <= BATTLE_PHASE_PLAYER_DEFEND) {
+            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
+        }
         if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
             action_msg = "[A] PICK   [SEL] GO";
-            desc_msg = card_get_description(battle->hand[battle->cursor_pos]);
             info_msg = "[B] UNDO [START] BAG";
         } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
             action_msg = "DEFEND! PICK SHIELDS";
-            desc_msg = card_get_description(battle->hand[battle->cursor_pos]);
             info_msg = "[A] BLOCK  [SEL] GO";
         } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
             action_msg = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "ATTACK!";

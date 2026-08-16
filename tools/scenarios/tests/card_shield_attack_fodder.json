@@ -1,17 +1,8 @@
 {
-  "name": "battle_sword_damage",
+  "name": "card_shield_attack_fodder",
   "test": true,
-  "description": "With the SWORD equipped the hero one-shots the slime (attack 6 vs 5 HP)",
-  "scenario_id": "BATTLE_BOOT",
+  "description": "In attack phase, playing a shield card alone acts as combo fodder (deals 0 damage, enemy HP stays 5), but consumes the shield card",
   "actions": [
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
     {
       "type": "press",
       "button": "RIGHT"
@@ -34,20 +25,20 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 10
     }
   ],
   "assertions": [
     {
-      "type": "battle_result",
-      "expected": "VICTORY"
+      "type": "game_state",
+      "expected": "BATTLE"
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 0
+      "expected": 5
     },
     {
-      "type": "event_occurred",
+      "type": "event_not_occurred",
       "event": "BATTLE_WON"
     }
   ],
@@ -58,10 +49,7 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 8408,
-    "equipment": {
-      "weapon": "SWORD"
-    },
+    "seed": 5002,
     "start_battle": true
   }
 }

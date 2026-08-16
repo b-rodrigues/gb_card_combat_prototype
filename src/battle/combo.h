@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef enum {
+    COMBO_PHASE_ATTACK = 0,
+    COMBO_PHASE_DEFEND = 1
+} ComboPhase;
+
 typedef struct {
     Card cards[5];
     uint8_t count;
@@ -15,7 +20,7 @@ typedef struct {
     uint16_t final_power;
 } ComboResult;
 
-/* Evaluate a sequence of up to 5 cards */
-void combo_evaluate(const Card *cards, uint8_t count, ComboResult *out_result);
+/* Evaluate a sequence of up to 5 cards for the specified phase */
+void combo_evaluate(const Card *cards, uint8_t count, ComboPhase phase, ComboResult *out_result);
 
 #endif /* COMBO_H */

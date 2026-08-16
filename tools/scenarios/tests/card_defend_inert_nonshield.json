@@ -1,9 +1,24 @@
 {
-  "name": "battle_gold_drop",
+  "name": "card_defend_inert_nonshield",
   "test": true,
-  "description": "Defeating a slime grants its gold reward (earn money)",
-  "scenario_id": "FIRST_ENCOUNTER",
+  "description": "In defend phase, non-shield cards are inert: playing BO3 contributes 0 block, so hero takes the full 3 damage from the enemy",
   "actions": [
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
     {
       "type": "press",
       "button": "RIGHT"
@@ -18,23 +33,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
+      "frames": 8
     },
     {
       "type": "press",
@@ -42,34 +41,21 @@
     },
     {
       "type": "wait",
-      "frames": 35
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 10
+      "frames": 12
     }
   ],
   "assertions": [
     {
       "type": "game_state",
-      "expected": "OVERWORLD"
+      "expected": "BATTLE"
     },
     {
-      "type": "currency",
-      "expected": 25,
-      "currency": "GOLD"
-    },
-    {
-      "type": "event_occurred",
-      "event": "CURRENCY_ADDED"
+      "type": "battle_player_hp",
+      "expected": 7
     },
     {
       "type": "event_occurred",
-      "event": "ENTITY_DEFEATED"
+      "event": "DAMAGE_RECEIVED"
     }
   ],
   "initial_state": {
@@ -79,6 +65,13 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 8105
+    "party": {
+      "HERO": {
+        "hp": 10,
+        "max_hp": 10
+      }
+    },
+    "seed": 5002,
+    "start_battle": true
   }
 }

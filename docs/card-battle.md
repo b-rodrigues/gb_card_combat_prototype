@@ -33,6 +33,81 @@ The goal is to prove that the card-combat loop is fun and understandable before 
 
 ---
 
+# 1.5 The Attack/Defend Split
+
+The battle is built on **two opposed phases**, each with a distinct card role. This
+is the core of the design, so read this before any of the per-card details.
+
+```text
+ATTACK PHASE  (your turn)          DEFEND PHASE (enemy telegraphs a hit)
+   build an offensive combo            build a defensive block
+       ↓                                   ↓
+ SW / BO / FI = damage               SH = block value
+ HE           = heal                 SW / BO / FI / HE = inert
+ SH           = combo fodder (0 dmg)
+```
+
+Every card has an **active role** determined by the current phase:
+
+| Card    | ATTACK phase                       | DEFEND phase              |
+| ------- | ---------------------------------- | ------------------------- |
+| `SW`    | Physical damage (adds value)       | inert                     |
+| `BO`    | Ranged damage (adds value)         | inert                     |
+| `FI`    | Elemental damage (adds value)      | inert                     |
+| `HE`    | Heal (adds value to player HP)     | inert                     |
+| `SH`    | combo fodder (0 damage)            | block value               |
+
+### The shield tension (why this design exists)
+
+A shield (`SH`) is genuinely good at **both** jobs — in an attack combo it
+extends the straight and raises the multiplier, and in the defend phase it
+becomes block value. But a shield used is a shield **gone** from your hand and
+deck.
+
+So every time your hand shows a shield you answer the question:
+
+> Do I burn this shield **now** to make a bigger attack combo, or do I save it to
+> survive the enemy's next hit?
+
+Spending one in a combo that doesn't even land is a total loss.
+
+### Fodder vs inert (the asymmetry)
+
+* In the **attack** phase a shield is **fodder**: it contributes **0 damage**,
+  but its number **still counts toward straight detection and the combo
+  multiplier**. `SW1 SH2 SW3` is a valid 3-card straight whose damage base is
+  `1 + 3` (the shield's `2` does not add damage, but it earns the ×150%
+  multiplier).
+* In the **defend** phase a non-shield (`SW/BO/FI/HE`) is fully **inert**: it
+  contributes **0 block and 0 combo**. Only shields build a defensive block.
+
+### Wasted cards
+
+Selecting a card palette that produces no effect still **consumes** the cards
+from your hand and deck. A lone `SH2` in the attack phase (no straight, base 0)
+does nothing but eats the shield — exactly the mistake the tension wants the
+player to avoid.
+
+---
+
+## Implementation status (where this prototype stands)
+
+The Game Boy build implements the full card combat system and phase rules. `DONE`
+markers throughout the doc point to the exact source. A quick summary:
+
+**Implemented today**
+* Five-card hand with LEFT/RIGHT cursor, A-select, B-undo, SELECT-execute.
+* Phase-aware combo evaluation (ascending straights, flush/same-type multiplier, 100/150/175/200).
+* Attack resolution — lead card type decides action (`HE` heals, offensive types damage); shields are combo fodder (0 damage base, participate in straight/flush multipliers).
+* Defend resolution — shields block incoming enemy damage with straight/flush bonuses; non-shields are inert (0 block, 0 combo).
+* Card consumption — played cards are always discarded and replaced from the deck.
+* Reset deck (Fisher-Yates shuffle), draw/discard/draw-to-replace.
+* 20-second decision timer that auto-executes on expiry.
+* Explicit battle state machine plus a tutorial-slime battle.
+* Telemetry for every important transition; regression scenarios under `make test-harness`.
+
+---
+
 # 2. Card Representation
 
 Every card has:
@@ -57,13 +132,18 @@ The number is the card's numerical value and is used for combo construction.
 
 ### Initial card types
 
-| Code | Meaning | Function         |
-| ---- | ------- | ---------------- |
-| `SW` | Sword   | Physical attack  |
-| `SH` | Shield  | Defense          |
-| `BO` | Bow     | Ranged attack    |
-| `FI` | Fire    | Elemental attack |
-| `HE` | Heal    | Restore HP       |
+| Code | Meaning | ATTACK role   | DEFEND role |
+| ---- | ------- | ------------- | ----------- |
+| `SW` | Sword   | Physical attack | inert     |
+| `SH` | Shield  | combo fodder (0 dmg) | block value |
+| `BO` | Bow     | Ranged attack  | inert       |
+| `FI` | Fire    | Elemental attack | inert    |
+| `HE` | Heal    | Restore HP     | inert       |
+
+A card's **type determines its active role in the current phase** (see §1.5).
+Attack cards (`SW/BO/FI`) deal damage only in the attack phase; `HE` heals only
+in the attack phase; `SH` is the only card that does anything in the defend
+phase.
 
 Keep the initial prototype to these five card types.
 
@@ -248,6 +328,11 @@ SW2  SH5  BO3  SW4  HE7
 The cursor should be extremely obvious.
 
 A simple arrow underneath the selected card is sufficient.
+
+> **DONE:** The five-card hand renders horizontally on the battle screen, and the
+> cursor moves with LEFT/RIGHT. Implemented in `src/ui/ui.c`
+> (`ui_draw_battle_hand`, hand row with cursor arrow) and `src/battle/battle.c`
+> (`battle_cursor_move`).
 
 ---
 
@@ -488,6 +573,12 @@ Inventory
 
 This keeps the control scheme extremely simple.
 
+> **DONE:** Card selection (`A`/`battle_card_select`, cursor auto-advances to the
+> next unselected card), undo (`B`/`battle_card_undo`; with no cards selected in
+> the attack phase it flees via `BATTLE_RESULT_FLED`), and execute (SELECT) are all
+> wired in `src/battle/battle.c`, driven through the input layer and the battle
+> screen (`src/screens/battle_screen.c`).
+
 ---
 
 # 13. Combo Display
@@ -619,6 +710,30 @@ However, if the types match, then the combo gets a multiplier bonus:
 SW2 → SW3 → SW4
 ```
 
+### Shields extend length, not damage
+
+Recall the phase rule (§1.5): in the attack phase a shield adds **0 damage** but
+its number still participates in straight detection and the combo multiplier.
+
+```text
+SW1 → SH2 → SW3
+```
+
+is a valid 3-card straight:
+
+```text
+1 → 2 → 3
+STRAIGHT!
+```
+
+Its damage base is only `1 + 3` (the `SH2` contributes no damage), but because
+it is a 3-card straight the ×150% multiplier applies. The shield earned the
+straight you otherwise would not have had — at the price of one value point and
+one shield card.
+
+In the defend phase the mirror is stricter: non-shields are **fully inert**
+(§1.5/§23), contributing neither block value **nor** combo length.
+
 ---
 
 # 17. Combo Length
@@ -671,7 +786,7 @@ The exact multipliers should remain simple.
 
 ---
 
-# 18. Simple Damage Formula
+# 18. Simple Damage / Block Formula
 
 Do not use floating-point arithmetic.
 
@@ -680,33 +795,41 @@ Use integer percentages.
 For example:
 
 ```text
-Base damage = sum of card values
+Base value = sum of the active cards' values
 ```
+
+In the attack phase, "active" cards are the attack cards (`SW/BO/FI`) plus heals
+(`HE`) when they resolve as healing. Shields contribute **0** to the base.
 
 Then apply a combo multiplier.
 
-Example:
+Examples (attack phase):
 
 ```text
-SW2 + BO3 + SW4
+SW2 + BO3 + SW4            base = 9
+3-card straight = ×150%    final damage = 13
+```
 
-Base = 9
+```text
+SW1 + SH2 + SW3            base = 4   (shield adds 0)
+3-card straight = ×150%    final damage = 6
+```
 
-3-card straight = ×150%
-
-Final damage = 13
+```text
+SH2 alone                  base = 0
+no straight                final damage = 0  (card consumed, no effect)
 ```
 
 Use integer arithmetic:
 
 ```text
-damage = base * multiplier / 100
+value = base * multiplier / 100
 ```
 
 Possible initial multipliers:
 
 ```text
-Normal combo: 100
+Normal combo:    100
 3-card straight: 150
 4-card straight: 175
 5-card straight: 200
@@ -744,7 +867,8 @@ Damage contribution:
 
 ## SH — Shield
 
-Defense.
+**Block value in the defend phase; combo fodder (0 damage) in the attack phase**
+(see §1.5).
 
 Example:
 
@@ -764,7 +888,19 @@ When used defensively:
 Defense = 5
 ```
 
-Multiple Shield cards can be combined.
+When used in an attack combo it adds **0** to the damage base, but its number
+still counts toward straight detection and the combo multiplier — so it can
+bridge or extend an attack straight without dealing damage itself.
+
+Multiple Shield cards can be combined into one block in the defend phase.
+
+> **DONE:** Implemented in `src/battle/combo.c` and `src/battle/battle.c`.
+> In the attack phase, shields are combo fodder (0 damage base, participate in
+> straight and flush multipliers). In the defend phase, shields provide block
+> value and build defensive combos, while non-shields are inert (0 block, 0 combo).
+> Regression-covered by `tools/scenarios/tests/card_shield_defend.json`,
+> `tools/scenarios/tests/card_shield_attack_fodder.json`, and
+> `tools/scenarios/tests/card_defend_inert_nonshield.json`.
 
 ---
 
@@ -867,6 +1003,14 @@ ENEMY HP
 30 → 17
 ```
 
+> **DONE:** The attack phase resolves a combo against the enemy this way —
+> the lead card type decides the action (`HE` heals the player, all offensive types
+> damage the enemy), computed via `battle_eval_current_combo` in
+> `src/battle/battle.c::battle_execute_combo`. Shields in an attack combo act as
+> combo fodder: they add 0 damage to the base while contributing to straight
+> and flush multipliers. Combed damage/heal is applied, the played cards are
+> discarded and replaced from the deck, and victory/defeat is checked.
+
 ---
 
 # 21. Simple Attack Animation
@@ -925,35 +1069,37 @@ or a small weighted random table.
 
 The enemy does not need to use the card system yet, but will in the future.
 
+> **DONE:** Enemies currently use one fixed non-card attack. After the player's
+> attack resolves, the battle enters an enemy telegraph phase that sets the
+> incoming damage to the enemy's attack value (defaulting to 3), then hands the
+> player the defend phase (`src/battle/battle.c::battle_update`). No enemy AI/weighted
+> random table yet — that is future work.
+
 ---
 
 # 23. Defense
 
-When the enemy attacks:
+When the enemy telegraphs an attack:
 
 ```text
 SLIME ATTACK!
 DAMAGE: 15
 ```
 
-Switch the player into defense mode.
+Switch the player into the **defend phase**.
 
-The hand is shown:
+The hand is shown; all five cards are still present and cursor-selectable:
 
 ```text
 SW2  SH5  BO3  SH4  HE7
       ^
 ```
 
-The description changes automatically:
+Only **Shield** cards build the block. The non-shields (`SW2 BO3 HE7`) are
+fully **inert** here — they add 0 to the block and 0 to any defensive combo
+(§1.5). Selection is not prevented; they simply do nothing if played.
 
-```text
-Blocks incoming damage.
-```
-
-The player selects Shield cards.
-
-Example:
+The player selects Shield cards:
 
 ```text
 COMBO: SH4 SH5
@@ -964,9 +1110,9 @@ SELECT executes the defense.
 Calculate:
 
 ```text
-Defense = 4 + 5
+Block   = 4 + 5  (+ straight/flush multiplier if any)
 Enemy damage = 15
-Damage taken = 6
+Damage taken = damage - block
 ```
 
 Display:
@@ -978,6 +1124,13 @@ TAKEN: 6
 ```
 
 Then continue the battle.
+
+> **DONE:** The defend phase blocks incoming enemy damage equal to the
+> combo-evaluated shield value (straight/flush bonuses apply), applied once to
+> the *next* enemy attack only (`src/battle/battle.c::battle_execute_combo`
+> `PLAYER_DEFEND`). Non-shields are inert (0 block, 0 combo). Regression-covered
+> by `tools/scenarios/tests/card_shield_defend.json` and
+> `tools/scenarios/tests/card_defend_inert_nonshield.json`.
 
 ---
 
@@ -998,6 +1151,11 @@ and presses SELECT:
 The player's HP updates immediately.
 
 For the initial prototype, Heal does not need complicated combo rules.
+
+> **DONE:** Healing works in the current build — if the combo's lead card is `HE`,
+> the player's HP is restored (capped at max) instead of dealing damage
+> (`src/battle/battle.c::battle_execute_combo`, `PLAYER_SELECT` branch), and emits
+> a `HEALED` telemetry event.
 
 ---
 
@@ -1186,6 +1344,11 @@ DEFEAT
 INVENTORY
 ```
 
+> **DONE:** The engine runs an explicit state machine in `src/battle/battle.c`
+> (`battle_start` → `PLAYER_SELECT` → `PLAYER_ANIM` → `ENEMY_TELEGRAPH` →
+> `PLAYER_DEFEND` → `DEFENSE_RESOLVE`, cycling back to `PLAYER_SELECT`), with
+> `RESULT`/`battle_over` exit and telemetry for start/won/lost/fled/entity-defeated.
+
 ---
 
 # 30. Timer State
@@ -1225,6 +1388,12 @@ Never let the timer run during:
 * victory/defeat
 * transitions
 
+> **DONE:** The decision timer runs only in `PLAYER_SELECT`/`PLAYER_DEFEND`
+> and decrements once per frame; it targets 20s (`BATTLE_TIMER_MAX_FRAMES 1200`)
+> with a 60-division bar. On expiry, `battle_update` auto-executes the current
+> combo (and if none was selected, auto-selects the card under the cursor). It is
+> suspended during animation/delay phases (`battle.c::battle_update`).
+
 ---
 
 # 31. Deck
@@ -1259,6 +1428,12 @@ Start with a deterministic deck order for debugging.
 Once the system works, implement shuffling.
 
 The player should draw replacement cards after cards are played according to the eventual deck rules.
+
+> **DONE:** The deck system is implemented: a default packed starter deck
+> (`s_default_starter_deck_packed` in `src/battle/deck.c`), a Fisher-Yates shuffle
+> with uniform reject-and-retry, draw + discard, and draw-to-replace after each
+> resolved combo (`battle_resolve_hand_discard` draws one replacement per played
+> card). Cards are represented as compact type+value structs, not strings.
 
 ---
 
@@ -1486,6 +1661,11 @@ or:
 DEFEAT
 ```
 
+> **Design note for this battle:** with the attack/defend split (§1.5), the shield
+> `SH5` in the hand is the pivot. Use it as combo fodder now (its `5` could extend
+> an attack straight at 0 damage) and lose the block for the enemy's attack — or
+> save it to eat most of the incoming hit. That trade is the game.
+
 ---
 
 # 38. Development Order
@@ -1620,6 +1800,12 @@ It needs to make this interaction feel **fast, obvious, and satisfying**.
 **Cards = two letters + number**
 
 **Combos = primarily based on card numbers**
+
+**Attack phase = attack cards deal damage, shields are combo fodder (0 damage)**
+
+**Defend phase = shields block, everything else is inert**
+
+**Used cards are always consumed, even if the play had no effect**
 
 **Graphics = tile/text based wherever possible**
 

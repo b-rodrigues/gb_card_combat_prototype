@@ -19,8 +19,8 @@ typedef struct {
     uint8_t value;  /* Number 1 - 9 */
 } Card;
 
-/* Get one-line short description for card */
-const char *card_get_description(Card card);
+/* Get one-line short description for card type */
+const char *card_get_description(uint8_t type);
 
 /* Two-letter abbreviation for CardType (e.g. "SW", "SH", "BO", "FI", "HE") */
 const char *card_type_code(uint8_t type);

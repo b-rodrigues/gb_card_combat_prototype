@@ -13,6 +13,14 @@
     },
     {
       "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
       "button": "A"
     },
     {

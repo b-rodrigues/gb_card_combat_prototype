@@ -83,6 +83,15 @@ void battle_card_select(Battle *b)
     }
 }
 
+static void battle_set_result(Battle *b, BattleResult res, uint8_t ev)
+{
+    b->result = res;
+    b->phase = BATTLE_PHASE_RESULT;
+    b->turn = BATTLE_TURN_RESULT;
+    b->battle_over = true;
+    telemetry_emit(ev, 0, 0, 0, 0);
+}
+
 void battle_card_undo(Battle *b)
 {
     if (!b) return;
@@ -93,11 +102,7 @@ void battle_card_undo(Battle *b)
     if (b->combo_count > 0) {
         b->cursor_pos = b->selected_indices[--b->combo_count];
     } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        b->result = BATTLE_RESULT_FLED;
-        b->phase = BATTLE_PHASE_RESULT;
-        b->turn = BATTLE_TURN_RESULT;
-        b->battle_over = true;
-        telemetry_emit(EVENT_BATTLE_FLED, 0, 0, 0, 0);
+        battle_set_result(b, BATTLE_RESULT_FLED, EVENT_BATTLE_FLED);
     }
 }
 
@@ -114,13 +119,14 @@ static void battle_resolve_hand_discard(Battle *b)
 
 static uint8_t battle_eval_current_combo(Battle *b)
 {
-    Card selected[BATTLE_HAND_SIZE];
     uint8_t i;
+    ComboPhase phase;
     if (b->combo_count == 0) return 0;
     for (i = 0; i < b->combo_count; i++) {
-        selected[i] = b->hand[b->selected_indices[i]];
+        b->last_combo.cards[i] = b->hand[b->selected_indices[i]];
     }
-    combo_evaluate(selected, b->combo_count, &b->last_combo);
+    phase = (b->phase == BATTLE_PHASE_PLAYER_DEFEND) ? COMBO_PHASE_DEFEND : COMBO_PHASE_ATTACK;
+    combo_evaluate(b->last_combo.cards, b->combo_count, phase, &b->last_combo);
     return (uint8_t)b->last_combo.final_power;
 }
 
@@ -128,11 +134,7 @@ static void battle_check_death(Battle *b, Combatant *c, BattleResult res, uint8_
 {
     if (combatant_is_dead(c)) {
         telemetry_emit(EVENT_ENTITY_DEFEATED, entity_idx, 0, 0, 0);
-        b->result = res;
-        b->phase = BATTLE_PHASE_RESULT;
-        b->turn = BATTLE_TURN_RESULT;
-        b->battle_over = true;
-        telemetry_emit(ev, 0, 0, 0, 0);
+        battle_set_result(b, res, ev);
     }
 }
 
