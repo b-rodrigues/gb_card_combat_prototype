@@ -101,13 +101,13 @@ void audio_update(void)
     if (current_track == MUSIC_NONE) return;
 
     if (current_track == MUSIC_OVERWORLD) {
-        if (++step_counter >= 32) {
+        if (++step_counter >= 43) {
             step_counter = 0;
             play_note(s_note_freqs[lacrimosa_notes[note_index]]);
             note_index = (uint8_t)((note_index + 1) & 31);
         }
     } else if (current_track == MUSIC_BATTLE) {
-        if (++step_counter >= 16) {
+        if (++step_counter >= 17) {
             step_counter = 0;
             play_note(s_note_freqs[summer_notes[note_index]]);
             note_index = (uint8_t)((note_index + 1) & 31);
