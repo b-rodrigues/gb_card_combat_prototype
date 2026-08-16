@@ -57,30 +57,6 @@ void dialogue_init(DialogueState *d)
     d->completion_flag = 0;
 }
 
-void dialogue_start(DialogueState *d, DialogueId id, const char *speaker, const char **lines, uint8_t count)
-{
-    uint8_t i;
-    if (!d) return;
-    if (!lines) return;
-    if (count > MAX_DIALOGUE_LINES) count = MAX_DIALOGUE_LINES;
-
-    d->active = true;
-    d->id = id;
-    d->current_line = 0;
-    d->line_count = count;
-    d->speaker = speaker ? speaker : "";
-    d->completion_flag = 0;
-
-    for (i = 0; i < count; i++) {
-        d->lines[i] = lines[i];
-    }
-    for (; i < MAX_DIALOGUE_LINES; i++) {
-        d->lines[i] = "";
-    }
-
-    telemetry_emit(EVENT_DIALOGUE_STARTED, (uint8_t)d->id, 0, 0, 0);
-}
-
 void dialogue_start_def(DialogueState *d, DialogueId id)
 {
     uint8_t i;
@@ -115,8 +91,9 @@ void dialogue_start_def(DialogueState *d, DialogueId id)
     }
 
     for (i = 0; i < d->line_count; i++) {
-        if (def->lines[i]) {
-            banked_copy(g_dialogue_bank, g_dlg_lines[i], def->lines[i], 20);
+        const char *line_ptr = def->lines[i];
+        if (line_ptr) {
+            banked_copy(g_dialogue_bank, g_dlg_lines[i], line_ptr, 20);
             g_dlg_lines[i][20] = 0;
             d->lines[i] = g_dlg_lines[i];
         } else {

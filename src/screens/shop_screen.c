@@ -6,6 +6,7 @@
 #include "menu.h"
 #include "shops.h"
 #include "game_ids.h"
+#include "ui.h"
 
 #define SHOP_MSG_NONE 0
 #define SHOP_MSG_BOUGHT 1
@@ -21,70 +22,60 @@ static const ShopDefinition *shop_active(const Game *g)
 static void shop_draw(Game *g)
 {
     const ShopDefinition *def = shop_active(g);
-    MenuFrame frame = { "SHOP", 0, 3, 12 };
+    MenuFrame frame;
     char str[7];
     uint8_t i, y;
 
+    frame.title = "SHOP";
+    frame.title_row = 0;
+    frame.top_row = 3;
+    frame.bottom_row = 12;
     menu_draw_frame(&frame);
-    y = menu_row(&frame, 0);
-    ui_draw_text_line(0, y, "GOLD:", 5);
+    ui_draw_text_line(0, 3, "GOLD:", 5);
     ui_format_int(currency_get(&g->state, CURRENCY_ID_GOLD), str);
-    ui_draw_text_line(5, y, str, 14);
+    ui_draw_text_line(5, 3, str, 14);
 
     if (!def) {
-        menu_draw_content(&frame, 2, "(nothing)");
-        ui_draw_text_line(0, menu_row(&frame, 4), "[B] Leave", 9);
+        ui_draw_text_line(0, 5, "(nothing)", 9);
+        ui_draw_text_line(0, 7, "[B] Leave", 9);
         return;
     }
 
     for (i = 0; i < def->count; i++) {
         const ItemDefinition *item = item_get_def(def->items[i]);
-        y = menu_row(&frame, 1 + i);
+        y = (uint8_t)(5 + i);
         ui_draw_text_line(0, y, (g->item_menu_index == i) ? ">" : " ", 1);
-        ui_format_int((int16_t)(item ? item->price : 0), str);
-        ui_draw_text_line(1, y, item ? item->name : "?", 8);
-        ui_draw_text_line(9, y, str, 4);
-        ui_draw_text_line(14, y, "G", 1);
+        ui_draw_text_line(1, y, item ? item->name : "???", 10);
+        ui_format_int(item ? item->price : 0, str);
+        ui_draw_text_line(12, y, str, 4);
+        ui_draw_text_line(16, y, "G", 1);
     }
 
-    ui_draw_text_line(0, menu_row(&frame, 3 + def->count), "[A] Buy  [B] Leave", 18);
-    if (g->shop_message == SHOP_MSG_BOUGHT) {
-        menu_draw_content(&frame, 5 + def->count, "Bought!");
-    } else if (g->shop_message == SHOP_MSG_NO_GOLD) {
-        menu_draw_content(&frame, 5 + def->count, "Not enough gold!");
+    ui_draw_text_line(0, (uint8_t)(6 + def->count), "[A] Buy  [B] Leave", 18);
+    if (g->shop_message != SHOP_MSG_NONE) {
+        ui_draw_text_line(0, (uint8_t)(8 + def->count),
+                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" : "Not enough gold!", 16);
     }
 }
 
 void shop_screen_update(Game *g)
 {
     const ShopDefinition *def;
-    const ItemDefinition *item;
+    uint8_t count;
 
     if (!g) return;
     def = shop_active(g);
+    count = def ? def->count : 0;
 
-    if (def && g->item_menu_index >= def->count && def->count > 0) {
-        g->item_menu_index = (uint8_t)(def->count - 1);
-    }
-
-    if (input_pressed(INPUT_UP)) {
-        if (g->item_menu_index > 0) g->item_menu_index--;
-        g->render_cache.valid = false;
-    }
-    if (input_pressed(INPUT_DOWN)) {
-        if (def && def->count > 0 && (uint8_t)(g->item_menu_index + 1) < def->count) {
+    if (count > 0) {
+        if (input_pressed(INPUT_UP) && g->item_menu_index > 0) {
+            g->item_menu_index--;
+        } else if (input_pressed(INPUT_DOWN) && (uint8_t)(g->item_menu_index + 1) < count) {
             g->item_menu_index++;
-        }
-        g->render_cache.valid = false;
-    }
-
-    if (input_pressed(INPUT_A)) {
-        if (def && def->count > 0) {
-            item = item_get_def(def->items[g->item_menu_index]);
-            if (item) {
-                g->shop_message = (item_purchase(&g->state, item->id) == ITEM_PURCHASE_OK)
-                                  ? SHOP_MSG_BOUGHT : SHOP_MSG_NO_GOLD;
-            }
+        } else if (input_pressed(INPUT_A) && g->item_menu_index < count) {
+            ItemId item_id = def->items[g->item_menu_index];
+            g->shop_message = (item_purchase(&g->state, item_id) == ITEM_PURCHASE_OK)
+                              ? SHOP_MSG_BOUGHT : SHOP_MSG_NO_GOLD;
         }
         g->render_cache.valid = false;
     }

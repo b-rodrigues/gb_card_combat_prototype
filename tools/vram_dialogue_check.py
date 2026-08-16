@@ -60,25 +60,21 @@ def check(label, ok, detail=""):
         failures.append(label)
 
 
-def raw_id(tm, x, y):
-    ident = tm.tile_identifier(x, y)
-    return ident - 256 if ident >= 256 else ident
+def raw_id(pb, x, y):
+    return pb.memory[0x9800 + ((y & 31) * 32) + (x & 31)]
 
 
-def background_row(bg, screen_y, scroll_y, ncols=20):
-    """Decode a BACKGROUND row into a string.  PyBoy's tilemap_background
-    indexes the absolute 32x32 tilemap ring; the ring holds world tiles at
-    wrapped (world & 31) addresses, and the visible row `screen_y` shows
-    ring row (scroll_y + screen_y) & 31 (the camera scrolls the ring)."""
+def background_row(pb, screen_y, scroll_y, ncols=20):
+    """Decode a BACKGROUND row into a string."""
     row = ""
     for x in range(ncols):
-        t = raw_id(bg, x, (screen_y + scroll_y) & 31)
-        if t >= 128:
-            row += "#"
-        elif t == 0:
-            row += " "
-        else:
+        t = raw_id(pb, x, (screen_y + scroll_y) & 31)
+        if 0 <= t < 96:
             row += chr(0x20 + t)
+        elif 128 <= t <= 223:
+            row += chr(0x20 + (t - 128))
+        else:
+            row += "#"
     return row
 
 
@@ -170,7 +166,9 @@ def main():
         print("warning: walk did not reach the guard; sampling anyway")
 
     # Bump the guard at (10,8): a blocked RIGHT press engages the dialogue.
-    press("right")
+    press("right", settle=30)
+    for _ in range(10):
+        pb.tick()
 
     win = pb.tilemap_window
     bg = pb.tilemap_background
@@ -189,7 +187,7 @@ def main():
           "expected the walk to reach a scrolled camera (SCY>0) so the box "
           f"placement is exercised with an offset, got scroll_y={scroll_y}")
 
-    box = [background_row(bg, 12 + wy, scroll_y) for wy in range(6)]
+    box = [background_row(pb, 12 + wy, scroll_y) for wy in range(6)]
     lcdc = pb.memory[0xFF40]
     win_enabled = bool(lcdc & 0x20)
 
@@ -202,9 +200,9 @@ def main():
           f"12-17 at the scrolled ring offset (scroll_y={scroll_y}), got: "
           + " / ".join(box))
 
-    # ── 2. Box is clean: no map tiles (>= 128) inside it ───────────────
-    dirty = any(t >= 128 for wy in range(6)
-                for t in (raw_id(bg, x, (12 + scroll_y + wy) & 31)
+    # ── 2. Box is clean: only font tiles (0..95 or 128..223) inside it ────────
+    dirty = any((t >= 96 and not (128 <= t <= 223)) for wy in range(6)
+                for t in (raw_id(pb, x, (12 + scroll_y + wy) & 31)
                           for x in range(20)))
     check("dialogue-clean", not dirty,
           f"map tiles leaked into the dialogue box (rows: {box[1:5]})")
@@ -213,11 +211,11 @@ def main():
     check("dialogue-window-hidden", not win_enabled,
           f"expected the HUD window disabled during dialogue, got LCDC=0x{lcdc:02X}")
 
-    # Advance once and verify the later line too.  The initial line is drawn
-    # during the screen transition; this catches redraws that only fail when
-    # the modal text changes on a live frame.
+    # Advance once and verify the later line too.
     press("a", settle=30)
-    second_line = background_row(pb.tilemap_background, 14, scroll_y)
+    for _ in range(10):
+        pb.tick()
+    second_line = background_row(pb, 14, scroll_y)
     check("dialogue-second-line", "Watch for slimes." in second_line,
           "expected the second dialogue line, got: " + second_line)
 

@@ -22,7 +22,23 @@
     },
     {
       "type": "wait",
-      "frames": 40
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 35
     },
     {
       "type": "press",
@@ -30,7 +46,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 10
     },
     {
       "type": "press",
@@ -46,7 +62,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 10
     }
   ],
   "assertions": [

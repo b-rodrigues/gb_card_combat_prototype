@@ -23,6 +23,14 @@
     {
       "type": "wait",
       "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     }
   ],
   "assertions": [
@@ -32,20 +40,16 @@
     },
     {
       "type": "event_occurred",
-      "event": "BATTLE_ACTION"
-    },
-    {
-      "type": "event_occurred",
       "event": "DAMAGE_DEALT"
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 2
+      "expected": 3
     },
     {
       "type": "screen_row",
-      "row": 6,
-      "contains": "  HP:  2/ 5"
+      "row": 2,
+      "contains": " 3/ 5"
     }
   ],
   "initial_state": {

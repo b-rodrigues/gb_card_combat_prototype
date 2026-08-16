@@ -7,13 +7,7 @@
 #include "audio.h"
 #include "content.h"
 
-/* Last drawn overworld camera offset, for redrawing the terrain tile window
- * when the camera scrolls (a file-static rather than a RenderCache field so
- * the Game struct layout stays untouched). */
-static uint8_t s_prev_scroll_x;
-static uint8_t s_prev_scroll_y;
-
-static void start_battle_from_world(Game *g)
+void start_battle_from_world(Game *g)
 {
     uint8_t idx = g->world.encounter_actor_index;
     if (idx == NO_ACTOR_INDEX) return;
@@ -148,8 +142,6 @@ void overworld_screen_render(Game *g)
         rc->valid = true;
         rc->prev_screen = SCREEN_OVERWORLD;
         rc->prev_map_id = g->world.map_id;
-        s_prev_scroll_x = g->world.scroll_x;
-        s_prev_scroll_y = g->world.scroll_y;
         ui_sprite_move(px, py);
         ui_draw_actors_sprites(&g->world);
         rc->prev_player_x = px;

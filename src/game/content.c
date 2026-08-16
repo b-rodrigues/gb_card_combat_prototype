@@ -57,7 +57,6 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
 {
     CharacterState *hero;
     uint8_t gained;
-    uint8_t i;
 
     if (!state || !result || !result->crossed) return;
     gained = (uint8_t)(result->level_after - result->level_before);
@@ -65,15 +64,11 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
 
     if (target.type == PROG_TYPE_HERO) {
         hero = party_get_member(&state->party, CHARACTER_HERO);
-        if (!hero) return;
-        for (i = 0; i < gained; i++) {
-            if (hero->max_hp < 253) {
-                hero->max_hp = (uint8_t)(hero->max_hp + 2);
-            }
+        if (hero) {
+            hero->max_hp = (uint8_t)(hero->max_hp + (gained << 1));
+            hero->hp = hero->max_hp;
         }
-        hero->hp = hero->max_hp;
     }
-    /* Other target types have no game-specific consequence yet. */
 }
 
 ScreenId game_screen_after_victory(const Game *g)

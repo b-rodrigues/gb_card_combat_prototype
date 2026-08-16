@@ -163,8 +163,6 @@ extern uint8_t g_telemetry_head;
 
 void telemetry_init(void);
 void telemetry_emit(uint8_t type, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
-const GameEvent* telemetry_get_events(void);
-uint8_t telemetry_get_count(void);
 void telemetry_set_frame_ptr(const uint32_t *frame_ptr);
 void debug_snapshot(void);
 void debug_state_snapshot(void);

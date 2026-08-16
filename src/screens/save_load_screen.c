@@ -4,11 +4,13 @@
 #include "rpg/save.h"
 #include "menu.h"
 #include "scene.h"
+#include "ui.h"
 
 static void save_load_draw(Game *g)
 {
     uint8_t i, y;
     MenuFrame frame;
+    char slot[8] = "SLOT 1:";
     frame.title = (g->save_slot_mode == 1) ? "SAVE GAME" : "LOAD GAME";
     frame.title_row = 0;
     frame.top_row = 3;
@@ -18,14 +20,14 @@ static void save_load_draw(Game *g)
     for (i = 0; i < SAVE_SLOT_COUNT; i++) {
         y = (uint8_t)(4 + (i << 1));
         ui_draw_text_line(0, y, (g->save_slot_index == i) ? ">" : " ", 1);
-        ui_draw_text_line(1, y, (i == 0) ? "SLOT 1:" : ((i == 1) ? "SLOT 2:" : "SLOT 3:"), 7);
+        slot[5] = (char)('1' + i);
+        ui_draw_text_line(1, y, slot, 7);
         ui_draw_text_line(9, y, save_present_slot(i) ? "SAVED" : "(EMPTY)", 7);
     }
-    ui_draw_text_line(0, 11, (g->save_slot_mode == 1) ? "[A] SAVE  [B] BACK" : "[A] LOAD  [B] BACK", 18);
-    if (g->save_slot_message == 1) {
-        ui_draw_text_line(2, 13, "Game Saved!", 11);
-    } else if (g->save_slot_message == 2) {
-        ui_draw_text_line(2, 13, "Slot is empty!", 14);
+    ui_draw_text_line(0, 11, (g->save_slot_mode == 1) ? "[A] SAVE  " : "[A] LOAD  ", 10);
+    ui_draw_text_line(10, 11, "[B] BACK", 8);
+    if (g->save_slot_message != 0) {
+        ui_draw_text_line(2, 13, (g->save_slot_message == 1) ? "Game Saved!" : "Slot is empty!", 14);
     }
 }
 
@@ -35,11 +37,11 @@ void save_load_screen_update(Game *g)
     if (!g) return;
     idx = g->save_slot_index;
     if (input_pressed(INPUT_UP) && idx > 0) {
-        g->save_slot_index = (uint8_t)(idx - 1);
+        g->save_slot_index--;
         g->save_slot_message = 0;
         g->render_cache.valid = false;
-    } else if (input_pressed(INPUT_DOWN) && idx < (SAVE_SLOT_COUNT - 1)) {
-        g->save_slot_index = (uint8_t)(idx + 1);
+    } else if (input_pressed(INPUT_DOWN) && (uint8_t)(idx + 1) < SAVE_SLOT_COUNT) {
+        g->save_slot_index++;
         g->save_slot_message = 0;
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_A)) {

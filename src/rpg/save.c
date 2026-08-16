@@ -25,7 +25,7 @@ typedef char check_save_slot_size[(sizeof(GameState) <= (SAVE_SLOT_STRIDE - SAVE
 
 static uint16_t save_slot_base(uint8_t slot)
 {
-    return (uint16_t)(SAVE_SRAM_BASE + (slot * SAVE_SLOT_STRIDE));
+    return (uint16_t)(SAVE_SRAM_BASE + ((uint16_t)slot << 8));
 }
 
 static uint8_t save_checksum(const GameState *state)
@@ -63,26 +63,24 @@ bool save_present_slot(uint8_t slot)
     return valid;
 }
 
+static void sram_copy(uint8_t *dst, const uint8_t *src, uint8_t count)
+{
+    uint8_t i;
+    for (i = 0; i < count; i++) dst[i] = src[i];
+}
+
 bool save_game_slot(uint8_t slot, const GameState *state)
 {
     uint8_t *sram;
-    uint8_t checksum;
-    uint16_t i;
-    const uint8_t *src;
-
     if (!state || slot >= SAVE_SLOT_COUNT) return false;
-    checksum = save_checksum(state);
     sram = (uint8_t *)save_slot_base(slot);
 
     ENABLE_RAM;
-    sram[SAVE_SRAM_MAGIC_OFF] = (uint8_t)(SAVE_MAGIC & 0xFF);
-    sram[SAVE_SRAM_MAGIC_OFF + 1] = (uint8_t)(SAVE_MAGIC >> 8);
-    sram[SAVE_SRAM_VERSION_OFF] = SAVE_VERSION;
-    sram[SAVE_SRAM_CHECKSUM_OFF] = checksum;
-    src = (const uint8_t *)state;
-    for (i = 0; i < sizeof(GameState); i++) {
-        sram[SAVE_SRAM_STATE_OFF + i] = src[i];
-    }
+    sram[0] = (uint8_t)(SAVE_MAGIC & 0xFF);
+    sram[1] = (uint8_t)(SAVE_MAGIC >> 8);
+    sram[2] = SAVE_VERSION;
+    sram[3] = save_checksum(state);
+    sram_copy(sram + 4, (const uint8_t *)state, (uint8_t)sizeof(GameState));
     DISABLE_RAM;
     return true;
 }
@@ -90,8 +88,6 @@ bool save_game_slot(uint8_t slot, const GameState *state)
 bool load_game_slot(uint8_t slot, GameState *state)
 {
     uint8_t *sram;
-    uint16_t i;
-    uint8_t *dst;
     bool valid;
 
     if (!state || slot >= SAVE_SLOT_COUNT) return false;
@@ -100,10 +96,7 @@ bool load_game_slot(uint8_t slot, GameState *state)
     ENABLE_RAM;
     valid = save_valid_at_slot(slot);
     if (valid) {
-        dst = (uint8_t *)state;
-        for (i = 0; i < sizeof(GameState); i++) {
-            dst[i] = sram[SAVE_SRAM_STATE_OFF + i];
-        }
+        sram_copy((uint8_t *)state, sram + 4, (uint8_t)sizeof(GameState));
     }
     DISABLE_RAM;
     return valid;

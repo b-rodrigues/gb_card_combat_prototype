@@ -50,6 +50,7 @@ void scene_sync_from_world(Game *g);
 
 void overworld_screen_update(Game *g);
 void overworld_screen_render(Game *g);
+void start_battle_from_world(Game *g);
 void dialogue_screen_update(Game *g);
 void dialogue_screen_render(Game *g);
 void battle_screen_update(Game *g);

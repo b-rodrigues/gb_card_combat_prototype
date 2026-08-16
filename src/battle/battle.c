@@ -5,72 +5,204 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
                   uint8_t enemy_hp, uint8_t enemy_max_hp)
 {
+    uint8_t i;
     if (!b) return;
+
     combatant_init(&b->player, "Hero", player_hp, player_max_hp);
     combatant_init(&b->enemy, enemy_name ? enemy_name : "Enemy", enemy_hp, enemy_max_hp);
     b->player.attack = player_attack;
-    b->enemy.attack = 2;
+    b->enemy.attack = 3;
+
+    deck_init_default(&b->deck);
+    for (i = 0; i < BATTLE_HAND_SIZE; i++) {
+        deck_draw(&b->deck, &b->hand[i]);
+        b->selected_indices[i] = 0;
+    }
+
+    b->combo_count = 0;
+    b->cursor_pos = 0;
+    b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+    b->timer_max = BATTLE_TIMER_MAX_FRAMES;
+    b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;
     b->result = BATTLE_RESULT_NONE;
     b->delay_timer = 0;
     b->battle_over = false;
+    b->enemy_incoming_dmg = 0;
+
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }
 
-void battle_execute_action(Battle *b, BattleAction action)
+bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
 {
-    uint8_t dmg;
-    if (!b || b->turn != BATTLE_TURN_PLAYER || b->battle_over) return;
-
-    if (action == BATTLE_ACTION_ATTACK) {
-        telemetry_emit(EVENT_BATTLE_ACTION, BATTLE_ACTION_ATTACK, 0, 0, 0);
-        dmg = b->player.attack;
-        combatant_take_damage(&b->enemy, dmg);
-        telemetry_emit(EVENT_DAMAGE_DEALT, dmg, 0, 0, 0);
-        
-        if (combatant_is_dead(&b->enemy)) {
-            telemetry_emit(EVENT_ENTITY_DEFEATED, 1, 0, 0, 0);
-            b->result = BATTLE_RESULT_VICTORY;
-            b->turn = BATTLE_TURN_RESULT;
-            b->battle_over = true;
-            telemetry_emit(EVENT_BATTLE_WON, 0, 0, 0, 0);
-        } else {
-            b->turn = BATTLE_TURN_ENEMY_DELAY;
-            b->delay_timer = 20; /* ~0.3s pause before enemy turn */
+    uint8_t i;
+    if (!b) return false;
+    for (i = 0; i < b->combo_count; i++) {
+        if (b->selected_indices[i] == hand_idx) {
+            return true;
         }
-    } else if (action == BATTLE_ACTION_RUN) {
-        telemetry_emit(EVENT_BATTLE_ACTION, BATTLE_ACTION_RUN, 0, 0, 0);
-        b->result = BATTLE_RESULT_FLED;
-        b->turn = BATTLE_TURN_RESULT;
-        b->battle_over = true;
-        telemetry_emit(EVENT_BATTLE_FLED, 0, 0, 0, 0);
+    }
+    return false;
+}
+
+void battle_cursor_move(Battle *b, int8_t step)
+{
+    int8_t next_pos;
+    if (!b) return;
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        next_pos = (int8_t)b->cursor_pos + step;
+        if (next_pos < 0) next_pos = BATTLE_HAND_SIZE - 1;
+        else if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
+        b->cursor_pos = (uint8_t)next_pos;
+    }
+}
+
+void battle_card_select(Battle *b)
+{
+    uint8_t step, next_pos;
+    if (!b) return;
+    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) {
+        return;
+    }
+
+    if (battle_is_card_selected(b, b->cursor_pos)) {
+        return;
+    }
+
+    if (b->combo_count < BATTLE_HAND_SIZE) {
+        b->selected_indices[b->combo_count++] = b->cursor_pos;
+
+        for (step = 1; step < BATTLE_HAND_SIZE; step++) {
+            next_pos = (uint8_t)(b->cursor_pos + step);
+            if (next_pos >= BATTLE_HAND_SIZE) next_pos -= BATTLE_HAND_SIZE;
+            if (!battle_is_card_selected(b, next_pos)) {
+                b->cursor_pos = next_pos;
+                break;
+            }
+        }
+    }
+}
+
+static void battle_set_result(Battle *b, BattleResult res, uint8_t ev)
+{
+    b->result = res;
+    b->phase = BATTLE_PHASE_RESULT;
+    b->turn = BATTLE_TURN_RESULT;
+    b->battle_over = true;
+    telemetry_emit(ev, 0, 0, 0, 0);
+}
+
+void battle_card_undo(Battle *b)
+{
+    if (!b) return;
+    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) {
+        return;
+    }
+
+    if (b->combo_count > 0) {
+        b->cursor_pos = b->selected_indices[--b->combo_count];
+    } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        battle_set_result(b, BATTLE_RESULT_FLED, EVENT_BATTLE_FLED);
+    }
+}
+
+static void battle_resolve_hand_discard(Battle *b)
+{
+    uint8_t i, idx;
+    for (i = 0; i < b->combo_count; i++) {
+        idx = b->selected_indices[i];
+        deck_discard(&b->deck, b->hand[idx]);
+        deck_draw(&b->deck, &b->hand[idx]);
+    }
+    b->combo_count = 0;
+}
+
+static uint8_t battle_eval_current_combo(Battle *b)
+{
+    uint8_t i;
+    ComboPhase phase;
+    if (b->combo_count == 0) return 0;
+    for (i = 0; i < b->combo_count; i++) {
+        b->last_combo.cards[i] = b->hand[b->selected_indices[i]];
+    }
+    phase = (b->phase == BATTLE_PHASE_PLAYER_DEFEND) ? COMBO_PHASE_DEFEND : COMBO_PHASE_ATTACK;
+    combo_evaluate(b->last_combo.cards, b->combo_count, phase, &b->last_combo);
+    return (uint8_t)b->last_combo.final_power;
+}
+
+static void battle_check_death(Battle *b, Combatant *c, BattleResult res, uint8_t entity_idx, uint8_t ev)
+{
+    if (combatant_is_dead(c)) {
+        telemetry_emit(EVENT_ENTITY_DEFEATED, entity_idx, 0, 0, 0);
+        battle_set_result(b, res, ev);
+    }
+}
+
+void battle_execute_combo(Battle *b)
+{
+    uint8_t power;
+    if (!b || b->battle_over) return;
+
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        /* If the timer expires with no cards selected, auto-select the card under the cursor */
+        if (b->combo_count == 0) {
+            b->selected_indices[0] = b->cursor_pos;
+            b->combo_count = 1;
+        }
+        power = battle_eval_current_combo(b);
+        /* Lead card type determines action: CARD_TYPE_HEAL restores player HP,
+         * all offensive types (SW, BO, FI) deal damage to enemy. */
+        if (b->last_combo.cards[0].type == CARD_TYPE_HEAL) {
+            b->player.hp = (uint8_t)((b->player.hp + power > b->player.max_hp) ? b->player.max_hp : (b->player.hp + power));
+            telemetry_emit(EVENT_HEALED, power, 0, 0, 0);
+        } else {
+            combatant_take_damage(&b->enemy, power);
+            telemetry_emit(EVENT_DAMAGE_DEALT, power, 0, 0, 0);
+        }
+        battle_resolve_hand_discard(b);
+        b->phase = BATTLE_PHASE_PLAYER_ANIM;
+        b->delay_timer = 30;
+        battle_check_death(b, &b->enemy, BATTLE_RESULT_VICTORY, 1, EVENT_BATTLE_WON);
+    } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        /* Defend phase: Shield cards reduce incoming attack damage.
+         * combo-evaluated (face value +/- straight/flush bonuses) and
+         * applied once to the NEXT enemy attack only, not the whole turn.
+         * If the timer runs out with 0 cards chosen, power is 0 (full
+         * unblocked damage taken). */
+        power = battle_eval_current_combo(b);
+        power = (b->enemy_incoming_dmg > power) ? (b->enemy_incoming_dmg - power) : 0;
+        combatant_take_damage(&b->player, power);
+        telemetry_emit(EVENT_DAMAGE_RECEIVED, power, 0, 0, 0);
+        battle_resolve_hand_discard(b);
+        b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
+        b->delay_timer = 30;
+        battle_check_death(b, &b->player, BATTLE_RESULT_DEFEAT, 0, EVENT_BATTLE_LOST);
     }
 }
 
 void battle_update(Battle *b)
 {
-    uint8_t dmg;
     if (!b || b->battle_over) return;
 
-    if (b->turn == BATTLE_TURN_ENEMY_DELAY) {
-        if (b->delay_timer > 0) {
-            b->delay_timer--;
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        if (b->timer_ticks > 0) {
+            b->timer_ticks--;
         } else {
-            b->turn = BATTLE_TURN_ENEMY;
+            battle_execute_combo(b);
         }
-    } else if (b->turn == BATTLE_TURN_ENEMY) {
-        dmg = 2;
-        combatant_take_damage(&b->player, dmg);
-        telemetry_emit(EVENT_DAMAGE_RECEIVED, dmg, 0, 0, 0);
-
-        if (combatant_is_dead(&b->player)) {
-            telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
-            b->result = BATTLE_RESULT_DEFEAT;
-            b->turn = BATTLE_TURN_RESULT;
-            b->battle_over = true;
-            telemetry_emit(EVENT_BATTLE_LOST, 0, 0, 0, 0);
+    } else if (b->delay_timer > 0) {
+        b->delay_timer--;
+    } else {
+        if (b->phase == BATTLE_PHASE_PLAYER_ANIM) {
+            b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
+            b->turn = BATTLE_TURN_ENEMY;
+            b->enemy_incoming_dmg = b->enemy.attack ? b->enemy.attack : 3;
+            b->delay_timer = 20;
         } else {
+            b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
             b->turn = BATTLE_TURN_PLAYER;
+            b->combo_count = 0;
+            b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
         }
     }
 }

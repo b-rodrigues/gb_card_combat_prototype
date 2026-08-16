@@ -18,7 +18,15 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     },
     {
       "type": "press",
@@ -26,7 +34,7 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
     },
     {
       "type": "press",
@@ -34,7 +42,31 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 60
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     },
     {
       "type": "press",
@@ -42,7 +74,23 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 60
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     },
     {
       "type": "press",
@@ -50,7 +98,15 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     },
     {
       "type": "press",
@@ -58,7 +114,31 @@
     },
     {
       "type": "wait",
-      "frames": 4
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 35
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 10
     }
   ],
   "assertions": [

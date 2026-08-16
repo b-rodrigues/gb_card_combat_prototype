@@ -1,0 +1,73 @@
+{
+  "name": "card_shield_defend",
+  "test": true,
+  "description": "In battle, a shield card blocks the NEXT enemy attack by its shield value: pick SH5 after the enemy telegraphs 3 damage, and the hero takes 0 damage.  Also proves the block is one-shot against the next attack, not applied for the whole turn.",
+  "actions": [
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    }
+  ],
+  "assertions": [
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "battle_player_hp",
+      "expected": 10
+    },
+    {
+      "type": "event_occurred",
+      "event": "DAMAGE_RECEIVED"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "party": {
+      "HERO": {
+        "hp": 10,
+        "max_hp": 10
+      }
+    },
+    "seed": 5002,
+    "start_battle": true
+  }
+}

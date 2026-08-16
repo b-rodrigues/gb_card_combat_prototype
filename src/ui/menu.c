@@ -6,23 +6,10 @@ void menu_draw_frame(const MenuFrame *frame)
     if (!frame) return;
     ui_clear_screen();
     menu_draw_centered(frame->title_row, frame->title);
-    ui_draw_text_line(0, (uint8_t)(frame->title_row + 1), "--------------------", MENU_WIDTH);
+    ui_draw_hline((uint8_t)(frame->title_row + 1), '-');
 }
 
-void menu_draw_content(const MenuFrame *frame, uint8_t idx, const char *text)
-{
-    uint8_t y;
-    if (!frame) return;
-    if (idx >= (uint8_t)(frame->bottom_row - frame->top_row)) return;
-    y = (uint8_t)(frame->top_row + idx);
-    ui_draw_text_line(0, y, text, MENU_WIDTH);
-}
 
-uint8_t menu_row(const MenuFrame *frame, uint8_t idx)
-{
-    if (!frame) return 0;
-    return (uint8_t)(frame->top_row + idx);
-}
 
 void menu_draw_centered(uint8_t y, const char *text)
 {

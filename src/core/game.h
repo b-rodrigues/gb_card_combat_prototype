@@ -22,9 +22,13 @@ typedef struct {
     uint8_t prev_dialogue_line;
     DialogueId prev_dialogue_id;
     BattleTurn prev_battle_turn;
+    BattlePhase prev_battle_phase;
     uint8_t prev_player_hp;
     uint8_t prev_enemy_hp;
     BattleResult prev_battle_result;
+    uint8_t prev_battle_cursor;
+    uint8_t prev_battle_combo_count;
+    uint8_t prev_battle_timer_bar;
     uint8_t prev_game_over_choice;
 } RenderCache;
 

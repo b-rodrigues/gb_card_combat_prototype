@@ -1,0 +1,77 @@
+{
+  "name": "card_defend_inert_nonshield",
+  "test": true,
+  "description": "In defend phase, non-shield cards are inert: playing BO3 contributes 0 block, so hero takes the full 3 damage from the enemy",
+  "actions": [
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    }
+  ],
+  "assertions": [
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "battle_player_hp",
+      "expected": 7
+    },
+    {
+      "type": "event_occurred",
+      "event": "DAMAGE_RECEIVED"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "party": {
+      "HERO": {
+        "hp": 10,
+        "max_hp": 10
+      }
+    },
+    "seed": 5002,
+    "start_battle": true
+  }
+}

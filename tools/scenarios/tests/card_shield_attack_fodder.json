@@ -1,0 +1,55 @@
+{
+  "name": "card_shield_attack_fodder",
+  "test": true,
+  "description": "In attack phase, playing a shield card alone acts as combo fodder (deals 0 damage, enemy HP stays 5), but consumes the shield card",
+  "actions": [
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    }
+  ],
+  "assertions": [
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "battle_enemy_hp",
+      "expected": 5
+    },
+    {
+      "type": "event_not_occurred",
+      "event": "BATTLE_WON"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 5002,
+    "start_battle": true
+  }
+}

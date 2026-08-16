@@ -61,65 +61,60 @@ void screen_change(Game *g, ScreenId screen)
      * ui_sprite_begin_transition() before the redraw runs). */
     if (screen != SCREEN_OVERWORLD && screen != SCREEN_DIALOGUE) {
         ui_sprite_hide();
+        SCX_REG = 0;
+        SCY_REG = 0;
     }
 
     old_screen = g->screen;
     g->prev_screen = old_screen;
     g->screen = screen;
 
-    /* The HUD window layer is only visible on the overworld (the SCX/SCY
-     * background map must not carry it). */
     if (screen == SCREEN_OVERWORLD) {
         ui_hud_show();
     } else {
         ui_hud_hide();
     }
 
-    /* SCX/SCY are the overworld camera (written every frame by
-     * ui_update_camera).  Battle/menu screens draw full-screen tiles at the
-     * (0,0) origin and never call ui_update_camera, so the camera offset
-     * must be reset here: a stale SCX>0 makes a non-overworld screen show a
-     * shifted background (e.g. cols 12-31 of a 32-wide ring, leaving the
-     * left ~60% of the display showing whatever the ring held).  The
-     * dialogue screen is exempt: it overlays the frozen overworld and must
-     * keep the current camera. */
-    if (screen != SCREEN_OVERWORLD && screen != SCREEN_DIALOGUE) {
-        SCX_REG = 0;
-        SCY_REG = 0;
-    }
-
     telemetry_emit(EVENT_SCREEN_CHANGED, (uint8_t)old_screen, (uint8_t)screen, 0, 0);
     game_render_reset(g);
 }
 
+typedef void (*ScreenFn)(Game *g);
+
+static const ScreenFn s_update_table[9] = {
+    overworld_screen_update,
+    dialogue_screen_update,
+    battle_screen_update,
+    game_over_screen_update,
+    thanks_screen_update,
+    shop_screen_update,
+    item_screen_update,
+    ending_screen_update,
+    save_load_screen_update
+};
+
+static const ScreenFn s_render_table[9] = {
+    overworld_screen_render,
+    dialogue_screen_render,
+    battle_screen_render,
+    game_over_screen_render,
+    thanks_screen_render,
+    shop_screen_render,
+    item_screen_render,
+    ending_screen_render,
+    save_load_screen_render
+};
+
 void screen_update(Game *g)
 {
-    if (!g) return;
-    switch (g->screen) {
-        case SCREEN_OVERWORLD: overworld_screen_update(g); break;
-        case SCREEN_DIALOGUE:  dialogue_screen_update(g); break;
-        case SCREEN_BATTLE:    battle_screen_update(g); break;
-        case SCREEN_GAME_OVER: game_over_screen_update(g); break;
-        case SCREEN_THANKS:    thanks_screen_update(g); break;
-        case SCREEN_SHOP:      shop_screen_update(g); break;
-        case SCREEN_ITEM:      item_screen_update(g); break;
-        case SCREEN_ENDING:    ending_screen_update(g); break;
-        case SCREEN_SAVE_LOAD: save_load_screen_update(g); break;
+    if (g && g->screen < 9) {
+        s_update_table[g->screen](g);
     }
 }
 
 void screen_render(Game *g)
 {
-    if (!g) return;
-    switch (g->screen) {
-        case SCREEN_OVERWORLD: overworld_screen_render(g); break;
-        case SCREEN_DIALOGUE:  dialogue_screen_render(g); break;
-        case SCREEN_BATTLE:    battle_screen_render(g); break;
-        case SCREEN_GAME_OVER: game_over_screen_render(g); break;
-        case SCREEN_THANKS:    thanks_screen_render(g); break;
-        case SCREEN_SHOP:      shop_screen_render(g); break;
-        case SCREEN_ITEM:      item_screen_render(g); break;
-        case SCREEN_ENDING:    ending_screen_render(g); break;
-        case SCREEN_SAVE_LOAD: save_load_screen_render(g); break;
+    if (g && g->screen < 9) {
+        s_render_table[g->screen](g);
     }
 }

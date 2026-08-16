@@ -9,33 +9,18 @@ static const uint16_t g_hero_thresholds[] = {100, 250, 450, 700, 1000, 1400, 190
 static const uint16_t g_weapon_thresholds[] = {50, 120, 220, 350, 520, 750, 1020};
 static const uint16_t g_companion_thresholds[] = {60, 150, 280, 450, 660, 900, 1200};
 
-typedef struct {
-    uint8_t type;
-    const ProgressionDefinition def;
-} ProgressionTypeDef;
-
-static const ProgressionTypeDef g_progression_defs[] = {
-    { PROG_TYPE_HERO,      { 11, g_hero_thresholds,     (uint8_t)(sizeof(g_hero_thresholds) / sizeof(g_hero_thresholds[0])) } },
-    { PROG_TYPE_WEAPON,    { 8,  g_weapon_thresholds,   (uint8_t)(sizeof(g_weapon_thresholds) / sizeof(g_weapon_thresholds[0])) } },
-    { PROG_TYPE_COMPANION, { 8,  g_companion_thresholds,(uint8_t)(sizeof(g_companion_thresholds) / sizeof(g_companion_thresholds[0])) } }
+static const ProgressionDefinition g_progression_defs[] = {
+    { 11, g_hero_thresholds, 10 },
+    { 8,  g_weapon_thresholds, 7 },
+    { 8,  g_companion_thresholds, 7 }
 };
-
-#define NUM_PROG_DEFS (sizeof(g_progression_defs) / sizeof(g_progression_defs[0]))
 
 const ProgressionDefinition *progression_get_def(uint8_t target_type)
 {
-    uint8_t i;
-    for (i = 0; i < NUM_PROG_DEFS; i++) {
-        if (g_progression_defs[i].type == target_type) {
-            return &g_progression_defs[i].def;
-        }
+    if (target_type >= 1 && target_type <= 3) {
+        return &g_progression_defs[target_type - 1];
     }
     return NULL;
-}
-
-static bool target_equal(ProgressionTarget a, ProgressionTarget b)
-{
-    return (a.type == b.type) && (a.id == b.id);
 }
 
 ProgressionState *progression_get(GameState *state, ProgressionTarget target)
@@ -43,7 +28,8 @@ ProgressionState *progression_get(GameState *state, ProgressionTarget target)
     uint8_t i;
     if (!state || target.type == PROG_TYPE_NONE) return NULL;
     for (i = 0; i < state->progression.count; i++) {
-        if (target_equal(state->progression.entries[i].target, target)) {
+        if (state->progression.entries[i].target.type == target.type &&
+            state->progression.entries[i].target.id == target.id) {
             return &state->progression.entries[i].state;
         }
     }
