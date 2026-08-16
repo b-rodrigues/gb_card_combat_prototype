@@ -13,3 +13,8 @@ const uint8_t g_rpg_world_tiles[256] = {
     /* 8 forest tiles (128 bytes): Floor, Tree, Gate, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump */
 #include "gfx/rpg_forest_tiles.inc"
 };
+
+/* Font tiles extracted from assets/intrepid.png (96 tiles = 1536 bytes) */
+const uint8_t g_intrepid_font_tiles[1536] = {
+#include "gfx/intrepid_font_tiles.inc"
+};
