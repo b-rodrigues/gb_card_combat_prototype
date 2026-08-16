@@ -75,6 +75,12 @@ void ui_init(void)
     for (p = 0; p < 96; p += 8) {
         banked_copy(2, g_ui_screen_buf, g_intrepid_font_tiles + ((uint16_t)p << 4), 128);
         set_bkg_data(p, 8, (const uint8_t *)g_ui_screen_buf);
+        /* The overworld renders actors as OAM sprites that reference the
+         * font glyph tiles, but sprites always read from the 0x8000 VRAM
+         * block while the LCDC bit-4 = 0 signed map puts the font in 0x9000.
+         * Duplicate each font tile into the sprite block so actor sprites
+         * (glyph index = visual - ' ') have real glyph data (AGENTS.md). */
+        set_sprite_data(p, 8, (const uint8_t *)g_ui_screen_buf);
     }
     ui_font_tile_base = 0;
 
