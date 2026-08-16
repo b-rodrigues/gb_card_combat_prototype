@@ -1,0 +1,73 @@
+{
+  "name": "quest_progress",
+  "test": true,
+  "description": "Defeating a hostile actor increments the global MONSTERS_DEFEATED counter (the quest objective)",
+  "scenario_id": "FIRST_ENCOUNTER",
+  "actions": [
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 26
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 4
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 4
+    }
+  ],
+  "assertions": [
+    {
+      "type": "game_state",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "variable",
+      "variable": "MONSTERS_DEFEATED",
+      "expected": 1
+    },
+    {
+      "type": "variable",
+      "variable": "QUEST_MONSTER_HUNT",
+      "expected": 1
+    },
+    {
+      "type": "event_occurred",
+      "event": "SCRIPT_TRIGGERED"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 8402,
+    "variables": {
+      "QUEST_MONSTER_HUNT": 1,
+      "MONSTERS_DEFEATED": 0
+    }
+  }
+}

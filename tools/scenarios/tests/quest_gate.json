@@ -1,0 +1,68 @@
+{
+  "name": "quest_gate",
+  "test": true,
+  "description": "Monster kills count toward the quest objective even before the quest is started, so earlier kills are never wasted",
+  "scenario_id": "FIRST_ENCOUNTER",
+  "actions": [
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 26
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 4
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 4
+    }
+  ],
+  "assertions": [
+    {
+      "type": "game_state",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "variable",
+      "variable": "MONSTERS_DEFEATED",
+      "expected": 1
+    },
+    {
+      "type": "variable",
+      "variable": "QUEST_MONSTER_HUNT",
+      "expected": 0
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 8405,
+    "variables": {
+      "MONSTERS_DEFEATED": 0
+    }
+  }
+}

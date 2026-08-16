@@ -1,0 +1,64 @@
+{
+  "name": "quick_equip_ui",
+  "test": true,
+  "description": "Via the quick screen UI: START opens it, SELECT cycles to the EQUIP tab, A equips the SWORD -> attack 6",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 0,
+      "contains": "EQUIP"
+    },
+    {
+      "type": "screen_row",
+      "row": 2,
+      "contains": "EQUIP"
+    },
+    {
+      "type": "attack",
+      "expected": 6
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8409,
+    "inventory": {
+      "SWORD": 1
+    }
+  }
+}

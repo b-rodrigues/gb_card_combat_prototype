@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v4
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Lint + release + memory budget + harness + OAM fidelity
+        run: |
+          nix develop -c bash -c "make clean && make lint && make test && make memmap && make test-harness JOBS=4 && make verify-oam"
+        timeout-minutes: 50
+
+      - name: Generated tile headers in sync with assets
+        run: |
+          nix develop -c bash -c "make gfx && git diff --exit-code -- src/gfx assets"
+
+      - name: Upload ROMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: roms
+          path: |
+            build/rpg_card_proto.gb
+            build/rpg_card_proto_debug.gb
+            build/rpg_card_proto_debug.sym
+          if-no-files-found: error
