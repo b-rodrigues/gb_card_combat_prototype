@@ -69,7 +69,11 @@ void audio_init(void)
     TAC_REG = 0x00;
     TMA_REG = 0x00;
     TIMA_REG = 0x00;
-    TAC_REG = 0x05;
+    /* TACF_START | TACF_65KHZ = 0x06: 65536 Hz clock -> TIMA overflows at
+     * 256 Hz (TMA=0), one audio_update() per overflow (crt0.s timer ISR).
+     * 0x05 (TACF_16KHZ) would select the 262144 Hz clock -> a 1024 Hz music
+     * clock, 4x too fast. */
+    TAC_REG = 0x06;
 }
 
 void audio_play_music(MusicTrack track)
