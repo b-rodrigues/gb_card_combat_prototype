@@ -32,10 +32,13 @@ void dialogue_screen_render(Game *g)
      * (scenario boot, forced via render_cache in scenarios.c) establishes
      * the world itself. */
     if (!rc->valid || rc->prev_screen != SCREEN_DIALOGUE) {
+        ui_lcd_off();
         if (rc->prev_screen != SCREEN_OVERWORLD) {
             ui_draw_world_full(&g->world);
         }
         ui_draw_dialogue(&g->dialogue, g->world.scroll_x, g->world.scroll_y);
+        ui_hud_hide();
+        ui_lcd_on();
         ui_sprite_move((uint8_t)(world_player_px(&g->world) - g->world.camera_px_x),
                        (uint8_t)(world_player_py(&g->world) - g->world.camera_px_y));
         ui_draw_actors_sprites(&g->world);

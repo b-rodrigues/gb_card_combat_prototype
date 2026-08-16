@@ -37,21 +37,13 @@ bool inventory_add(InventoryState *inventory, ItemId item_id, uint8_t quantity)
 bool inventory_remove(InventoryState *inventory, ItemId item_id, uint8_t quantity)
 {
     InventoryEntry *e;
-    uint8_t i;
     if (!inventory || item_id == ITEM_NONE || quantity == 0) return false;
 
     e = find_entry(inventory, item_id);
     if (!e || e->quantity < quantity) return false;
 
     if (e->quantity == quantity) {
-        /* Remove the slot entirely: swap with last and shrink. */
-        for (i = 0; i < inventory->count; i++) {
-            if (&inventory->entries[i] == e) {
-                inventory->entries[i] = inventory->entries[inventory->count - 1];
-                break;
-            }
-        }
-        inventory->count--;
+        *e = inventory->entries[--inventory->count];
     } else {
         e->quantity = (uint8_t)(e->quantity - quantity);
     }

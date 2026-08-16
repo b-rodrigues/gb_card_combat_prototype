@@ -10,7 +10,23 @@
     },
     {
       "type": "wait",
-      "frames": 4
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
     }
   ],
   "assertions": [

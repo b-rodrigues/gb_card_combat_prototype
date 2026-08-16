@@ -52,10 +52,6 @@ void item_register_defs(const ItemDefinition *table, uint8_t count, uint8_t bank
 uint8_t item_def_count(void);
 const ItemDefinition *item_get_def_at(uint8_t idx);
 
-/* True if the item is owned and its effect can currently apply to the
- * target party member (consumables only). */
-bool item_can_use(const GameState *state, ItemId id, CharacterId target);
-
 /* Use a consumable item from GameState.inventory on a target party member.
  * Applies the generic effect (HEAL_HP for now), consuming one unit only if
  * the use succeeds.  Emits ITEM_USED / ITEM_USE_FAILED (plus HEALED and

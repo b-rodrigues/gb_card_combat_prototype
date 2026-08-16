@@ -455,7 +455,8 @@ class EmulatorSession:
         # runner with no sound device the audio callback never fires at the
         # expected rate, so after `c` the core stalls before game_render and
         # the frame-sync breakpoint never hits.
-        cmd = ['xvfb-run', '--auto-servernum', 'mgba',
+        server_num = str((os.getpid() % 800) + 100)
+        cmd = ['xvfb-run', '-a', '-n', server_num, 'mgba',
                '-C', 'audioSync=false', '-C', 'videoSync=false',
                '-d', self.rom_path]
         self.proc = subprocess.Popen(cmd, stdin=slave, stdout=slave, stderr=slave,
@@ -583,7 +584,7 @@ class EmulatorSession:
         """Advance N frames using breakpoint at _game_render."""
         for _ in range(frames):
             self._send('next')
-            time.sleep(0.005)
+            self._wait_for_prompt(timeout=5.0)
             self._drain()
             self._send('c')
             out = self._read_until(timeout=10.0)

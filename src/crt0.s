@@ -258,6 +258,8 @@ copy_isr_loop:
         .globl  _g_bank_copy_src
         .globl  _g_bank_copy_n
 _banked_copy_tramp:
+        push    bc
+        push    de
         di                            ; no ISR while the MBC5 bank is switched
         xor     a
         ld      (0x3000), a          ; MBC5 ROM bank high byte = 0
@@ -292,8 +294,11 @@ _banked_copy_tramp:
         ld      (__current_bank), a
         ld      a, (_g_harness_mode)
         or      a
-        ret     nz
+        jr      nz, banked_copy_ret
         ei                            ; home bank restored, interrupts safe again
+ banked_copy_ret:
+        pop     de
+        pop     bc
         ret
  _banked_copy_tramp_end:
 

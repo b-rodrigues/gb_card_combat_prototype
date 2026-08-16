@@ -1,8 +1,7 @@
 {
-  "name": "quest_gate",
+  "name": "card_battle_heal",
   "test": true,
-  "description": "Monster kills count toward the quest objective even before the quest is started, so earlier kills are never wasted",
-  "scenario_id": "FIRST_ENCOUNTER",
+  "description": "Select HEAL card in battle to restore Hero HP",
   "actions": [
     {
       "type": "press",
@@ -10,11 +9,27 @@
     },
     {
       "type": "wait",
-      "frames": 8
+      "frames": 5
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
     },
     {
       "type": "wait",
@@ -34,31 +49,17 @@
     },
     {
       "type": "wait",
-      "frames": 35
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
       "frames": 10
     }
   ],
   "assertions": [
     {
-      "type": "game_state",
-      "expected": "OVERWORLD"
+      "type": "screen",
+      "expected": "BATTLE"
     },
     {
-      "type": "variable",
-      "variable": "MONSTERS_DEFEATED",
-      "expected": 1
-    },
-    {
-      "type": "variable",
-      "variable": "QUEST_MONSTER_HUNT",
-      "expected": 0
+      "type": "event_occurred",
+      "event": "HEALED"
     }
   ],
   "initial_state": {
@@ -68,9 +69,13 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 8405,
-    "variables": {
-      "MONSTERS_DEFEATED": 0
-    }
+    "party": {
+      "HERO": {
+        "hp": 5,
+        "max_hp": 10
+      }
+    },
+    "seed": 5002,
+    "start_battle": true
   }
 }

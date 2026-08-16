@@ -246,6 +246,7 @@ def main():
     # to open the shop (window layer disabled = shop screen up).
     ok = walk("up", lambda: pos()[1] == 4) and ok
     press_until("up", lambda: not window_enabled(pb), settle=30)
+    wait(20)
     shoot(pb, "05-shop")
 
     # Close the shop (B restores the overworld window), then open the quick
@@ -323,12 +324,13 @@ def main():
     press2("right", settle=40)
     shoot(pb, "09-battle")
 
-    # Player turn: A attacks (damage dealt), then the enemy acts.
-    press2("a", settle=40)
+    # Select card with A, then execute combo with SELECT (damage dealt)
+    press2("a", settle=15)
+    press2("select", settle=40)
     shoot(pb, "10-battle-attack")
 
-    # B flees the battle (always available, deterministic).
-    press2("b", settle=40)
+    # Defense turn or next selection
+    press2("a", settle=20)
     shoot(pb, "11-battle-run")
     pb.stop()
 

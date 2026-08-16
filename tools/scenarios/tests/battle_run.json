@@ -18,15 +18,15 @@
     },
     {
       "type": "wait",
-      "frames": 26
+      "frames": 5
     },
     {
       "type": "press",
-      "button": "B"
+      "button": "SELECT"
     },
     {
       "type": "wait",
-      "frames": 4
+      "frames": 55
     },
     {
       "type": "press",
@@ -34,25 +34,41 @@
     },
     {
       "type": "wait",
-      "frames": 4
+      "frames": 5
     },
     {
       "type": "press",
-      "button": "RIGHT"
+      "button": "SELECT"
     },
     {
       "type": "wait",
-      "frames": 8
+      "frames": 35
+    },
+    {
+      "type": "press",
+      "button": "B"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 10
     }
   ],
   "assertions": [
     {
       "type": "game_state",
-      "expected": "BATTLE"
+      "expected": "OVERWORLD"
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 2
+      "expected": 3
     },
     {
       "type": "event_occurred",

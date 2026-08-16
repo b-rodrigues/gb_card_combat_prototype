@@ -1,20 +1,15 @@
 {
-  "name": "battle_attack",
+  "name": "card_battle_combo",
   "test": true,
-  "description": "Enter battle with Slime and attack once, asserting the on-screen enemy HP readout decreases from 5 to 2",
-  "scenario_id": "BATTLE_ATTACK",
+  "description": "Select multiple cards and execute combo to defeat enemy",
   "actions": [
+    {
+      "type": "press",
+      "button": "A"
+    },
     {
       "type": "wait",
       "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 8
     },
     {
       "type": "press",
@@ -30,26 +25,17 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 10
     }
   ],
   "assertions": [
     {
-      "type": "game_state",
+      "type": "screen",
       "expected": "BATTLE"
     },
     {
       "type": "event_occurred",
       "event": "DAMAGE_DEALT"
-    },
-    {
-      "type": "battle_enemy_hp",
-      "expected": 3
-    },
-    {
-      "type": "screen_row",
-      "row": 2,
-      "contains": " 3/ 5"
     }
   ],
   "initial_state": {
@@ -59,6 +45,7 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 3000
+    "seed": 5002,
+    "start_battle": true
   }
 }

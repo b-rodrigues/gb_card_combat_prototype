@@ -192,60 +192,40 @@ WorldMoveResult world_update_move(World *w, const GameState *state)
     return MOVE_RESULT_MOVED;
 }
 
+static uint8_t calc_interp(uint8_t base, uint8_t target, uint8_t progress)
+{
+    uint8_t px = (uint8_t)(base * 8);
+    if (target > base) px += progress;
+    else if (target < base) px -= progress;
+    return px;
+}
+
 uint8_t world_player_px(const World *w)
 {
-    uint8_t px;
-    uint8_t base;
-    uint8_t progress;
     if (!w) return 0;
-    px = (uint8_t)(w->player.position.x * 8);
-    if (w->move_state == MOVE_STATE_MOVING) {
-        base = w->player.position.x;
-        progress = w->move_progress;
-        if (w->move_target_x > base) px = (uint8_t)(px + progress);
-        else if (w->move_target_x < base) px = (uint8_t)(px - progress);
-    }
-    return px;
+    return (w->move_state == MOVE_STATE_MOVING) ?
+        calc_interp(w->player.position.x, w->move_target_x, w->move_progress) :
+        (uint8_t)(w->player.position.x * 8);
 }
 
 uint8_t world_player_py(const World *w)
 {
-    uint8_t py;
-    uint8_t base;
-    uint8_t progress;
     if (!w) return 0;
-    py = (uint8_t)(w->player.position.y * 8);
-    if (w->move_state == MOVE_STATE_MOVING) {
-        base = w->player.position.y;
-        progress = w->move_progress;
-        if (w->move_target_y > base) py = (uint8_t)(py + progress);
-        else if (w->move_target_y < base) py = (uint8_t)(py - progress);
-    }
-    return py;
+    return (w->move_state == MOVE_STATE_MOVING) ?
+        calc_interp(w->player.position.y, w->move_target_y, w->move_progress) :
+        (uint8_t)(w->player.position.y * 8);
 }
 
 uint8_t world_actor_px(const WorldActorRuntime *a)
 {
-    uint8_t px;
     if (!a) return 0;
-    px = (uint8_t)(a->x * 8);
-    if (a->move_state && a->move_target_x != a->x) {
-        if (a->move_target_x > a->x) px = (uint8_t)(px + a->move_progress);
-        else px = (uint8_t)(px - a->move_progress);
-    }
-    return px;
+    return (a->move_state) ? calc_interp(a->x, a->move_target_x, a->move_progress) : (uint8_t)(a->x * 8);
 }
 
 uint8_t world_actor_py(const WorldActorRuntime *a)
 {
-    uint8_t py;
     if (!a) return 0;
-    py = (uint8_t)(a->y * 8);
-    if (a->move_state && a->move_target_y != a->y) {
-        if (a->move_target_y > a->y) py = (uint8_t)(py + a->move_progress);
-        else py = (uint8_t)(py - a->move_progress);
-    }
-    return py;
+    return (a->move_state) ? calc_interp(a->y, a->move_target_y, a->move_progress) : (uint8_t)(a->y * 8);
 }
 
 void world_on_battle_end(Game *g, bool victory)
@@ -273,7 +253,6 @@ void world_on_battle_end(Game *g, bool victory)
         if (actor_id != 0) {
             game_world_set_actor_state(&g->state, actor_id, ACTOR_STATE_DEFEATED);
         }
-        /* Quest progress / final-boss ending is expressed by the event table. */
         event_resolve_actor_defeated(g, actor_id, w->actors[idx].id);
     }
 }
@@ -289,13 +268,13 @@ void world_on_battle_fled(Game *g)
     w->encounter_actor_index = NO_ACTOR_INDEX;
     if (idx == NO_ACTOR_INDEX) return;
 
-    /* The enemy stays on the map with the HP it had when the hero fled. */
     if (w->actors[idx].active) {
         w->actors[idx].hp = g->battle.enemy.hp;
     }
 }
 
-/* ── Autonomous Enemy Patrol AI ─────────────────────────────────── */
+static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };
+static const uint8_t s_patrol_line[8] = { 0x01, 0x15, 0x19, 0x05, 0x24, 0x35, 0x36, 0x25 };
 
 WorldMoveResult world_update_actors(World *w)
 {
@@ -303,7 +282,7 @@ WorldMoveResult world_update_actors(World *w)
     WorldActorRuntime *a;
     int8_t dx, dy;
     uint8_t target_x, target_y, facing;
-    uint8_t step;
+    uint8_t entry;
 
     if (!w) return MOVE_RESULT_NONE;
 
@@ -313,7 +292,6 @@ WorldMoveResult world_update_actors(World *w)
             continue;
         }
 
-        /* If animating sub-tile move between tiles: */
         if (a->move_state) {
             a->move_progress++;
             if (a->move_progress >= 8) {
@@ -332,27 +310,12 @@ WorldMoveResult world_update_actors(World *w)
             continue;
         }
 
-        dx = 0;
-        dy = 0;
-        facing = DIRECTION_DOWN;
-
-        if (a->ai_type == AI_PATROL_CIRCLE) {
-            step = (uint8_t)(a->ai_step & 3);
-            if (step == 0) { dx = 1; facing = DIRECTION_RIGHT; }
-            else if (step == 1) { dx = 1; dy = 1; facing = DIRECTION_DOWN; }
-            else if (step == 2) { dy = 1; facing = DIRECTION_LEFT; }
-            else { facing = DIRECTION_UP; }
-        } else {
-            step = (uint8_t)(a->ai_step & 7);
-            if (step == 0) { dy = -1; facing = DIRECTION_UP; }
-            else if (step == 1) { facing = DIRECTION_DOWN; }
-            else if (step == 2) { dy = 1; facing = DIRECTION_DOWN; }
-            else if (step == 3) { facing = DIRECTION_UP; }
-            else if (step == 4) { dx = -1; facing = DIRECTION_LEFT; }
-            else if (step == 5) { facing = DIRECTION_RIGHT; }
-            else if (step == 6) { dx = 1; facing = DIRECTION_RIGHT; }
-            else { facing = DIRECTION_LEFT; }
-        }
+        entry = (a->ai_type == AI_PATROL_CIRCLE) ?
+            s_patrol_circle[a->ai_step & 3] :
+            s_patrol_line[a->ai_step & 7];
+        dx = (int8_t)((entry & 3) - 1);
+        dy = (int8_t)(((entry >> 2) & 3) - 1);
+        facing = (uint8_t)(entry >> 4);
 
         target_x = (uint8_t)(a->spawn_x + dx);
         target_y = (uint8_t)(a->spawn_y + dy);

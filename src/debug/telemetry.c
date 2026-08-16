@@ -2,10 +2,9 @@
 #include "audio.h"
 #include "screen.h"
 #include "actor.h"
-
-uint8_t g_snap_buf[SNAPSHOT_TOTAL_SIZE] = {0};
-uint8_t g_state_snap_buf[STATE_SNAP_TOTAL_SIZE] = {0};
-GameEvent g_telemetry_buffer[MAX_TELEMETRY_EVENTS] = {{0}};
+uint8_t g_snap_buf[SNAPSHOT_TOTAL_SIZE];
+uint8_t g_state_snap_buf[STATE_SNAP_TOTAL_SIZE];
+GameEvent g_telemetry_buffer[MAX_TELEMETRY_EVENTS];
 uint8_t g_telemetry_count = 0;
 uint8_t g_telemetry_head = 0;
 static uint32_t event_seq = 0;
@@ -13,29 +12,10 @@ static const uint32_t *telemetry_frame_ptr = NULL;
 
 void telemetry_init(void)
 {
-    uint8_t i;
-
     g_telemetry_count = 0;
     g_telemetry_head = 0;
     event_seq = 0;
     telemetry_frame_ptr = NULL;
-
-    for (i = 0; i < MAX_TELEMETRY_EVENTS; i++) {
-        uint8_t *p = (uint8_t *)&g_telemetry_buffer[i];
-        uint8_t j;
-        for (j = 0; j < sizeof(GameEvent); j++) {
-            p[j] = 0;
-        }
-    }
-#ifdef DEBUG_BUILD
-    for (i = 0; i < sizeof(g_snap_buf); i++) {
-        g_snap_buf[i] = 0;
-    }
-    for (i = 0; i < 128; i++) {
-        g_state_snap_buf[i] = 0;
-        g_state_snap_buf[128 + i] = 0;
-    }
-#endif
 }
 
 void telemetry_emit(uint8_t type, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3)
@@ -120,9 +100,6 @@ void debug_snapshot(void)
     g_snap_buf[18] = (uint8_t)g->screen;
     g_snap_buf[19] = (uint8_t)g->state.scene.scene_id;
 
-    for (i = 0; i < (MAX_SNAPSHOT_ACTORS * ACTOR_SNAPSHOT_ENTRY_SIZE); i++) {
-        g_snap_buf[SNAPSHOT_BASE_SIZE + i] = 0;
-    }
     actor_write_snapshot(&g->world, &g_snap_buf[SNAPSHOT_BASE_SIZE], MAX_SNAPSHOT_ACTORS);
 
     debug_state_snapshot();
@@ -130,77 +107,77 @@ void debug_snapshot(void)
 
 /* Serialize the canonical GameState into g_state_snap_buf for the host.
  * Fixed offsets documented in telemetry.h. */
+static void snap_write16(uint8_t *dst, uint16_t v)
+{
+    dst[0] = (uint8_t)(v & 0xFF);
+    dst[1] = (uint8_t)((v >> 8) & 0xFF);
+}
+
 void debug_state_snapshot(void)
 {
     const GameState *st;
     uint8_t i;
-    uint8_t n;
+    uint8_t *p;
     uint8_t *b = g_state_snap_buf;
 
     if (!&g_game) return;
     st = &g_game.state;
 
-    for (i = 0; i < STATE_SNAP_TOTAL_SIZE; i++) {
-        b[i] = 0;
-    }
-
     b[0] = STATE_SNAP_VERSION_BYTE;
-    for (i = 0; i < MAX_STATE_FLAGS / 8; i++) {
+    for (i = 0; i < (MAX_STATE_FLAGS / 8); i++) {
         b[STATE_SNAP_FLAGS_OFFSET + i] = st->flags.bytes[i];
     }
-    for (i = 0; i < STATE_SNAP_VARIABLES_SIZE / 2; i++) {
-        b[STATE_SNAP_VARIABLES_OFFSET + i * 2]     = (uint8_t)(st->variables.values[i] & 0xFF);
-        b[STATE_SNAP_VARIABLES_OFFSET + i * 2 + 1] = (uint8_t)((st->variables.values[i] >> 8) & 0xFF);
+    p = b + STATE_SNAP_VARIABLES_OFFSET;
+    for (i = 0; i < MAX_STATE_VARIABLES; i++) {
+        snap_write16(p, (uint16_t)st->variables.values[i]);
+        p += 2;
     }
 
-    /* Currency: dense slots; report every slot (id = index + 1). */
     b[STATE_SNAP_CURRENCY_COUNT_OFF] = MAX_CURRENCIES;
+    p = b + STATE_SNAP_CURRENCY_ENTRY_OFF;
     for (i = 0; i < MAX_CURRENCIES; i++) {
-        n = STATE_SNAP_CURRENCY_ENTRY_OFF + i * STATE_SNAP_CURRENCY_ENTRY_SIZE;
-        b[n]     = (uint8_t)(i + 1);
-        b[n + 1] = (uint8_t)(st->currency.amount[i] & 0xFF);
-        b[n + 2] = (uint8_t)((st->currency.amount[i] >> 8) & 0xFF);
+        *p++ = (uint8_t)(i + 1);
+        snap_write16(p, (uint16_t)st->currency.amount[i]);
+        p += 2;
     }
 
     b[STATE_SNAP_PARTY_OFFSET] = st->party.count;
+    p = b + STATE_SNAP_PARTY_OFFSET + 1;
     for (i = 0; i < st->party.count && i < MAX_PARTY_MEMBERS; i++) {
-        n = STATE_SNAP_PARTY_OFFSET + 1 + i * STATE_SNAP_PARTY_ENTRY_SIZE;
-        b[n]     = (uint8_t)st->party.members[i].id;
-        b[n + 1] = st->party.members[i].hp;
-        b[n + 2] = st->party.members[i].max_hp;
+        *p++ = (uint8_t)st->party.members[i].id;
+        *p++ = st->party.members[i].hp;
+        *p++ = st->party.members[i].max_hp;
     }
 
     b[STATE_SNAP_INVENTORY_OFFSET] = st->inventory.count;
+    p = b + STATE_SNAP_INVENTORY_OFFSET + 1;
     for (i = 0; i < st->inventory.count && i < 16; i++) {
-        n = STATE_SNAP_INVENTORY_OFFSET + 1 + i * STATE_SNAP_INVENTORY_ENTRY_SIZE;
-        b[n]     = (uint8_t)st->inventory.entries[i].item_id;
-        b[n + 1] = st->inventory.entries[i].quantity;
+        *p++ = (uint8_t)st->inventory.entries[i].item_id;
+        *p++ = st->inventory.entries[i].quantity;
     }
 
     b[STATE_SNAP_WORLD_OFFSET] = st->world.count;
+    p = b + STATE_SNAP_WORLD_OFFSET + 1;
     for (i = 0; i < st->world.count && i < 16; i++) {
-        n = STATE_SNAP_WORLD_OFFSET + 1 + i * STATE_SNAP_WORLD_ENTRY_SIZE;
-        b[n]     = (uint8_t)(st->world.actors[i].actor_id & 0xFF);
-        b[n + 1] = (uint8_t)((st->world.actors[i].actor_id >> 8) & 0xFF);
-        b[n + 2] = st->world.actors[i].state;
+        snap_write16(p, (uint16_t)st->world.actors[i].actor_id);
+        p += 2;
+        *p++ = st->world.actors[i].state;
     }
 
     b[STATE_SNAP_PROGRESSION_COUNT_OFF] = st->progression.count;
+    p = b + STATE_SNAP_PROGRESSION_ENTRY_OFF;
     for (i = 0; i < st->progression.count && i < MAX_PROGRESSION_TARGETS; i++) {
-        n = STATE_SNAP_PROGRESSION_ENTRY_OFF + i * STATE_SNAP_PROGRESSION_ENTRY_SIZE;
-        b[n]     = st->progression.entries[i].target.type;
-        b[n + 1] = (uint8_t)(st->progression.entries[i].target.id & 0xFF);
-        b[n + 2] = (uint8_t)((st->progression.entries[i].target.id >> 8) & 0xFF);
-        b[n + 3] = st->progression.entries[i].state.level;
-        b[n + 4] = (uint8_t)(st->progression.entries[i].state.progress & 0xFF);
-        b[n + 5] = (uint8_t)((st->progression.entries[i].state.progress >> 8) & 0xFF);
+        *p++ = st->progression.entries[i].target.type;
+        snap_write16(p, st->progression.entries[i].target.id);
+        p += 2;
+        *p++ = st->progression.entries[i].state.level;
+        snap_write16(p, st->progression.entries[i].state.progress);
+        p += 2;
     }
 
     b[STATE_SNAP_EQUIPMENT_OFF] = (uint8_t)st->equipment.weapon;
 
-    /* Runtime overworld camera + scene dims (not part of the saveable
-     * GameState; the host asserts scroll/camera for the camera/scroll
-     * milestone and the SCX/SCY-render alignment). */
+    /* Runtime overworld camera + scene dims */
     b[STATE_SNAP_SCROLL_X_OFF]        = g_game.world.scroll_x;
     b[STATE_SNAP_SCROLL_Y_OFF]        = g_game.world.scroll_y;
     b[STATE_SNAP_WORLD_WIDTH_OFF]     = g_game.world.width;

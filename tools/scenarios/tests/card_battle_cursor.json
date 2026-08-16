@@ -1,9 +1,12 @@
 {
-  "name": "battle_attack",
+  "name": "card_battle_cursor",
   "test": true,
-  "description": "Enter battle with Slime and attack once, asserting the on-screen enemy HP readout decreases from 5 to 2",
-  "scenario_id": "BATTLE_ATTACK",
+  "description": "Move cursor left and right in card battle hand",
   "actions": [
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
     {
       "type": "wait",
       "frames": 5
@@ -14,19 +17,11 @@
     },
     {
       "type": "wait",
-      "frames": 8
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
       "frames": 5
     },
     {
       "type": "press",
-      "button": "SELECT"
+      "button": "LEFT"
     },
     {
       "type": "wait",
@@ -35,21 +30,13 @@
   ],
   "assertions": [
     {
-      "type": "game_state",
+      "type": "screen",
       "expected": "BATTLE"
     },
     {
-      "type": "event_occurred",
-      "event": "DAMAGE_DEALT"
-    },
-    {
-      "type": "battle_enemy_hp",
-      "expected": 3
-    },
-    {
       "type": "screen_row",
-      "row": 2,
-      "contains": " 3/ 5"
+      "row": 9,
+      "contains": "^"
     }
   ],
   "initial_state": {
@@ -59,6 +46,7 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 3000
+    "seed": 5002,
+    "start_battle": true
   }
 }

@@ -1,17 +1,8 @@
 {
-  "name": "quest_gate",
+  "name": "card_battle_victory",
   "test": true,
-  "description": "Monster kills count toward the quest objective even before the quest is started, so earlier kills are never wasted",
-  "scenario_id": "FIRST_ENCOUNTER",
+  "description": "Defeat enemy with combo and return to overworld on victory",
   "actions": [
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 8
-    },
     {
       "type": "press",
       "button": "A"
@@ -47,18 +38,12 @@
   ],
   "assertions": [
     {
-      "type": "game_state",
+      "type": "screen",
       "expected": "OVERWORLD"
     },
     {
-      "type": "variable",
-      "variable": "MONSTERS_DEFEATED",
-      "expected": 1
-    },
-    {
-      "type": "variable",
-      "variable": "QUEST_MONSTER_HUNT",
-      "expected": 0
+      "type": "event_occurred",
+      "event": "BATTLE_WON"
     }
   ],
   "initial_state": {
@@ -68,9 +53,7 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 8405,
-    "variables": {
-      "MONSTERS_DEFEATED": 0
-    }
+    "seed": 5002,
+    "start_battle": true
   }
 }

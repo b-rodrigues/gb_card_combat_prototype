@@ -39,47 +39,13 @@ const ItemDefinition *item_get_def_at(uint8_t idx)
 const ItemDefinition *item_get_def(ItemId id)
 {
     uint8_t i;
-    if (!g_items) return NULL;
     for (i = 0; i < g_item_count; i++) {
-        if (g_item_bank != 0) {
-            banked_copy(g_item_bank, &s_item_scratch, &g_items[i], sizeof(ItemDefinition));
-        } else {
-            s_item_scratch = g_items[i];
-        }
-        if (s_item_scratch.id == id) {
-            return &s_item_scratch;
+        const ItemDefinition *def = item_get_def_at(i);
+        if (def && def->id == id) {
+            return def;
         }
     }
     return NULL;
-}
-
-static CharacterState *item_target_member(GameState *state, CharacterId target)
-{
-    CharacterState *member;
-    if (!state || state->party.count == 0) return NULL;
-
-    member = party_get_member(&state->party, target);
-    if (member) return member;
-
-    /* Fall back to the first member when the target id is not present. */
-    return &state->party.members[0];
-}
-
-bool item_can_use(const GameState *state, ItemId id, CharacterId target)
-{
-    const ItemDefinition *def;
-    const CharacterState *member;
-    if (!state) return false;
-
-    def = item_get_def(id);
-    if (!def || def->kind != ITEM_KIND_CONSUMABLE) return false;
-    if (def->effect == ITEM_EFFECT_NONE) return false;
-    if (inventory_count(&state->inventory, id) == 0) return false;
-
-    member = party_get_member_const(&state->party, target);
-    if (!member) member = &state->party.members[0];
-    if (member->hp >= member->max_hp) return false;
-    return true;
 }
 
 bool item_equip(GameState *state, ItemId id)
@@ -115,8 +81,9 @@ bool item_use(GameState *state, ItemId id, CharacterId target)
 
     switch (def->effect) {
         case ITEM_EFFECT_HEAL_HP:
-            member = item_target_member(state, target);
-            if (!member || member->hp >= member->max_hp) {
+            member = party_get_member(&state->party, target);
+            if (!member) member = &state->party.members[0];
+            if (member->hp >= member->max_hp) {
                 telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 2, 0, 0);
                 return false;
             }

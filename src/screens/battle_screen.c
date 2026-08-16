@@ -11,21 +11,18 @@ void battle_screen_update(Game *g)
 
     if (g->battle.battle_over) {
         if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
-            if (g->battle.result == BATTLE_RESULT_VICTORY) {
+            if (g->battle.result == BATTLE_RESULT_VICTORY || g->battle.result == BATTLE_RESULT_FLED) {
                 g->world.player.hp = g->battle.player.hp;
                 g->state.party.members[0].hp = g->battle.player.hp;
-                world_on_battle_end(g, true);
                 audio_play_music(MUSIC_OVERWORLD);
                 telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
-                screen_change(g, game_screen_after_victory(g));
-            } else if (g->battle.result == BATTLE_RESULT_FLED) {
-                /* Ran away: keep the damage taken, enemy stays on the map. */
-                g->world.player.hp = g->battle.player.hp;
-                g->state.party.members[0].hp = g->battle.player.hp;
-                world_on_battle_fled(g);
-                audio_play_music(MUSIC_OVERWORLD);
-                telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
-                screen_change(g, SCREEN_OVERWORLD);
+                if (g->battle.result == BATTLE_RESULT_VICTORY) {
+                    world_on_battle_end(g, true);
+                    screen_change(g, game_screen_after_victory(g));
+                } else {
+                    world_on_battle_fled(g);
+                    screen_change(g, SCREEN_OVERWORLD);
+                }
             } else {
                 world_on_battle_end(g, false);
                 g->game_over_choice = 0;
@@ -35,17 +32,25 @@ void battle_screen_update(Game *g)
         return;
     }
 
-    if (g->battle.turn == BATTLE_TURN_PLAYER) {
+    if (g->battle.phase == BATTLE_PHASE_PLAYER_SELECT ||
+        g->battle.phase == BATTLE_PHASE_PLAYER_DEFEND) {
         if (input_pressed(INPUT_START)) {
             g->item_menu_index = 0;
             g->item_menu_tab = 0;
             screen_change(g, SCREEN_ITEM);
+        } else if (input_pressed(INPUT_LEFT)) {
+            battle_cursor_move(&g->battle, -1);
+        } else if (input_pressed(INPUT_RIGHT)) {
+            battle_cursor_move(&g->battle, 1);
         } else if (input_pressed(INPUT_A)) {
-            battle_execute_action(&g->battle, BATTLE_ACTION_ATTACK);
+            battle_card_select(&g->battle);
         } else if (input_pressed(INPUT_B)) {
-            battle_execute_action(&g->battle, BATTLE_ACTION_RUN);
+            battle_card_undo(&g->battle);
+        } else if (input_pressed(INPUT_SELECT)) {
+            battle_execute_combo(&g->battle);
         }
     }
+
     battle_update(&g->battle);
 }
 
@@ -68,19 +73,11 @@ void battle_screen_render(Game *g)
         return;
     }
 
-    if (g->battle.turn != rc->prev_battle_turn ||
-        g->battle.player.hp != rc->prev_player_hp ||
-        g->battle.enemy.hp != rc->prev_enemy_hp ||
-        g->battle.result != rc->prev_battle_result) {
-        /* HP and action text update several rows.  The write is too large to
-         * fit in the VBlank remainder after vsync(), so prevent the PPU from
-         * entering Mode 3 while the tilemap is being updated. */
-        ui_lcd_off();
-        ui_update_battle(&g->battle);
-        ui_lcd_on();
-        rc->prev_battle_turn = g->battle.turn;
-        rc->prev_player_hp = g->battle.player.hp;
-        rc->prev_enemy_hp = g->battle.enemy.hp;
-        rc->prev_battle_result = g->battle.result;
-    }
+    /* Redraw on state / timer changes */
+    ui_update_battle(&g->battle);
+
+    rc->prev_battle_turn = g->battle.turn;
+    rc->prev_player_hp = g->battle.player.hp;
+    rc->prev_enemy_hp = g->battle.enemy.hp;
+    rc->prev_battle_result = g->battle.result;
 }

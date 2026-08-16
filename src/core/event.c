@@ -75,26 +75,35 @@ static void event_execute_actions(Game *g, const EventDefinition *def,
     uint8_t i;
     for (i = 0; i < def->action_count; i++) {
         const EventAction *a = &def->actions[i];
-        uint8_t t = a->type;
-        if (t == EVENT_ACTION_DIALOGUE) {
-            dialogue_start_def(&g->dialogue, (DialogueId)a->arg0);
-            if (dialogue_started) *dialogue_started = true;
-        } else if (t == EVENT_ACTION_SET_FLAG) {
-            story_set_flag(&g->state, (FlagId)a->arg0);
-        } else if (t == EVENT_ACTION_CLEAR_FLAG) {
-            story_clear_flag(&g->state, (FlagId)a->arg0);
-        } else if (t == EVENT_ACTION_SET_VARIABLE) {
-            game_variable_set(&g->state, (VariableId)a->arg0, a->arg1);
-        } else if (t == EVENT_ACTION_ADD_VARIABLE) {
-            game_variable_add(&g->state, (VariableId)a->arg0, a->arg1);
-        } else if (t == EVENT_ACTION_SCENE_CHANGE) {
-            scene_load(g, (SceneId)a->arg0, (uint8_t)a->arg1, (uint8_t)a->arg2);
-        } else if (t == EVENT_ACTION_ADD_ITEM) {
-            inventory_add(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
-        } else if (t == EVENT_ACTION_ADD_CURRENCY) {
-            currency_add(&g->state, (CurrencyId)a->arg0, a->arg1);
-        } else if (t == EVENT_ACTION_REMOVE_ITEM) {
-            inventory_remove(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
+        switch (a->type) {
+            case EVENT_ACTION_DIALOGUE:
+                dialogue_start_def(&g->dialogue, (DialogueId)a->arg0);
+                if (dialogue_started) *dialogue_started = true;
+                break;
+            case EVENT_ACTION_SET_FLAG:
+                story_set_flag(&g->state, (FlagId)a->arg0);
+                break;
+            case EVENT_ACTION_CLEAR_FLAG:
+                story_clear_flag(&g->state, (FlagId)a->arg0);
+                break;
+            case EVENT_ACTION_SET_VARIABLE:
+                game_variable_set(&g->state, (VariableId)a->arg0, a->arg1);
+                break;
+            case EVENT_ACTION_ADD_VARIABLE:
+                game_variable_add(&g->state, (VariableId)a->arg0, a->arg1);
+                break;
+            case EVENT_ACTION_SCENE_CHANGE:
+                scene_load(g, (SceneId)a->arg0, (uint8_t)a->arg1, (uint8_t)a->arg2);
+                break;
+            case EVENT_ACTION_ADD_ITEM:
+                inventory_add(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
+                break;
+            case EVENT_ACTION_ADD_CURRENCY:
+                currency_add(&g->state, (CurrencyId)a->arg0, a->arg1);
+                break;
+            case EVENT_ACTION_REMOVE_ITEM:
+                inventory_remove(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
+                break;
         }
     }
 }

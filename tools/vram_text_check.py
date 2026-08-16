@@ -127,7 +127,10 @@ def main():
 
     # ── 3. Open the ITEM menu (START).  Menu text must be on the
     #    BACKGROUND and the map must be gone (the menu cleared it) ───────
-    pb.button("start")
+    pb.button_press("start")
+    for _ in range(5):
+        pb.tick()
+    pb.button_release("start")
     for _ in range(30):
         pb.tick()
 
@@ -153,7 +156,10 @@ def main():
           f"expected window disabled (LCDC bit 5) while the menu is up, got 0x{lcdc:02X}")
 
     # ── 5. Close the menu (B) and confirm the overworld returns ─────────
-    pb.button("b")
+    pb.button_press("b")
+    for _ in range(5):
+        pb.tick()
+    pb.button_release("b")
     for _ in range(30):
         pb.tick()
 

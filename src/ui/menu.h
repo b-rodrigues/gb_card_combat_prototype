@@ -27,12 +27,7 @@ typedef struct {
  * separator line directly below it. */
 void menu_draw_frame(const MenuFrame *frame);
 
-/* Draw one content line: idx 0 is top_row; out-of-range idx is ignored. */
-void menu_draw_content(const MenuFrame *frame, uint8_t idx, const char *text);
 
-/* Absolute row for a content index (top_row + idx).  Callers pass indices
- * in [0, bottom_row - top_row); drawing is clamped by menu_draw_content. */
-uint8_t menu_row(const MenuFrame *frame, uint8_t idx);
 
 /* Draw text centered on the 20-column line. */
 void menu_draw_centered(uint8_t y, const char *text);

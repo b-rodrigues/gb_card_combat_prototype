@@ -162,31 +162,31 @@ void actor_load_scene(World *world, MapId map_id, const GameState *state)
 #ifdef DEBUG_BUILD
 uint8_t actor_write_snapshot(const World *world, uint8_t *out, uint8_t max_actors)
 {
-    uint8_t i, n = 0;
-    uint8_t slot;
-    uint8_t *p;
+    uint8_t i, n = 0, slot;
+    uint8_t *p = out;
 
     if (!world || !out || max_actors == 0) return 0;
 
-    /* hostile runtime actors */
     for (slot = 0; slot < MAX_WORLD_ACTORS && n < max_actors; slot++) {
         if (world->actors[slot].active) {
-            p = &out[n * ACTOR_SNAPSHOT_ENTRY_SIZE];
-            p[0] = (uint8_t)world->actors[slot].id;
-            p[1] = world->actors[slot].x;
-            p[2] = world->actors[slot].y;
-            p[3] = world->actors[slot].facing;
+            *p++ = (uint8_t)world->actors[slot].id;
+            *p++ = world->actors[slot].x;
+            *p++ = world->actors[slot].y;
+            *p++ = (uint8_t)world->actors[slot].facing;
             n++;
         }
     }
 
-    /* friendly static definitions */
     for (i = 0; i < g_static_actor_count && n < max_actors; i++) {
-        p = &out[n * ACTOR_SNAPSHOT_ENTRY_SIZE];
-        p[0] = (uint8_t)g_static_actors[i].id;
-        p[1] = g_static_actors[i].x;
-        p[2] = g_static_actors[i].y;
-        p[3] = g_static_actors[i].facing;
+        *p++ = (uint8_t)g_static_actors[i].id;
+        *p++ = g_static_actors[i].x;
+        *p++ = g_static_actors[i].y;
+        *p++ = g_static_actors[i].facing;
+        n++;
+    }
+
+    while (n < max_actors) {
+        *p++ = 0; *p++ = 0; *p++ = 0; *p++ = 0;
         n++;
     }
 
