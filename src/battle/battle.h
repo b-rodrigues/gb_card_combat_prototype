@@ -9,7 +9,11 @@
 #include <stdbool.h>
 
 #define BATTLE_HAND_SIZE 5
-#define BATTLE_TIMER_MAX_FRAMES 360 /* 6 seconds at 60fps */
+#define BATTLE_TIMER_MAX_FRAMES 1200 /* 20 seconds at 60fps */
+/* Timer-bar divider: 20 tiles drained across 20s = 1 tile/second.  Keep in
+ * sync between ui_draw_battle_timer() (ui.c) and calc_timer_bar()
+ * (battle_screen.c). */
+#define BATTLE_TIMER_BAR_DIVISOR 60
 
 typedef enum {
     BATTLE_PHASE_PLAYER_SELECT = 0,    /* Player selecting attack cards */

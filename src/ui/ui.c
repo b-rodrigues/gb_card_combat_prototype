@@ -595,17 +595,14 @@ static void ui_draw_battle_hand(const Battle *battle)
     }
 }
 
-static void ui_draw_battle_timer(const Battle *battle)
+void ui_draw_battle_timer(const Battle *battle)
 {
     uint8_t active_tiles = 0, i;
     uint16_t t = battle->timer_ticks;
 
-    while (t >= 18) {
-        t -= 18;
+    while (t >= BATTLE_TIMER_BAR_DIVISOR) {
+        t -= BATTLE_TIMER_BAR_DIVISOR;
         active_tiles++;
-    }
-    if (active_tiles <= 5 && (battle->timer_ticks & 4)) {
-        active_tiles = 0;
     }
     for (i = 0; i < 20; i++) {
         ui_put_char(i, 17, (i < active_tiles) ? '=' : ' ');

@@ -52,6 +52,7 @@ void ui_format_int(int16_t value, char *out);
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y);
 void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
+void ui_draw_battle_timer(const Battle *battle);
 
 void ui_draw_font_test(void);
 
