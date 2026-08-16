@@ -1,0 +1,72 @@
+{
+  "name": "card_battle_selection_cycle",
+  "test": true,
+  "description": "Select multiple cards into combo and undo, verifying cursor, selection markers, and card descriptions stay intact",
+  "actions": [
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "B"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "SW2"
+    },
+    {
+      "type": "screen_row",
+      "row": 8,
+      "contains": "SW2 SH5 BO3 SW4 HE7"
+    },
+    {
+      "type": "screen_row",
+      "row": 9,
+      "contains": "*"
+    },
+    {
+      "type": "screen_row",
+      "row": 9,
+      "contains": "^"
+    },
+    {
+      "type": "screen_row",
+      "row": 12,
+      "contains": "Shield: block dmg"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 3000,
+    "start_battle": true
+  }
+}
