@@ -35,15 +35,7 @@ void telemetry_emit(uint8_t type, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3
     }
 }
 
-const GameEvent* telemetry_get_events(void)
-{
-    return g_telemetry_buffer;
-}
 
-uint8_t telemetry_get_count(void)
-{
-    return g_telemetry_count;
-}
 
 void telemetry_set_frame_ptr(const uint32_t *frame_ptr)
 {

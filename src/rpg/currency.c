@@ -1,27 +1,16 @@
 #include "rpg/currency.h"
 #include "telemetry.h"
 
-static bool currency_id_valid(CurrencyId currency)
-{
-    return (currency >= 1 && currency <= MAX_CURRENCIES);
-}
-
 int16_t currency_get(const GameState *state, CurrencyId currency)
 {
-    if (!state || !currency_id_valid(currency)) return 0;
+    if (!state || currency < 1 || currency > MAX_CURRENCIES) return 0;
     return state->currency.amount[currency - 1];
-}
-
-void currency_set(GameState *state, CurrencyId currency, int16_t amount)
-{
-    if (!state || !currency_id_valid(currency)) return;
-    state->currency.amount[currency - 1] = amount;
 }
 
 void currency_add(GameState *state, CurrencyId currency, int16_t amount)
 {
     int16_t new_value;
-    if (!state || !currency_id_valid(currency) || amount == 0) return;
+    if (!state || currency < 1 || currency > MAX_CURRENCIES || amount == 0) return;
     new_value = (int16_t)(state->currency.amount[currency - 1] + amount);
     state->currency.amount[currency - 1] = new_value;
     if (amount > 0) {

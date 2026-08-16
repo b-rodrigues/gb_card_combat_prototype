@@ -25,7 +25,7 @@ typedef char check_save_slot_size[(sizeof(GameState) <= (SAVE_SLOT_STRIDE - SAVE
 
 static uint16_t save_slot_base(uint8_t slot)
 {
-    return (uint16_t)(SAVE_SRAM_BASE + (slot * SAVE_SLOT_STRIDE));
+    return (uint16_t)(SAVE_SRAM_BASE + ((uint16_t)slot << 8));
 }
 
 static uint8_t save_checksum(const GameState *state)

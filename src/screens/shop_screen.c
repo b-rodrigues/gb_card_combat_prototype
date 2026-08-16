@@ -52,10 +52,9 @@ static void shop_draw(Game *g)
     }
 
     ui_draw_text_line(0, (uint8_t)(6 + def->count), "[A] Buy  [B] Leave", 18);
-    if (g->shop_message == SHOP_MSG_BOUGHT) {
-        ui_draw_text_line(0, (uint8_t)(8 + def->count), "Bought!", 7);
-    } else if (g->shop_message == SHOP_MSG_NO_GOLD) {
-        ui_draw_text_line(0, (uint8_t)(8 + def->count), "Not enough gold!", 16);
+    if (g->shop_message != SHOP_MSG_NONE) {
+        ui_draw_text_line(0, (uint8_t)(8 + def->count),
+                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" : "Not enough gold!", 16);
     }
 }
 

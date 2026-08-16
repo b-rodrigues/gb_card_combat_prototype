@@ -19,9 +19,6 @@ typedef struct {
     uint8_t value;  /* Number 1 - 9 */
 } Card;
 
-/* Format card into 3-character string buffer (e.g. "SW3") + null terminator */
-void card_format(Card card, char *out_buf);
-
 /* Get one-line short description for card */
 const char *card_get_description(Card card);
 

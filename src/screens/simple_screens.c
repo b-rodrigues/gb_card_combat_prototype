@@ -15,7 +15,8 @@ void thanks_screen_render(Game *g)
     rc = &g->render_cache;
 
     if (!rc->valid || rc->prev_screen != SCREEN_THANKS) {
-        ui_draw_thanks();
+        ui_clear_screen();
+        ui_draw_text_line(1, 8, "THANKS FOR PLAYING!", 19);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_THANKS, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_THANKS;
@@ -36,7 +37,7 @@ void ending_screen_render(Game *g)
     rc = &g->render_cache;
     if (!rc->valid || rc->prev_screen != SCREEN_ENDING) {
         ui_clear_screen();
-        ui_draw_text_line(0, 1, "      THE END       ", 20);
+        ui_draw_text_line(6, 1, "THE END", 7);
         ui_draw_hline(2, '-');
         ui_draw_text_line(0, 4, "The Hero cleared", 16);
         ui_draw_text_line(0, 5, "the land of slimes!", 19);
@@ -73,7 +74,12 @@ void game_over_screen_render(Game *g)
 
     if (!rc->valid || rc->prev_screen != SCREEN_GAME_OVER ||
         g->game_over_choice != rc->prev_game_over_choice) {
-        ui_draw_game_over(g->game_over_choice);
+        ui_clear_screen();
+        ui_draw_text_line(4, 3, "GAME OVER", 9);
+        ui_draw_text_line(3, 8, "CONTINUE?", 9);
+        ui_draw_text_line(0, 11, (g->game_over_choice == 0) ? "> YES" : "  YES", 5);
+        ui_draw_text_line(0, 12, (g->game_over_choice != 0) ? "> NO" : "  NO", 4);
+        ui_draw_text_line(1, 16, "[A] CONFIRM", 11);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_GAME_OVER, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_GAME_OVER;

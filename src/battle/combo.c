@@ -51,24 +51,13 @@ void combo_evaluate(const Card *cards, uint8_t count, ComboResult *out_result)
     {
         uint8_t power = (uint8_t)sum;
         if (count >= 2 && straight) {
-            if (count == 2) {
-                uint8_t s = (uint8_t)sum, q = 0;
-                while (s >= 5) { s -= 5; q++; }
-                power += q;
-            } else if (count == 3) {
-                power += (uint8_t)(sum >> 1);
-            } else if (count == 4) {
-                power += (uint8_t)((sum >> 1) + (sum >> 2));
-            } else {
-                power += (uint8_t)sum;
-            }
-            if (same_type) {
-                power += (uint8_t)(sum >> 2);
-            }
+            uint8_t add = (count == 5) ? (uint8_t)sum :
+                          (count == 4) ? (uint8_t)((sum >> 1) + (sum >> 2)) :
+                          (count == 3) ? (uint8_t)(sum >> 1) : (uint8_t)(sum >> 2);
+            power += add;
+            if (same_type) power += (uint8_t)(sum >> 2);
         } else if (count >= 2 && same_type) {
-            uint8_t s = (uint8_t)sum, q = 0;
-            while (s >= 10) { s -= 10; q++; }
-            power += q;
+            power += (uint8_t)(sum >> 3);
         }
         out_result->final_power = power;
     }

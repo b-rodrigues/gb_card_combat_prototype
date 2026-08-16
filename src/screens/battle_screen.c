@@ -54,30 +54,52 @@ void battle_screen_update(Game *g)
     battle_update(&g->battle);
 }
 
+static uint8_t calc_timer_bar(uint16_t t)
+{
+    uint8_t bar = 0;
+    while (t >= 18) {
+        t -= 18;
+        bar++;
+    }
+    return bar;
+}
+
 void battle_screen_render(Game *g)
 {
     RenderCache *rc;
+    uint8_t timer_bar;
 
     if (!g) return;
     rc = &g->render_cache;
+    timer_bar = calc_timer_bar(g->battle.timer_ticks);
 
     if (!rc->valid || rc->prev_screen != SCREEN_BATTLE) {
+        ui_lcd_off();
         ui_draw_battle_full(&g->battle);
+        ui_lcd_on();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_BATTLE, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
-        rc->prev_battle_turn = g->battle.turn;
-        rc->prev_player_hp = g->battle.player.hp;
-        rc->prev_enemy_hp = g->battle.enemy.hp;
-        rc->prev_battle_result = g->battle.result;
+    } else if (rc->prev_battle_phase != g->battle.phase ||
+               rc->prev_player_hp != g->battle.player.hp ||
+               rc->prev_enemy_hp != g->battle.enemy.hp ||
+               rc->prev_battle_result != g->battle.result ||
+               rc->prev_battle_cursor != g->battle.cursor_pos ||
+               rc->prev_battle_combo_count != g->battle.combo_count ||
+               rc->prev_battle_timer_bar != timer_bar) {
+        ui_lcd_off();
+        ui_update_battle(&g->battle);
+        ui_lcd_on();
+    } else {
         return;
     }
 
-    /* Redraw on state / timer changes */
-    ui_update_battle(&g->battle);
-
     rc->prev_battle_turn = g->battle.turn;
+    rc->prev_battle_phase = g->battle.phase;
     rc->prev_player_hp = g->battle.player.hp;
     rc->prev_enemy_hp = g->battle.enemy.hp;
     rc->prev_battle_result = g->battle.result;
+    rc->prev_battle_cursor = g->battle.cursor_pos;
+    rc->prev_battle_combo_count = g->battle.combo_count;
+    rc->prev_battle_timer_bar = timer_bar;
 }

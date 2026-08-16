@@ -46,11 +46,7 @@ const ItemDefinition *item_get_def(ItemId id);
 /* Register the game's item catalog (content, provided by the game layer).
  * The mechanics below are generic over whatever catalog is registered. */
 void item_register_defs(const ItemDefinition *table, uint8_t count, uint8_t bank);
-
-/* Iterate the registered catalog.  item_def_count() returns the number of
- * definitions; item_get_def_at(idx) returns the idx-th definition or NULL. */
-uint8_t item_def_count(void);
-const ItemDefinition *item_get_def_at(uint8_t idx);
+const ItemDefinition *item_get_def(ItemId id);
 
 /* Use a consumable item from GameState.inventory on a target party member.
  * Applies the generic effect (HEAL_HP for now), consuming one unit only if

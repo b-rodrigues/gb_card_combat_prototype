@@ -22,7 +22,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events).
-DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/rng.c
+DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS))

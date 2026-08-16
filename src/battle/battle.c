@@ -45,13 +45,15 @@ bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
     return false;
 }
 
-void battle_cursor_move(Battle *b, int8_t dir)
+void battle_cursor_move(Battle *b, int8_t step)
 {
+    int8_t next_pos;
     if (!b) return;
-    if (dir < 0) {
-        b->cursor_pos = (uint8_t)((b->cursor_pos > 0) ? (b->cursor_pos - 1) : (BATTLE_HAND_SIZE - 1));
-    } else if (dir > 0) {
-        b->cursor_pos = (uint8_t)((b->cursor_pos < BATTLE_HAND_SIZE - 1) ? (b->cursor_pos + 1) : 0);
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        next_pos = (int8_t)b->cursor_pos + step;
+        if (next_pos < 0) next_pos = BATTLE_HAND_SIZE - 1;
+        else if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
+        b->cursor_pos = (uint8_t)next_pos;
     }
 }
 
@@ -71,7 +73,8 @@ void battle_card_select(Battle *b)
         b->selected_indices[b->combo_count++] = b->cursor_pos;
 
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {
-            next_pos = (uint8_t)((b->cursor_pos + step) % BATTLE_HAND_SIZE);
+            next_pos = (uint8_t)(b->cursor_pos + step);
+            if (next_pos >= BATTLE_HAND_SIZE) next_pos -= BATTLE_HAND_SIZE;
             if (!battle_is_card_selected(b, next_pos)) {
                 b->cursor_pos = next_pos;
                 break;
@@ -91,6 +94,7 @@ void battle_card_undo(Battle *b)
         b->cursor_pos = b->selected_indices[--b->combo_count];
     } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
         b->result = BATTLE_RESULT_FLED;
+        b->phase = BATTLE_PHASE_RESULT;
         b->turn = BATTLE_TURN_RESULT;
         b->battle_over = true;
         telemetry_emit(EVENT_BATTLE_FLED, 0, 0, 0, 0);
@@ -125,6 +129,7 @@ static void battle_check_death(Battle *b, Combatant *c, BattleResult res, uint8_
     if (combatant_is_dead(c)) {
         telemetry_emit(EVENT_ENTITY_DEFEATED, entity_idx, 0, 0, 0);
         b->result = res;
+        b->phase = BATTLE_PHASE_RESULT;
         b->turn = BATTLE_TURN_RESULT;
         b->battle_over = true;
         telemetry_emit(ev, 0, 0, 0, 0);
@@ -137,11 +142,14 @@ void battle_execute_combo(Battle *b)
     if (!b || b->battle_over) return;
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        /* If the timer expires with no cards selected, auto-select the card under the cursor */
         if (b->combo_count == 0) {
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
         }
         power = battle_eval_current_combo(b);
+        /* Lead card type determines action: CARD_TYPE_HEAL restores player HP,
+         * all offensive types (SW, BO, FI) deal damage to enemy. */
         if (b->last_combo.cards[0].type == CARD_TYPE_HEAL) {
             b->player.hp = (uint8_t)((b->player.hp + power > b->player.max_hp) ? b->player.max_hp : (b->player.hp + power));
             telemetry_emit(EVENT_HEALED, power, 0, 0, 0);
@@ -154,6 +162,8 @@ void battle_execute_combo(Battle *b)
         b->delay_timer = 30;
         battle_check_death(b, &b->enemy, BATTLE_RESULT_VICTORY, 1, EVENT_BATTLE_WON);
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        /* Defend phase: Shield cards reduce incoming attack damage.
+         * If timer runs out with 0 cards chosen, power is 0 (full unblocked damage taken). */
         power = battle_eval_current_combo(b);
         power = (b->enemy_incoming_dmg > power) ? (b->enemy_incoming_dmg - power) : 0;
         combatant_take_damage(&b->player, power);

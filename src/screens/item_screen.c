@@ -88,20 +88,21 @@ static void quest_draw_status(Game *g, const QuestDefinition *q, uint8_t y)
         ui_draw_text_line(0, y, "not started", 11);
     } else if (st == QUEST_STATUS_ACTIVE) {
         if (q->progress_variable != 0) {
-            char line[21];
-            char b1[6], b2[6];
-            uint8_t p = 0, k;
+            char b[6];
+            uint8_t col = 0, blen = 0;
             const char *lbl = q->progress_label ? q->progress_label : "";
-            while (*lbl && p < 12) line[p++] = *lbl++;
-            line[p++] = ':';
-            line[p++] = ' ';
-            ui_format_int(game_variable_get(&g->state, q->progress_variable), b1);
-            for (k = 0; b1[k] && p < 18; k++) line[p++] = b1[k];
-            line[p++] = '/';
-            ui_format_int(q->progress_target, b2);
-            for (k = 0; b2[k] && p < 20; k++) line[p++] = b2[k];
-            line[p] = '\0';
-            ui_draw_text_line(0, y, line, 20);
+            while (lbl[col] && col < 10) col++;
+            ui_draw_text_line(0, y, lbl, col);
+            ui_draw_text_line(col, y, ": ", 2);
+            col = (uint8_t)(col + 2);
+            ui_format_int(game_variable_get(&g->state, q->progress_variable), b);
+            while (b[blen]) blen++;
+            ui_draw_text_line(col, y, b, blen);
+            col = (uint8_t)(col + blen);
+            ui_draw_text_line(col, y, "/", 1);
+            col++;
+            ui_format_int(q->progress_target, b);
+            ui_draw_text_line(col, y, b, 3);
         } else {
             ui_draw_text_line(0, y, "active", 6);
         }
@@ -142,14 +143,13 @@ static void menu_draw(Game *g)
     menu_draw_frame(&frame);
     menu_draw_tabs(g);
 
-    if (g->item_menu_tab == MENU_TAB_STATUS) {
-        menu_draw_status(g, buf);
-        ui_draw_text_line(0, 16, "[B] CLOSE", 20);
-        return;
-    }
-    if (g->item_menu_tab == MENU_TAB_QUEST) {
-        menu_draw_quest(g, buf);
-        ui_draw_text_line(0, 16, "[B] CLOSE", 20);
+    if (g->item_menu_tab >= MENU_TAB_QUEST) {
+        if (g->item_menu_tab == MENU_TAB_STATUS) {
+            menu_draw_status(g, buf);
+        } else {
+            menu_draw_quest(g, buf);
+        }
+        ui_draw_text_line(0, 16, "[B] CLOSE", 10);
         return;
     }
 
@@ -178,24 +178,23 @@ static void menu_draw(Game *g)
         }
     }
     if (vis_count == 0) {
-        ui_draw_text_line(0, 5, "(no items)", 20);
+        ui_draw_text_line(0, 5, "(no items)", 10);
     }
-    ui_draw_text_line(0, 16, (g->item_menu_tab == MENU_TAB_ITEM) ? "[A] USE  [B] CLOSE" : "[A] EQUIP [B] CLOSE", 20);
+    ui_draw_text_line(0, 16, (g->item_menu_tab == MENU_TAB_ITEM) ? "[A] USE  " : "[A] EQUIP ", 10);
+    ui_draw_text_line(10, 16, "[B] CLOSE", 10);
 }
 
 void item_screen_update(Game *g)
 {
     uint8_t vis_count, ei;
+    int8_t tab_dir = 0;
     if (!g) return;
 
-    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) {
-        g->item_menu_tab = (uint8_t)((g->item_menu_tab + 1) & 3);
-        g->item_menu_index = 0;
-        g->render_cache.valid = false;
-        return;
-    }
-    if (input_pressed(INPUT_LEFT)) {
-        g->item_menu_tab = (uint8_t)((g->item_menu_tab - 1) & 3);
+    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) tab_dir = 1;
+    else if (input_pressed(INPUT_LEFT)) tab_dir = -1;
+
+    if (tab_dir != 0) {
+        g->item_menu_tab = (uint8_t)((g->item_menu_tab + tab_dir) & 3);
         g->item_menu_index = 0;
         g->render_cache.valid = false;
         return;

@@ -23,17 +23,13 @@ const ProgressionDefinition *progression_get_def(uint8_t target_type)
     return NULL;
 }
 
-static bool target_equal(ProgressionTarget a, ProgressionTarget b)
-{
-    return (a.type == b.type) && (a.id == b.id);
-}
-
 ProgressionState *progression_get(GameState *state, ProgressionTarget target)
 {
     uint8_t i;
     if (!state || target.type == PROG_TYPE_NONE) return NULL;
     for (i = 0; i < state->progression.count; i++) {
-        if (target_equal(state->progression.entries[i].target, target)) {
+        if (state->progression.entries[i].target.type == target.type &&
+            state->progression.entries[i].target.id == target.id) {
             return &state->progression.entries[i].state;
         }
     }

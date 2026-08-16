@@ -1,4 +1,5 @@
 #include "deck.h"
+#include "rng.h"
 
 static const uint8_t s_default_starter_deck_packed[MAX_DECK_SIZE] = {
     0x02, 0x15, 0x23, 0x04, 0x47,
@@ -23,7 +24,8 @@ void deck_init_default(Deck *d)
 
 void deck_draw(Deck *d, Card *out_card)
 {
-    uint8_t i;
+    uint8_t i, j;
+    Card temp;
     if (!out_card) return;
     if (!d || d->count == 0) {
         out_card->type = CARD_TYPE_SWORD;
@@ -38,6 +40,13 @@ void deck_draw(Deck *d, Card *out_card)
             }
             d->count = d->discard_count;
             d->discard_count = 0;
+            /* Deterministic Fisher-Yates shuffle of recycled discard pile */
+            for (i = (uint8_t)(d->count - 1); i > 0; i--) {
+                j = (uint8_t)(rng_next() & i);
+                temp = d->cards[i];
+                d->cards[i] = d->cards[j];
+                d->cards[j] = temp;
+            }
         }
         d->draw_idx = 0;
     }

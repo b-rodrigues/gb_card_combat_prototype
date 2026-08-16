@@ -22,13 +22,4 @@ const char *card_get_description(Card card)
     return (card.type < 5) ? s_card_descs[card.type] : "";
 }
 
-void card_format(Card card, char *out_buf)
-{
-    const char *code;
-    if (!out_buf) return;
-    code = card_type_code(card.type);
-    out_buf[0] = code[0];
-    out_buf[1] = code[1];
-    out_buf[2] = (char)('0' + card.value);
-    out_buf[3] = '\0';
-}
+
