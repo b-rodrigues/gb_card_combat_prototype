@@ -231,15 +231,16 @@ static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
     uint8_t i = 0;
     uint8_t ended;
     char ch;
+    volatile uint8_t *vram_base;
     if (y >= 18) return;
     VBK_REG = 0;  /* tile-index bank, not the CGB attribute bank */
     ended = (text == NULL);
+    vram_base = (volatile uint8_t *)(0x9800 + (((uint16_t)(y + oy) & 31) << 5));
     while (i < max_chars) {
         if (!ended && text[i] == '\0') ended = 1;
         ch = ended ? ' ' : text[i];
         if ((x + i) < 20) {
-            ((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + ox + i) & 31)] =
-                (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+            vram_base[(x + ox + i) & 31] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
             g_ui_screen_buf[y][x + i] = ch;
         }
         i++;
@@ -521,7 +522,18 @@ static void ui_hud_hline(uint8_t y, char ch)
 void ui_draw_hline(uint8_t y, char ch)
 {
     uint8_t x;
-    for (x = 0; x < 20; x++) ui_put_char(x, y, ch);
+    volatile uint8_t *vram;
+    uint8_t tile;
+
+    if (y >= 18) return;
+    vram = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5));
+    tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+
+    VBK_REG = 0;
+    for (x = 0; x < 20; x++) {
+        vram[x] = tile;
+        g_ui_screen_buf[y][x] = ch;
+    }
 }
 
 void ui_draw_overworld_hud(const World *world)
@@ -595,20 +607,23 @@ static void ui_draw_battle_hand(const Battle *battle)
     }
 }
 
-void ui_draw_battle_timer(const Battle *battle)
+uint8_t ui_calc_timer_bar(uint16_t t)
 {
-    uint8_t active_tiles = 0, i;
-    uint16_t t = battle->timer_ticks;
-    volatile uint8_t *vram_row = (volatile uint8_t *)(0x9800 + (17 * 32));
-    uint8_t eq_tile = (uint8_t)(ui_font_tile_base + (uint8_t)('=' - ' '));
-    uint8_t sp_tile = (uint8_t)ui_font_tile_base;
-
+    uint8_t bar = 0;
     while (t > 0) {
-        active_tiles++;
+        bar++;
         if (t <= BATTLE_TIMER_BAR_DIVISOR) break;
         t -= BATTLE_TIMER_BAR_DIVISOR;
     }
-    if (active_tiles > 20) active_tiles = 20;
+    return (bar > 20) ? 20 : bar;
+}
+
+void ui_draw_battle_timer(const Battle *battle)
+{
+    uint8_t active_tiles = ui_calc_timer_bar(battle->timer_ticks), i;
+    volatile uint8_t *vram_row = (volatile uint8_t *)(0x9800 + (17 * 32));
+    uint8_t eq_tile = (uint8_t)(ui_font_tile_base + (uint8_t)('=' - ' '));
+    uint8_t sp_tile = (uint8_t)ui_font_tile_base;
 
     VBK_REG = 0;
     for (i = 0; i < 20; i++) {
