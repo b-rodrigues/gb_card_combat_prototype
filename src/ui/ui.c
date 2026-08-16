@@ -599,13 +599,26 @@ void ui_draw_battle_timer(const Battle *battle)
 {
     uint8_t active_tiles = 0, i;
     uint16_t t = battle->timer_ticks;
+    volatile uint8_t *vram_row = (volatile uint8_t *)(0x9800 + (17 * 32));
+    uint8_t eq_tile = (uint8_t)(ui_font_tile_base + (uint8_t)('=' - ' '));
+    uint8_t sp_tile = (uint8_t)ui_font_tile_base;
 
-    while (t >= BATTLE_TIMER_BAR_DIVISOR) {
-        t -= BATTLE_TIMER_BAR_DIVISOR;
+    while (t > 0) {
         active_tiles++;
+        if (t <= BATTLE_TIMER_BAR_DIVISOR) break;
+        t -= BATTLE_TIMER_BAR_DIVISOR;
     }
+    if (active_tiles > 20) active_tiles = 20;
+
+    VBK_REG = 0;
     for (i = 0; i < 20; i++) {
-        ui_put_char(i, 17, (i < active_tiles) ? '=' : ' ');
+        if (i < active_tiles) {
+            vram_row[i] = eq_tile;
+            g_ui_screen_buf[17][i] = '=';
+        } else {
+            vram_row[i] = sp_tile;
+            g_ui_screen_buf[17][i] = ' ';
+        }
     }
 }
 

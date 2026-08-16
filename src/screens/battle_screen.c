@@ -58,11 +58,12 @@ void battle_screen_update(Game *g)
 static uint8_t calc_timer_bar(uint16_t t)
 {
     uint8_t bar = 0;
-    while (t >= BATTLE_TIMER_BAR_DIVISOR) {
-        t -= BATTLE_TIMER_BAR_DIVISOR;
+    while (t > 0) {
         bar++;
+        if (t <= BATTLE_TIMER_BAR_DIVISOR) break;
+        t -= BATTLE_TIMER_BAR_DIVISOR;
     }
-    return bar;
+    return (bar > 20) ? 20 : bar;
 }
 
 void battle_screen_render(Game *g)
@@ -90,9 +91,7 @@ void battle_screen_render(Game *g)
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
     } else if (content_dirty) {
-        ui_lcd_off();
         ui_update_battle(&g->battle);
-        ui_lcd_on();
     } else if (rc->prev_battle_timer_bar != timer_bar) {
         /* Only the countdown bar moved -- redraw just that row
          * incrementally, without toggling the LCD off/on (the old full
