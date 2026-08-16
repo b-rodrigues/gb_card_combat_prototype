@@ -163,7 +163,10 @@ void battle_execute_combo(Battle *b)
         battle_check_death(b, &b->enemy, BATTLE_RESULT_VICTORY, 1, EVENT_BATTLE_WON);
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         /* Defend phase: Shield cards reduce incoming attack damage.
-         * If timer runs out with 0 cards chosen, power is 0 (full unblocked damage taken). */
+         * combo-evaluated (face value +/- straight/flush bonuses) and
+         * applied once to the NEXT enemy attack only, not the whole turn.
+         * If the timer runs out with 0 cards chosen, power is 0 (full
+         * unblocked damage taken). */
         power = battle_eval_current_combo(b);
         power = (b->enemy_incoming_dmg > power) ? (b->enemy_incoming_dmg - power) : 0;
         combatant_take_damage(&b->player, power);
