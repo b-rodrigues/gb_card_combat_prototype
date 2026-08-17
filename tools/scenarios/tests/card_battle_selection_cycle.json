@@ -35,27 +35,27 @@
     },
     {
       "type": "screen_row",
-      "row": 6,
+      "row": 8,
       "contains": "SW2"
     },
     {
       "type": "screen_row",
-      "row": 8,
+      "row": 10,
       "contains": "SW2 SH5 BO3 SW4 HE7"
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 11,
       "contains": "*"
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 11,
       "contains": "^"
     },
     {
       "type": "screen_row",
-      "row": 12,
+      "row": 13,
       "contains": "Shield: block dmg"
     }
   ],

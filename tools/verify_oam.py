@@ -14,8 +14,8 @@ world-tile*8 position the overworld renderer used before the scroll.
 
   Battle transition  (first_encounter): player (13,8), camera (24,16)
                      -> overworld shadow OAM (y=64,x=88) -> after walking
-                     into the slime, battle sprite (88,128) -> hidden on
-                     the item screen (y=0) -> reappears on close (88,128).
+                     into the slime, battle sprite (64,128) -> hidden on
+                     the item screen (y=0) -> reappears on close (64,128).
   Steady battle frame: the sprite must NOT be re-hidden every frame (the
                      old prev_map_id=255 reset sentinel re-ran the hide on
                      every non-overworld frame, keeping the sprite hidden
@@ -111,7 +111,7 @@ def verify_battle_transition(sess):
     #    the hold-to-move commits the tile (MOVE_FRAMES=8).  The sprite is
     #    hidden for the battle redraw, then committed at the battle position.
     sess.hold("RIGHT", 10)
-    check("battle sprite position (shadow OAM)", (88, 128), shadow_oam(sess))
+    check("battle sprite position (shadow OAM)", (64, 128), shadow_oam(sess))
 
     # 3. Open the item menu (START): the item screen keeps the sprite
     #    hidden (ui_sprite_hide on the screen change).
@@ -125,7 +125,7 @@ def verify_battle_transition(sess):
     #    committed back at the battle position.
     sess.press("B")
     sess.step(1)
-    check("back in battle: sprite reappears (shadow OAM)", (88, 128),
+    check("back in battle: sprite reappears (shadow OAM)", (64, 128),
           shadow_oam(sess))
     sess.step(1)
 

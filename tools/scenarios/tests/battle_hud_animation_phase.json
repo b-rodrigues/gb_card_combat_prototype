@@ -36,17 +36,17 @@
     },
     {
       "type": "screen_row",
-      "row": 11,
-      "contains": "ATTACK!"
+      "row": 0,
+      "contains": "PLAYER ATTACK!"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 12,
+      "row": 13,
       "contains": "Sword"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 12,
+      "row": 13,
       "contains": "physical"
     },
     {

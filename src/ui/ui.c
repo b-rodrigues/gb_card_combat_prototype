@@ -484,13 +484,11 @@ void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
+static const char * const s_map_names[5] = { "FIELD", "TOWN ", "FORST", "MOUNT", "CASTL" };
+
 static const char *map_name_str(uint8_t m)
 {
-    if (m == MAP_TOWN) return "TOWN ";
-    if (m == MAP_FOREST) return "FORST";
-    if (m == MAP_MOUNTAIN_PASS) return "MOUNT";
-    if (m == MAP_CASTLE) return "CASTL";
-    return "FIELD";
+    return (m < 5) ? s_map_names[m] : s_map_names[0];
 }
 
 static void ui_hud_hline(uint8_t y, char ch)
@@ -556,43 +554,51 @@ static void ui_draw_enemy_columns(const Battle *battle)
 {
     uint8_t k, x = 0;
     const Combatant *e;
+    bool blink = (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH ||
+                  battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) &&
+                 ((battle->delay_timer >> 2) & 1) == 0;
 
     for (k = 0; k < MAX_BATTLE_ENEMIES; k++, x = (uint8_t)(x + 7)) {
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
-            ui_draw_text_line(x, 0, e->name ? e->name : "ENEMY", 6);
-            ui_draw_num2(x, 1, e->hp);
-            ui_put_char((uint8_t)(x + 2), 1, '/');
-            ui_draw_num2((uint8_t)(x + 3), 1, e->max_hp);
-            ui_put_char((uint8_t)(x + 5), 1, ' ');
+            if (blink && k == battle->attacking_enemy_idx) {
+                ui_draw_text_line(x, 2, NULL, 6);
+                ui_draw_text_line(x, 3, NULL, 6);
+            } else {
+                ui_draw_text_line(x, 2, e->name ? e->name : "ENEMY", 6);
+                ui_draw_num2(x, 3, e->hp);
+                ui_put_char((uint8_t)(x + 2), 3, '/');
+                ui_draw_num2((uint8_t)(x + 3), 3, e->max_hp);
+                ui_put_char((uint8_t)(x + 5), 3, ' ');
+            }
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                ui_draw_text_line(x, 3, "  ^   ", 6);
+                ui_draw_text_line(x, 4, "  ^   ", 6);
                 continue;
             }
         } else {
-            ui_draw_text_line(x, 0, "      ", 6);
-            ui_draw_text_line(x, 1, "      ", 6);
+            ui_draw_text_line(x, 2, NULL, 6);
+            ui_draw_text_line(x, 3, NULL, 6);
         }
-        ui_draw_text_line(x, 3, "      ", 6);
+        ui_draw_text_line(x, 4, NULL, 6);
     }
 }
 
 static void ui_draw_hero_row(const Battle *battle)
 {
-    ui_draw_text_line(0, 5, "HERO        HP:", 15);
-    ui_draw_num2(15, 5, battle->player.hp);
-    ui_put_char(17, 5, '/');
-    ui_draw_num2(18, 5, battle->player.max_hp);
+    ui_draw_text_line(0, 6, "HERO        HP:", 15);
+    ui_draw_num2(15, 6, battle->player.hp);
+    ui_put_char(17, 6, '/');
+    ui_draw_num2(18, 6, battle->player.max_hp);
 }
 
 static void ui_draw_battle_combo(const Battle *battle)
 {
     uint8_t i, x;
-    ui_draw_text_line(0, 6, "COMBO:              ", 20);
+    ui_draw_text_line(0, 8, "COMBO:              ", 20);
     x = 7;
     for (i = 0; i < battle->combo_count && (x + 3) <= 20; i++) {
-        ui_draw_card_at(x, 6, battle->hand[battle->selected_indices[i]]);
+        ui_draw_card_at(x, 8, battle->hand[battle->selected_indices[i]]);
         x += 4;
     }
 }
@@ -600,14 +606,14 @@ static void ui_draw_battle_combo(const Battle *battle)
 static void ui_draw_battle_hand(const Battle *battle)
 {
     uint8_t i;
-    ui_draw_hline(9, ' ');
+    ui_draw_hline(11, ' ');
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
-        ui_draw_card_at(col, 8, battle->hand[i]);
+        ui_draw_card_at(col, 10, battle->hand[i]);
         if (i == battle->cursor_pos) {
-            ui_put_char((uint8_t)(col + 1), 9, '^');
+            ui_put_char((uint8_t)(col + 1), 11, '^');
         } else if (battle_is_card_selected(battle, i)) {
-            ui_put_char((uint8_t)(col + 1), 9, '*');
+            ui_put_char((uint8_t)(col + 1), 11, '*');
         }
     }
 }
@@ -644,17 +650,41 @@ void ui_draw_battle_full(const Battle *battle)
     ui_clear_screen();
     ui_update_battle(battle);
 
-    /* Show hero sprite next to hero label */
-    shadow_OAM[PLAYER_SPRITE_NUM].y = 88;
+    /* Show hero sprite next to hero label (row 6: 6*8+16 = 64) */
+    shadow_OAM[PLAYER_SPRITE_NUM].y = 64;
     shadow_OAM[PLAYER_SPRITE_NUM].x = 128;
 }
 
 void ui_update_battle(const Battle *battle)
 {
-    const char *action_msg = "";
+    const char *turn_banner = "";
     const char *desc_msg = "";
 
     if (!battle) return;
+
+    if (battle->result == BATTLE_RESULT_VICTORY) {
+        turn_banner = "VICTORY!";
+    } else if (battle->result == BATTLE_RESULT_DEFEAT) {
+        turn_banner = "DEFEATED!";
+    } else if (battle->result == BATTLE_RESULT_FLED) {
+        turn_banner = "FLED!";
+    } else {
+        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
+            turn_banner = "PLAYER TURN";
+            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
+        } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
+            turn_banner = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
+        } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
+            turn_banner = "ENEMY ATTACK!";
+        } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+            turn_banner = "DEFENSE TURN";
+            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
+        } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
+            turn_banner = "BLOCKED ATTACK!";
+        }
+    }
+
+    ui_draw_text_line(0, 0, turn_banner, 20);
 
     ui_draw_enemy_columns(battle);
     ui_draw_hero_row(battle);
@@ -662,25 +692,7 @@ void ui_update_battle(const Battle *battle)
     ui_draw_battle_combo(battle);
     ui_draw_battle_hand(battle);
 
-    if (battle->result == BATTLE_RESULT_VICTORY) {
-        action_msg = "VICTORY!";
-    } else if (battle->result == BATTLE_RESULT_DEFEAT) {
-        action_msg = "DEFEATED!";
-    } else if (battle->result == BATTLE_RESULT_FLED) {
-        action_msg = "FLED!";
-    } else {
-        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-        } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
-            action_msg = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "ATTACK!";
-        } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
-            action_msg = "ENEMY ATTACKING!";
-        } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
-            action_msg = "BLOCKED ATTACK!";
-        }
-    }
-    ui_draw_text_line(0, 11, action_msg, 20);
-    ui_draw_text_line(0, 12, desc_msg, 20);
+    ui_draw_text_line(0, 13, desc_msg, 20);
     ui_draw_battle_timer(battle);
 }
 

@@ -268,17 +268,33 @@ void battle_update(Battle *b)
         }
     } else if (b->delay_timer > 0) {
         b->delay_timer--;
+        if (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH || b->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
+            b->dirty = 1;
+        }
     } else {
         if (b->phase == BATTLE_PHASE_PLAYER_ANIM) {
+            uint8_t count = 0;
             b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             b->turn = BATTLE_TURN_ENEMY;
             b->enemy_incoming_dmg = battle_calc_enemy_attack(b);
             b->delay_timer = 20;
-        } else {
-            b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
+            while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
+                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+                count++;
+            }
+        } else if (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
+            b->phase = BATTLE_PHASE_PLAYER_DEFEND;
             b->turn = BATTLE_TURN_PLAYER;
             b->combo_count = 0;
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+        } else {
+            b->phase = BATTLE_PHASE_PLAYER_SELECT;
+            b->turn = BATTLE_TURN_PLAYER;
+            b->combo_count = 0;
+            b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+            if (b->enemy_count > 1) {
+                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+            }
         }
         b->dirty = 1;
     }

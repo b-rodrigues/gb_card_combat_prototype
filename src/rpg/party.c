@@ -3,14 +3,10 @@
 
 void party_init(PartyState *party)
 {
-    uint8_t i;
+    uint8_t *p = (uint8_t *)party;
+    uint8_t n = sizeof(PartyState);
     if (!party) return;
-    party->count = 0;
-    for (i = 0; i < MAX_PARTY_MEMBERS; i++) {
-        party->members[i].id = CHARACTER_NONE;
-        party->members[i].hp = 0;
-        party->members[i].max_hp = 0;
-    }
+    while (n--) *p++ = 0;
 }
 
 CharacterState *party_get_member(PartyState *party, CharacterId id)

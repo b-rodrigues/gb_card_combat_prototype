@@ -77,10 +77,8 @@ void game_over_screen_render(Game *g)
         ui_clear_screen();
         ui_draw_text_line(4, 3, "GAME OVER", 9);
         ui_draw_text_line(3, 8, "CONTINUE?", 9);
-        ui_draw_text_line(0, 11, (g->game_over_choice == 0) ? ">" : " ", 1);
-        ui_draw_text_line(2, 11, "YES", 3);
-        ui_draw_text_line(0, 12, (g->game_over_choice != 0) ? ">" : " ", 1);
-        ui_draw_text_line(2, 12, "NO", 2);
+        ui_draw_text_line(0, 11, (g->game_over_choice == 0) ? "> YES" : "  YES", 5);
+        ui_draw_text_line(0, 12, (g->game_over_choice != 0) ? "> NO" : "  NO", 4);
         ui_draw_text_line(1, 16, "[A] CONFIRM", 11);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_GAME_OVER, 0, 0, 0);
         rc->valid = true;

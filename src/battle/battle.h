@@ -60,6 +60,7 @@ typedef struct {
     bool battle_over;
     ComboResult last_combo;
     uint8_t enemy_incoming_dmg;                /* Enemy attack power telegraphed */
+    uint8_t attacking_enemy_idx;               /* Index of enemy currently attacking / blinking */
 } Battle;
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,

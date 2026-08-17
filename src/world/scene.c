@@ -50,14 +50,8 @@ void scene_load_tiles(World *w, MapId map_id)
     for (y = 0; y < w->height; y++) {
         uint8_t *row = w->map[y];
         for (x = 0; x < w->width; x++) {
-            row[x] = TILE_FLOOR;
+            row[x] = (x == 0 || x == (uint8_t)(w->width - 1) || y == 0 || y == (uint8_t)(w->height - 1)) ? TILE_WALL : TILE_FLOOR;
         }
-        row[0] = TILE_WALL;
-        row[w->width - 1] = TILE_WALL;
-    }
-    for (x = 0; x < w->width; x++) {
-        w->map[0][x] = TILE_WALL;
-        w->map[w->height - 1][x] = TILE_WALL;
     }
 
     if (def->terrain_blocks) {

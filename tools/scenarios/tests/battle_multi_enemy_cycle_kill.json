@@ -42,16 +42,21 @@
     {
       "type": "screen_row",
       "row": 0,
+      "contains": "PLAYER TURN"
+    },
+    {
+      "type": "screen_row",
+      "row": 2,
       "contains": "SLIME  SLIME        "
     },
     {
       "type": "screen_row",
-      "row": 1,
+      "row": 3,
       "contains": " 8/ 8   5/ 5        "
     },
     {
       "type": "screen_row",
-      "row": 3,
+      "row": 4,
       "contains": "  ^                 "
     },
     {
