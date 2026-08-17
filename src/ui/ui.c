@@ -244,6 +244,26 @@ static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
     }
 }
 
+/* Write one tile to the BG tilemap (0x9800) such that the store always lands
+ * at the start of a fresh HBlank/VBlank window.  STAT bit 1 is set during PPU
+ * modes 2/3 (OAM search / data transfer), when VRAM is inaccessible and a
+ * write is silently dropped.  A bare `while (STAT_REG & 0x02);` can exit near
+ * the end of HBlank and roll the store into the next mode 2/3, dropping the
+ * write while g_ui_screen_buf is still updated -- the caller's skip-optimization
+ * then never re-writes, leaving stale tiles (e.g. ghost battle cursors).
+ * Waiting for a full render cycle first places the store at the start of a
+ * ~200-cycle HBlank (or VBlank), which cannot be eclipsed.  When the LCD is
+ * off, VRAM is fully accessible and the waits are skipped (they would spin
+ * forever, as STAT stays idle). */
+static void ui_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
+{
+    if (LCDC_REG & 0x80) {
+        while (!(STAT_REG & 0x02));
+        while (STAT_REG & 0x02);
+    }
+    *dst = tile;
+}
+
 void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
 {
     uint8_t i;
@@ -272,8 +292,7 @@ void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars
         }
         if (*buf != ch) {
             uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-            while (STAT_REG & 0x02);
-            *dst = tile;
+            ui_vram_sync_write(dst, tile);
             *buf = ch;
         }
         dst++;
@@ -477,8 +496,7 @@ static void ui_put_char(uint8_t x, uint8_t y, char ch)
             uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
             volatile uint8_t *dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
             VBK_REG = 0;
-            while (STAT_REG & 0x02);
-            *dst = tile;
+            ui_vram_sync_write(dst, tile);
             g_ui_screen_buf[y][x] = ch;
         }
     }
