@@ -13,17 +13,16 @@
 
 void game_render_reset(Game *g)
 {
+    uint8_t *p;
+    uint8_t n;
     if (!g) return;
+    p = (uint8_t *)&g->render_cache;
+    n = (uint8_t)sizeof(RenderCache);
+    while (n--) *p++ = 0xFF;
     g->render_cache.valid = false;
+    g->render_cache.prev_dialogue_active = false;
     g->render_cache.prev_screen = g->prev_screen;
     g->render_cache.prev_map_id = g->world.map_id;
-    g->render_cache.prev_player_x = 255;
-    g->render_cache.prev_player_y = 255;
-    g->render_cache.prev_dialogue_active = false;
-    g->render_cache.prev_dialogue_line = 255;
-    g->render_cache.prev_dialogue_id = DIALOGUE_ID_NONE;
-    g->render_cache.prev_battle_timer_bar = 255;
-    g->render_cache.prev_game_over_choice = 255;
     g->battle.dirty = 1;
 }
 

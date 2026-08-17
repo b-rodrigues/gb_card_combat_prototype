@@ -101,6 +101,7 @@ typedef struct {
     uint8_t move_target_x;
     uint8_t move_target_y;
     uint8_t move_progress;       /* 0..7 sub-tile pixels */
+    uint8_t battle_type;         /* BattleId */
 } WorldActorRuntime;
 
 typedef struct {

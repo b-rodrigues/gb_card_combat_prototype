@@ -19,37 +19,41 @@ void dialogue_screen_update(Game *g)
 void dialogue_screen_render(Game *g)
 {
     RenderCache *rc;
+    World *w;
+    DialogueState *d;
     uint8_t first_enter;
 
     if (!g) return;
     rc = &g->render_cache;
+    w = &g->world;
+    d = &g->dialogue;
 
     first_enter = (!rc->valid || rc->prev_screen != SCREEN_DIALOGUE);
     if (!first_enter &&
-        g->dialogue.current_line == rc->prev_dialogue_line &&
-        g->dialogue.id == rc->prev_dialogue_id) {
+        d->current_line == rc->prev_dialogue_line &&
+        d->id == rc->prev_dialogue_id) {
         return;
     }
 
     ui_lcd_off();
     if (first_enter && rc->prev_screen != SCREEN_OVERWORLD) {
-        ui_draw_world_full(&g->world);
+        ui_draw_world_full(w);
     }
-    ui_draw_dialogue(&g->dialogue, g->world.scroll_x, g->world.scroll_y);
+    ui_draw_dialogue(d, w->scroll_x, w->scroll_y);
     ui_hud_hide();
     ui_lcd_on();
 
     if (first_enter) {
-        ui_sprite_move((uint8_t)(world_player_px(&g->world) - g->world.camera_px_x),
-                       (uint8_t)(world_player_py(&g->world) - g->world.camera_px_y));
-        ui_draw_actors_sprites(&g->world);
+        ui_sprite_move((uint8_t)(world_player_px(w) - w->camera_px_x),
+                       (uint8_t)(world_player_py(w) - w->camera_px_y));
+        ui_draw_actors_sprites(w);
         rc->valid = true;
         rc->prev_screen = SCREEN_DIALOGUE;
         rc->prev_dialogue_active = true;
     }
 
-    telemetry_emit(EVENT_RENDER_DIALOGUE, (uint8_t)g->dialogue.id,
-                   g->dialogue.current_line, 0, 0);
-    rc->prev_dialogue_line = g->dialogue.current_line;
-    rc->prev_dialogue_id = g->dialogue.id;
+    telemetry_emit(EVENT_RENDER_DIALOGUE, (uint8_t)d->id,
+                   d->current_line, 0, 0);
+    rc->prev_dialogue_line = d->current_line;
+    rc->prev_dialogue_id = d->id;
 }

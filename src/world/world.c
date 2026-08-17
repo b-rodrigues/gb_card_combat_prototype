@@ -83,8 +83,10 @@ void world_change_map(World *w, MapId map_id, uint8_t spawn_x, uint8_t spawn_y,
 
 bool world_is_walkable(const World *w, uint8_t x, uint8_t y)
 {
+    uint8_t tile;
     if (!w || x >= w->width || y >= w->height) return false;
-    return w->map[y][x] != TILE_WALL;
+    tile = w->map[y][x];
+    return (tile == TILE_FLOOR || tile == TILE_EXIT);
 }
 
 WorldMoveResult world_try_begin_move(World *w, int8_t dx, int8_t dy,
@@ -230,19 +232,19 @@ void world_on_battle_end(Game *g, bool victory)
     if (idx == NO_ACTOR_INDEX) return;
 
     if (victory) {
-        actor_id = w->actors[idx].actor_id;
-        w->actors[idx].active = 0;
-        w->actors[idx].hp = 0;
-        w->actors[idx].flags = ACTOR_STATE_NONE;
-        telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)w->actors[idx].id, 0, 0, 0);
-        if (w->actors[idx].reward_currency != 0 && w->actors[idx].gold_reward != 0) {
-            currency_add(&g->state, (CurrencyId)w->actors[idx].reward_currency,
-                         w->actors[idx].gold_reward);
+        WorldActorRuntime *act = &w->actors[idx];
+        actor_id = act->actor_id;
+        act->active = 0;
+        act->hp = 0;
+        act->flags = ACTOR_STATE_NONE;
+        telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)act->id, 0, 0, 0);
+        if (act->reward_currency != 0 && act->gold_reward != 0) {
+            currency_add(&g->state, (CurrencyId)act->reward_currency, act->gold_reward);
         }
         if (actor_id != 0) {
             game_world_set_actor_state(&g->state, actor_id, ACTOR_STATE_DEFEATED);
         }
-        event_resolve_actor_defeated(g, actor_id, w->actors[idx].id);
+        event_resolve_actor_defeated(g, actor_id, act->id);
     }
 }
 

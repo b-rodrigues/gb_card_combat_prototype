@@ -10,6 +10,8 @@ uint8_t g_telemetry_head = 0;
 static uint32_t event_seq = 0;
 static const uint32_t *telemetry_frame_ptr = NULL;
 
+/* Direct byte copy into the snapshot buffer.  SM83 / Game Boy architecture is
+ * little-endian, matching the snapshot wire format expected by the host Python harness. */
 static void snap_copy(uint8_t *dst, const void *src, uint8_t n)
 {
     const uint8_t *s = (const uint8_t *)src;

@@ -30,28 +30,19 @@ void ending_screen_update(Game *g)
     }
 }
 
-static const char * const s_ending_text[6] = {
-    "The Hero cleared",
-    "the land of slimes!",
-    "",
-    "Peace has returned!",
-    "",
-    "Thanks for playing!"
-};
-
 void ending_screen_render(Game *g)
 {
     RenderCache *rc;
-    uint8_t i;
     if (!g) return;
     rc = &g->render_cache;
     if (!rc->valid || rc->prev_screen != SCREEN_ENDING) {
         ui_clear_screen();
         ui_draw_text_line(6, 1, "THE END", 7);
         ui_draw_hline(2, '-');
-        for (i = 0; i < 6; i++) {
-            ui_draw_text_line(0, (uint8_t)(4 + i), s_ending_text[i], 19);
-        }
+        ui_draw_text_line(0, 4, "The Hero cleared", 16);
+        ui_draw_text_line(0, 5, "the land of slimes!", 19);
+        ui_draw_text_line(0, 7, "Peace has returned!", 19);
+        ui_draw_text_line(0, 9, "Thanks for playing!", 19);
         ui_draw_text_line(0, 14, "[A] RESTART", 11);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_ENDING, 0, 0, 0);
         rc->valid = true;

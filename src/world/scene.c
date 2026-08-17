@@ -83,15 +83,3 @@ void scene_load_tiles(World *w, MapId map_id)
         w->map[s_exit_scratch.gate_y][s_exit_scratch.gate_x] = TILE_EXIT;
     }
 }
-
-/* MapId and SceneId 1:1 identity mappings (MAP_FIELD==SCENE_FIELD .. MAP_CASTLE==SCENE_CASTLE).
- * Range checked to guarantee valid values within [0..MAP_CASTLE]. */
-MapId scene_id_to_map(SceneId scene)
-{
-    return (scene <= SCENE_CASTLE) ? (MapId)scene : MAP_FIELD;
-}
-
-SceneId map_to_scene_id(MapId map)
-{
-    return (map <= MAP_CASTLE) ? (SceneId)map : SCENE_FIELD;
-}

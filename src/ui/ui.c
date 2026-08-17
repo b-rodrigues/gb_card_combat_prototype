@@ -20,7 +20,6 @@ uint8_t g_tilemap_mirror[32 * 32];
 extern uint8_t console_mode;
 
 static void ui_put_char(uint8_t x, uint8_t y, char ch);
-static void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val);
 
 /* First VRAM tile the font occupies.  Tile 0 is space (0x20), so the tile
  * for char `ch` is base + (ch - ' '). */
@@ -262,9 +261,8 @@ static void ui_put_char_ring(uint8_t x, uint8_t y, char ch, uint8_t ox, uint8_t 
 
 void ui_format_int(int16_t value, char *out)
 {
-    char buf[6];
-    uint8_t i = 0;
     uint16_t uval;
+    uint8_t started = 0;
     if (!out) return;
     if (value < 0) {
         *out++ = '-';
@@ -272,23 +270,30 @@ void ui_format_int(int16_t value, char *out)
     } else {
         uval = (uint16_t)value;
     }
-    if (uval == 0) {
-        *out++ = '0';
-        *out = '\0';
-        return;
+    if (uval >= 10000) {
+        uint8_t d = 0;
+        while (uval >= 10000) { uval -= 10000; d++; }
+        *out++ = (char)('0' + d);
+        started = 1;
     }
-    while (uval > 0) {
-        uint16_t q = 0;
-        while (uval >= 10) {
-            uval -= 10;
-            q++;
-        }
-        buf[i++] = (char)('0' + uval);
-        uval = q;
+    if (started || uval >= 1000) {
+        uint8_t d = 0;
+        while (uval >= 1000) { uval -= 1000; d++; }
+        *out++ = (char)('0' + d);
+        started = 1;
     }
-    while (i > 0) {
-        *out++ = buf[--i];
+    if (started || uval >= 100) {
+        uint8_t d = 0;
+        while (uval >= 100) { uval -= 100; d++; }
+        *out++ = (char)('0' + d);
+        started = 1;
     }
+    if (started || uval >= 10) {
+        uint8_t d = 0;
+        while (uval >= 10) { uval -= 10; d++; }
+        *out++ = (char)('0' + d);
+    }
+    *out++ = (char)('0' + (uint8_t)uval);
     *out = '\0';
 }
 
@@ -478,7 +483,7 @@ static void ui_hud_num2(uint8_t x, uint8_t y, uint8_t val)
     ui_hud_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-static void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
+void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
 {
     uint8_t d = 0;
     while (val >= 10) { val -= 10; d++; }
@@ -486,9 +491,14 @@ static void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-static const char s_map_names[5][6] = {
-    "FIELD", "TOWN ", "FORST", "MOUNT", "CASTL"
-};
+static const char *map_name_str(uint8_t m)
+{
+    if (m == MAP_TOWN) return "TOWN ";
+    if (m == MAP_FOREST) return "FORST";
+    if (m == MAP_MOUNTAIN_PASS) return "MOUNT";
+    if (m == MAP_CASTLE) return "CASTL";
+    return "FIELD";
+}
 
 static void ui_hud_hline(uint8_t y, char ch)
 {
@@ -515,17 +525,15 @@ void ui_draw_hline(uint8_t y, char ch)
 
 void ui_draw_overworld_hud(const World *world)
 {
-    uint8_t r, m;
+    uint8_t r;
 
     if (!world) return;
-
-    m = (world->map_id <= MAP_CASTLE) ? world->map_id : 0;
 
     /* The HUD lives in the WINDOW layer (0x9C00), so the SCX/SCY-scrolled
      * background map never carries it.  Window row y -> screen row 12+y. */
     ui_hud_hline(0, '=');
     ui_hud_text_line(0, 1, "MAP: ", 5);
-    ui_hud_text_line(5, 1, s_map_names[m], 5);
+    ui_hud_text_line(5, 1, map_name_str(world->map_id), 5);
     ui_hud_text_line(10, 1, "| HP:", 5);
     ui_hud_num2(15, 1, world->player.hp);
     ui_hud_put_char(17, 1, '/');
@@ -551,15 +559,13 @@ static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)
     ui_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
 }
 
-static const uint8_t s_slot_col[3] = { 0, 7, 14 };
-
 static void ui_draw_enemy_columns(const Battle *battle)
 {
     uint8_t k, x;
     const Combatant *e;
 
     for (k = 0; k < MAX_BATTLE_ENEMIES; k++) {
-        x = s_slot_col[k];
+        x = (k == 0) ? 0 : ((k == 1) ? 7 : 14);
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
             ui_draw_text_line(x, 0, e->name ? e->name : "ENEMY", 6);
@@ -582,8 +588,7 @@ static void ui_draw_enemy_columns(const Battle *battle)
 
 static void ui_draw_hero_row(const Battle *battle)
 {
-    ui_draw_text_line(0, 5, "HERO", 4);
-    ui_draw_text_line(4, 5, "        HP:", 11);
+    ui_draw_text_line(0, 5, "HERO        HP:", 15);
     ui_draw_num2(15, 5, battle->player.hp);
     ui_put_char(17, 5, '/');
     ui_draw_num2(18, 5, battle->player.max_hp);
@@ -629,7 +634,7 @@ uint8_t ui_calc_timer_bar(uint16_t t)
 void ui_draw_battle_timer(const Battle *battle)
 {
     uint8_t active = ui_calc_timer_bar(battle->timer_ticks), i;
-    volatile uint8_t *v = (volatile uint8_t *)(0x9800 + (17 * 32));
+    volatile uint8_t *v = (volatile uint8_t *)0x9A20;
     uint8_t base = ui_font_tile_base;
 
     VBK_REG = 0;
@@ -670,11 +675,12 @@ void ui_update_battle(const Battle *battle)
     ui_draw_battle_combo(battle);
     ui_draw_battle_hand(battle);
 
-    if (battle->result != BATTLE_RESULT_NONE) {
-        const char *r = (battle->result == BATTLE_RESULT_VICTORY) ? "VICTORY" :
-                        ((battle->result == BATTLE_RESULT_DEFEAT) ? "DEFEATED" : "FLED");
-        ui_draw_text_line(0, 11, r, 8);
-        ui_draw_text_line(8, 11, "! PRESS [A]", 11);
+    if (battle->result == BATTLE_RESULT_VICTORY) {
+        ui_draw_text_line(0, 11, "VICTORY! PRESS [A]  ", 20);
+    } else if (battle->result == BATTLE_RESULT_DEFEAT) {
+        ui_draw_text_line(0, 11, "DEFEATED! PRESS [A] ", 20);
+    } else if (battle->result == BATTLE_RESULT_FLED) {
+        ui_draw_text_line(0, 11, "FLED! PRESS [A]     ", 20);
     } else {
         if (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
             desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);

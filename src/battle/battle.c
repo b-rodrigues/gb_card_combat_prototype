@@ -1,18 +1,16 @@
 #include "battle.h"
 #include "telemetry.h"
+#include <string.h>
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
                   uint8_t enemy_hp, uint8_t enemy_max_hp)
 {
-    uint8_t i;
-    uint8_t *p;
+    uint8_t *p = (uint8_t *)b;
+    uint8_t n = sizeof(Battle);
     if (!b) return;
 
-    p = (uint8_t *)b;
-    for (i = 0; i < sizeof(Battle); i++) {
-        p[i] = 0;
-    }
+    while (n--) *p++ = 0;
     b->player.name = "Hero";
     b->player.hp = player_hp;
     b->player.max_hp = player_max_hp;
@@ -25,8 +23,8 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemy_count = 1;
 
     deck_init_default(&b->deck);
-    for (i = 0; i < BATTLE_HAND_SIZE; i++) {
-        deck_draw(&b->deck, &b->hand[i]);
+    for (n = 0; n < BATTLE_HAND_SIZE; n++) {
+        deck_draw(&b->deck, &b->hand[n]);
     }
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
@@ -35,6 +33,18 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->turn = BATTLE_TURN_PLAYER;
 
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
+}
+
+void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack)
+{
+    uint8_t idx;
+    if (!b || b->enemy_count >= MAX_BATTLE_ENEMIES) return;
+    idx = b->enemy_count++;
+    b->enemies[idx].name = name ? name : "Enemy";
+    b->enemies[idx].hp = hp;
+    b->enemies[idx].max_hp = max_hp;
+    b->enemies[idx].attack = attack;
+    b->dirty = 1;
 }
 
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)

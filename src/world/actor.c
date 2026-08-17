@@ -12,16 +12,15 @@
 
 static const WorldActorTable *g_actor_tables = NULL;
 static uint8_t g_actor_table_count = 0;
-static uint8_t g_actor_bank = 0;
 
 static WorldActorDefinition g_static_actors[6];
 static uint8_t g_static_actor_count = 0;
 
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank)
 {
+    (void)bank;
     g_actor_tables = tables;
     g_actor_table_count = count;
-    g_actor_bank = bank;
 }
 
 static const char *actor_name_for_visual(uint8_t visual)
@@ -56,6 +55,7 @@ static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
     r->move_target_x = def->x;
     r->move_target_y = def->y;
     r->move_progress = 0;
+    r->battle_type = (uint8_t)def->battle_id;
 }
 
 uint8_t actor_find_hostile_slot(const World *world, uint8_t x, uint8_t y)
@@ -123,11 +123,11 @@ void actor_load_scene(World *world, MapId map_id, const GameState *state)
     if (!g_actor_tables) return;
 
     for (i = 0; i < g_actor_table_count; i++) {
-        banked_copy(g_actor_bank, &s_load_tbl, &g_actor_tables[i], sizeof(WorldActorTable));
+        banked_copy(2, &s_load_tbl, &g_actor_tables[i], sizeof(WorldActorTable));
         if (s_load_tbl.map_id == map_id) {
             slot = 0;
             for (d = 0; d < s_load_tbl.count; d++) {
-                banked_copy(g_actor_bank, &s_load_def, &s_load_tbl.defs[d], sizeof(WorldActorDefinition));
+                banked_copy(2, &s_load_def, &s_load_tbl.defs[d], sizeof(WorldActorDefinition));
 
                 if (s_load_def.actor_id != 0 && game_world_actor_is_defeated(state, s_load_def.actor_id)) {
                     continue;
