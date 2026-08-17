@@ -554,11 +554,10 @@ static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)
 
 static void ui_draw_enemy_columns(const Battle *battle)
 {
-    uint8_t k, x;
+    uint8_t k, x = 0;
     const Combatant *e;
 
-    for (k = 0; k < MAX_BATTLE_ENEMIES; k++) {
-        x = (k == 0) ? 0 : ((k == 1) ? 7 : 14);
+    for (k = 0; k < MAX_BATTLE_ENEMIES; k++, x = (uint8_t)(x + 7)) {
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
             ui_draw_text_line(x, 0, e->name ? e->name : "ENEMY", 6);
@@ -695,6 +694,7 @@ void ui_update_battle(const Battle *battle)
         ui_draw_text_line(0, 12, desc_msg, 20);
         ui_draw_text_line(0, 13, info_msg, 20);
     }
+    ui_draw_text_line(0, 15, (battle->enemy_count > 1) ? "[^/v] TARGET" : "TURN TIMER: ", 12);
     ui_draw_battle_timer(battle);
 }
 

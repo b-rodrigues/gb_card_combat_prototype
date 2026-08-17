@@ -3,46 +3,48 @@
   "test": true,
   "description": "Defeat enemy with combo and return to overworld on victory",
   "actions": [
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 35
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 10
-    }
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 55 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 55 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 10 }
   ],
   "assertions": [
     {
@@ -60,6 +62,9 @@
       "x": 13,
       "y": 8,
       "facing": "DOWN"
+    },
+    "equipment": {
+      "weapon": "SWORD"
     },
     "seed": 5002,
     "start_battle": true

@@ -24,7 +24,7 @@ void deck_init_default(Deck *d)
 
 void deck_draw(Deck *d, Card *out_card)
 {
-    uint8_t i, j, t, v;
+    uint8_t i, j;
     if (!out_card) return;
     if (!d || d->count == 0) {
         out_card->type = CARD_TYPE_SWORD;
@@ -35,37 +35,29 @@ void deck_draw(Deck *d, Card *out_card)
     if (d->draw_idx >= d->count) {
         if (d->discard_count > 0) {
             for (i = 0; i < d->discard_count; i++) {
-                d->cards[i].type = d->discard[i].type;
-                d->cards[i].value = d->discard[i].value;
+                d->cards[i] = d->discard[i];
             }
             d->count = d->discard_count;
             d->discard_count = 0;
             for (i = (uint8_t)(d->count - 1); i > 0; i--) {
+                Card tmp;
                 do {
                     j = (uint8_t)(rng_next() & 0x1F);
                 } while (j > i);
-                t = d->cards[i].type;
-                v = d->cards[i].value;
-                d->cards[i].type = d->cards[j].type;
-                d->cards[i].value = d->cards[j].value;
-                d->cards[j].type = t;
-                d->cards[j].value = v;
+                tmp = d->cards[i];
+                d->cards[i] = d->cards[j];
+                d->cards[j] = tmp;
             }
         }
         d->draw_idx = 0;
     }
 
-    out_card->type = d->cards[d->draw_idx].type;
-    out_card->value = d->cards[d->draw_idx].value;
-    d->draw_idx++;
+    *out_card = d->cards[d->draw_idx++];
 }
 
 void deck_discard(Deck *d, Card c)
 {
-    if (!d) return;
-    if (d->discard_count < MAX_DECK_SIZE) {
-        d->discard[d->discard_count].type = c.type;
-        d->discard[d->discard_count].value = c.value;
-        d->discard_count++;
+    if (d && d->discard_count < MAX_DECK_SIZE) {
+        d->discard[d->discard_count++] = c;
     }
 }

@@ -13,12 +13,10 @@ static bool variable_id_valid(VariableId variable)
 
 void game_state_zero(GameState *state)
 {
-    uint8_t i;
-    uint8_t *bytes = (uint8_t *)state;
+    uint8_t *p = (uint8_t *)state;
+    uint16_t n = sizeof(GameState);
     if (!state) return;
-    for (i = 0; i < sizeof(GameState); i++) {
-        bytes[i] = 0;
-    }
+    while (n--) *p++ = 0;
 }
 
 static uint8_t flag_byte_bit(FlagId flag, uint8_t *out_mask)
@@ -102,19 +100,12 @@ void game_world_set_actor_state(GameState *state, ActorId actor_id,
 
     a = find_actor_state(state, actor_id);
     if (a) {
-        if (a->state != (uint8_t)actor_state) {
-            a->state = (uint8_t)actor_state;
-            telemetry_emit(EVENT_ACTOR_STATE_CHANGE,
-                           (uint8_t)(actor_id & 0xFF),
-                           (uint8_t)((actor_id >> 8) & 0xFF),
-                           (uint8_t)actor_state, 0);
-        }
-        return;
+        if (a->state == (uint8_t)actor_state) return;
+    } else {
+        if (state->world.count >= MAX_PERSISTENT_ACTORS) return;
+        a = &state->world.actors[state->world.count++];
+        a->actor_id = actor_id;
     }
-
-    if (state->world.count >= MAX_PERSISTENT_ACTORS) return;
-    a = &state->world.actors[state->world.count++];
-    a->actor_id = actor_id;
     a->state = (uint8_t)actor_state;
     telemetry_emit(EVENT_ACTOR_STATE_CHANGE,
                    (uint8_t)(actor_id & 0xFF),

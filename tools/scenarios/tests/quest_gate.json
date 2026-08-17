@@ -4,54 +4,50 @@
   "description": "Monster kills count toward the quest objective even before the quest is started, so earlier kills are never wasted",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 8
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 35
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 10
-    }
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 8 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 55 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 55 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 10 }
   ],
   "assertions": [
     {
@@ -76,7 +72,7 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 8405,
+    "seed": 5002,
     "variables": {
       "MONSTERS_DEFEATED": 0
     }
