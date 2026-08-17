@@ -123,20 +123,11 @@ void actor_load_scene(World *world, MapId map_id, const GameState *state)
     if (!g_actor_tables) return;
 
     for (i = 0; i < g_actor_table_count; i++) {
-        if (g_actor_bank != 0) {
-            banked_copy(g_actor_bank, &s_load_tbl, &g_actor_tables[i], sizeof(WorldActorTable));
-        } else {
-            s_load_tbl = g_actor_tables[i];
-        }
-
+        banked_copy(g_actor_bank, &s_load_tbl, &g_actor_tables[i], sizeof(WorldActorTable));
         if (s_load_tbl.map_id == map_id) {
             slot = 0;
             for (d = 0; d < s_load_tbl.count; d++) {
-                if (g_actor_bank != 0) {
-                    banked_copy(g_actor_bank, &s_load_def, &s_load_tbl.defs[d], sizeof(WorldActorDefinition));
-                } else {
-                    s_load_def = s_load_tbl.defs[d];
-                }
+                banked_copy(g_actor_bank, &s_load_def, &s_load_tbl.defs[d], sizeof(WorldActorDefinition));
 
                 if (s_load_def.actor_id != 0 && game_world_actor_is_defeated(state, s_load_def.actor_id)) {
                     continue;

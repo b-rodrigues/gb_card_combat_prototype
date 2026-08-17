@@ -17,9 +17,3 @@ void combatant_take_damage(Combatant *c, uint8_t damage)
         c->hp -= damage;
     }
 }
-
-bool combatant_is_dead(const Combatant *c)
-{
-    if (!c) return true;
-    return c->hp == 0;
-}

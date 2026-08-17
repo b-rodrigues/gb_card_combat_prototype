@@ -148,23 +148,16 @@ void ui_hud_hide(void)
 void ui_sprite_init(void)
 {
     set_sprite_data(PLAYER_SPRITE_TILE_ID, 1, player_sprite_tile);
-    set_sprite_tile(PLAYER_SPRITE_NUM, PLAYER_SPRITE_TILE_ID);
+    shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
+    shadow_OAM[PLAYER_SPRITE_NUM].y = 0;
     SPRITES_8x8;
     SHOW_SPRITES;
-    hide_sprite(PLAYER_SPRITE_NUM);
 }
 
-/* Position the player sprite at pixel coordinate (px, py), where a tile at
- * (tx, ty) is at (tx*8, ty*8).  Hardware OAM coordinates are offset +8/+16
- * from the visible pixel grid (GBDK's move_sprite takes raw OAM
- * coordinates, not screen tiles); a valid position (y >= 16) also un-hides
- * the sprite.  Only shadow OAM is written here; ui_sprite_commit() (called
- * once at the end of every frame) DMAs it to real OAM at the frame boundary,
- * so the displayed sprite is always in the correct state for the current
- * screen. */
 void ui_sprite_move(uint8_t px, uint8_t py)
 {
-    move_sprite(PLAYER_SPRITE_NUM, (uint8_t)(px + 8), (uint8_t)(py + 16));
+    shadow_OAM[PLAYER_SPRITE_NUM].y = (uint8_t)(py + 16);
+    shadow_OAM[PLAYER_SPRITE_NUM].x = (uint8_t)(px + 8);
 }
 
 /* Hide the player sprite (OAM Y = 0).  Called on transitions away from the
@@ -210,15 +203,12 @@ void ui_lcd_on(void)
 void ui_clear_screen(void)
 {
     uint8_t x, y;
-    /* Always select VRAM bank 0 before tilemap writes: on CGB, VBK_REG = 1
-     * selects the CGB attribute bank and writes land there instead of the
-     * tile-index bank.  Written directly -- not through gotoxy/putchar --
-     * so full-screen clears are a tight VRAM loop that fits in VBlank. */
+    volatile uint8_t *v;
     VBK_REG = 0;
     for (y = 0; y < 18; y++) {
+        v = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5));
         for (x = 0; x < 20; x++) {
-            ((volatile uint8_t *)0x9800)[y * 32 + x] =
-                ui_font_tile_base;
+            v[x] = ui_font_tile_base;
             g_ui_screen_buf[y][x] = ' ';
         }
         g_ui_screen_buf[y][20] = '\0';
@@ -272,9 +262,9 @@ static void ui_put_char_ring(uint8_t x, uint8_t y, char ch, uint8_t ox, uint8_t 
 
 void ui_format_int(int16_t value, char *out)
 {
-    static const uint16_t s_pws[4] = { 10000, 1000, 100, 10 };
+    char buf[6];
+    uint8_t i = 0;
     uint16_t uval;
-    uint8_t i, started = 0;
     if (!out) return;
     if (value < 0) {
         *out++ = '-';
@@ -282,19 +272,23 @@ void ui_format_int(int16_t value, char *out)
     } else {
         uval = (uint16_t)value;
     }
-    for (i = 0; i < 4; i++) {
-        uint8_t d = 0;
-        uint16_t pw = s_pws[i];
-        while (uval >= pw) {
-            uval -= pw;
-            d++;
-        }
-        if (d || started) {
-            *out++ = (char)('0' + d);
-            started = 1;
-        }
+    if (uval == 0) {
+        *out++ = '0';
+        *out = '\0';
+        return;
     }
-    *out++ = (char)('0' + uval);
+    while (uval > 0) {
+        uint16_t q = 0;
+        while (uval >= 10) {
+            uval -= 10;
+            q++;
+        }
+        buf[i++] = (char)('0' + uval);
+        uval = q;
+    }
+    while (i > 0) {
+        *out++ = buf[--i];
+    }
     *out = '\0';
 }
 
@@ -348,18 +342,19 @@ void ui_draw_actors_sprites(const World *world)
     if (!world) return;
 
     for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
-        uint8_t spr_num = (uint8_t)(1 + slot);
+        uint8_t spr = (uint8_t)(1 + slot);
         a = &world->actors[slot];
         if (a->active) {
             uint8_t px = (uint8_t)(world_actor_px(a) - world->camera_px_x);
             uint8_t py = (uint8_t)(world_actor_py(a) - world->camera_px_y);
             if (px < 160 && py < 96) {
-                move_sprite(spr_num, (uint8_t)(px + 8), (uint8_t)(py + 16));
-                set_sprite_tile(spr_num, (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' ')));
+                shadow_OAM[spr].y = (uint8_t)(py + 16);
+                shadow_OAM[spr].x = (uint8_t)(px + 8);
+                shadow_OAM[spr].tile = (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' '));
                 continue;
             }
         }
-        hide_sprite(spr_num);
+        shadow_OAM[spr].y = 0;
     }
 }
 
@@ -448,65 +443,47 @@ void ui_update_camera(const World *world)
  * at screen rows 12-17) and mirror it into the semantic g_ui_screen_buf.
  * The console font packs its glyphs starting at space, so char `ch` is tile
  * base + (ch - ' ').  Callers pass in-range coordinates (x < 20, y < 6). */
-static void ui_put_char_at_base(volatile uint8_t *base, uint8_t x, uint8_t y, char ch, uint8_t screen_y)
-{
-    VBK_REG = 0;
-    base[y * 32 + x] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-    g_ui_screen_buf[screen_y][x] = ch;
-}
-
 static void ui_hud_put_char(uint8_t x, uint8_t y, char ch)
 {
-    ui_put_char_at_base((volatile uint8_t *)0x9C00, x, y, ch, (uint8_t)(12 + y));
+    VBK_REG = 0;
+    ((volatile uint8_t *)0x9C00)[((uint16_t)y << 5) + x] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+    g_ui_screen_buf[12 + y][x] = ch;
 }
 
 static void ui_put_char(uint8_t x, uint8_t y, char ch)
 {
     if (y < 18 && x < 20) {
-        ui_put_char_at_base((volatile uint8_t *)0x9800, x, y, ch, y);
+        VBK_REG = 0;
+        ((volatile uint8_t *)0x9800)[((uint16_t)y << 5) + x] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+        g_ui_screen_buf[y][x] = ch;
     }
-}
-
-static void draw_digits(uint8_t val, char *d0, char *d1)
-{
-    uint8_t d = 0;
-    while (val >= 10) {
-        val -= 10;
-        d++;
-    }
-    *d0 = d ? (char)('0' + d) : ' ';
-    *d1 = (char)('0' + val);
 }
 
 static void ui_hud_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
 {
     uint8_t i = 0;
-    char ch;
-    while (text && text[i] != '\0' && i < max_chars) {
-        ch = text[i];
-        ui_hud_put_char((uint8_t)(x + i), y, ch);
-        i++;
-    }
+    uint8_t ended = (text == NULL);
     while (i < max_chars) {
-        ui_hud_put_char((uint8_t)(x + i), y, ' ');
+        if (!ended && text[i] == '\0') ended = 1;
+        ui_hud_put_char((uint8_t)(x + i), y, ended ? ' ' : text[i]);
         i++;
     }
 }
 
 static void ui_hud_num2(uint8_t x, uint8_t y, uint8_t val)
 {
-    char d0, d1;
-    draw_digits(val, &d0, &d1);
-    ui_hud_put_char(x, y, d0);
-    ui_hud_put_char((uint8_t)(x + 1), y, d1);
+    uint8_t d = 0;
+    while (val >= 10) { val -= 10; d++; }
+    ui_hud_put_char(x, y, d ? (char)('0' + d) : ' ');
+    ui_hud_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
 static void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
 {
-    char d0, d1;
-    draw_digits(val, &d0, &d1);
-    ui_put_char(x, y, d0);
-    ui_put_char((uint8_t)(x + 1), y, d1);
+    uint8_t d = 0;
+    while (val >= 10) { val -= 10; d++; }
+    ui_put_char(x, y, d ? (char)('0' + d) : ' ');
+    ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
 static const char s_map_names[5][6] = {
@@ -566,15 +543,6 @@ void ui_draw_world_full(const World *world)
     ui_hud_show();
 }
 
-/* Draw a battle HP line: "  HP: <hp>/<max>" at row y. */
-static void ui_draw_hp_row(uint8_t y, uint8_t hp, uint8_t max_hp)
-{
-    ui_draw_text_line(0, y, "  HP: ", 6);
-    ui_draw_num2(6, y, hp);
-    ui_put_char(8, y, '/');
-    ui_draw_num2(9, y, max_hp);
-}
-
 static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)
 {
     const char *code = card_type_code(card.type);
@@ -583,12 +551,52 @@ static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)
     ui_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
 }
 
+static const uint8_t s_slot_col[3] = { 0, 7, 14 };
+
+static void ui_draw_enemy_columns(const Battle *battle)
+{
+    uint8_t k, x;
+    const Combatant *e;
+
+    for (k = 0; k < MAX_BATTLE_ENEMIES; k++) {
+        x = s_slot_col[k];
+        if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
+            e = &battle->enemies[k];
+            ui_draw_text_line(x, 0, e->name ? e->name : "ENEMY", 6);
+            ui_draw_num2(x, 1, e->hp);
+            ui_put_char((uint8_t)(x + 2), 1, '/');
+            ui_draw_num2((uint8_t)(x + 3), 1, e->max_hp);
+            ui_put_char((uint8_t)(x + 5), 1, ' ');
+            if (k == battle->target_idx &&
+                (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
+                ui_draw_text_line(x, 3, "  ^   ", 6);
+                continue;
+            }
+        } else {
+            ui_draw_text_line(x, 0, "      ", 6);
+            ui_draw_text_line(x, 1, "      ", 6);
+        }
+        ui_draw_text_line(x, 3, "      ", 6);
+    }
+}
+
+static void ui_draw_hero_row(const Battle *battle)
+{
+    ui_draw_text_line(0, 5, "HERO", 4);
+    ui_draw_text_line(4, 5, "        HP:", 11);
+    ui_draw_num2(15, 5, battle->player.hp);
+    ui_put_char(17, 5, '/');
+    ui_draw_num2(18, 5, battle->player.max_hp);
+}
+
 static void ui_draw_battle_combo(const Battle *battle)
 {
-    uint8_t i;
-    ui_draw_hline(6, ' ');
-    for (i = 0; i < battle->combo_count; i++) {
-        ui_draw_card_at((uint8_t)(i << 2), 6, battle->hand[battle->selected_indices[i]]);
+    uint8_t i, x;
+    ui_draw_text_line(0, 6, "COMBO:              ", 20);
+    x = 7;
+    for (i = 0; i < battle->combo_count && (x + 3) <= 20; i++) {
+        ui_draw_card_at(x, 6, battle->hand[battle->selected_indices[i]]);
+        x += 4;
     }
 }
 
@@ -620,20 +628,15 @@ uint8_t ui_calc_timer_bar(uint16_t t)
 
 void ui_draw_battle_timer(const Battle *battle)
 {
-    uint8_t active_tiles = ui_calc_timer_bar(battle->timer_ticks), i;
-    volatile uint8_t *vram_row = (volatile uint8_t *)(0x9800 + (17 * 32));
-    uint8_t eq_tile = (uint8_t)(ui_font_tile_base + (uint8_t)('=' - ' '));
-    uint8_t sp_tile = (uint8_t)ui_font_tile_base;
+    uint8_t active = ui_calc_timer_bar(battle->timer_ticks), i;
+    volatile uint8_t *v = (volatile uint8_t *)(0x9800 + (17 * 32));
+    uint8_t base = ui_font_tile_base;
 
     VBK_REG = 0;
     for (i = 0; i < 20; i++) {
-        if (i < active_tiles) {
-            vram_row[i] = eq_tile;
-            g_ui_screen_buf[17][i] = '=';
-        } else {
-            vram_row[i] = sp_tile;
-            g_ui_screen_buf[17][i] = ' ';
-        }
+        char ch = (i < active) ? '=' : ' ';
+        v[i] = (uint8_t)(base + (uint8_t)(ch - ' '));
+        g_ui_screen_buf[17][i] = ch;
     }
 }
 
@@ -642,12 +645,6 @@ void ui_draw_battle_full(const Battle *battle)
     if (!battle) return;
 
     ui_clear_screen();
-
-    ui_draw_hline(0, '=');
-    ui_draw_text_line(0, 1, "  ENEMY: ", 9);
-    ui_draw_text_line(9, 1, battle->enemy.name ? battle->enemy.name : "ENEMY", 10);
-    ui_draw_text_line(0, 3, "  HERO:", 7);
-    ui_draw_text_line(0, 5, "-COMBO:-------------", 20);
     ui_draw_hline(10, '-');
     ui_draw_hline(14, '-');
     ui_draw_hline(16, '-');
@@ -655,7 +652,8 @@ void ui_draw_battle_full(const Battle *battle)
     ui_update_battle(battle);
 
     /* Show hero sprite next to hero label */
-    move_sprite(PLAYER_SPRITE_NUM, 128, 48);
+    shadow_OAM[PLAYER_SPRITE_NUM].x = 48;
+    shadow_OAM[PLAYER_SPRITE_NUM].y = 56;
 }
 
 void ui_update_battle(const Battle *battle)
@@ -666,8 +664,8 @@ void ui_update_battle(const Battle *battle)
 
     if (!battle) return;
 
-    ui_draw_hp_row(2, battle->enemy.hp, battle->enemy.max_hp);
-    ui_draw_hp_row(4, battle->player.hp, battle->player.max_hp);
+    ui_draw_enemy_columns(battle);
+    ui_draw_hero_row(battle);
 
     ui_draw_battle_combo(battle);
     ui_draw_battle_hand(battle);

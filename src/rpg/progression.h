@@ -26,18 +26,12 @@ typedef struct {
 
 const ProgressionDefinition *progression_get_def(uint8_t target_type);
 
-/* Return the state of a target, or NULL if it has no progression entry. */
-ProgressionState *progression_get(GameState *state, ProgressionTarget target);
+ProgressionState *progression_get(GameState *state, uint8_t target_type, uint16_t target_id);
 
-/* Ensure a target exists with the given level/progress.  Used by scenario
- * injection; emits no telemetry and never applies consequences. */
-bool progression_ensure(GameState *state, ProgressionTarget target,
+bool progression_ensure(GameState *state, uint8_t target_type, uint16_t target_id,
                         uint8_t level, uint16_t progress);
 
-/* Add progress to a target, crossing thresholds and emitting
- * PROGRESSION_GAINED + LEVEL_UP.  The caller decides what the level-up
- * means for the game. */
-ProgressionAddResult progression_add(GameState *state, ProgressionTarget target,
-                                     uint16_t amount);
+bool progression_add(GameState *state, uint8_t target_type, uint16_t target_id,
+                     uint16_t amount, ProgressionAddResult *out_result);
 
 #endif /* RPG_PROGRESSION_H */

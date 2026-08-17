@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define MAX_BATTLE_ENEMIES 3
 #define BATTLE_HAND_SIZE 5
 #define BATTLE_TIMER_MAX_FRAMES 1200 /* 20 seconds at 60fps */
 /* Timer-bar divider: 20 tiles drained across 20s = 1 tile/second.  Keep in
@@ -41,14 +42,17 @@ typedef enum {
 
 typedef struct {
     Combatant player;
-    Combatant enemy;
+    Combatant enemies[MAX_BATTLE_ENEMIES];
+    uint8_t enemy_count;                       /* 1..3 */
+    uint8_t target_idx;                        /* 0..enemy_count-1 */
+    uint8_t dirty;
     Deck deck;
     Card hand[BATTLE_HAND_SIZE];
     uint8_t selected_indices[BATTLE_HAND_SIZE]; /* Hand indices in combo order */
     uint8_t combo_count;                       /* Number of selected cards (0..5) */
     uint8_t cursor_pos;                        /* 0..4 in hand */
     uint16_t timer_ticks;                      /* Countdown timer ticks remaining */
-    uint16_t timer_max;                        /* Max timer ticks (360) */
+    uint16_t timer_max;                        /* Max timer ticks (1200) */
     BattlePhase phase;
     BattleTurn turn;                           /* Mirror for telemetry / snapshots */
     BattleResult result;
@@ -62,6 +66,10 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
                   uint8_t enemy_hp, uint8_t enemy_max_hp);
 void battle_cursor_move(Battle *b, int8_t dir);
+void battle_target_move(Battle *b, int8_t dir);
+void battle_target_auto_advance(Battle *b);
+bool battle_all_enemies_dead(const Battle *b);
+uint8_t battle_calc_enemy_attack(const Battle *b);
 void battle_card_select(Battle *b);
 void battle_card_undo(Battle *b);
 void battle_execute_combo(Battle *b);

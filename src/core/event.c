@@ -18,10 +18,6 @@
  * returned pointer is only valid until the next row access. */
 static const EventDefinition *g_events = NULL;
 static uint8_t g_event_count = 0;
-static uint8_t g_event_bank = 0;
-/* Single-flight scratch row (not reentrant): a nested event lookup mid-row
- * would silently corrupt the outer row.  Safe today because scene_load()
- * does not synchronously re-enter event resolution; keep that invariant. */
 static EventDefinition g_event_scratch;
 
 /* banked_copy() takes a uint8_t byte count; a larger row cannot be staged. */
@@ -29,30 +25,27 @@ typedef char event_def_fits_banked_copy[sizeof(EventDefinition) <= 255 ? 1 : -1]
 
 void event_init(const EventDefinition *table, uint8_t count, uint8_t bank)
 {
+    (void)bank;
     g_events = table;
     g_event_count = count;
-    g_event_bank = bank;
 }
 
 static const EventDefinition *event_get_row(uint8_t i)
 {
-    if (g_event_bank == 0) {
-        return &g_events[i];
-    }
-    banked_copy(g_event_bank, &g_event_scratch, &g_events[i],
-                sizeof(EventDefinition));
+    banked_copy(2, &g_event_scratch, &g_events[i], sizeof(EventDefinition));
     return &g_event_scratch;
 }
 
 static bool event_condition_met(const GameState *state, const EventCond *cond)
 {
     int16_t v;
-    if (cond->type == EVENT_COND_FLAG) {
+    uint8_t t = cond->type;
+    if (t == EVENT_COND_FLAG) {
         return story_has_flag(state, (FlagId)cond->id) == cond->flag_set;
     }
-    if (cond->type == EVENT_COND_VARIABLE) {
+    if (t == EVENT_COND_VARIABLE) {
         v = game_variable_get(state, (VariableId)cond->id);
-    } else if (cond->type == EVENT_COND_ITEM_COUNT) {
+    } else if (t == EVENT_COND_ITEM_COUNT) {
         v = (int16_t)inventory_count(&state->inventory, (ItemId)cond->id);
     } else {
         return true;

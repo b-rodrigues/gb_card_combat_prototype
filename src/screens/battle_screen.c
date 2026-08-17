@@ -43,6 +43,10 @@ void battle_screen_update(Game *g)
             battle_cursor_move(&g->battle, -1);
         } else if (input_pressed(INPUT_RIGHT)) {
             battle_cursor_move(&g->battle, 1);
+        } else if (input_pressed(INPUT_UP)) {
+            battle_target_move(&g->battle, -1);
+        } else if (input_pressed(INPUT_DOWN)) {
+            battle_target_move(&g->battle, 1);
         } else if (input_pressed(INPUT_A)) {
             battle_card_select(&g->battle);
         } else if (input_pressed(INPUT_B)) {
@@ -59,42 +63,27 @@ void battle_screen_render(Game *g)
 {
     RenderCache *rc;
     uint8_t timer_bar;
-    uint8_t dirty;
+    Battle *b;
 
     if (!g) return;
     rc = &g->render_cache;
-    timer_bar = ui_calc_timer_bar(g->battle.timer_ticks);
-
-    dirty = (rc->prev_battle_phase != g->battle.phase) |
-            (rc->prev_player_hp != g->battle.player.hp) |
-            (rc->prev_enemy_hp != g->battle.enemy.hp) |
-            (rc->prev_battle_result != g->battle.result) |
-            (rc->prev_battle_cursor != g->battle.cursor_pos) |
-            (rc->prev_battle_combo_count != g->battle.combo_count);
+    b = &g->battle;
+    timer_bar = ui_calc_timer_bar(b->timer_ticks);
 
     if (!rc->valid || rc->prev_screen != SCREEN_BATTLE) {
         ui_lcd_off();
-        ui_draw_battle_full(&g->battle);
+        ui_draw_battle_full(b);
         ui_lcd_on();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_BATTLE, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
-    } else if (dirty) {
+    } else if (b->dirty) {
         ui_lcd_off();
-        ui_update_battle(&g->battle);
+        ui_update_battle(b);
         ui_lcd_on();
     } else if (rc->prev_battle_timer_bar != timer_bar) {
-        ui_draw_battle_timer(&g->battle);
-    } else {
-        return;
+        ui_draw_battle_timer(b);
     }
-
-    rc->prev_battle_turn = g->battle.turn;
-    rc->prev_battle_phase = g->battle.phase;
-    rc->prev_player_hp = g->battle.player.hp;
-    rc->prev_enemy_hp = g->battle.enemy.hp;
-    rc->prev_battle_result = g->battle.result;
-    rc->prev_battle_cursor = g->battle.cursor_pos;
-    rc->prev_battle_combo_count = g->battle.combo_count;
+    b->dirty = 0;
     rc->prev_battle_timer_bar = timer_bar;
 }

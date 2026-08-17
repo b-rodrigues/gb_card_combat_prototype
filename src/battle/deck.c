@@ -25,7 +25,8 @@ void deck_init_default(Deck *d)
 void deck_draw(Deck *d, Card *out_card)
 {
     uint8_t i, j;
-    Card temp;
+    uint16_t *cards16;
+    const uint16_t *disc16;
     if (!out_card) return;
     if (!d || d->count == 0) {
         out_card->type = CARD_TYPE_SWORD;
@@ -33,38 +34,36 @@ void deck_draw(Deck *d, Card *out_card)
         return;
     }
 
+    cards16 = (uint16_t *)d->cards;
+    disc16 = (const uint16_t *)d->discard;
+
     if (d->draw_idx >= d->count) {
         if (d->discard_count > 0) {
             for (i = 0; i < d->discard_count; i++) {
-                d->cards[i] = d->discard[i];
+                cards16[i] = disc16[i];
             }
             d->count = d->discard_count;
             d->discard_count = 0;
-            /* Deterministic Fisher-Yates shuffle of recycled discard pile.
-             * A plain `rng_next() & i` is only uniform when i = 2^n - 1, so
-             * mask with 0x1F (i <= 19) and reject draws above i.  The xorshift
-             * RNG is a permutation over its state and never repeats, so the
-             * retry always terminates.  Avoiding the SDCC division helper
-             * `% (i + 1)` keeps the fixed-bank budget (see make memmap). */
             for (i = (uint8_t)(d->count - 1); i > 0; i--) {
+                uint16_t temp;
                 do {
                     j = (uint8_t)(rng_next() & 0x1F);
                 } while (j > i);
-                temp = d->cards[i];
-                d->cards[i] = d->cards[j];
-                d->cards[j] = temp;
+                temp = cards16[i];
+                cards16[i] = cards16[j];
+                cards16[j] = temp;
             }
         }
         d->draw_idx = 0;
     }
 
-    *out_card = d->cards[d->draw_idx++];
+    *(uint16_t *)out_card = cards16[d->draw_idx++];
 }
 
 void deck_discard(Deck *d, Card c)
 {
     if (!d) return;
     if (d->discard_count < MAX_DECK_SIZE) {
-        d->discard[d->discard_count++] = c;
+        *(uint16_t *)&d->discard[d->discard_count++] = *(const uint16_t *)&c;
     }
 }

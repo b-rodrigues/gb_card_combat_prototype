@@ -1,0 +1,59 @@
+{
+  "name": "battle_multi_enemy_targeting",
+  "test": true,
+  "description": "Multi-enemy layout displays enemy slots and D-pad UP/DOWN changes target indicator",
+  "actions": [
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "UP"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 0,
+      "contains": "SLIME"
+    },
+    {
+      "type": "screen_row",
+      "row": 3,
+      "contains": "^"
+    },
+    {
+      "type": "screen_row",
+      "row": 5,
+      "contains": "HERO"
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "COMBO:"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 5002,
+    "start_battle": true
+  }
+}

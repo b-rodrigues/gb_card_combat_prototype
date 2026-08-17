@@ -45,13 +45,8 @@ static void menu_draw_tabs(Game *g)
 static void menu_draw_status(Game *g, char *buf)
 {
     const CharacterState *hero = &g->state.party.members[0];
-    ProgressionTarget t;
-    ProgressionState *ps;
+    ProgressionState *ps = progression_get(&g->state, PROG_TYPE_HERO, 1);
     const ItemDefinition *wd;
-
-    t.type = PROG_TYPE_HERO;
-    t.id = 1;
-    ps = progression_get(&g->state, t);
 
     ui_draw_text_line(0, 5, "HERO", 4);
     ui_draw_text_line(0, 6, "HP:", 3);
@@ -131,16 +126,10 @@ static const char * const s_tab_titles[4] = { "ITEMS", "EQUIP", "QUESTS", "STATU
 static void menu_draw(Game *g)
 {
     const InventoryState *inv = &g->state.inventory;
-    MenuFrame frame;
     char buf[7];
     uint8_t i, y, vis_count = 0, scroll = 0;
 
-    frame.title_row = 0;
-    frame.top_row = 5;
-    frame.bottom_row = 17;
-    frame.title = (g->item_menu_tab < 4) ? s_tab_titles[g->item_menu_tab] : s_tab_titles[0];
-
-    menu_draw_frame(&frame);
+    menu_draw_frame((g->item_menu_tab < 4) ? s_tab_titles[g->item_menu_tab] : s_tab_titles[0]);
     menu_draw_tabs(g);
 
     if (g->item_menu_tab >= MENU_TAB_QUEST) {
@@ -187,14 +176,14 @@ static void menu_draw(Game *g)
 void item_screen_update(Game *g)
 {
     uint8_t vis_count, ei;
-    int8_t tab_dir = 0;
-    if (!g) return;
-
-    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) tab_dir = 1;
-    else if (input_pressed(INPUT_LEFT)) tab_dir = -1;
-
-    if (tab_dir != 0) {
-        g->item_menu_tab = (uint8_t)((g->item_menu_tab + tab_dir) & 3);
+    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) {
+        g->item_menu_tab = (uint8_t)((g->item_menu_tab + 1) & 3);
+        g->item_menu_index = 0;
+        g->render_cache.valid = false;
+        return;
+    }
+    if (input_pressed(INPUT_LEFT)) {
+        g->item_menu_tab = (uint8_t)((g->item_menu_tab + 3) & 3);
         g->item_menu_index = 0;
         g->render_cache.valid = false;
         return;

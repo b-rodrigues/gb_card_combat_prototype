@@ -10,14 +10,13 @@
  * item_register_defs() (see src/game/items.c). */
 static const ItemDefinition *g_items = NULL;
 static uint8_t g_item_count = 0;
-static uint8_t g_item_bank = 0;
 static ItemDefinition s_item_scratch;
 
 void item_register_defs(const ItemDefinition *table, uint8_t count, uint8_t bank)
 {
+    (void)bank;
     g_items = table;
     g_item_count = count;
-    g_item_bank = bank;
 }
 
 const ItemDefinition *item_get_def(ItemId id)
@@ -25,11 +24,7 @@ const ItemDefinition *item_get_def(ItemId id)
     uint8_t i;
     if (!g_items) return NULL;
     for (i = 0; i < g_item_count; i++) {
-        if (g_item_bank != 0) {
-            banked_copy(g_item_bank, &s_item_scratch, &g_items[i], sizeof(ItemDefinition));
-        } else {
-            s_item_scratch = g_items[i];
-        }
+        banked_copy(2, &s_item_scratch, &g_items[i], sizeof(ItemDefinition));
         if (s_item_scratch.id == id) {
             return &s_item_scratch;
         }
@@ -53,9 +48,7 @@ bool item_use(GameState *state, ItemId id, CharacterId target)
 {
     const ItemDefinition *def;
     CharacterState *member;
-    uint8_t healed;
-    uint8_t max_heal;
-    bool ok = false;
+    uint8_t healed, max_heal;
 
     if (!state) return false;
     def = item_get_def(id);
@@ -68,28 +61,25 @@ bool item_use(GameState *state, ItemId id, CharacterId target)
         return false;
     }
 
-    switch (def->effect) {
-        case ITEM_EFFECT_HEAL_HP:
-            member = party_get_member(&state->party, target);
-            if (!member) member = &state->party.members[0];
-            if (member->hp >= member->max_hp) {
-                telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 2, 0, 0);
-                return false;
-            }
-            max_heal = (uint8_t)(member->max_hp - member->hp);
-            healed = (def->effect_amount < max_heal) ? def->effect_amount : max_heal;
-            member->hp = (uint8_t)(member->hp + healed);
-            telemetry_emit(EVENT_HEALED, healed, (uint8_t)id, 0, 0);
-            ok = true;
-            break;
-        default:
-            telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 3, 0, 0);
-            return false;
+    if (def->effect != ITEM_EFFECT_HEAL_HP) {
+        telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 3, 0, 0);
+        return false;
     }
+
+    member = party_get_member(&state->party, target);
+    if (!member) member = &state->party.members[0];
+    if (member->hp >= member->max_hp) {
+        telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 2, 0, 0);
+        return false;
+    }
+    max_heal = (uint8_t)(member->max_hp - member->hp);
+    healed = (def->effect_amount < max_heal) ? def->effect_amount : max_heal;
+    member->hp = (uint8_t)(member->hp + healed);
+    telemetry_emit(EVENT_HEALED, healed, (uint8_t)id, 0, 0);
 
     inventory_remove(&state->inventory, id, 1);
     telemetry_emit(EVENT_ITEM_USED, (uint8_t)id, (uint8_t)target, 0, 0);
-    return ok;
+    return true;
 }
 
 ItemPurchaseResult item_purchase(GameState *state, ItemId id)

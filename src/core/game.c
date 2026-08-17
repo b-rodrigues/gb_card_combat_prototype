@@ -15,58 +15,19 @@ void game_render_reset(Game *g)
 {
     if (!g) return;
     g->render_cache.valid = false;
-    /* The "previous screen" becomes whatever screen we are leaving, not a
-     * 255 sentinel: every screen renderer already forces a full redraw via
-     * rc->valid == false, and prev_screen then records the OLD screen so
-     * dialogue can tell whether the overworld is still on the display. */
     g->render_cache.prev_screen = g->prev_screen;
-    /* The map about to be drawn always matches the current world map.  A
-     * 255 sentinel here made every non-overworld screen look like a map
-     * change every frame, re-hiding the sprite for the whole of each
-     * battle/dialogue/menu frame on real hardware.  Gate crossings change
-     * world.map_id WITHOUT a reset, so the mismatch still fires there. */
     g->render_cache.prev_map_id = g->world.map_id;
     g->render_cache.prev_player_x = 255;
     g->render_cache.prev_player_y = 255;
     g->render_cache.prev_dialogue_active = false;
     g->render_cache.prev_dialogue_line = 255;
     g->render_cache.prev_dialogue_id = DIALOGUE_ID_NONE;
-    g->render_cache.prev_battle_turn = (BattleTurn)255;
-    g->render_cache.prev_player_hp = 255;
-    g->render_cache.prev_enemy_hp = 255;
-    g->render_cache.prev_battle_result = (BattleResult)255;
+    g->render_cache.prev_battle_timer_bar = 255;
     g->render_cache.prev_game_over_choice = 255;
+    g->battle.dirty = 1;
 }
 
-void game_init(Game *g)
-{
-    if (!g) return;
-    /* Install the WRAM banked-copy trampoline before any banked content
-     * (event/dialogue tables) can be read.  Runs here rather than in CRT0
-     * init because the harness jumps straight to main(). */
-    banked_copy_init();
-    g->frame = 0;
-    g->game_over_choice = 0;
-    g->shop_id = 1;
-    g->screen = SCREEN_OVERWORLD;
-    g->prev_screen = SCREEN_OVERWORLD;
-    telemetry_init();
-    telemetry_set_frame_ptr(&g->frame);
-    game_new_game(&g->state);
-    world_init(&g->world, &g->state);
-    dialogue_init(&g->dialogue);
-    audio_play_music(MUSIC_OVERWORLD);
-    telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
-
-    game_render_reset(g);
-    game_render(g);
-
-#ifdef DEBUG_BUILD
-    debug_snapshot();
-#endif
-}
-
-/* Reset the world to a fresh new-game state (used by the Continue? menu). */
+/* Reset the world to a fresh new-game state (used by the Continue? menu and boot). */
 void game_restart(Game *g)
 {
     if (!g) return;
@@ -81,6 +42,23 @@ void game_restart(Game *g)
     audio_play_music(MUSIC_OVERWORLD);
     telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
     game_render_reset(g);
+}
+
+void game_init(Game *g)
+{
+    if (!g) return;
+    /* Install the WRAM banked-copy trampoline before any banked content
+     * (event/dialogue tables) can be read.  Runs here rather than in CRT0
+     * init because the harness jumps straight to main(). */
+    banked_copy_init();
+    telemetry_init();
+    telemetry_set_frame_ptr(&g->frame);
+    game_restart(g);
+    game_render(g);
+
+#ifdef DEBUG_BUILD
+    debug_snapshot();
+#endif
 }
 
 void game_update(Game *g)

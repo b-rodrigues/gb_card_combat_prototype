@@ -32,7 +32,7 @@
     },
     {
       "type": "screen_row",
-      "row": 1,
+      "row": 0,
       "contains": "BAT"
     },
     {

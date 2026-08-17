@@ -16,16 +16,9 @@
  * file-scope `const char *[]` pointer table - the linker can place such a
  * table in a ROM bank that is not mapped when the screen draws, which makes
  * the text render blank (see AGENTS.md 54.6). */
-typedef struct {
-    const char *title;
-    uint8_t title_row;
-    uint8_t top_row;      /* first content row (inclusive) */
-    uint8_t bottom_row;   /* one past the last content row */
-} MenuFrame;
-
-/* Clear the screen and draw the frame: centered title at title_row with a
+/* Clear the screen and draw the frame: centered title at row 0 with a
  * separator line directly below it. */
-void menu_draw_frame(const MenuFrame *frame);
+void menu_draw_frame(const char *title);
 
 
 

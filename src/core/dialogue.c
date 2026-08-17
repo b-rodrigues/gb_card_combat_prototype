@@ -16,7 +16,6 @@
  * started from the overworld screen and not restarted until it ends). */
 static const DialogueDefinition *g_dialogues = NULL;
 static uint8_t g_dialogue_count = 0;
-static uint8_t g_dialogue_bank = 0;
 
 /* Single-flight WRAM staging (not reentrant): a nested banked row/text
  * lookup would silently corrupt the outer one.  Safe today because only one
@@ -31,18 +30,14 @@ typedef char dialogue_def_fits_banked_copy[sizeof(DialogueDefinition) <= 255 ? 1
 
 void dialogue_register(const DialogueDefinition *table, uint8_t count, uint8_t bank)
 {
+    (void)bank;
     g_dialogues = table;
     g_dialogue_count = count;
-    g_dialogue_bank = bank;
 }
 
 static const DialogueDefinition *dialogue_get_row(uint8_t i)
 {
-    if (g_dialogue_bank == 0) {
-        return &g_dialogues[i];
-    }
-    banked_copy(g_dialogue_bank, &g_dialogue_scratch, &g_dialogues[i],
-                sizeof(DialogueDefinition));
+    banked_copy(2, &g_dialogue_scratch, &g_dialogues[i], sizeof(DialogueDefinition));
     return &g_dialogue_scratch;
 }
 
@@ -83,7 +78,7 @@ void dialogue_start_def(DialogueState *d, DialogueId id)
      * after the ROM bank is restored.  Fixed-size copies + forced NUL keep
      * the strings terminated regardless of source length. */
     if (def->speaker) {
-        banked_copy(g_dialogue_bank, g_dlg_speaker, def->speaker, 11);
+        banked_copy(2, g_dlg_speaker, def->speaker, 11);
         g_dlg_speaker[11] = 0;
         d->speaker = g_dlg_speaker;
     } else {
@@ -93,7 +88,7 @@ void dialogue_start_def(DialogueState *d, DialogueId id)
     for (i = 0; i < d->line_count; i++) {
         const char *line_ptr = def->lines[i];
         if (line_ptr) {
-            banked_copy(g_dialogue_bank, g_dlg_lines[i], line_ptr, 20);
+            banked_copy(2, g_dlg_lines[i], line_ptr, 20);
             g_dlg_lines[i][20] = 0;
             d->lines[i] = g_dlg_lines[i];
         } else {

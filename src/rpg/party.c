@@ -25,11 +25,6 @@ CharacterState *party_get_member(PartyState *party, CharacterId id)
     return NULL;
 }
 
-const CharacterState *party_get_member_const(const PartyState *party, CharacterId id)
-{
-    return party_get_member((PartyState *)party, id);
-}
-
 void party_set_hp(PartyState *party, CharacterId id, uint8_t hp)
 {
     CharacterState *m = party_get_member(party, id);
@@ -39,6 +34,6 @@ void party_set_hp(PartyState *party, CharacterId id, uint8_t hp)
 
 uint8_t party_get_hp(const PartyState *party, CharacterId id)
 {
-    const CharacterState *m = party_get_member_const(party, id);
+    CharacterState *m = party_get_member((PartyState *)party, id);
     return m ? m->hp : 0;
 }

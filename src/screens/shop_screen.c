@@ -22,15 +22,10 @@ static const ShopDefinition *shop_active(const Game *g)
 static void shop_draw(Game *g)
 {
     const ShopDefinition *def = shop_active(g);
-    MenuFrame frame;
     char str[7];
     uint8_t i, y;
 
-    frame.title = "SHOP";
-    frame.title_row = 0;
-    frame.top_row = 3;
-    frame.bottom_row = 12;
-    menu_draw_frame(&frame);
+    menu_draw_frame("SHOP");
     ui_draw_text_line(0, 3, "GOLD:", 5);
     ui_format_int(currency_get(&g->state, CURRENCY_ID_GOLD), str);
     ui_draw_text_line(5, 3, str, 14);

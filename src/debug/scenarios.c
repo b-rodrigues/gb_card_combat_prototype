@@ -48,10 +48,7 @@ static void scenario_begin(uint16_t seed)
     audio_play_music(MUSIC_OVERWORLD);
 }
 
-static uint16_t snap_read16(const uint8_t *p)
-{
-    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
-}
+#define snap_read16(p) (*(const uint16_t *)(p))
 
 static void scenario_load_state(void)
 {
@@ -121,11 +118,10 @@ static void scenario_load_state(void)
 
     p = b + STATE_LOAD_DESC_PROGRESSION_ENTRY_OFF;
     for (i = 0; i < b[STATE_LOAD_DESC_PROGRESSION_COUNT_OFF]; i++) {
-        ProgressionTarget t;
-        t.type = *p++;
-        t.id = snap_read16(p);
+        uint8_t t_type = *p++;
+        uint16_t t_id = snap_read16(p);
         p += 2;
-        progression_ensure(&g_game.state, t, *p, snap_read16(p + 1));
+        progression_ensure(&g_game.state, t_type, t_id, *p, snap_read16(p + 1));
         p += 3;
     }
     g_game.state.equipment.weapon = (ItemId)b[STATE_LOAD_DESC_EQUIPMENT_OFF];
@@ -202,8 +198,7 @@ static void debug_run_action(void)
         case DBG_ACT_ADD_PROGRESS:
             target.type = a0;
             target.id = (uint16_t)a1;
-            pres = progression_add(&g_game.state, target, a2);
-            if (pres.crossed) {
+            if (progression_add(&g_game.state, a0, (uint16_t)a1, a2, &pres)) {
                 game_on_level_up(&g_game.state, target, &pres);
             }
             break;

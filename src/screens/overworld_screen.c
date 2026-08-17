@@ -85,10 +85,10 @@ void overworld_screen_update(Game *g)
         return;
     }
 
-    if (input_held(INPUT_UP))    dy = -1;
-    if (input_held(INPUT_DOWN))  dy = 1;
-    if (input_held(INPUT_LEFT))  dx = -1;
-    if (input_held(INPUT_RIGHT)) dx = 1;
+    if (input_held(INPUT_UP)) dy = -1;
+    else if (input_held(INPUT_DOWN)) dy = 1;
+    else if (input_held(INPUT_LEFT)) dx = -1;
+    else if (input_held(INPUT_RIGHT)) dx = 1;
 
     if (dx != 0 || dy != 0) {
         move_res = world_try_begin_move(&g->world, dx, dy, &g->state);
@@ -100,22 +100,20 @@ void overworld_screen_update(Game *g)
         engage = interaction_try_bump(g, dx, dy);
     }
 
-    if (engage == ENGAGE_DIALOGUE) {
-        screen_change(g, SCREEN_DIALOGUE);
-        return;
-    } else if (engage == ENGAGE_BATTLE) {
-        start_battle_from_world(g);
-        return;
-    } else if (engage == ENGAGE_SHOP) {
-        g->item_menu_index = 0;
-        screen_change(g, SCREEN_SHOP);
-        return;
-    } else if (engage == ENGAGE_SAVE) {
-        g->save_slot_mode = 1;
-        g->save_slot_index = 0;
-        g->save_slot_message = 0;
-        screen_change(g, SCREEN_SAVE_LOAD);
-        return;
+    if (engage != ENGAGE_NONE) {
+        if (engage == ENGAGE_DIALOGUE) {
+            screen_change(g, SCREEN_DIALOGUE);
+        } else if (engage == ENGAGE_BATTLE) {
+            start_battle_from_world(g);
+        } else if (engage == ENGAGE_SHOP) {
+            g->item_menu_index = 0;
+            screen_change(g, SCREEN_SHOP);
+        } else if (engage == ENGAGE_SAVE) {
+            g->save_slot_mode = 1;
+            g->save_slot_index = 0;
+            g->save_slot_message = 0;
+            screen_change(g, SCREEN_SAVE_LOAD);
+        }
     }
 }
 
@@ -127,32 +125,23 @@ void overworld_screen_render(Game *g)
     if (!g) return;
     rc = &g->render_cache;
 
-    /* SCX/SCY is applied after any entering-edge tile writes below.  This
-     * keeps the newly visible edge off-screen while it is being populated. */
     px = (uint8_t)(world_player_px(&g->world) - g->world.camera_px_x);
     py = (uint8_t)(world_player_py(&g->world) - g->world.camera_px_y);
+    ui_update_camera(&g->world);
 
-    /* Map transition, cache reset, or return from Battle/Dialogue */
     if (!rc->valid || rc->prev_screen != SCREEN_OVERWORLD ||
         g->world.map_id != rc->prev_map_id) {
-        ui_update_camera(&g->world);
         ui_draw_world_full(&g->world);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_OVERWORLD, 0,
                        (uint8_t)g->world.map_id, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_OVERWORLD;
         rc->prev_map_id = g->world.map_id;
-        ui_sprite_move(px, py);
-        ui_draw_actors_sprites(&g->world);
-        rc->prev_player_x = px;
-        rc->prev_player_y = py;
         rc->prev_dialogue_active = false;
         rc->prev_dialogue_line = 255;
         rc->prev_dialogue_id = DIALOGUE_ID_NONE;
-        return;
     }
 
-    ui_update_camera(&g->world);
     ui_sprite_move(px, py);
     ui_draw_actors_sprites(&g->world);
     rc->prev_player_x = px;

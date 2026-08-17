@@ -1,12 +1,12 @@
 #include "ui.h"
 #include "menu.h"
 
-void menu_draw_frame(const MenuFrame *frame)
+void menu_draw_frame(const char *title)
 {
-    if (!frame) return;
+    if (!title) return;
     ui_clear_screen();
-    menu_draw_centered(frame->title_row, frame->title);
-    ui_draw_hline((uint8_t)(frame->title_row + 1), '-');
+    menu_draw_centered(0, title);
+    ui_draw_hline(1, '-');
 }
 
 

@@ -48,20 +48,31 @@ void scene_load_tiles(World *w, MapId map_id)
     if (!def) return;
 
     for (y = 0; y < w->height; y++) {
+        uint8_t *row = w->map[y];
         for (x = 0; x < w->width; x++) {
-            w->map[y][x] = (y == 0 || y == w->height - 1 || x == 0 || x == w->width - 1) ? TILE_WALL : TILE_FLOOR;
+            row[x] = TILE_FLOOR;
         }
+        row[0] = TILE_WALL;
+        row[w->width - 1] = TILE_WALL;
+    }
+    for (x = 0; x < w->width; x++) {
+        w->map[0][x] = TILE_WALL;
+        w->map[w->height - 1][x] = TILE_WALL;
     }
 
     if (def->terrain_blocks) {
         for (i = 0; ; i++) {
+            uint8_t ex, ey;
             banked_copy(2, &s_block_scratch, &def->terrain_blocks[i], sizeof(SceneTerrainBlock));
             if (s_block_scratch.w == 0) break;
-            for (y = s_block_scratch.y; y < s_block_scratch.y + s_block_scratch.h; y++) {
-                for (x = s_block_scratch.x; x < s_block_scratch.x + s_block_scratch.w; x++) {
-                    if (x < w->width && y < w->height) {
-                        w->map[y][x] = s_block_scratch.tile;
-                    }
+            ey = (uint8_t)(s_block_scratch.y + s_block_scratch.h);
+            ex = (uint8_t)(s_block_scratch.x + s_block_scratch.w);
+            if (ey > w->height) ey = w->height;
+            if (ex > w->width) ex = w->width;
+            for (y = s_block_scratch.y; y < ey; y++) {
+                uint8_t *row = w->map[y];
+                for (x = s_block_scratch.x; x < ex; x++) {
+                    row[x] = s_block_scratch.tile;
                 }
             }
         }

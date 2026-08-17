@@ -9,13 +9,8 @@
 static void save_load_draw(Game *g)
 {
     uint8_t i, y;
-    MenuFrame frame;
     char slot[8] = "SLOT 1:";
-    frame.title = (g->save_slot_mode == 1) ? "SAVE GAME" : "LOAD GAME";
-    frame.title_row = 0;
-    frame.top_row = 3;
-    frame.bottom_row = 15;
-    menu_draw_frame(&frame);
+    menu_draw_frame((g->save_slot_mode == 1) ? "SAVE GAME" : "LOAD GAME");
 
     for (i = 0; i < SAVE_SLOT_COUNT; i++) {
         y = (uint8_t)(4 + (i << 1));
