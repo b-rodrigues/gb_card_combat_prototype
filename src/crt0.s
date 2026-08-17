@@ -332,6 +332,96 @@ banked_copy_init_loop:
         jr      nz, banked_copy_init_loop
         ret
 
+; ── Banked-call trampoline ─────────────────────────────────────────
+; Mirrors _banked_copy_tramp but EXECUTES a fixed no-arg function that
+; lives in a banked ROM bank, from a fixed-bank caller.  Lets a
+; self-contained module (e.g. src/battle/combo.c) move out of the fixed
+; bank to relieve the fixed-bank budget without pulling GBDK's
+; RAM-resident ___sdcc_banked_call/___sdcc_call_hl helpers (which the
+; harness never installs because it skips CRT0; see §52.1/§52.11).
+;
+; The fixed-bank C wrapper stages the target bank + logical address and
+; any arguments into _DATA globals (banked.c), then calls the ROM stub
+; _banked_call_run, which jumps into the WRAM copy of this body.  The WRAM
+; trampoline selects the bank, computes the banked function's runtime
+; address 0x4000 | (target & 0x3FFF), pushes the WRAM return address, and
+; `jp`s to the target.  When the target `ret`s it pops that WRAM address,
+; so control returns to WRAM (always mapped) which restores the home bank.
+;
+; Like banked_copy, the whole switch + execute + restore runs from WRAM
+; with interrupts disabled, and the home bank (1) is restored before
+; returning.  The wrappers push/pop caller registers around the call.
+; The target must be self-contained: it may read its own banked data and
+; the staged WRAM globals, but must NOT call any fixed-bank function (the
+; bank is switched away for the duration).
+        .globl  _g_bk_call_bank
+        .globl  _g_bk_call_target
+        .globl  _g_banked_call_tramp
+_banked_call_tramp:
+        push    bc
+        push    de
+        di                            ; no ISR while the MBC5 bank is switched
+        xor     a
+        ld      (0x3000), a          ; MBC5 ROM bank high byte = 0
+        ld      a, (_g_bk_call_bank)
+        ld      (0x2000), a          ; select the target ROM bank
+        ld      hl, #_g_bk_call_target
+        ld      a, (hl)
+        inc     hl
+        ld      h, (hl)
+        ld      l, a                ; hl = target logical 16-bit address
+        ld      a, h
+        and     a, #0x3F
+        or      a, #0x40
+        ld      h, a                ; hl = target runtime address (0x4000|off)
+        ld      d, h
+        ld      e, l                ; de = target runtime address
+        ld      hl, #(_g_banked_call_tramp + (banked_call_ret_wram - _banked_call_tramp))
+        push    hl                   ; WRAM return address for the target's ret
+        ld      h, d
+        ld      l, e
+        jp      (hl)                ; run the banked function
+banked_call_ret_wram:
+        ld      a, #0x01
+        ld      (0x2000), a          ; restore home bank 1
+        ld      (__current_bank), a
+        ld      a, (_g_harness_mode)
+        or      a
+        jr      nz, banked_call_ret
+        ei                            ; home bank restored, interrupts safe again
+banked_call_ret:
+        pop     de
+        pop     bc
+        ret
+_banked_call_tramp_end:
+
+; ROM stub for the fixed-bank C wrapper (src/core/banked.c): jumps into the
+; WRAM trampoline.  The trampoline's WRAM home is the linker-allocated C
+; buffer _g_banked_call_tramp, so its address is resolved by the linker.
+        .globl  _banked_call_run
+_banked_call_run:
+        ld      hl, #_g_banked_call_tramp
+        jp      (hl)
+
+; Copies the banked-call trampoline body from ROM into the
+; _g_banked_call_tramp buffer.  Called once from game_init() so both real
+; hardware and the harness have it resident before any banked call.
+        .globl  _banked_call_init
+_banked_call_init:
+        ld      hl, #_banked_call_tramp
+        ld      de, #_g_banked_call_tramp
+        ld      bc, #(_banked_call_tramp_end - _banked_call_tramp)
+banked_call_init_loop:
+        ld      a, (hl)
+        inc     hl
+        ld      (de), a
+        inc     de
+        dec     bc
+        ld      a, b
+        or      c
+        jr      nz, banked_call_init_loop
+        ret
+
         .area   _HOME
 
         .area   _DATA

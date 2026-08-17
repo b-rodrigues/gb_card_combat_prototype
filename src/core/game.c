@@ -50,6 +50,7 @@ void game_init(Game *g)
      * (event/dialogue tables) can be read.  Runs here rather than in CRT0
      * init because the harness jumps straight to main(). */
     banked_copy_init();
+    banked_call_init();
     telemetry_init();
     telemetry_set_frame_ptr(&g->frame);
     game_restart(g);

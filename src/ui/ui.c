@@ -639,14 +639,41 @@ static void ui_draw_hero_row(const Battle *battle)
     ui_draw_num2(18, 6, battle->player.max_hp);
 }
 
+static const char *ui_combo_hand_name(const Battle *b)
+{
+    uint8_t i, j, prev, t0, v, straight, same, n;
+
+    n = b->combo_count;
+    if (n < 2 || n > 5) return "";
+    prev = b->hand[b->selected_indices[0]].value;
+    t0 = b->hand[b->selected_indices[0]].type;
+    straight = same = 1;
+    for (i = 1; i < n; i++) {
+        v = b->hand[b->selected_indices[i]].value;
+        if (v != (uint8_t)(prev + 1)) straight = 0;
+        if (b->hand[b->selected_indices[i]].type != t0) same = 0;
+        prev = v;
+    }
+    if (straight) return "STRAIGHT";
+    if (same) return "FLUSH";
+    for (i = 0; i < n; i++) {
+        for (j = (uint8_t)(i + 1); j < n; j++) {
+            if (b->hand[b->selected_indices[i]].value == b->hand[b->selected_indices[j]].value) return "PAIR";
+        }
+    }
+    return "";
+}
+
 static void ui_draw_battle_combo(const Battle *battle)
 {
-    uint8_t i, x;
-    ui_draw_text_line(0, 9, "COMBO:              ", 20);
-    x = 7;
-    for (i = 0; i < battle->combo_count && (x + 3) <= 20; i++) {
-        ui_draw_card_at(x, 9, battle->hand[battle->selected_indices[i]]);
-        x += 4;
+    const char *name = ui_combo_hand_name(battle);
+
+    ui_draw_text_line(0, 13, "COMBO:", 6);
+    if (name[0] != '\0') {
+        ui_draw_text_line(7, 13, " ", 1);
+        ui_draw_text_line(8, 13, name, 12);
+    } else {
+        ui_draw_text_line(7, 13, NULL, 13);
     }
 }
 
@@ -655,9 +682,20 @@ static void ui_draw_battle_hand(const Battle *battle)
     uint8_t i;
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
-        char marker = (i == battle->cursor_pos) ? '^' : (battle_is_card_selected(battle, i) ? '*' : ' ');
-        ui_draw_card_at(col, 10, battle->hand[i]);
-        ui_put_char((uint8_t)(col + 1), 11, marker);
+        uint8_t k;
+        char marker = ' ';
+        for (k = 0; k < battle->combo_count; k++) {
+            if (battle->selected_indices[k] == i) {
+                marker = (char)('0' + (k + 1));
+                break;
+            }
+        }
+        ui_draw_card_at(col, 14, battle->hand[i]);
+        if (i == battle->cursor_pos) {
+            ui_put_char((uint8_t)(col + 1), 15, '^');
+        } else {
+            ui_put_char((uint8_t)(col + 1), 15, marker);
+        }
     }
 }
 
@@ -698,6 +736,17 @@ void ui_draw_battle_full(const Battle *battle)
     ui_draw_battle_timer(battle);
 }
 
+static void ui_draw_banner_line(uint8_t y, const char *text, uint8_t width)
+{
+    uint8_t len = 0, x;
+    if (text) {
+        while (len < width && text[len] != '\0') len++;
+    }
+    x = (width - len) / 2;
+    ui_draw_text_line(0, y, NULL, width);
+    ui_draw_text_line(x, y, text, (uint8_t)(width - x));
+}
+
 void ui_update_battle(const Battle *battle)
 {
     uint8_t d;
@@ -731,12 +780,12 @@ void ui_update_battle(const Battle *battle)
         }
     }
 
-    if (d & BATTLE_DIRTY_BANNER) ui_draw_text_line(0, 0, turn_banner, 20);
+    if (d & BATTLE_DIRTY_BANNER) ui_draw_banner_line(0, turn_banner, 20);
     if (d & (BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BLINK)) ui_draw_enemy_columns(battle);
     if (d & BATTLE_DIRTY_HERO) ui_draw_hero_row(battle);
     if (d & BATTLE_DIRTY_COMBO) ui_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) ui_draw_battle_hand(battle);
-    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 12, desc_msg, 20);
+    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 16, desc_msg, 20);
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

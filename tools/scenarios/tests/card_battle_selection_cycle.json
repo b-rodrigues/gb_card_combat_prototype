@@ -35,27 +35,27 @@
     },
     {
       "type": "screen_row",
-      "row": 9,
-      "contains": "SW2"
+      "row": 13,
+      "contains": "COMBO:"
     },
     {
       "type": "screen_row",
-      "row": 10,
+      "row": 14,
       "contains": "SW2 SH5 BO3 SW4 HE7"
     },
     {
       "type": "screen_row",
-      "row": 11,
-      "contains": "*"
+      "row": 15,
+      "contains": "1"
     },
     {
       "type": "screen_row",
-      "row": 11,
+      "row": 15,
       "contains": "^"
     },
     {
       "type": "screen_row",
-      "row": 12,
+      "row": 16,
       "contains": "Shield: block dmg"
     }
   ],
