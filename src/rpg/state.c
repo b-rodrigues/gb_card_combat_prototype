@@ -1,5 +1,6 @@
 #include "rpg/state.h"
 #include "telemetry.h"
+#include <stddef.h>
 
 static bool flag_id_valid(FlagId flag)
 {
@@ -14,7 +15,7 @@ static bool variable_id_valid(VariableId variable)
 void game_state_zero(GameState *state)
 {
     uint8_t *p = (uint8_t *)state;
-    uint16_t n = sizeof(GameState);
+    size_t n = sizeof(GameState);
     if (!state) return;
     while (n--) *p++ = 0;
 }

@@ -1,0 +1,71 @@
+{
+  "name": "battle_multi_enemy_cycle_kill",
+  "test": true,
+  "description": "Target enemy 2, defeat enemy 2 with combo, verify auto-advance to live enemy 0 and that manual D-pad targeting skips dead enemy 2",
+  "actions": [
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 10 },
+    { "type": "press", "button": "DOWN" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "DOWN" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "RIGHT" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 55 },
+    { "type": "press", "button": "A" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "SELECT" },
+    { "type": "wait", "frames": 35 },
+    { "type": "press", "button": "DOWN" },
+    { "type": "wait", "frames": 5 },
+    { "type": "press", "button": "DOWN" },
+    { "type": "wait", "frames": 5 }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 0,
+      "contains": "SLIME  SLIME        "
+    },
+    {
+      "type": "screen_row",
+      "row": 1,
+      "contains": " 8/ 8   5/ 5        "
+    },
+    {
+      "type": "screen_row",
+      "row": 3,
+      "contains": "  ^                 "
+    },
+    {
+      "type": "event_occurred",
+      "event": "ENTITY_DEFEATED"
+    }
+  ],
+  "initial_state": {
+    "scene": "MOUNTAIN_PASS",
+    "player": {
+      "x": 13,
+      "y": 7,
+      "facing": "RIGHT"
+    },
+    "seed": 5002
+  }
+}

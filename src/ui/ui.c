@@ -649,8 +649,8 @@ void ui_draw_battle_full(const Battle *battle)
     ui_update_battle(battle);
 
     /* Show hero sprite next to hero label */
-    shadow_OAM[PLAYER_SPRITE_NUM].x = 48;
-    shadow_OAM[PLAYER_SPRITE_NUM].y = 56;
+    shadow_OAM[PLAYER_SPRITE_NUM].y = 88;
+    shadow_OAM[PLAYER_SPRITE_NUM].x = 128;
 }
 
 void ui_update_battle(const Battle *battle)
