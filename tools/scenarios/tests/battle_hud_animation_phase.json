@@ -41,17 +41,17 @@
     },
     {
       "type": "screen_row_not_contains",
-      "row": 13,
+      "row": 12,
       "contains": "Sword"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 13,
+      "row": 12,
       "contains": "physical"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 13,
+      "row": 12,
       "contains": "UNDO"
     }
   ],

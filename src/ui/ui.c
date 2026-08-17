@@ -624,10 +624,10 @@ static void ui_draw_hero_row(const Battle *battle)
 static void ui_draw_battle_combo(const Battle *battle)
 {
     uint8_t i, x;
-    ui_draw_text_line(0, 8, "COMBO:              ", 20);
+    ui_draw_text_line(0, 9, "COMBO:              ", 20);
     x = 7;
     for (i = 0; i < battle->combo_count && (x + 3) <= 20; i++) {
-        ui_draw_card_at(x, 8, battle->hand[battle->selected_indices[i]]);
+        ui_draw_card_at(x, 9, battle->hand[battle->selected_indices[i]]);
         x += 4;
     }
 }
@@ -714,7 +714,7 @@ void ui_update_battle(const Battle *battle)
     if (d & BATTLE_DIRTY_HERO) ui_draw_hero_row(battle);
     if (d & BATTLE_DIRTY_COMBO) ui_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) ui_draw_battle_hand(battle);
-    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 13, desc_msg, 20);
+    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 12, desc_msg, 20);
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)
