@@ -23,7 +23,7 @@ void game_render_reset(Game *g)
     g->render_cache.prev_dialogue_active = false;
     g->render_cache.prev_screen = g->prev_screen;
     g->render_cache.prev_map_id = g->world.map_id;
-    g->battle.dirty = 1;
+    g->battle.dirty = BATTLE_DIRTY_ALL;
 }
 
 /* Reset the world to a fresh new-game state (used by the Continue? menu and boot). */

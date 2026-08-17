@@ -4,50 +4,54 @@
   "description": "Defeating a slime grants its gold reward (earn money)",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 8 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 10 }
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 35
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    }
   ],
   "assertions": [
     {
@@ -75,6 +79,6 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 5002
+    "seed": 8105
   }
 }

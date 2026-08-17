@@ -39,16 +39,16 @@
   ],
   "assertions": [
     {
-      "type": "game_state",
-      "expected": "BATTLE"
+      "type": "battle_result",
+      "expected": "VICTORY"
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 5
+      "expected": 0
     },
     {
       "type": "event_occurred",
-      "event": "ENTITY_DEFEATED"
+      "event": "BATTLE_WON"
     }
   ],
   "initial_state": {

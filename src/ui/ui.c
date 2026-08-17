@@ -214,41 +214,6 @@ void ui_clear_screen(void)
     }
 }
 
-static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
-                                   uint8_t max_chars, uint8_t ox, uint8_t oy)
-{
-    uint8_t i = 0;
-    uint8_t ended;
-    char ch;
-    volatile uint8_t *vram_base;
-    if (y >= 18) return;
-    VBK_REG = 0;  /* tile-index bank, not the CGB attribute bank */
-    ended = (text == NULL);
-    vram_base = (volatile uint8_t *)(0x9800 + (((uint16_t)(y + oy) & 31) << 5));
-    while (i < max_chars) {
-        if (!ended && text[i] == '\0') ended = 1;
-        ch = ended ? ' ' : text[i];
-        if ((x + i) < 20) {
-            vram_base[(x + ox + i) & 31] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-            g_ui_screen_buf[y][x + i] = ch;
-        }
-        i++;
-    }
-}
-
-void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
-{
-    ui_draw_text_line_ring(x, y, text, max_chars, 0, 0);
-}
-
-/* Camera-offset variants of ui_put_char/ui_draw_text_line for the dialogue
- * box, which overlays the frozen (SCX/SCY-scrolled) overworld: the screen
- * anchor is the modal rows 12-17, but the ring must hold them at
- * ((y+scroll)&31) so the PPU, which reads ring row (scroll + R) & 31 at
- * screen row R, actually displays the box where it should be.  g_ui_screen_buf
- * stays screen-anchored, so the harness semantic rows are unchanged.  Safe
- * for every current map (18 rows -> scroll_y <= 6 -> box rows <= 23; FIELD
- * scroll_x <= 12 -> box cols <= 31), so the & 31 wrap is belt-and-braces. */
 static void ui_put_char_ring(uint8_t x, uint8_t y, char ch, uint8_t ox, uint8_t oy)
 {
     if (y < 18 && x < 20) {
@@ -258,6 +223,65 @@ static void ui_put_char_ring(uint8_t x, uint8_t y, char ch, uint8_t ox, uint8_t 
         g_ui_screen_buf[y][x] = ch;
     }
 }
+
+static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
+                                   uint8_t max_chars, uint8_t ox, uint8_t oy)
+{
+    uint8_t i;
+    char ch;
+    uint8_t ended = (text == NULL);
+    for (i = 0; i < max_chars; i++) {
+        if (!ended) {
+            ch = text[i];
+            if (ch == '\0') {
+                ended = 1;
+                ch = ' ';
+            }
+        } else {
+            ch = ' ';
+        }
+        ui_put_char_ring((uint8_t)(x + i), y, ch, ox, oy);
+    }
+}
+
+void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
+{
+    uint8_t i;
+    char ch;
+    volatile uint8_t *dst;
+    char *buf;
+    uint8_t ended;
+
+    if (y >= 18 || x >= 20) return;
+    if ((uint8_t)(x + max_chars) > 20) max_chars = (uint8_t)(20 - x);
+
+    VBK_REG = 0;
+    ended = (text == NULL);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+    buf = &g_ui_screen_buf[y][x];
+
+    for (i = 0; i < max_chars; i++) {
+        if (!ended) {
+            ch = text[i];
+            if (ch == '\0') {
+                ended = 1;
+                ch = ' ';
+            }
+        } else {
+            ch = ' ';
+        }
+        if (*buf != ch) {
+            uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+            while (STAT_REG & 0x02);
+            *dst = tile;
+            *buf = ch;
+        }
+        dst++;
+        buf++;
+    }
+}
+
+
 
 static const uint16_t s_p10[4] = { 10000, 1000, 100, 10 };
 
@@ -449,9 +473,14 @@ static void ui_hud_put_char(uint8_t x, uint8_t y, char ch)
 static void ui_put_char(uint8_t x, uint8_t y, char ch)
 {
     if (y < 18 && x < 20) {
-        VBK_REG = 0;
-        ((volatile uint8_t *)0x9800)[((uint16_t)y << 5) + x] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-        g_ui_screen_buf[y][x] = ch;
+        if (g_ui_screen_buf[y][x] != ch) {
+            uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+            volatile uint8_t *dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+            VBK_REG = 0;
+            while (STAT_REG & 0x02);
+            *dst = tile;
+            g_ui_screen_buf[y][x] = ch;
+        }
     }
 }
 
@@ -484,11 +513,11 @@ void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-static const char * const s_map_names[5] = { "FIELD", "TOWN ", "FORST", "MOUNT", "CASTL" };
+static const char * const s_map_names = "FIELD\0TOWN \0FORST\0MOUNT\0CASTL";
 
 static const char *map_name_str(uint8_t m)
 {
-    return (m < 5) ? s_map_names[m] : s_map_names[0];
+    return (m < 5) ? (s_map_names + (m * 6)) : s_map_names;
 }
 
 static void ui_hud_hline(uint8_t y, char ch)
@@ -509,8 +538,10 @@ void ui_draw_hline(uint8_t y, char ch)
 
     VBK_REG = 0;
     for (x = 0; x < 20; x++) {
-        vram[x] = tile;
-        g_ui_screen_buf[y][x] = ch;
+        if (g_ui_screen_buf[y][x] != ch) {
+            vram[x] = tile;
+            g_ui_screen_buf[y][x] = ch;
+        }
     }
 }
 
@@ -604,15 +635,11 @@ static void ui_draw_battle_combo(const Battle *battle)
 static void ui_draw_battle_hand(const Battle *battle)
 {
     uint8_t i;
-    ui_draw_hline(11, ' ');
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
+        char marker = (i == battle->cursor_pos) ? '^' : (battle_is_card_selected(battle, i) ? '*' : ' ');
         ui_draw_card_at(col, 10, battle->hand[i]);
-        if (i == battle->cursor_pos) {
-            ui_put_char((uint8_t)(col + 1), 11, '^');
-        } else if (battle_is_card_selected(battle, i)) {
-            ui_put_char((uint8_t)(col + 1), 11, '*');
-        }
+        ui_put_char((uint8_t)(col + 1), 11, marker);
     }
 }
 
@@ -651,43 +678,43 @@ void ui_draw_battle_full(const Battle *battle)
 
 void ui_update_battle(const Battle *battle)
 {
+    uint8_t d;
     const char *turn_banner = "";
     const char *desc_msg = "";
 
     if (!battle) return;
+    d = battle->dirty ? battle->dirty : BATTLE_DIRTY_ALL;
 
-    if (battle->result == BATTLE_RESULT_VICTORY) {
-        turn_banner = "VICTORY!";
-    } else if (battle->result == BATTLE_RESULT_DEFEAT) {
-        turn_banner = "DEFEATED!";
-    } else if (battle->result == BATTLE_RESULT_FLED) {
-        turn_banner = "FLED!";
-    } else {
-        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
-            turn_banner = "PLAYER TURN";
-            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-        } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
-            turn_banner = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
-        } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
-            turn_banner = "ENEMY ATTACK!";
-        } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-            turn_banner = "DEFENSE TURN";
-            desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-        } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
-            turn_banner = "BLOCKED ATTACK!";
+    if (d & (BATTLE_DIRTY_BANNER | BATTLE_DIRTY_DESC)) {
+        if (battle->result == BATTLE_RESULT_VICTORY) {
+            turn_banner = "VICTORY!";
+        } else if (battle->result == BATTLE_RESULT_DEFEAT) {
+            turn_banner = "DEFEATED!";
+        } else if (battle->result == BATTLE_RESULT_FLED) {
+            turn_banner = "FLED!";
+        } else {
+            if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
+                turn_banner = "PLAYER TURN";
+                desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
+            } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
+                turn_banner = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
+            } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
+                turn_banner = "ENEMY ATTACK!";
+            } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+                turn_banner = "DEFENSE TURN";
+                desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
+            } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
+                turn_banner = "BLOCKED ATTACK!";
+            }
         }
     }
 
-    ui_draw_text_line(0, 0, turn_banner, 20);
-
-    ui_draw_enemy_columns(battle);
-    ui_draw_hero_row(battle);
-
-    ui_draw_battle_combo(battle);
-    ui_draw_battle_hand(battle);
-
-    ui_draw_text_line(0, 13, desc_msg, 20);
-    ui_draw_battle_timer(battle);
+    if (d & BATTLE_DIRTY_BANNER) ui_draw_text_line(0, 0, turn_banner, 20);
+    if (d & (BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BLINK)) ui_draw_enemy_columns(battle);
+    if (d & BATTLE_DIRTY_HERO) ui_draw_hero_row(battle);
+    if (d & BATTLE_DIRTY_COMBO) ui_draw_battle_combo(battle);
+    if (d & BATTLE_DIRTY_HAND) ui_draw_battle_hand(battle);
+    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 13, desc_msg, 20);
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

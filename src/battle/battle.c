@@ -32,6 +32,7 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->timer_max = BATTLE_TIMER_MAX_FRAMES;
     b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;
+    b->dirty = BATTLE_DIRTY_ALL;
 
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }
@@ -45,7 +46,7 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, u
     b->enemies[idx].hp = hp;
     b->enemies[idx].max_hp = max_hp;
     b->enemies[idx].attack = attack;
-    b->dirty = 1;
+    b->dirty = BATTLE_DIRTY_ALL;
 }
 
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
@@ -69,14 +70,13 @@ void battle_cursor_move(Battle *b, int8_t dir)
     } else {
         b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
     }
-    b->dirty = 1;
+    b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 }
 
 void battle_target_move(Battle *b, int8_t dir)
 {
     uint8_t i, t;
     if (!b || b->enemy_count <= 1) return;
-    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) return;
 
     t = b->target_idx;
     for (i = 0; i < b->enemy_count; i++) {
@@ -87,7 +87,7 @@ void battle_target_move(Battle *b, int8_t dir)
         }
         if (b->enemies[t].hp != 0) {
             b->target_idx = t;
-            b->dirty = 1;
+            b->dirty |= BATTLE_DIRTY_ENEMIES;
             return;
         }
     }
@@ -95,19 +95,8 @@ void battle_target_move(Battle *b, int8_t dir)
 
 void battle_target_auto_advance(Battle *b)
 {
-    uint8_t i, t;
-    if (!b || b->enemy_count <= 1) return;
-    if (b->enemies[b->target_idx].hp != 0) return;
-
-    t = b->target_idx;
-    for (i = 1; i < b->enemy_count; i++) {
-        t++;
-        if (t >= b->enemy_count) t = 0;
-        if (b->enemies[t].hp != 0) {
-            b->target_idx = t;
-            b->dirty = 1;
-            return;
-        }
+    if (b && b->enemies[b->target_idx].hp == 0) {
+        battle_target_move(b, 1);
     }
 }
 
@@ -147,7 +136,7 @@ void battle_card_select(Battle *b)
 
     if (b->combo_count < BATTLE_HAND_SIZE) {
         b->selected_indices[b->combo_count++] = b->cursor_pos;
-        b->dirty = 1;
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 
         next_pos = b->cursor_pos;
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {
@@ -161,13 +150,15 @@ void battle_card_select(Battle *b)
     }
 }
 
-static void battle_set_result(Battle *b, BattleResult res, uint8_t ev)
+void battle_set_result(Battle *b, uint8_t res)
 {
-    b->result = res;
+    uint8_t ev = (res == BATTLE_RESULT_VICTORY) ? EVENT_BATTLE_WON :
+                 ((res == BATTLE_RESULT_DEFEAT) ? EVENT_BATTLE_LOST : EVENT_BATTLE_FLED);
+    b->result = (BattleResult)res;
     b->phase = BATTLE_PHASE_RESULT;
     b->turn = BATTLE_TURN_RESULT;
     b->battle_over = true;
-    b->dirty = 1;
+    b->dirty = BATTLE_DIRTY_ALL;
     telemetry_emit(ev, 0, 0, 0, 0);
 }
 
@@ -180,9 +171,9 @@ void battle_card_undo(Battle *b)
 
     if (b->combo_count > 0) {
         b->cursor_pos = b->selected_indices[--b->combo_count];
-        b->dirty = 1;
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
     } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        battle_set_result(b, BATTLE_RESULT_FLED, EVENT_BATTLE_FLED);
+        battle_set_result(b, BATTLE_RESULT_FLED);
     }
 }
 
@@ -232,13 +223,13 @@ void battle_execute_combo(Battle *b)
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
         b->delay_timer = 30;
-        b->dirty = 1;
+        b->dirty = BATTLE_DIRTY_ALL;
         if (b->enemies[b->target_idx].hp == 0) {
             telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)(b->target_idx + 1), 0, 0, 0);
             battle_target_auto_advance(b);
         }
         if (battle_all_enemies_dead(b)) {
-            battle_set_result(b, BATTLE_RESULT_VICTORY, EVENT_BATTLE_WON);
+            battle_set_result(b, BATTLE_RESULT_VICTORY);
         }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         power = battle_eval_current_combo(b);
@@ -248,10 +239,10 @@ void battle_execute_combo(Battle *b)
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
         b->delay_timer = 30;
-        b->dirty = 1;
+        b->dirty = BATTLE_DIRTY_ALL;
         if (b->player.hp == 0) {
             telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
-            battle_set_result(b, BATTLE_RESULT_DEFEAT, EVENT_BATTLE_LOST);
+            battle_set_result(b, BATTLE_RESULT_DEFEAT);
         }
     }
 }
@@ -264,7 +255,7 @@ void battle_update(Battle *b)
         if (b->timer_ticks > 0) {
             b->timer_ticks--;
             if (b->phase == BATTLE_PHASE_PLAYER_DEFEND && ((b->timer_ticks & 15) == 0 || (b->timer_ticks & 15) == 15)) {
-                b->dirty = 1;
+                b->dirty |= BATTLE_DIRTY_BLINK;
             }
         } else {
             battle_execute_combo(b);
@@ -282,20 +273,15 @@ void battle_update(Battle *b)
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
                 count++;
             }
-        } else if (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
-            b->phase = BATTLE_PHASE_PLAYER_DEFEND;
-            b->turn = BATTLE_TURN_PLAYER;
-            b->combo_count = 0;
-            b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
         } else {
-            b->phase = BATTLE_PHASE_PLAYER_SELECT;
+            b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
             b->turn = BATTLE_TURN_PLAYER;
             b->combo_count = 0;
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
-            if (b->enemy_count > 1) {
+            if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
             }
         }
-        b->dirty = 1;
+        b->dirty = BATTLE_DIRTY_ALL;
     }
 }

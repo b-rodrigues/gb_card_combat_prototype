@@ -16,6 +16,15 @@
  * (battle_screen.c). */
 #define BATTLE_TIMER_BAR_DIVISOR 60
 
+#define BATTLE_DIRTY_BANNER  0x01
+#define BATTLE_DIRTY_ENEMIES 0x02
+#define BATTLE_DIRTY_HERO    0x04
+#define BATTLE_DIRTY_COMBO   0x08
+#define BATTLE_DIRTY_HAND    0x10
+#define BATTLE_DIRTY_DESC    0x20
+#define BATTLE_DIRTY_BLINK   0x40
+#define BATTLE_DIRTY_ALL     0xFF
+
 typedef enum {
     BATTLE_PHASE_PLAYER_SELECT = 0,    /* Player selecting attack cards */
     BATTLE_PHASE_PLAYER_ANIM = 1,      /* Executing attack / heal */
