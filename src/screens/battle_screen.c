@@ -73,16 +73,12 @@ void battle_screen_render(Game *g)
     timer_bar = ui_calc_timer_bar(b->timer_ticks);
 
     if (!rc->valid || rc->prev_screen != SCREEN_BATTLE) {
-        ui_lcd_off();
         ui_draw_battle_full(b);
-        ui_lcd_on();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_BATTLE, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
     } else if (b->dirty) {
-        ui_lcd_off();
         ui_update_battle(b);
-        ui_lcd_on();
     } else if (rc->prev_battle_timer_bar != timer_bar) {
         ui_draw_battle_timer(b);
     }

@@ -263,14 +263,14 @@ void battle_update(Battle *b)
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         if (b->timer_ticks > 0) {
             b->timer_ticks--;
+            if (b->phase == BATTLE_PHASE_PLAYER_DEFEND && ((b->timer_ticks & 15) == 0 || (b->timer_ticks & 15) == 15)) {
+                b->dirty = 1;
+            }
         } else {
             battle_execute_combo(b);
         }
     } else if (b->delay_timer > 0) {
         b->delay_timer--;
-        if (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH || b->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
-            b->dirty = 1;
-        }
     } else {
         if (b->phase == BATTLE_PHASE_PLAYER_ANIM) {
             uint8_t count = 0;

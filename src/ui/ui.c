@@ -554,23 +554,21 @@ static void ui_draw_enemy_columns(const Battle *battle)
 {
     uint8_t k, x = 0;
     const Combatant *e;
-    bool blink = (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH ||
-                  battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) &&
-                 ((battle->delay_timer >> 2) & 1) == 0;
+    bool blink_name = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) &&
+                      (((battle->timer_ticks >> 4) & 1) == 0);
 
     for (k = 0; k < MAX_BATTLE_ENEMIES; k++, x = (uint8_t)(x + 7)) {
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
-            if (blink && k == battle->attacking_enemy_idx) {
+            if (blink_name && k == battle->attacking_enemy_idx) {
                 ui_draw_text_line(x, 2, NULL, 6);
-                ui_draw_text_line(x, 3, NULL, 6);
             } else {
                 ui_draw_text_line(x, 2, e->name ? e->name : "ENEMY", 6);
-                ui_draw_num2(x, 3, e->hp);
-                ui_put_char((uint8_t)(x + 2), 3, '/');
-                ui_draw_num2((uint8_t)(x + 3), 3, e->max_hp);
-                ui_put_char((uint8_t)(x + 5), 3, ' ');
             }
+            ui_draw_num2(x, 3, e->hp);
+            ui_put_char((uint8_t)(x + 2), 3, '/');
+            ui_draw_num2((uint8_t)(x + 3), 3, e->max_hp);
+            ui_put_char((uint8_t)(x + 5), 3, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
                 ui_draw_text_line(x, 4, "  ^   ", 6);
@@ -649,10 +647,6 @@ void ui_draw_battle_full(const Battle *battle)
 
     ui_clear_screen();
     ui_update_battle(battle);
-
-    /* Show hero sprite next to hero label (row 6: 6*8+16 = 64) */
-    shadow_OAM[PLAYER_SPRITE_NUM].y = 64;
-    shadow_OAM[PLAYER_SPRITE_NUM].x = 128;
 }
 
 void ui_update_battle(const Battle *battle)
