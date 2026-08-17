@@ -10,13 +10,14 @@
  * item_register_defs() (see src/game/items.c). */
 static const ItemDefinition *g_items = NULL;
 static uint8_t g_item_count = 0;
+static uint8_t g_item_bank = 2;
 static ItemDefinition s_item_scratch;
 
 void item_register_defs(const ItemDefinition *table, uint8_t count, uint8_t bank)
 {
-    (void)bank;
     g_items = table;
     g_item_count = count;
+    g_item_bank = bank;
 }
 
 const ItemDefinition *item_get_def(ItemId id)
@@ -24,7 +25,7 @@ const ItemDefinition *item_get_def(ItemId id)
     uint8_t i;
     if (!g_items) return NULL;
     for (i = 0; i < g_item_count; i++) {
-        banked_copy(2, &s_item_scratch, &g_items[i], sizeof(ItemDefinition));
+        banked_copy(g_item_bank, &s_item_scratch, &g_items[i], sizeof(ItemDefinition));
         if (s_item_scratch.id == id) {
             return &s_item_scratch;
         }

@@ -7,7 +7,8 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp)
 {
     uint8_t *p = (uint8_t *)b;
-    uint8_t n = sizeof(Battle);
+    uint16_t n = sizeof(Battle);
+    uint8_t i;
     if (!b) return;
 
     while (n--) *p++ = 0;
@@ -23,8 +24,8 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemy_count = 1;
 
     deck_init_default(&b->deck);
-    for (n = 0; n < BATTLE_HAND_SIZE; n++) {
-        deck_draw(&b->deck, &b->hand[n]);
+    for (i = 0; i < BATTLE_HAND_SIZE; i++) {
+        deck_draw(&b->deck, &b->hand[i]);
     }
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;

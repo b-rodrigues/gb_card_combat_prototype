@@ -259,10 +259,12 @@ static void ui_put_char_ring(uint8_t x, uint8_t y, char ch, uint8_t ox, uint8_t 
     }
 }
 
+static const uint16_t s_p10[4] = { 10000, 1000, 100, 10 };
+
 void ui_format_int(int16_t value, char *out)
 {
     uint16_t uval;
-    uint8_t started = 0;
+    uint8_t i, started = 0;
     if (!out) return;
     if (value < 0) {
         *out++ = '-';
@@ -270,28 +272,17 @@ void ui_format_int(int16_t value, char *out)
     } else {
         uval = (uint16_t)value;
     }
-    if (uval >= 10000) {
+    for (i = 0; i < 4; i++) {
+        uint16_t p = s_p10[i];
         uint8_t d = 0;
-        while (uval >= 10000) { uval -= 10000; d++; }
-        *out++ = (char)('0' + d);
-        started = 1;
-    }
-    if (started || uval >= 1000) {
-        uint8_t d = 0;
-        while (uval >= 1000) { uval -= 1000; d++; }
-        *out++ = (char)('0' + d);
-        started = 1;
-    }
-    if (started || uval >= 100) {
-        uint8_t d = 0;
-        while (uval >= 100) { uval -= 100; d++; }
-        *out++ = (char)('0' + d);
-        started = 1;
-    }
-    if (started || uval >= 10) {
-        uint8_t d = 0;
-        while (uval >= 10) { uval -= 10; d++; }
-        *out++ = (char)('0' + d);
+        while (uval >= p) {
+            uval -= p;
+            d++;
+        }
+        if (d != 0 || started) {
+            *out++ = (char)('0' + d);
+            started = 1;
+        }
     }
     *out++ = (char)('0' + (uint8_t)uval);
     *out = '\0';
@@ -478,6 +469,7 @@ static void ui_hud_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max
 static void ui_hud_num2(uint8_t x, uint8_t y, uint8_t val)
 {
     uint8_t d = 0;
+    if (val > 99) val = 99;
     while (val >= 10) { val -= 10; d++; }
     ui_hud_put_char(x, y, d ? (char)('0' + d) : ' ');
     ui_hud_put_char((uint8_t)(x + 1), y, (char)('0' + val));
@@ -486,6 +478,7 @@ static void ui_hud_num2(uint8_t x, uint8_t y, uint8_t val)
 void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
 {
     uint8_t d = 0;
+    if (val > 99) val = 99;
     while (val >= 10) { val -= 10; d++; }
     ui_put_char(x, y, d ? (char)('0' + d) : ' ');
     ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));

@@ -43,22 +43,19 @@ void world_load_map(World *w, MapId map_id, const GameState *state)
 void world_update_scroll(World *w)
 {
     uint8_t px, py, max_x, max_y;
-
     if (!w) return;
-
     px = world_player_px(w);
     py = world_player_py(w);
-
-    w->camera_px_x = (px < 80) ? 0 : (uint8_t)(px - 80);
-    w->camera_px_y = (py < 48) ? 0 : (uint8_t)(py - 48);
-
+    px = (px < 80) ? 0 : (uint8_t)(px - 80);
+    py = (py < 48) ? 0 : (uint8_t)(py - 48);
     max_x = (w->width > WORLD_VIEW_W) ? (uint8_t)((w->width - WORLD_VIEW_W) << 3) : 0;
     max_y = (w->height > WORLD_VIEW_H) ? (uint8_t)((w->height - WORLD_VIEW_H) << 3) : 0;
-    if (w->camera_px_x > max_x) w->camera_px_x = max_x;
-    if (w->camera_px_y > max_y) w->camera_px_y = max_y;
-
-    w->scroll_x = (uint8_t)(w->camera_px_x >> 3);
-    w->scroll_y = (uint8_t)(w->camera_px_y >> 3);
+    if (px > max_x) px = max_x;
+    if (py > max_y) py = max_y;
+    w->camera_px_x = px;
+    w->camera_px_y = py;
+    w->scroll_x = (uint8_t)(px >> 3);
+    w->scroll_y = (uint8_t)(py >> 3);
 }
 
 void world_init(World *w, const GameState *state)

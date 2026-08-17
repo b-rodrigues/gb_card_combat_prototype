@@ -61,7 +61,8 @@ static void menu_draw_status(Game *g, char *buf)
     ui_draw_num2(6, 9, (uint8_t)(ps ? ps->level : 1));
 
     ui_draw_text_line(0, 10, "PROGRESS:", 9);
-    ui_draw_num2(10, 10, (uint8_t)(ps ? ps->progress : 0));
+    ui_format_int((int16_t)(ps ? ps->progress : 0), buf);
+    ui_draw_text_line(10, 10, buf, 6);
 
     ui_draw_text_line(0, 11, "WEAPON:", 7);
     wd = (g->state.equipment.weapon != ITEM_NONE) ? item_get_def(g->state.equipment.weapon) : NULL;

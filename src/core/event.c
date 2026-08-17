@@ -18,6 +18,7 @@
  * returned pointer is only valid until the next row access. */
 static const EventDefinition *g_events = NULL;
 static uint8_t g_event_count = 0;
+static uint8_t g_event_bank = 2;
 static EventDefinition g_event_scratch;
 
 /* banked_copy() takes a uint8_t byte count; a larger row cannot be staged. */
@@ -25,14 +26,14 @@ typedef char event_def_fits_banked_copy[sizeof(EventDefinition) <= 255 ? 1 : -1]
 
 void event_init(const EventDefinition *table, uint8_t count, uint8_t bank)
 {
-    (void)bank;
     g_events = table;
     g_event_count = count;
+    g_event_bank = bank;
 }
 
 static const EventDefinition *event_get_row(uint8_t i)
 {
-    banked_copy(2, &g_event_scratch, &g_events[i], sizeof(EventDefinition));
+    banked_copy(g_event_bank, &g_event_scratch, &g_events[i], sizeof(EventDefinition));
     return &g_event_scratch;
 }
 

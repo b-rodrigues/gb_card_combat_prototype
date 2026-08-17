@@ -41,7 +41,8 @@ static void shop_draw(Game *g)
         y = (uint8_t)(5 + i);
         ui_draw_text_line(0, y, (g->item_menu_index == i) ? ">" : " ", 1);
         ui_draw_text_line(1, y, item ? item->name : "???", 10);
-        ui_draw_num2(12, y, item ? (uint8_t)item->price : 0);
+        ui_format_int(item ? (int16_t)item->price : 0, str);
+        ui_draw_text_line(12, y, str, 4);
         ui_draw_text_line(16, y, "G", 1);
     }
 
