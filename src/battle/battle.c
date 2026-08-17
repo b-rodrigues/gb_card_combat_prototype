@@ -2,6 +2,15 @@
 #include "telemetry.h"
 #include <string.h>
 
+/* Compile-time guarantee that the timer window is an exact integer number of
+ * bar cells and whole seconds: every '=' drains one cell per
+ * BATTLE_TIMER_SECONDS frames with no fractional remainder (which would make
+ * tiles drain over uneven frame counts).  Same array-size trap as input.c. */
+static const int g_battle_timer_cadence_ok[
+    (BATTLE_TIMER_MAX_FRAMES % BATTLE_TIMER_BAR_LENGTH == 0) &&
+    (BATTLE_TIMER_BAR_DIVISOR == BATTLE_TIMER_MAX_FRAMES / BATTLE_TIMER_BAR_LENGTH) ? 1 : 0
+];
+
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
                   uint8_t enemy_hp, uint8_t enemy_max_hp)

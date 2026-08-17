@@ -11,10 +11,16 @@
 #define MAX_BATTLE_ENEMIES 3
 #define BATTLE_HAND_SIZE 5
 #define BATTLE_TIMER_MAX_FRAMES 1200 /* 20 seconds at 60fps */
-/* Timer-bar divider: 20 tiles drained across 20s = 1 tile/second.  Keep in
- * sync between ui_draw_battle_timer() (ui.c) and calc_timer_bar()
- * (battle_screen.c). */
-#define BATTLE_TIMER_BAR_DIVISOR 60
+/* Timer cadence.  The bar is BATTLE_TIMER_BAR_LENGTH cells, each draining one
+ * tile every BATTLE_TIMER_BAR_DIVISOR frames (= BATTLE_TIMER_SECONDS), so the
+ * whole window is an exact integer number of cells.  The divisor is derived
+ * from the length so MAX_FRAMES / BAR_LENGTH is always integral; a non-integer
+ * split would make individual tiles drain over varying frames (audible/visible
+ * skips).  A compile-time guard in battle.c enforces the divisibility.  Keep
+ * bar length and divisor in sync with ui_draw_battle_timer()/calc_timer_bar(). */
+#define BATTLE_TIMER_BAR_LENGTH  20
+#define BATTLE_TIMER_BAR_DIVISOR (BATTLE_TIMER_MAX_FRAMES / BATTLE_TIMER_BAR_LENGTH)
+#define BATTLE_TIMER_SECONDS     (BATTLE_TIMER_MAX_FRAMES / BATTLE_TIMER_BAR_DIVISOR)
 
 #define BATTLE_DIRTY_BANNER  0x01
 #define BATTLE_DIRTY_ENEMIES 0x02

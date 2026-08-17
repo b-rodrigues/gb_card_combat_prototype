@@ -681,7 +681,7 @@ void ui_draw_battle_timer(const Battle *battle)
     VBK_REG = 0;
     for (i = 0; i < 20; i++) {
         char ch = (i < active) ? '=' : ' ';
-        v[i] = (uint8_t)(base + (uint8_t)(ch - ' '));
+        ui_vram_sync_write(&v[i], (uint8_t)(base + (uint8_t)(ch - ' ')));
         g_ui_screen_buf[17][i] = ch;
     }
 }
@@ -692,6 +692,10 @@ void ui_draw_battle_full(const Battle *battle)
 
     ui_clear_screen();
     ui_update_battle(battle);
+    /* The timer bar is otherwise only redrawn on a tile-boundary change
+     * (battle_screen.c), so draw it here once at a full count on entry;
+     * otherwise the first tile never shows (bar first appears at 19). */
+    ui_draw_battle_timer(battle);
 }
 
 void ui_update_battle(const Battle *battle)
