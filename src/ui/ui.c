@@ -642,10 +642,6 @@ void ui_draw_battle_full(const Battle *battle)
     if (!battle) return;
 
     ui_clear_screen();
-    ui_draw_hline(10, '-');
-    ui_draw_hline(14, '-');
-    ui_draw_hline(16, '-');
-
     ui_update_battle(battle);
 
     /* Show hero sprite next to hero label */
@@ -657,7 +653,6 @@ void ui_update_battle(const Battle *battle)
 {
     const char *action_msg = "";
     const char *desc_msg = "";
-    const char *info_msg = "";
 
     if (!battle) return;
 
@@ -668,21 +663,14 @@ void ui_update_battle(const Battle *battle)
     ui_draw_battle_hand(battle);
 
     if (battle->result == BATTLE_RESULT_VICTORY) {
-        ui_draw_text_line(0, 11, "VICTORY! PRESS [A]  ", 20);
+        action_msg = "VICTORY!";
     } else if (battle->result == BATTLE_RESULT_DEFEAT) {
-        ui_draw_text_line(0, 11, "DEFEATED! PRESS [A] ", 20);
+        action_msg = "DEFEATED!";
     } else if (battle->result == BATTLE_RESULT_FLED) {
-        ui_draw_text_line(0, 11, "FLED! PRESS [A]     ", 20);
+        action_msg = "FLED!";
     } else {
         if (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
             desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-        }
-        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
-            action_msg = "[A] PICK   [SEL] GO";
-            info_msg = "[B] UNDO [START] BAG";
-        } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-            action_msg = "DEFEND! PICK SHIELDS";
-            info_msg = "[A] BLOCK  [SEL] GO";
         } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
             action_msg = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "ATTACK!";
         } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
@@ -690,11 +678,9 @@ void ui_update_battle(const Battle *battle)
         } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
             action_msg = "BLOCKED ATTACK!";
         }
-        ui_draw_text_line(0, 11, action_msg, 20);
-        ui_draw_text_line(0, 12, desc_msg, 20);
-        ui_draw_text_line(0, 13, info_msg, 20);
     }
-    ui_draw_text_line(0, 15, (battle->enemy_count > 1) ? "[^/v] TARGET" : "TURN TIMER: ", 12);
+    ui_draw_text_line(0, 11, action_msg, 20);
+    ui_draw_text_line(0, 12, desc_msg, 20);
     ui_draw_battle_timer(battle);
 }
 
