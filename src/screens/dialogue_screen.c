@@ -40,7 +40,6 @@ void dialogue_screen_render(Game *g)
         ui_draw_world_full(w);
     }
     ui_draw_dialogue(d, w->scroll_x, w->scroll_y);
-    ui_hud_hide();
     ui_lcd_on();
 
     if (first_enter) {

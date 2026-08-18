@@ -1,7 +1,7 @@
 {
   "name": "scroll_render_alignment",
   "test": true,
-  "description": "Walk east on the Field to (26,7); the player-centred camera scrolls to camera_px=(96,8) and SCX/SCY track it, while the background tilemap ring holds the correct world tiles at wrapped addresses (east wall at world col 31, floor at 12) -- verifies the SCX/SCY-vs-tilemap-ring alignment the harness cannot see via VRAM",
+  "description": "Walk east on the Field to (26,7); with a full-screen 18-row viewport the map fits vertically so camera_px_y stays 0, while the player-centred camera scrolls horizontally to camera_px_x=96 and SCX/SCY track it, while the background tilemap ring holds the correct world tiles at wrapped addresses",
   "scenario_id": "SCROLL_RENDER_ALIGNMENT",
   "actions": [
     {
@@ -27,7 +27,7 @@
     {
       "type": "camera",
       "expected_x": 12,
-      "expected_y": 1
+      "expected_y": 0
     },
     {
       "type": "camera_px_x",
@@ -35,7 +35,7 @@
     },
     {
       "type": "camera_px_y",
-      "expected": 8
+      "expected": 0
     },
     {
       "type": "scx",
@@ -43,7 +43,7 @@
     },
     {
       "type": "scy",
-      "expected": 8
+      "expected": 0
     },
     {
       "type": "tilemap_cell",
@@ -60,7 +60,7 @@
     {
       "type": "screen_row",
       "row": 0,
-      "expected": "...................#"
+      "expected": ">###################"
     },
     {
       "type": "screen_row",

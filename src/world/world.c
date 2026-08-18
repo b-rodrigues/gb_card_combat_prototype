@@ -47,7 +47,7 @@ void world_update_scroll(World *w)
     px = world_player_px(w);
     py = world_player_py(w);
     px = (px < 80) ? 0 : (uint8_t)(px - 80);
-    py = (py < 48) ? 0 : (uint8_t)(py - 48);
+    py = (py < 72) ? 0 : (uint8_t)(py - 72);
     max_x = (w->width > WORLD_VIEW_W) ? (uint8_t)((w->width - WORLD_VIEW_W) << 3) : 0;
     max_y = (w->height > WORLD_VIEW_H) ? (uint8_t)((w->height - WORLD_VIEW_H) << 3) : 0;
     if (px > max_x) px = max_x;

@@ -69,12 +69,6 @@ void screen_change(Game *g, ScreenId screen)
     g->prev_screen = old_screen;
     g->screen = screen;
 
-    if (screen == SCREEN_OVERWORLD) {
-        ui_hud_show();
-    } else {
-        ui_hud_hide();
-    }
-
     telemetry_emit(EVENT_SCREEN_CHANGED, (uint8_t)old_screen, (uint8_t)screen, 0, 0);
     game_render_reset(g);
 }
