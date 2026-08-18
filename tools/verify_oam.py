@@ -12,19 +12,19 @@ smooth SCX/SCY scroll (B3) the sprite's OAM position is
 (world_px - camera_px) + GBDK's +8/+16 OAM offset, so it is NOT the
 world-tile*8 position the overworld renderer used before the scroll.
 
-  Battle transition  (first_encounter): player (13,8), camera (24,16)
-                     -> overworld shadow OAM (y=64,x=88) -> after walking
-                     into the slime, battle sprite hidden (y=0) -> hidden on
-                     the item screen (y=0) -> stays hidden in battle (y=0).
+  Battle transition  (first_encounter): player (13,8), camera (24,0)
+                     -> overworld shadow OAM (y=80,x=88) -> after walking
+                     into the slime, battle sprite hidden (y=0) -> after the
+                     item screen toggle the sprite stays hidden in battle (y=0).
   Steady battle frame: the sprite must NOT be re-hidden every frame (the
                      old prev_map_id=255 reset sentinel re-ran the hide on
                      every non-overworld frame, keeping the sprite hidden
                      for the whole fight on real hardware).  Detected by
                      breakpoint, since the harness's vsync-skip hides the
                      symptom from OAM reads.
-  Scene transition   (town_arrival): FIELD (30,7) camera (96,8) -> shadow
-                     OAM (64,152) -> gate -> TOWN (2,7) camera (0,8) ->
-                     shadow OAM (64,27).
+  Scene transition   (town_arrival): FIELD (30,7) camera (96,0) -> shadow
+                     OAM (72,152) -> gate -> TOWN (2,7) camera (0,0) ->
+                     shadow OAM (72,27).
   Dialogue entry     (mayor): the dialogue must NOT wipe the world behind
                      the box (the map is already on screen from the
                      overworld).  Detected by breakpoint at ui_draw_world_full
@@ -102,9 +102,9 @@ def verify_battle_transition(sess):
     sess.load_scenario(load_scenario(sess, "first_encounter.json"))
     sess.step(1)
 
-    # 1. Overworld steady: player at (13,8), camera (24,16) ->
-    #    OAM x = 13*8+8-24 = 88, y = 8*8+16-16 = 64.
-    check("overworld @ sprite position (shadow OAM)", (64, 88), shadow_oam(sess))
+    # 1. Overworld steady: player at (13,8), camera (24,0) ->
+    #    OAM x = 13*8+8-24 = 88, y = 8*8+0+16 = 80.
+    check("overworld @ sprite position (shadow OAM)", (80, 88), shadow_oam(sess))
     check("overworld sprite tile (shadow OAM)", 102, shadow_sprite_tile(sess))
 
     # 2. Walk right into the slime at (14,8): the encounter is decided once
@@ -207,19 +207,19 @@ def verify_scene_transition(sess):
     sess.load_scenario(initial)
     sess.step(1)
 
-    # 1. FIELD steady: player at (30,7), camera (96,8) ->
-    #    OAM x = 30*8+8-96 = 152, y = 7*8+16-8 = 64.
+    # 1. FIELD steady: player at (30,7), camera (96,0) ->
+    #    OAM x = 30*8+8-96 = 152, y = 7*8+0+16 = 72.
     check("overworld steady: @ sprite position (shadow OAM)",
-          (64, 152), shadow_oam(sess))
+          (72, 152), shadow_oam(sess))
 
     # 2. Hold RIGHT through the gate at (31,7) into TOWN (spawn 2,7).  The
     #    map change triggers the transition hide/commit; the sprite lands at
     #    TOWN (2,7), visible at its committed position (the camera is
     #    mid-scroll, so the exact x is the committed value, not the
-    #    steady-camera calc).  (64,27) is the observed deterministic result.
+    #    steady-camera calc).  (72,27) is the observed deterministic result.
     sess.hold("RIGHT", 14)
     check("new map: @ sprite position (shadow OAM)",
-          (64, 27), shadow_oam(sess))
+          (72, 27), shadow_oam(sess))
 
 
 def main():

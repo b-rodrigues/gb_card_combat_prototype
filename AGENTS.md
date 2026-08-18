@@ -130,6 +130,20 @@ This validates the release build, including compilation, linking, ROM header, an
 
 ---
 
+## OAM Fidelity Check
+
+```bash
+make verify-oam
+```
+
+Asserts correct player-sprite OAM positions across battle, scene-change, and
+dialogue transitions via the mGBA debugger.  Catches VBlank-timed sprite bugs
+that the SameBoy harness cannot observe (see §52.15).  **Required** — CI runs
+this on every push.  Must be included in the standard validate sequence alongside
+`make test-harness` and `make test`.
+
+---
+
 ## Run in Emulator
 
 ```bash
@@ -1573,6 +1587,17 @@ then:
 ```bash
 make test
 ```
+
+then:
+
+```bash
+make verify-oam
+```
+
+`verify-oam` uses mGBA's debugger to assert correct OAM sprite positions
+across transitions (battle, scene change, dialogue).  It catches VBlank-timed
+sprite bugs that the SameBoy harness cannot observe (AGENTS.md §52.15).  This
+step is **required**, not optional — CI runs it on every push.
 
 If rendering or UI changed, also run:
 
