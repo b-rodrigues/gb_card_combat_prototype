@@ -51,10 +51,10 @@ void dialogue_screen_render(Game *g)
         rc->prev_screen = SCREEN_DIALOGUE;
         rc->prev_dialogue_active = true;
     } else {
-        ui_draw_text_line((uint8_t)(1 + w->scroll_x), (uint8_t)(13 + w->scroll_y),
-                          d->speaker ? d->speaker : "", 18);
-        ui_draw_text_line((uint8_t)(1 + w->scroll_x), (uint8_t)(14 + w->scroll_y),
-                          d->lines[d->current_line], 18);
+        ui_draw_dialogue_line(1, 13, d->speaker ? d->speaker : "", 18,
+                              w->scroll_x, w->scroll_y);
+        ui_draw_dialogue_line(1, 14, d->lines[d->current_line], 18,
+                              w->scroll_x, w->scroll_y);
     }
 
     telemetry_emit(EVENT_RENDER_DIALOGUE, (uint8_t)d->id,
