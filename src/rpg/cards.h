@@ -9,7 +9,7 @@
 typedef uint8_t CardId;
 
 #define CARD_NONE       0
-#define CARD_FIRST_GAME 0x80
+#define CARD_FIRST_GAME 0x40
 
 /* Broad card categories. */
 typedef enum {

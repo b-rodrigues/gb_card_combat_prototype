@@ -137,7 +137,7 @@ void debug_state_snapshot(void)
 
     b[STATE_SNAP_INVENTORY_OFFSET] = st->cards.collection.count;
     p = b + STATE_SNAP_INVENTORY_OFFSET + 1;
-    for (i = 0; i < st->cards.collection.count && i < 16; i++) {
+    for (i = 0; i < st->cards.collection.count && i < MAX_CARD_COLLECTION; i++) {
         *p++ = st->cards.collection.entries[i].id;
         *p++ = st->cards.collection.entries[i].count;
     }
