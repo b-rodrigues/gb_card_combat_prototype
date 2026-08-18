@@ -386,7 +386,7 @@ void ui_draw_actors_sprites(const World *world)
         if (a->active) {
             uint8_t px = (uint8_t)(world_actor_px(a) - world->camera_px_x);
             uint8_t py = (uint8_t)(world_actor_py(a) - world->camera_px_y);
-            if (px < 160 && py < 96) {
+            if (px < 160 && py < 144) {
                 shadow_OAM[spr].y = (uint8_t)(py + 16);
                 shadow_OAM[spr].x = (uint8_t)(px + 8);
                 shadow_OAM[spr].tile = (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' '));
@@ -587,8 +587,6 @@ void ui_draw_world_full(const World *world)
     if (!world) return;
     ui_clear_screen();
     ui_draw_world_map(world);
-    ui_draw_overworld_hud(world);
-    ui_hud_show();
 }
 
 static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)

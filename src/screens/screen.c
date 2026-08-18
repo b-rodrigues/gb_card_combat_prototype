@@ -69,9 +69,7 @@ void screen_change(Game *g, ScreenId screen)
     g->prev_screen = old_screen;
     g->screen = screen;
 
-    if (screen == SCREEN_OVERWORLD) {
-        ui_hud_show();
-    } else {
+    if (screen != SCREEN_OVERWORLD) {
         ui_hud_hide();
     }
 

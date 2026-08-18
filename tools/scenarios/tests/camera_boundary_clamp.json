@@ -1,7 +1,7 @@
 {
   "name": "camera_boundary_clamp",
   "test": true,
-  "description": "Walk the player to the far SE corner of the Field (30,16); the player-centered camera clamps at the scene boundary (scroll 12,6 = width-20 and height-12 tiles) so it never scrolls past the map edge while the player continues to the corner",
+  "description": "Walk the player to the far SE corner of the Field (30,16); with a full-screen 18-row viewport the 18-tall map fits exactly so scroll_y stays 0 while scroll_x clamps at 12 (width-20 tiles)",
   "scenario_id": "CAMERA_BOUNDARY_CLAMP",
   "actions": [
     {
@@ -36,7 +36,7 @@
     {
       "type": "camera",
       "expected_x": 12,
-      "expected_y": 6
+      "expected_y": 0
     },
     {
       "type": "scroll_x",
@@ -44,7 +44,7 @@
     },
     {
       "type": "scroll_y",
-      "expected": 6
+      "expected": 0
     }
   ],
   "initial_state": {

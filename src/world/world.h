@@ -17,7 +17,7 @@
  * keeps the player inside this window, scrolling as the player crosses its
  * edge and clamping at the scene bounds (world width/height). */
 #define WORLD_VIEW_W 20
-#define WORLD_VIEW_H 12
+#define WORLD_VIEW_H 18
 
 /* Maximum concurrent hostile actors in a scene (compile-time constant). */
 #define MAX_WORLD_ACTORS 4
