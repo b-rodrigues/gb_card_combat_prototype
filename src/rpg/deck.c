@@ -88,8 +88,9 @@ bool deck_add_card(CardState *cs, CardId id)
     if (!deck_collection_is_owned(cs, id)) return false;
 
     def = card_get_def(id);
+    if (!def) return false;
     in_deck = deck_count_in_deck(&cs->deck, id);
-    if (def && in_deck >= def->max_copies) return false;
+    if (in_deck >= def->max_copies) return false;
 
     cs->deck.cards[cs->deck.count] = id;
     cs->deck.count++;
@@ -128,8 +129,9 @@ bool deck_validate(const CardState *cs)
         owned = deck_collection_count(cs, id);
         if (owned == 0) return false;
         def = card_get_def(id);
+        if (!def) return false;
         in_deck = deck_count_in_deck(&cs->deck, id);
-        if (def && in_deck > def->max_copies) return false;
+        if (in_deck > def->max_copies) return false;
     }
     return true;
 }
