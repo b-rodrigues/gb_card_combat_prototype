@@ -31,26 +31,20 @@ static uint16_t save_slot_base(uint8_t slot)
 static uint8_t save_checksum(const GameState *state)
 {
     uint8_t sum = 0;
-    uint16_t i;
+    uint8_t n = (uint8_t)sizeof(GameState);
     const uint8_t *b = (const uint8_t *)state;
-    for (i = 0; i < sizeof(GameState); i++) {
-        sum = (uint8_t)(sum + b[i]);
-    }
+    while (n--) sum = (uint8_t)(sum + *b++);
     return sum;
 }
 
-static bool save_valid_at_slot(uint8_t slot)
+static bool save_valid_at_slot(const uint8_t *sram)
 {
-    uint8_t *sram = (uint8_t *)save_slot_base(slot);
-
-    if (sram[SAVE_SRAM_MAGIC_OFF] != (uint8_t)(SAVE_MAGIC & 0xFF) ||
-        sram[SAVE_SRAM_MAGIC_OFF + 1] != (uint8_t)(SAVE_MAGIC >> 8)) {
+    if (sram[0] != (uint8_t)(SAVE_MAGIC & 0xFF) ||
+        sram[1] != (uint8_t)(SAVE_MAGIC >> 8) ||
+        sram[2] != SAVE_VERSION) {
         return false;
     }
-    if (sram[SAVE_SRAM_VERSION_OFF] != SAVE_VERSION) {
-        return false;
-    }
-    return sram[SAVE_SRAM_CHECKSUM_OFF] == save_checksum((const GameState *)(sram + SAVE_SRAM_STATE_OFF));
+    return sram[3] == save_checksum((const GameState *)(sram + 4));
 }
 
 bool save_present_slot(uint8_t slot)
@@ -58,15 +52,14 @@ bool save_present_slot(uint8_t slot)
     bool valid;
     if (slot >= SAVE_SLOT_COUNT) return false;
     ENABLE_RAM;
-    valid = save_valid_at_slot(slot);
+    valid = save_valid_at_slot((const uint8_t *)save_slot_base(slot));
     DISABLE_RAM;
     return valid;
 }
 
 static void sram_copy(uint8_t *dst, const uint8_t *src, uint8_t count)
 {
-    uint8_t i;
-    for (i = 0; i < count; i++) dst[i] = src[i];
+    while (count--) *dst++ = *src++;
 }
 
 bool save_game_slot(uint8_t slot, const GameState *state)
@@ -94,7 +87,7 @@ bool load_game_slot(uint8_t slot, GameState *state)
     sram = (uint8_t *)save_slot_base(slot);
 
     ENABLE_RAM;
-    valid = save_valid_at_slot(slot);
+    valid = save_valid_at_slot(sram);
     if (valid) {
         sram_copy((uint8_t *)state, sram + 4, (uint8_t)sizeof(GameState));
     }

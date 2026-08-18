@@ -79,42 +79,36 @@ void screen_change(Game *g, ScreenId screen)
     game_render_reset(g);
 }
 
-typedef void (*ScreenFn)(Game *g);
-
-static const ScreenFn s_update_table[9] = {
-    overworld_screen_update,
-    dialogue_screen_update,
-    battle_screen_update,
-    game_over_screen_update,
-    thanks_screen_update,
-    shop_screen_update,
-    item_screen_update,
-    ending_screen_update,
-    save_load_screen_update
-};
-
-static const ScreenFn s_render_table[9] = {
-    overworld_screen_render,
-    dialogue_screen_render,
-    battle_screen_render,
-    game_over_screen_render,
-    thanks_screen_render,
-    shop_screen_render,
-    item_screen_render,
-    ending_screen_render,
-    save_load_screen_render
-};
-
 void screen_update(Game *g)
 {
-    if (g && g->screen < 9) {
-        s_update_table[g->screen](g);
+    if (!g) return;
+    switch (g->screen) {
+    case SCREEN_OVERWORLD: overworld_screen_update(g); break;
+    case SCREEN_DIALOGUE: dialogue_screen_update(g); break;
+    case SCREEN_BATTLE: battle_screen_update(g); break;
+    case SCREEN_GAME_OVER: game_over_screen_update(g); break;
+    case SCREEN_THANKS: thanks_screen_update(g); break;
+    case SCREEN_SHOP: shop_screen_update(g); break;
+    case SCREEN_ITEM: item_screen_update(g); break;
+    case SCREEN_ENDING: ending_screen_update(g); break;
+    case SCREEN_SAVE_LOAD: save_load_screen_update(g); break;
+    default: break;
     }
 }
 
 void screen_render(Game *g)
 {
-    if (g && g->screen < 9) {
-        s_render_table[g->screen](g);
+    if (!g) return;
+    switch (g->screen) {
+    case SCREEN_OVERWORLD: overworld_screen_render(g); break;
+    case SCREEN_DIALOGUE: dialogue_screen_render(g); break;
+    case SCREEN_BATTLE: battle_screen_render(g); break;
+    case SCREEN_GAME_OVER: game_over_screen_render(g); break;
+    case SCREEN_THANKS: thanks_screen_render(g); break;
+    case SCREEN_SHOP: shop_screen_render(g); break;
+    case SCREEN_ITEM: item_screen_render(g); break;
+    case SCREEN_ENDING: ending_screen_render(g); break;
+    case SCREEN_SAVE_LOAD: save_load_screen_render(g); break;
+    default: break;
     }
 }

@@ -16,7 +16,7 @@
  * started from the overworld screen and not restarted until it ends). */
 static const DialogueDefinition *g_dialogues = NULL;
 static uint8_t g_dialogue_count = 0;
-static uint8_t g_dialogue_bank = 0;
+static uint8_t g_dialogue_bank = 2;
 
 /* Single-flight WRAM staging (not reentrant): a nested banked row/text
  * lookup would silently corrupt the outer one.  Safe today because only one
@@ -38,11 +38,7 @@ void dialogue_register(const DialogueDefinition *table, uint8_t count, uint8_t b
 
 static const DialogueDefinition *dialogue_get_row(uint8_t i)
 {
-    if (g_dialogue_bank == 0) {
-        return &g_dialogues[i];
-    }
-    banked_copy(g_dialogue_bank, &g_dialogue_scratch, &g_dialogues[i],
-                sizeof(DialogueDefinition));
+    banked_copy(g_dialogue_bank, &g_dialogue_scratch, &g_dialogues[i], sizeof(DialogueDefinition));
     return &g_dialogue_scratch;
 }
 

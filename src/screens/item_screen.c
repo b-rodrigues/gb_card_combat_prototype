@@ -45,29 +45,20 @@ static void menu_draw_tabs(Game *g)
 static void menu_draw_status(Game *g, char *buf)
 {
     const CharacterState *hero = &g->state.party.members[0];
-    ProgressionTarget t;
-    ProgressionState *ps;
+    ProgressionState *ps = progression_get(&g->state, PROG_TYPE_HERO, 1);
     const ItemDefinition *wd;
 
-    t.type = PROG_TYPE_HERO;
-    t.id = 1;
-    ps = progression_get(&g->state, t);
-
     ui_draw_text_line(0, 5, "HERO", 4);
-    ui_draw_text_line(0, 6, "HP:", 3);
-    ui_format_int((int16_t)hero->hp, buf);
-    ui_draw_text_line(4, 6, buf, 3);
-    ui_draw_text_line(7, 6, "/", 1);
-    ui_format_int((int16_t)hero->max_hp, buf);
-    ui_draw_text_line(8, 6, buf, 3);
+    ui_draw_text_line(0, 6, "HP:   /   ", 10);
+    ui_draw_num2(4, 6, hero->hp);
+    ui_draw_num2(7, 6, hero->max_hp);
 
     ui_draw_text_line(0, 7, "GOLD:", 5);
     ui_format_int(currency_get(&g->state, CURRENCY_ID_GOLD), buf);
     ui_draw_text_line(6, 7, buf, 10);
 
     ui_draw_text_line(0, 9, "LEVEL:", 6);
-    ui_format_int((int16_t)(ps ? ps->level : 1), buf);
-    ui_draw_text_line(6, 9, buf, 4);
+    ui_draw_num2(6, 9, (uint8_t)(ps ? ps->level : 1));
 
     ui_draw_text_line(0, 10, "PROGRESS:", 9);
     ui_format_int((int16_t)(ps ? ps->progress : 0), buf);
@@ -89,20 +80,14 @@ static void quest_draw_status(Game *g, const QuestDefinition *q, uint8_t y)
     } else if (st == QUEST_STATUS_ACTIVE) {
         if (q->progress_variable != 0) {
             char b[6];
-            uint8_t col = 0, blen = 0;
-            const char *lbl = q->progress_label ? q->progress_label : "";
-            while (lbl[col] && col < 10) col++;
-            ui_draw_text_line(0, y, lbl, col);
-            ui_draw_text_line(col, y, ": ", 2);
-            col = (uint8_t)(col + 2);
-            ui_format_int(game_variable_get(&g->state, q->progress_variable), b);
-            while (b[blen]) blen++;
-            ui_draw_text_line(col, y, b, blen);
-            col = (uint8_t)(col + blen);
-            ui_draw_text_line(col, y, "/", 1);
-            col++;
-            ui_format_int(q->progress_target, b);
-            ui_draw_text_line(col, y, b, 3);
+            uint8_t val = (uint8_t)game_variable_get(&g->state, q->progress_variable);
+            ui_draw_text_line(0, y, q->progress_label ? q->progress_label : "", 8);
+            b[0] = ':';
+            b[1] = ' ';
+            b[2] = (char)('0' + val);
+            b[3] = '/';
+            b[4] = (char)('0' + (uint8_t)q->progress_target);
+            ui_draw_text_line(8, y, b, 5);
         } else {
             ui_draw_text_line(0, y, "active", 6);
         }
@@ -126,21 +111,21 @@ static void menu_draw_quest(Game *g, char *buf)
     }
 }
 
-static const char * const s_tab_titles[4] = { "ITEMS", "EQUIP", "QUESTS", "STATUS" };
+static const char *tab_title(uint8_t tab)
+{
+    if (tab == MENU_TAB_EQUIP) return "EQUIP";
+    if (tab == MENU_TAB_QUEST) return "QUESTS";
+    if (tab == MENU_TAB_STATUS) return "STATUS";
+    return "ITEMS";
+}
 
 static void menu_draw(Game *g)
 {
     const InventoryState *inv = &g->state.inventory;
-    MenuFrame frame;
     char buf[7];
     uint8_t i, y, vis_count = 0, scroll = 0;
 
-    frame.title_row = 0;
-    frame.top_row = 5;
-    frame.bottom_row = 17;
-    frame.title = (g->item_menu_tab < 4) ? s_tab_titles[g->item_menu_tab] : s_tab_titles[0];
-
-    menu_draw_frame(&frame);
+    menu_draw_frame(tab_title(g->item_menu_tab));
     menu_draw_tabs(g);
 
     if (g->item_menu_tab >= MENU_TAB_QUEST) {
@@ -165,9 +150,8 @@ static void menu_draw(Game *g)
                 ui_draw_text_line(0, y, (g->item_menu_index == vis_count) ? ">" : " ", 1);
                 ui_draw_text_line(1, y, def->name, 8);
                 if (def->kind == ITEM_KIND_CONSUMABLE) {
-                    ui_format_int((int16_t)inv->entries[i].quantity, buf);
                     ui_draw_text_line(10, y, "x", 1);
-                    ui_draw_text_line(11, y, buf, 4);
+                    ui_draw_num2(11, y, inv->entries[i].quantity);
                 } else if (g->state.equipment.weapon == inv->entries[i].item_id) {
                     ui_draw_text_line(10, y, "EQUIPPED", 8);
                 } else {
@@ -187,14 +171,14 @@ static void menu_draw(Game *g)
 void item_screen_update(Game *g)
 {
     uint8_t vis_count, ei;
-    int8_t tab_dir = 0;
-    if (!g) return;
-
-    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) tab_dir = 1;
-    else if (input_pressed(INPUT_LEFT)) tab_dir = -1;
-
-    if (tab_dir != 0) {
-        g->item_menu_tab = (uint8_t)((g->item_menu_tab + tab_dir) & 3);
+    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) {
+        g->item_menu_tab = (uint8_t)((g->item_menu_tab + 1) & 3);
+        g->item_menu_index = 0;
+        g->render_cache.valid = false;
+        return;
+    }
+    if (input_pressed(INPUT_LEFT)) {
+        g->item_menu_tab = (uint8_t)((g->item_menu_tab + 3) & 3);
         g->item_menu_index = 0;
         g->render_cache.valid = false;
         return;

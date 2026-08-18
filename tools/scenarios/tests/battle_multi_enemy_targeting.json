@@ -1,0 +1,72 @@
+{
+  "name": "battle_multi_enemy_targeting",
+  "test": true,
+  "description": "Bumping the Mountain Pass slime starts a 3-slime battle and D-pad DOWN cycles the target cursor",
+  "actions": [
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 0,
+      "contains": "PLAYER TURN"
+    },
+    {
+      "type": "screen_row",
+      "row": 2,
+      "contains": "SLIME  SLIME  SLIME"
+    },
+    {
+      "type": "screen_row",
+      "row": 3,
+      "contains": " 8/ 8   5/ 5   5/ 5"
+    },
+    {
+      "type": "screen_row",
+      "row": 4,
+      "contains": "       ^"
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "HERO        HP:10/10"
+    },
+    {
+      "type": "screen_row",
+      "row": 13,
+      "contains": "COMBO:"
+    }
+  ],
+  "initial_state": {
+    "scene": "MOUNTAIN_PASS",
+    "player": {
+      "x": 13,
+      "y": 7,
+      "facing": "RIGHT"
+    },
+    "seed": 5002
+  }
+}

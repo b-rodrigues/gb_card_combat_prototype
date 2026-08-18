@@ -18,10 +18,7 @@
  * returned pointer is only valid until the next row access. */
 static const EventDefinition *g_events = NULL;
 static uint8_t g_event_count = 0;
-static uint8_t g_event_bank = 0;
-/* Single-flight scratch row (not reentrant): a nested event lookup mid-row
- * would silently corrupt the outer row.  Safe today because scene_load()
- * does not synchronously re-enter event resolution; keep that invariant. */
+static uint8_t g_event_bank = 2;
 static EventDefinition g_event_scratch;
 
 /* banked_copy() takes a uint8_t byte count; a larger row cannot be staged. */
@@ -36,23 +33,20 @@ void event_init(const EventDefinition *table, uint8_t count, uint8_t bank)
 
 static const EventDefinition *event_get_row(uint8_t i)
 {
-    if (g_event_bank == 0) {
-        return &g_events[i];
-    }
-    banked_copy(g_event_bank, &g_event_scratch, &g_events[i],
-                sizeof(EventDefinition));
+    banked_copy(g_event_bank, &g_event_scratch, &g_events[i], sizeof(EventDefinition));
     return &g_event_scratch;
 }
 
 static bool event_condition_met(const GameState *state, const EventCond *cond)
 {
     int16_t v;
-    if (cond->type == EVENT_COND_FLAG) {
-        return story_has_flag(state, (FlagId)cond->id) == cond->flag_set;
+    uint8_t t = cond->type;
+    if (t == EVENT_COND_FLAG) {
+        return game_flag_is_set(state, (FlagId)cond->id) == cond->flag_set;
     }
-    if (cond->type == EVENT_COND_VARIABLE) {
+    if (t == EVENT_COND_VARIABLE) {
         v = game_variable_get(state, (VariableId)cond->id);
-    } else if (cond->type == EVENT_COND_ITEM_COUNT) {
+    } else if (t == EVENT_COND_ITEM_COUNT) {
         v = (int16_t)inventory_count(&state->inventory, (ItemId)cond->id);
     } else {
         return true;
@@ -75,35 +69,28 @@ static void event_execute_actions(Game *g, const EventDefinition *def,
     uint8_t i;
     for (i = 0; i < def->action_count; i++) {
         const EventAction *a = &def->actions[i];
-        switch (a->type) {
-            case EVENT_ACTION_DIALOGUE:
-                dialogue_start_def(&g->dialogue, (DialogueId)a->arg0);
-                if (dialogue_started) *dialogue_started = true;
-                break;
-            case EVENT_ACTION_SET_FLAG:
-                story_set_flag(&g->state, (FlagId)a->arg0);
-                break;
-            case EVENT_ACTION_CLEAR_FLAG:
-                story_clear_flag(&g->state, (FlagId)a->arg0);
-                break;
-            case EVENT_ACTION_SET_VARIABLE:
-                game_variable_set(&g->state, (VariableId)a->arg0, a->arg1);
-                break;
-            case EVENT_ACTION_ADD_VARIABLE:
-                game_variable_add(&g->state, (VariableId)a->arg0, a->arg1);
-                break;
-            case EVENT_ACTION_SCENE_CHANGE:
-                scene_load(g, (SceneId)a->arg0, (uint8_t)a->arg1, (uint8_t)a->arg2);
-                break;
-            case EVENT_ACTION_ADD_ITEM:
-                inventory_add(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
-                break;
-            case EVENT_ACTION_ADD_CURRENCY:
-                currency_add(&g->state, (CurrencyId)a->arg0, a->arg1);
-                break;
-            case EVENT_ACTION_REMOVE_ITEM:
-                inventory_remove(&g->state.inventory, (ItemId)a->arg0, (uint8_t)a->arg1);
-                break;
+        uint8_t t = a->type;
+        uint16_t a0 = a->arg0;
+        int16_t a1 = a->arg1;
+        if (t == EVENT_ACTION_DIALOGUE) {
+            dialogue_start_def(&g->dialogue, (DialogueId)a0);
+            if (dialogue_started) *dialogue_started = true;
+        } else if (t == EVENT_ACTION_SET_FLAG) {
+            game_flag_set(&g->state, (FlagId)a0);
+        } else if (t == EVENT_ACTION_CLEAR_FLAG) {
+            game_flag_clear(&g->state, (FlagId)a0);
+        } else if (t == EVENT_ACTION_SET_VARIABLE) {
+            game_variable_set(&g->state, (VariableId)a0, a1);
+        } else if (t == EVENT_ACTION_ADD_VARIABLE) {
+            game_variable_add(&g->state, (VariableId)a0, a1);
+        } else if (t == EVENT_ACTION_SCENE_CHANGE) {
+            scene_load(g, (SceneId)a0, (uint8_t)a1, (uint8_t)a->arg2);
+        } else if (t == EVENT_ACTION_ADD_ITEM) {
+            inventory_add(&g->state.inventory, (ItemId)a0, (uint8_t)a1);
+        } else if (t == EVENT_ACTION_ADD_CURRENCY) {
+            currency_add(&g->state, (CurrencyId)a0, a1);
+        } else if (t == EVENT_ACTION_REMOVE_ITEM) {
+            inventory_remove(&g->state.inventory, (ItemId)a0, (uint8_t)a1);
         }
     }
 }

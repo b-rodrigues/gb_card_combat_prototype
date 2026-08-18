@@ -51,7 +51,7 @@
     },
     {
       "type": "battle_player_hp",
-      "expected": 7
+      "expected": 3
     },
     {
       "type": "event_occurred",

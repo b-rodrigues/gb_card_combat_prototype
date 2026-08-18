@@ -1,5 +1,12 @@
 ; Minimal CRT0: reuses GBDK vectors/dispatch/logo, minimal init.
         .module crt0
+; The project links with -yo8: the fixed-bank _CODE/_HOME area spans file
+; 0x0000-0x7FFF and the second half is reached at CPU 0x4000-0x7FFF with
+; ROMB=1 (see the banked-content copy trampoline notes below).  This is the
+; architectural home bank: every bank-switching trampoline restores it, and
+; boot init stores it into __current_bank.  Keep the trampolines' restore
+; sites in sync with this single constant.
+HOME_BANK .equ 1
         .globl  _main
         .globl  _audio_update
         .globl  _g_harness_mode
@@ -59,7 +66,7 @@ clear_loop:
         xor     a
         ld      (__is_GBA), a
         inc     a
-        ld      (__current_bank), a
+        ld      (__current_bank), a ; a was 0 -> __current_bank = HOME_BANK (1)
 
         ; Copy the RAM-resident timer ISR into WRAM (always mapped,
         ; independent of ROM banking).  Music runs on the hardware timer
@@ -257,6 +264,13 @@ copy_isr_loop:
         .globl  _g_bank_copy_dst
         .globl  _g_bank_copy_src
         .globl  _g_bank_copy_n
+; The banked_copy_init byte-copy copies this whole body into the linker-
+; allocated WRAM buffer g_banked_tramp[64] (banked.c).  These start/end
+; symbols are exported so tools/memmap.py can verify at build time that the
+; body still fits the buffer (fail instead of silently overwriting the
+; banked-call staging globals that follow it in WRAM).
+        .globl  _banked_copy_tramp
+        .globl  _banked_copy_tramp_end
 _banked_copy_tramp:
         push    bc
         push    de
@@ -289,8 +303,8 @@ _banked_copy_tramp:
         dec     c
         jr      nz, banked_copy_loop
  banked_copy_done:
-        ld      a, #0x01
-        ld      (0x2000), a          ; restore home bank 1 (see below)
+        ld      a, #HOME_BANK
+        ld      (0x2000), a          ; restore home bank (HOME_BANK, see below)
         ld      (__current_bank), a
         ld      a, (_g_harness_mode)
         or      a
@@ -330,6 +344,105 @@ banked_copy_init_loop:
         ld      a, b
         or      c
         jr      nz, banked_copy_init_loop
+        ret
+
+; ── Banked-call trampoline ─────────────────────────────────────────
+; Mirrors _banked_copy_tramp but EXECUTES a fixed no-arg function that
+; lives in a banked ROM bank, from a fixed-bank caller.  Lets a
+; self-contained module (e.g. src/battle/combo.c) move out of the fixed
+; bank to relieve the fixed-bank budget without pulling GBDK's
+; RAM-resident ___sdcc_banked_call/___sdcc_call_hl helpers (which the
+; harness never installs because it skips CRT0; see §52.1/§52.11).
+;
+; The fixed-bank C wrapper stages the target bank + logical address and
+; any arguments into _DATA globals (banked.c), then calls the ROM stub
+; _banked_call_run, which jumps into the WRAM copy of this body.  The WRAM
+; trampoline selects the bank, computes the banked function's runtime
+; address 0x4000 | (target & 0x3FFF), pushes the WRAM return address, and
+; `jp`s to the target.  When the target `ret`s it pops that WRAM address,
+; so control returns to WRAM (always mapped) which restores the home bank.
+;
+; Like banked_copy, the whole switch + execute + restore runs from WRAM
+; with interrupts disabled, and the home bank (1) is restored before
+; returning.  The wrappers push/pop caller registers around the call.
+; The target must be self-contained: it may read its own banked data and
+; the staged WRAM globals, but must NOT call any fixed-bank function (the
+; bank is switched away for the duration).
+        .globl  _g_bk_call_bank
+        .globl  _g_bk_call_target
+        .globl  _g_banked_call_tramp
+; _banked_call_tramp and _banked_call_tramp_end (both .globl below / above)
+; bound the body copied into g_banked_call_tramp[64] (see the size contract
+; at _banked_call_tramp_end).
+_banked_call_tramp:
+        push    bc
+        push    de
+        di                            ; no ISR while the MBC5 bank is switched
+        xor     a
+        ld      (0x3000), a          ; MBC5 ROM bank high byte = 0
+        ld      a, (_g_bk_call_bank)
+        ld      (0x2000), a          ; select the target ROM bank
+        ld      hl, #_g_bk_call_target
+        ld      a, (hl)
+        inc     hl
+        ld      h, (hl)
+        ld      l, a                ; hl = target logical 16-bit address
+        ld      a, h
+        and     a, #0x3F
+        or      a, #0x40
+        ld      h, a                ; hl = target runtime address (0x4000|off)
+        ld      d, h
+        ld      e, l                ; de = target runtime address
+        ld      hl, #(_g_banked_call_tramp + (banked_call_ret_wram - _banked_call_tramp))
+        push    hl                   ; WRAM return address for the target's ret
+        ld      h, d
+        ld      l, e
+        jp      (hl)                ; run the banked function
+ banked_call_ret_wram:
+        ld      a, #HOME_BANK
+        ld      (0x2000), a          ; restore home bank (HOME_BANK)
+        ld      (__current_bank), a
+        ld      a, (_g_harness_mode)
+        or      a
+        jr      nz, banked_call_ret
+        ei                            ; home bank restored, interrupts safe again
+ banked_call_ret:
+        pop     de
+        pop     bc
+        ret
+; Same build-time size contract as the copy trampoline above: the
+; banked_call_init byte-copy must fit the linker-allocated WRAM buffer
+; g_banked_call_tramp[64] (banked.c).  Start/end are exported so
+; tools/memmap.py can verify the body size at build time.
+        .globl  _banked_call_tramp
+        .globl  _banked_call_tramp_end
+_banked_call_tramp_end:
+
+; ROM stub for the fixed-bank C wrapper (src/core/banked.c): jumps into the
+; WRAM trampoline.  The trampoline's WRAM home is the linker-allocated C
+; buffer _g_banked_call_tramp, so its address is resolved by the linker.
+        .globl  _banked_call_run
+_banked_call_run:
+        ld      hl, #_g_banked_call_tramp
+        jp      (hl)
+
+; Copies the banked-call trampoline body from ROM into the
+; _g_banked_call_tramp buffer.  Called once from game_init() so both real
+; hardware and the harness have it resident before any banked call.
+        .globl  _banked_call_init
+_banked_call_init:
+        ld      hl, #_banked_call_tramp
+        ld      de, #_g_banked_call_tramp
+        ld      bc, #(_banked_call_tramp_end - _banked_call_tramp)
+banked_call_init_loop:
+        ld      a, (hl)
+        inc     hl
+        ld      (de), a
+        inc     de
+        dec     bc
+        ld      a, b
+        or      c
+        jr      nz, banked_call_init_loop
         ret
 
         .area   _HOME

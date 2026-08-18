@@ -38,19 +38,17 @@ ActorEngageResult interaction_try_at(Game *g, uint8_t target_x, uint8_t target_y
 
 ActorEngageResult interaction_try_facing(Game *g)
 {
-    int8_t dx = 0, dy = 0;
     const WorldActorDefinition *actor;
     uint8_t tx, ty;
 
     if (!g) return ENGAGE_NONE;
 
-    if (g->world.player.facing == DIRECTION_UP) dy = -1;
-    else if (g->world.player.facing == DIRECTION_DOWN) dy = 1;
-    else if (g->world.player.facing == DIRECTION_LEFT) dx = -1;
-    else if (g->world.player.facing == DIRECTION_RIGHT) dx = 1;
-
-    tx = (uint8_t)(g->world.player.position.x + dx);
-    ty = (uint8_t)(g->world.player.position.y + dy);
+    tx = g->world.player.position.x;
+    ty = g->world.player.position.y;
+    if (g->world.player.facing == DIRECTION_UP) ty--;
+    else if (g->world.player.facing == DIRECTION_DOWN) ty++;
+    else if (g->world.player.facing == DIRECTION_LEFT) tx--;
+    else if (g->world.player.facing == DIRECTION_RIGHT) tx++;
 
     actor = actor_find_at(&g->world, tx, ty);
     telemetry_emit(EVENT_INTERACTION_ATTEMPT, tx, ty,

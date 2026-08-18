@@ -1,7 +1,7 @@
 {
   "name": "battle_hud_animation_phase",
   "test": true,
-  "description": "Asserts battle HUD text on rows 11-13 during PLAYER_ANIM: row 11 shows action, row 12 and 13 stay blank without card description",
+  "description": "Asserts battle HUD text during PLAYER_ANIM: the centered banner row (0) shows the action, and the description row (16) stays blank without a card description",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
     {
@@ -36,22 +36,22 @@
     },
     {
       "type": "screen_row",
-      "row": 11,
-      "contains": "ATTACK!"
+      "row": 0,
+      "contains": "PLAYER ATTACK!"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 12,
+      "row": 16,
       "contains": "Sword"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 12,
+      "row": 16,
       "contains": "physical"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 13,
+      "row": 16,
       "contains": "UNDO"
     }
   ],

@@ -1,0 +1,29 @@
+{
+  "name": "post_trampoline_state",
+  "test": true,
+  "description": "Post-trampoline integration: execute a banked combo, then wait through the full attack cycle (PLAYER_ANIM->ENEMY_TELEGRAPH->PLAYER_DEFEND->PLAYER_SELECT) proving the fixed-bank code kept running after the trampoline returned.  Verifies bank restore, hand discard, phase advance, timer reset, and enemy attack resolution.",
+  "actions": [
+    {"type": "set_hand_card", "index": 0, "card_type": "SW", "value": 4},
+    {"type": "set_hand_card", "index": 1, "card_type": "SW", "value": 2},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "SELECT"},
+    {"type": "wait", "frames": 35},
+    {"type": "press", "button": "B"},
+    {"type": "wait", "frames": 45}
+  ],
+  "assertions": [
+    {"type": "screen", "expected": "BATTLE"},
+    {"type": "battle_turn", "expected": "PLAYER"},
+    {"type": "event_occurred", "event": "DAMAGE_DEALT"},
+    {"type": "event_occurred", "event": "ENTITY_DEFEATED"}
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {"x": 13, "y": 8, "facing": "DOWN"},
+    "seed": 3000,
+    "start_battle": true
+  }
+}

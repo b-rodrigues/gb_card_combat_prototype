@@ -10,6 +10,14 @@ uint8_t g_telemetry_head = 0;
 static uint32_t event_seq = 0;
 static const uint32_t *telemetry_frame_ptr = NULL;
 
+/* Direct byte copy into the snapshot buffer.  SM83 / Game Boy architecture is
+ * little-endian, matching the snapshot wire format expected by the host Python harness. */
+static void snap_copy(uint8_t *dst, const void *src, uint8_t n)
+{
+    const uint8_t *s = (const uint8_t *)src;
+    while (n--) *dst++ = *s++;
+}
+
 void telemetry_init(void)
 {
     g_telemetry_count = 0;
@@ -81,7 +89,7 @@ void debug_snapshot(void)
     g_snap_buf[7] = (uint8_t)g->battle.turn;
     g_snap_buf[8] = (uint8_t)g->battle.result;
     g_snap_buf[9] = g->battle.player.hp;
-    g_snap_buf[10] = g->battle.enemy.hp;
+    g_snap_buf[10] = g->battle.enemies[g->battle.target_idx].hp;
     g_snap_buf[11] = (uint8_t)g->world.map_id;
     g_snap_buf[12] = g->state.flags.bytes[0];
     g_snap_buf[13] = g->dialogue.active ? 1 : 0;
@@ -97,14 +105,6 @@ void debug_snapshot(void)
     debug_state_snapshot();
 }
 
-/* Serialize the canonical GameState into g_state_snap_buf for the host.
- * Fixed offsets documented in telemetry.h. */
-static void snap_write16(uint8_t *dst, uint16_t v)
-{
-    dst[0] = (uint8_t)(v & 0xFF);
-    dst[1] = (uint8_t)((v >> 8) & 0xFF);
-}
-
 void debug_state_snapshot(void)
 {
     const GameState *st;
@@ -116,20 +116,14 @@ void debug_state_snapshot(void)
     st = &g_game.state;
 
     b[0] = STATE_SNAP_VERSION_BYTE;
-    for (i = 0; i < (MAX_STATE_FLAGS / 8); i++) {
-        b[STATE_SNAP_FLAGS_OFFSET + i] = st->flags.bytes[i];
-    }
-    p = b + STATE_SNAP_VARIABLES_OFFSET;
-    for (i = 0; i < MAX_STATE_VARIABLES; i++) {
-        snap_write16(p, (uint16_t)st->variables.values[i]);
-        p += 2;
-    }
+    snap_copy(b + STATE_SNAP_FLAGS_OFFSET, st->flags.bytes, MAX_STATE_FLAGS / 8);
+    snap_copy(b + STATE_SNAP_VARIABLES_OFFSET, st->variables.values, MAX_STATE_VARIABLES * 2);
 
     b[STATE_SNAP_CURRENCY_COUNT_OFF] = MAX_CURRENCIES;
     p = b + STATE_SNAP_CURRENCY_ENTRY_OFF;
     for (i = 0; i < MAX_CURRENCIES; i++) {
         *p++ = (uint8_t)(i + 1);
-        snap_write16(p, (uint16_t)st->currency.amount[i]);
+        snap_copy(p, &st->currency.amount[i], 2);
         p += 2;
     }
 
@@ -151,7 +145,7 @@ void debug_state_snapshot(void)
     b[STATE_SNAP_WORLD_OFFSET] = st->world.count;
     p = b + STATE_SNAP_WORLD_OFFSET + 1;
     for (i = 0; i < st->world.count && i < 16; i++) {
-        snap_write16(p, (uint16_t)st->world.actors[i].actor_id);
+        snap_copy(p, &st->world.actors[i].actor_id, 2);
         p += 2;
         *p++ = st->world.actors[i].state;
     }
@@ -160,10 +154,10 @@ void debug_state_snapshot(void)
     p = b + STATE_SNAP_PROGRESSION_ENTRY_OFF;
     for (i = 0; i < st->progression.count && i < MAX_PROGRESSION_TARGETS; i++) {
         *p++ = st->progression.entries[i].target.type;
-        snap_write16(p, st->progression.entries[i].target.id);
+        snap_copy(p, &st->progression.entries[i].target.id, 2);
         p += 2;
         *p++ = st->progression.entries[i].state.level;
-        snap_write16(p, st->progression.entries[i].state.progress);
+        snap_copy(p, &st->progression.entries[i].state.progress, 2);
         p += 2;
     }
 

@@ -64,9 +64,7 @@ const SceneExit *scene_exit_at(const SceneDefinition *def, uint8_t x, uint8_t y)
  * and exit gates for map_id.  Uses map bounds from the scene definition. */
 void scene_load_tiles(World *w, MapId map_id);
 
-/* MapId and SceneId 1:1 identity mappings (MAP_FIELD==SCENE_FIELD .. MAP_CASTLE==SCENE_CASTLE).
- * Range checked to guarantee valid values within [0..MAP_CASTLE]. */
-MapId scene_id_to_map(SceneId scene);
-SceneId map_to_scene_id(MapId map);
+#define scene_id_to_map(scene) ((MapId)(scene))
+#define map_to_scene_id(map) ((SceneId)(map))
 
 #endif /* SCENE_H */

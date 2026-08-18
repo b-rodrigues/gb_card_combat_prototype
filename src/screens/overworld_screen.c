@@ -6,23 +6,32 @@
 #include "telemetry.h"
 #include "audio.h"
 #include "content.h"
+#include "game_ids.h"
 
 void start_battle_from_world(Game *g)
 {
+    WorldActorRuntime *act;
     uint8_t idx = g->world.encounter_actor_index;
     if (idx == NO_ACTOR_INDEX) return;
+    act = &g->world.actors[idx];
 
     /* Hero HP is authoritative in the party state; the world entity is the
      * runtime engine copy. */
     battle_start(&g->battle,
-                 g->world.actors[idx].display_name ? g->world.actors[idx].display_name : "ENEMY",
+                 act->display_name ? act->display_name : "ENEMY",
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
                  game_hero_attack(&g->state),
-                 g->world.actors[idx].hp, g->world.actors[idx].max_hp);
+                 act->hp, act->max_hp);
+
+    if (act->battle_type == BATTLE_SLIME_TRIO) {
+        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
+        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
+    }
+
     audio_play_music(MUSIC_BATTLE);
     telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_BATTLE, 0, 0, 0);
-    telemetry_emit(EVENT_ACTOR_COMBAT_START, (uint8_t)g->world.actors[idx].id, 0, 0, 0);
+    telemetry_emit(EVENT_ACTOR_COMBAT_START, (uint8_t)act->id, 0, 0, 0);
     screen_change(g, SCREEN_BATTLE);
     /* encounter_actor_index stays set until world_on_battle_end() */
 }
@@ -85,10 +94,10 @@ void overworld_screen_update(Game *g)
         return;
     }
 
-    if (input_held(INPUT_UP))    dy = -1;
-    if (input_held(INPUT_DOWN))  dy = 1;
-    if (input_held(INPUT_LEFT))  dx = -1;
-    if (input_held(INPUT_RIGHT)) dx = 1;
+    if (input_held(INPUT_UP)) dy = -1;
+    else if (input_held(INPUT_DOWN)) dy = 1;
+    else if (input_held(INPUT_LEFT)) dx = -1;
+    else if (input_held(INPUT_RIGHT)) dx = 1;
 
     if (dx != 0 || dy != 0) {
         move_res = world_try_begin_move(&g->world, dx, dy, &g->state);
@@ -100,61 +109,52 @@ void overworld_screen_update(Game *g)
         engage = interaction_try_bump(g, dx, dy);
     }
 
-    if (engage == ENGAGE_DIALOGUE) {
-        screen_change(g, SCREEN_DIALOGUE);
-        return;
-    } else if (engage == ENGAGE_BATTLE) {
-        start_battle_from_world(g);
-        return;
-    } else if (engage == ENGAGE_SHOP) {
-        g->item_menu_index = 0;
-        screen_change(g, SCREEN_SHOP);
-        return;
-    } else if (engage == ENGAGE_SAVE) {
-        g->save_slot_mode = 1;
-        g->save_slot_index = 0;
-        g->save_slot_message = 0;
-        screen_change(g, SCREEN_SAVE_LOAD);
-        return;
+    if (engage != ENGAGE_NONE) {
+        if (engage == ENGAGE_DIALOGUE) {
+            screen_change(g, SCREEN_DIALOGUE);
+        } else if (engage == ENGAGE_BATTLE) {
+            start_battle_from_world(g);
+        } else if (engage == ENGAGE_SHOP) {
+            g->item_menu_index = 0;
+            screen_change(g, SCREEN_SHOP);
+        } else if (engage == ENGAGE_SAVE) {
+            g->save_slot_mode = 1;
+            g->save_slot_index = 0;
+            g->save_slot_message = 0;
+            screen_change(g, SCREEN_SAVE_LOAD);
+        }
     }
 }
 
 void overworld_screen_render(Game *g)
 {
     RenderCache *rc;
+    World *w;
     uint8_t px, py;
 
     if (!g) return;
     rc = &g->render_cache;
+    w = &g->world;
 
-    /* SCX/SCY is applied after any entering-edge tile writes below.  This
-     * keeps the newly visible edge off-screen while it is being populated. */
-    px = (uint8_t)(world_player_px(&g->world) - g->world.camera_px_x);
-    py = (uint8_t)(world_player_py(&g->world) - g->world.camera_px_y);
+    px = (uint8_t)(world_player_px(w) - w->camera_px_x);
+    py = (uint8_t)(world_player_py(w) - w->camera_px_y);
+    ui_update_camera(w);
 
-    /* Map transition, cache reset, or return from Battle/Dialogue */
     if (!rc->valid || rc->prev_screen != SCREEN_OVERWORLD ||
-        g->world.map_id != rc->prev_map_id) {
-        ui_update_camera(&g->world);
-        ui_draw_world_full(&g->world);
+        w->map_id != rc->prev_map_id) {
+        ui_draw_world_full(w);
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_OVERWORLD, 0,
-                       (uint8_t)g->world.map_id, 0);
+                       (uint8_t)w->map_id, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_OVERWORLD;
-        rc->prev_map_id = g->world.map_id;
-        ui_sprite_move(px, py);
-        ui_draw_actors_sprites(&g->world);
-        rc->prev_player_x = px;
-        rc->prev_player_y = py;
+        rc->prev_map_id = w->map_id;
         rc->prev_dialogue_active = false;
         rc->prev_dialogue_line = 255;
         rc->prev_dialogue_id = DIALOGUE_ID_NONE;
-        return;
     }
 
-    ui_update_camera(&g->world);
     ui_sprite_move(px, py);
-    ui_draw_actors_sprites(&g->world);
+    ui_draw_actors_sprites(w);
     rc->prev_player_x = px;
     rc->prev_player_y = py;
 }

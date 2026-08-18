@@ -43,22 +43,19 @@ void world_load_map(World *w, MapId map_id, const GameState *state)
 void world_update_scroll(World *w)
 {
     uint8_t px, py, max_x, max_y;
-
     if (!w) return;
-
     px = world_player_px(w);
     py = world_player_py(w);
-
-    w->camera_px_x = (px < (uint8_t)(WORLD_VIEW_W * 4)) ? 0 : (uint8_t)(px - WORLD_VIEW_W * 4);
-    w->camera_px_y = (py < (uint8_t)(WORLD_VIEW_H * 4)) ? 0 : (uint8_t)(py - WORLD_VIEW_H * 4);
-
+    px = (px < 80) ? 0 : (uint8_t)(px - 80);
+    py = (py < 48) ? 0 : (uint8_t)(py - 48);
     max_x = (w->width > WORLD_VIEW_W) ? (uint8_t)((w->width - WORLD_VIEW_W) << 3) : 0;
     max_y = (w->height > WORLD_VIEW_H) ? (uint8_t)((w->height - WORLD_VIEW_H) << 3) : 0;
-    if (w->camera_px_x > max_x) w->camera_px_x = max_x;
-    if (w->camera_px_y > max_y) w->camera_px_y = max_y;
-
-    w->scroll_x = (uint8_t)(w->camera_px_x >> 3);
-    w->scroll_y = (uint8_t)(w->camera_px_y >> 3);
+    if (px > max_x) px = max_x;
+    if (py > max_y) py = max_y;
+    w->camera_px_x = px;
+    w->camera_px_y = py;
+    w->scroll_x = (uint8_t)(px >> 3);
+    w->scroll_y = (uint8_t)(py >> 3);
 }
 
 void world_init(World *w, const GameState *state)
@@ -93,14 +90,11 @@ WorldMoveResult world_try_begin_move(World *w, int8_t dx, int8_t dy,
                                      const GameState *state)
 {
     uint8_t target_x, target_y;
-    uint8_t target_tile;
     uint8_t hostile_slot;
-    uint8_t outcome;
     const WorldActorDefinition *actor;
 
-    if (!w) return MOVE_RESULT_NONE;
-    if (w->move_state == MOVE_STATE_MOVING) return MOVE_RESULT_NONE;
-    (void)state;   /* only world_update_move resolves the exit at commit */
+    if (!w || w->move_state == MOVE_STATE_MOVING) return MOVE_RESULT_NONE;
+    (void)state;
 
     if (dy < 0) w->player.facing = DIRECTION_UP;
     else if (dy > 0) w->player.facing = DIRECTION_DOWN;
@@ -114,30 +108,24 @@ WorldMoveResult world_try_begin_move(World *w, int8_t dx, int8_t dy,
         return MOVE_RESULT_BLOCKED;
     }
 
-    target_tile = w->map[target_y][target_x];
-
-    /* Generic hostile World Actor collision: record which slot was hit so
-     * the battle system can read the right HP.  Resolved at move commit. */
     hostile_slot = actor_find_hostile_slot(w, target_x, target_y);
     if (hostile_slot != NO_ACTOR_INDEX) {
-        outcome = MOVE_OUTCOME_ENCOUNTER;
+        w->move_outcome = MOVE_OUTCOME_ENCOUNTER;
         w->encounter_actor_index = hostile_slot;
     } else {
-        /* Generic friendly World Actor collision (static definitions). */
         actor = actor_find_at(w, target_x, target_y);
         if (actor) {
             telemetry_emit(EVENT_ACTOR_COLLISION, target_x, target_y,
                            (uint8_t)actor->id, 0);
             return MOVE_RESULT_BLOCKED;
         }
-        outcome = (target_tile == TILE_EXIT) ? MOVE_OUTCOME_EXIT
-                                             : MOVE_OUTCOME_NORMAL;
+        w->move_outcome = (w->map[target_y][target_x] == TILE_EXIT) ? MOVE_OUTCOME_EXIT
+                                                                    : MOVE_OUTCOME_NORMAL;
     }
 
     w->move_target_x = target_x;
     w->move_target_y = target_y;
     w->move_progress = 0;
-    w->move_outcome = outcome;
     w->move_state = MOVE_STATE_MOVING;
     return MOVE_RESULT_MOVED;
 }
@@ -194,9 +182,9 @@ WorldMoveResult world_update_move(World *w, const GameState *state)
 
 static uint8_t calc_interp(uint8_t base, uint8_t target, uint8_t progress)
 {
-    uint8_t px = (uint8_t)(base * 8);
-    if (target > base) px += progress;
-    else if (target < base) px -= progress;
+    uint8_t px = (uint8_t)(base << 3);
+    if (target > base) return (uint8_t)(px + progress);
+    if (target < base) return (uint8_t)(px - progress);
     return px;
 }
 
@@ -205,7 +193,7 @@ uint8_t world_player_px(const World *w)
     if (!w) return 0;
     return (w->move_state == MOVE_STATE_MOVING) ?
         calc_interp(w->player.position.x, w->move_target_x, w->move_progress) :
-        (uint8_t)(w->player.position.x * 8);
+        (uint8_t)(w->player.position.x << 3);
 }
 
 uint8_t world_player_py(const World *w)
@@ -213,19 +201,19 @@ uint8_t world_player_py(const World *w)
     if (!w) return 0;
     return (w->move_state == MOVE_STATE_MOVING) ?
         calc_interp(w->player.position.y, w->move_target_y, w->move_progress) :
-        (uint8_t)(w->player.position.y * 8);
+        (uint8_t)(w->player.position.y << 3);
 }
 
 uint8_t world_actor_px(const WorldActorRuntime *a)
 {
     if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->x, a->move_target_x, a->move_progress) : (uint8_t)(a->x * 8);
+    return (a->move_state) ? calc_interp(a->x, a->move_target_x, a->move_progress) : (uint8_t)(a->x << 3);
 }
 
 uint8_t world_actor_py(const WorldActorRuntime *a)
 {
     if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->y, a->move_target_y, a->move_progress) : (uint8_t)(a->y * 8);
+    return (a->move_state) ? calc_interp(a->y, a->move_target_y, a->move_progress) : (uint8_t)(a->y << 3);
 }
 
 void world_on_battle_end(Game *g, bool victory)
@@ -241,19 +229,19 @@ void world_on_battle_end(Game *g, bool victory)
     if (idx == NO_ACTOR_INDEX) return;
 
     if (victory) {
-        actor_id = w->actors[idx].actor_id;
-        w->actors[idx].active = 0;
-        w->actors[idx].hp = 0;
-        w->actors[idx].flags = ACTOR_STATE_NONE;
-        telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)w->actors[idx].id, 0, 0, 0);
-        if (w->actors[idx].reward_currency != 0 && w->actors[idx].gold_reward != 0) {
-            currency_add(&g->state, (CurrencyId)w->actors[idx].reward_currency,
-                         w->actors[idx].gold_reward);
+        WorldActorRuntime *act = &w->actors[idx];
+        actor_id = act->actor_id;
+        act->active = 0;
+        act->hp = 0;
+        act->flags = ACTOR_STATE_NONE;
+        telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)act->id, 0, 0, 0);
+        if (act->reward_currency != 0 && act->gold_reward != 0) {
+            currency_add(&g->state, (CurrencyId)act->reward_currency, act->gold_reward);
         }
         if (actor_id != 0) {
             game_world_set_actor_state(&g->state, actor_id, ACTOR_STATE_DEFEATED);
         }
-        event_resolve_actor_defeated(g, actor_id, w->actors[idx].id);
+        event_resolve_actor_defeated(g, actor_id, act->id);
     }
 }
 
@@ -269,7 +257,7 @@ void world_on_battle_fled(Game *g)
     if (idx == NO_ACTOR_INDEX) return;
 
     if (w->actors[idx].active) {
-        w->actors[idx].hp = g->battle.enemy.hp;
+        w->actors[idx].hp = g->battle.enemies[0].hp;
     }
 }
 
@@ -280,7 +268,6 @@ WorldMoveResult world_update_actors(World *w)
 {
     uint8_t slot;
     WorldActorRuntime *a;
-    int8_t dx, dy;
     uint8_t target_x, target_y, facing;
     uint8_t entry;
 
@@ -313,12 +300,9 @@ WorldMoveResult world_update_actors(World *w)
         entry = (a->ai_type == AI_PATROL_CIRCLE) ?
             s_patrol_circle[a->ai_step & 3] :
             s_patrol_line[a->ai_step & 7];
-        dx = (int8_t)((entry & 3) - 1);
-        dy = (int8_t)(((entry >> 2) & 3) - 1);
         facing = (uint8_t)(entry >> 4);
-
-        target_x = (uint8_t)(a->spawn_x + dx);
-        target_y = (uint8_t)(a->spawn_y + dy);
+        target_x = (uint8_t)(a->spawn_x + (entry & 3) - 1);
+        target_y = (uint8_t)(a->spawn_y + ((entry >> 2) & 3) - 1);
 
         if (target_x == a->x && target_y == a->y) {
             a->facing = facing;

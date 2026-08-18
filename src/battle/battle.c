@@ -1,36 +1,61 @@
 #include "battle.h"
 #include "telemetry.h"
+#include <string.h>
+
+/* Compile-time guarantee that the timer window is an exact integer number of
+ * bar cells and whole seconds: every '=' drains one cell per
+ * BATTLE_TIMER_SECONDS frames with no fractional remainder (which would make
+ * tiles drain over uneven frame counts).  Same array-size trap as input.c. */
+static const int g_battle_timer_cadence_ok[
+    (BATTLE_TIMER_MAX_FRAMES % BATTLE_TIMER_BAR_LENGTH == 0) &&
+    (BATTLE_TIMER_BAR_DIVISOR == BATTLE_TIMER_MAX_FRAMES / BATTLE_TIMER_BAR_LENGTH) ? 1 : 0
+];
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
                   uint8_t enemy_hp, uint8_t enemy_max_hp)
 {
+    uint8_t *p = (uint8_t *)b;
+    uint16_t n = sizeof(Battle);
     uint8_t i;
     if (!b) return;
 
-    combatant_init(&b->player, "Hero", player_hp, player_max_hp);
-    combatant_init(&b->enemy, enemy_name ? enemy_name : "Enemy", enemy_hp, enemy_max_hp);
+    while (n--) *p++ = 0;
+    b->player.name = "Hero";
+    b->player.hp = player_hp;
+    b->player.max_hp = player_max_hp;
     b->player.attack = player_attack;
-    b->enemy.attack = 3;
+
+    b->enemies[0].name = enemy_name ? enemy_name : "Enemy";
+    b->enemies[0].hp = enemy_hp;
+    b->enemies[0].max_hp = enemy_max_hp;
+    b->enemies[0].attack = 3;
+    b->enemy_count = 1;
 
     deck_init_default(&b->deck);
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         deck_draw(&b->deck, &b->hand[i]);
-        b->selected_indices[i] = 0;
     }
 
-    b->combo_count = 0;
-    b->cursor_pos = 0;
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
     b->timer_max = BATTLE_TIMER_MAX_FRAMES;
     b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;
-    b->result = BATTLE_RESULT_NONE;
-    b->delay_timer = 0;
-    b->battle_over = false;
-    b->enemy_incoming_dmg = 0;
+    b->dirty = BATTLE_DIRTY_ALL;
 
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
+}
+
+void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack)
+{
+    uint8_t idx;
+    if (!b || b->enemy_count >= MAX_BATTLE_ENEMIES) return;
+    idx = b->enemy_count++;
+    b->enemies[idx].name = name ? name : "Enemy";
+    b->enemies[idx].hp = hp;
+    b->enemies[idx].max_hp = max_hp;
+    b->enemies[idx].attack = attack;
+    b->dirty = BATTLE_DIRTY_ALL;
 }
 
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
@@ -45,16 +70,65 @@ bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
     return false;
 }
 
-void battle_cursor_move(Battle *b, int8_t step)
+void battle_cursor_move(Battle *b, int8_t dir)
 {
-    int8_t next_pos;
     if (!b) return;
-    if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-        next_pos = (int8_t)b->cursor_pos + step;
-        if (next_pos < 0) next_pos = BATTLE_HAND_SIZE - 1;
-        else if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
-        b->cursor_pos = (uint8_t)next_pos;
+    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) return;
+    if (dir < 0) {
+        b->cursor_pos = (b->cursor_pos == 0) ? (BATTLE_HAND_SIZE - 1) : (uint8_t)(b->cursor_pos - 1);
+    } else {
+        b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
     }
+    b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+}
+
+void battle_target_move(Battle *b, int8_t dir)
+{
+    uint8_t i, t;
+    if (!b || b->enemy_count <= 1) return;
+
+    t = b->target_idx;
+    for (i = 0; i < b->enemy_count; i++) {
+        if (dir < 0) {
+            t = (t == 0) ? (uint8_t)(b->enemy_count - 1) : (uint8_t)(t - 1);
+        } else {
+            t = (uint8_t)((t + 1 >= b->enemy_count) ? 0 : (t + 1));
+        }
+        if (b->enemies[t].hp != 0) {
+            b->target_idx = t;
+            b->dirty |= BATTLE_DIRTY_ENEMIES;
+            return;
+        }
+    }
+}
+
+void battle_target_auto_advance(Battle *b)
+{
+    if (b && b->enemies[b->target_idx].hp == 0) {
+        battle_target_move(b, 1);
+    }
+}
+
+bool battle_all_enemies_dead(const Battle *b)
+{
+    uint8_t i;
+    if (!b) return true;
+    for (i = 0; i < b->enemy_count; i++) {
+        if (b->enemies[i].hp != 0) return false;
+    }
+    return true;
+}
+
+uint8_t battle_calc_enemy_attack(const Battle *b)
+{
+    uint8_t i, total = 0;
+    if (!b || b->enemy_count == 0) return 3;
+    for (i = 0; i < b->enemy_count; i++) {
+        if (b->enemies[i].hp != 0) {
+            total = (uint8_t)(total + (b->enemies[i].attack ? b->enemies[i].attack : 3));
+        }
+    }
+    return total ? total : 3;
 }
 
 void battle_card_select(Battle *b)
@@ -71,10 +145,12 @@ void battle_card_select(Battle *b)
 
     if (b->combo_count < BATTLE_HAND_SIZE) {
         b->selected_indices[b->combo_count++] = b->cursor_pos;
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 
+        next_pos = b->cursor_pos;
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {
-            next_pos = (uint8_t)(b->cursor_pos + step);
-            if (next_pos >= BATTLE_HAND_SIZE) next_pos -= BATTLE_HAND_SIZE;
+            next_pos++;
+            if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
             if (!battle_is_card_selected(b, next_pos)) {
                 b->cursor_pos = next_pos;
                 break;
@@ -83,12 +159,15 @@ void battle_card_select(Battle *b)
     }
 }
 
-static void battle_set_result(Battle *b, BattleResult res, uint8_t ev)
+void battle_set_result(Battle *b, uint8_t res)
 {
-    b->result = res;
+    uint8_t ev = (res == BATTLE_RESULT_VICTORY) ? EVENT_BATTLE_WON :
+                 ((res == BATTLE_RESULT_DEFEAT) ? EVENT_BATTLE_LOST : EVENT_BATTLE_FLED);
+    b->result = (BattleResult)res;
     b->phase = BATTLE_PHASE_RESULT;
     b->turn = BATTLE_TURN_RESULT;
     b->battle_over = true;
+    b->dirty = BATTLE_DIRTY_ALL;
     telemetry_emit(ev, 0, 0, 0, 0);
 }
 
@@ -101,8 +180,9 @@ void battle_card_undo(Battle *b)
 
     if (b->combo_count > 0) {
         b->cursor_pos = b->selected_indices[--b->combo_count];
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
     } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        battle_set_result(b, BATTLE_RESULT_FLED, EVENT_BATTLE_FLED);
+        battle_set_result(b, BATTLE_RESULT_FLED);
     }
 }
 
@@ -130,45 +210,37 @@ static uint8_t battle_eval_current_combo(Battle *b)
     return (uint8_t)b->last_combo.final_power;
 }
 
-static void battle_check_death(Battle *b, Combatant *c, BattleResult res, uint8_t entity_idx, uint8_t ev)
-{
-    if (combatant_is_dead(c)) {
-        telemetry_emit(EVENT_ENTITY_DEFEATED, entity_idx, 0, 0, 0);
-        battle_set_result(b, res, ev);
-    }
-}
-
 void battle_execute_combo(Battle *b)
 {
     uint8_t power;
     if (!b || b->battle_over) return;
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        /* If the timer expires with no cards selected, auto-select the card under the cursor */
         if (b->combo_count == 0) {
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
         }
         power = battle_eval_current_combo(b);
-        /* Lead card type determines action: CARD_TYPE_HEAL restores player HP,
-         * all offensive types (SW, BO, FI) deal damage to enemy. */
         if (b->last_combo.cards[0].type == CARD_TYPE_HEAL) {
-            b->player.hp = (uint8_t)((b->player.hp + power > b->player.max_hp) ? b->player.max_hp : (b->player.hp + power));
+            b->player.hp += power;
+            if (b->player.hp > b->player.max_hp) b->player.hp = b->player.max_hp;
             telemetry_emit(EVENT_HEALED, power, 0, 0, 0);
         } else {
-            combatant_take_damage(&b->enemy, power);
+            combatant_take_damage(&b->enemies[b->target_idx], power);
             telemetry_emit(EVENT_DAMAGE_DEALT, power, 0, 0, 0);
         }
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
         b->delay_timer = 30;
-        battle_check_death(b, &b->enemy, BATTLE_RESULT_VICTORY, 1, EVENT_BATTLE_WON);
+        b->dirty = BATTLE_DIRTY_ALL;
+        if (b->enemies[b->target_idx].hp == 0) {
+            telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)(b->target_idx + 1), 0, 0, 0);
+            battle_target_auto_advance(b);
+        }
+        if (battle_all_enemies_dead(b)) {
+            battle_set_result(b, BATTLE_RESULT_VICTORY);
+        }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-        /* Defend phase: Shield cards reduce incoming attack damage.
-         * combo-evaluated (face value +/- straight/flush bonuses) and
-         * applied once to the NEXT enemy attack only, not the whole turn.
-         * If the timer runs out with 0 cards chosen, power is 0 (full
-         * unblocked damage taken). */
         power = battle_eval_current_combo(b);
         power = (b->enemy_incoming_dmg > power) ? (b->enemy_incoming_dmg - power) : 0;
         combatant_take_damage(&b->player, power);
@@ -176,7 +248,11 @@ void battle_execute_combo(Battle *b)
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
         b->delay_timer = 30;
-        battle_check_death(b, &b->player, BATTLE_RESULT_DEFEAT, 0, EVENT_BATTLE_LOST);
+        b->dirty = BATTLE_DIRTY_ALL;
+        if (b->player.hp == 0) {
+            telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
+            battle_set_result(b, BATTLE_RESULT_DEFEAT);
+        }
     }
 }
 
@@ -187,6 +263,9 @@ void battle_update(Battle *b)
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         if (b->timer_ticks > 0) {
             b->timer_ticks--;
+            if (b->phase == BATTLE_PHASE_PLAYER_DEFEND && ((b->timer_ticks & 15) == 0 || (b->timer_ticks & 15) == 15)) {
+                b->dirty |= BATTLE_DIRTY_BLINK;
+            }
         } else {
             battle_execute_combo(b);
         }
@@ -194,15 +273,24 @@ void battle_update(Battle *b)
         b->delay_timer--;
     } else {
         if (b->phase == BATTLE_PHASE_PLAYER_ANIM) {
+            uint8_t count = 0;
             b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             b->turn = BATTLE_TURN_ENEMY;
-            b->enemy_incoming_dmg = b->enemy.attack ? b->enemy.attack : 3;
+            b->enemy_incoming_dmg = battle_calc_enemy_attack(b);
             b->delay_timer = 20;
+            while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
+                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+                count++;
+            }
         } else {
             b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
             b->turn = BATTLE_TURN_PLAYER;
             b->combo_count = 0;
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+            if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
+                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+            }
         }
+        b->dirty = BATTLE_DIRTY_ALL;
     }
 }

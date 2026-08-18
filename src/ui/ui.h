@@ -34,6 +34,7 @@ void ui_draw_overworld_hud(const World *world);
 void ui_draw_world_full(const World *world);
 void ui_draw_actors_sprites(const World *world);
 void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars);
+void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val);
 void ui_draw_hline(uint8_t y, char ch);
 
 /* Set SCX/SCY from the overworld camera pixel position.  Called every

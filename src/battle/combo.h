@@ -26,4 +26,10 @@ typedef struct {
  * out_result->cards[] if needed (as in battle_eval_current_combo). */
 void combo_evaluate(const Card *cards, uint8_t count, ComboPhase phase, ComboResult *out_result);
 
+/* The banked no-arg body (src/battle/combo_content.c, ROM bank 2), run via
+ * the WRAM banked-call trampoline.  Read only the staged _DATA globals and
+ * writes through the staged out_result pointer; it must stay self-contained
+ * so it never calls fixed-bank code. */
+void combo_evaluate_banked(void);
+
 #endif /* COMBO_H */

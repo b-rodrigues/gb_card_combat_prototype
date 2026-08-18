@@ -2035,6 +2035,44 @@ The one RAM-resident section the custom CRT0 itself copies is the timer ISR
 and enables timer IE (`IE = 0x04`; VBlank IE is off).  The harness skips this
 (it never enables interrupts), so the ISR never runs under the harness.
 
+### 52.11.1 Banked *code* execution: the banked-call trampoline
+
+Moving a whole bank-0 *function* to a higher ROM bank is possible and does
+NOT need GBDK's `__banked` / `___sdcc_banked_call` machinery (those helpers
+are the RAM-resident library code that §52.1/§52.11 warn about).  Instead
+mirror the `banked_copy` pattern:
+
+* The module's logic moves to a banked file (`#pragma bank 2`) as a fixed
+  **no-arg** function `xx_banked(void)` that reads its inputs only from the
+  staging globals and writes its outputs only through a staged pointer.
+  It must be fully self-contained — it may read its own banked const data
+  and the staged WRAM globals, but must never `call` a fixed-bank function
+  (the bank is switched away while it runs).
+* A thin fixed-bank wrapper keeps the original signature, stages the bank +
+  logical address + arguments into the `g_bk_call_*` globals
+  (`src/core/banked.c`), then calls `banked_call_run()`.
+* `crt0.s` `_banked_call_tramp` is the WRAM-resident body (copied by
+  `_banked_call_init`, which `game_init()` calls alongside
+  `banked_copy_init()` so it is resident under the harness too): it selects
+  the bank, computes the runtime target `0x4000 | (addr & 0x3FFF)`, pushes
+  the WRAM return address, and `jp`s to the target; the target's `ret` pops
+  back to WRAM, which restores home bank 1, `__current_bank`, and (unless
+  harness mode) `ei`.
+
+First user: `src/battle/combo.c` (`combo_evaluate` wrapper) →
+`src/battle/combo_content.c` (`combo_evaluate_banked`, bank 2).  This
+relieved the fixed-bank budget enough for the battle HUD row work.
+
+### 52.11.2 Battle HUD layout (rows)
+
+The battle screen uses the fixed background rows: `0` centered banner,
+`2-4` enemies (name/HP/caret), `6` hero, `13` `COMBO:` + hand type
+(`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
+cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`
+card description (`card_get_description`), `17` timer bar (window row,
+`0x9A20`).  Rows `7-12` stay blank as whitespace between the hero and the
+bottom card stack.
+
 ## 52.12 Scenario state ordering
 
 `scenario_begin()` (called by the declarative loader) resets

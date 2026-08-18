@@ -25,7 +25,6 @@ void deck_init_default(Deck *d)
 void deck_draw(Deck *d, Card *out_card)
 {
     uint8_t i, j;
-    Card temp;
     if (!out_card) return;
     if (!d || d->count == 0) {
         out_card->type = CARD_TYPE_SWORD;
@@ -40,19 +39,14 @@ void deck_draw(Deck *d, Card *out_card)
             }
             d->count = d->discard_count;
             d->discard_count = 0;
-            /* Deterministic Fisher-Yates shuffle of recycled discard pile.
-             * A plain `rng_next() & i` is only uniform when i = 2^n - 1, so
-             * mask with 0x1F (i <= 19) and reject draws above i.  The xorshift
-             * RNG is a permutation over its state and never repeats, so the
-             * retry always terminates.  Avoiding the SDCC division helper
-             * `% (i + 1)` keeps the fixed-bank budget (see make memmap). */
             for (i = (uint8_t)(d->count - 1); i > 0; i--) {
+                Card tmp;
                 do {
                     j = (uint8_t)(rng_next() & 0x1F);
                 } while (j > i);
-                temp = d->cards[i];
+                tmp = d->cards[i];
                 d->cards[i] = d->cards[j];
-                d->cards[j] = temp;
+                d->cards[j] = tmp;
             }
         }
         d->draw_idx = 0;
@@ -63,8 +57,7 @@ void deck_draw(Deck *d, Card *out_card)
 
 void deck_discard(Deck *d, Card c)
 {
-    if (!d) return;
-    if (d->discard_count < MAX_DECK_SIZE) {
+    if (d && d->discard_count < MAX_DECK_SIZE) {
         d->discard[d->discard_count++] = c;
     }
 }

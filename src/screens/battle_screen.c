@@ -8,16 +8,18 @@
 
 void battle_screen_update(Game *g)
 {
+    Battle *b;
     if (!g) return;
+    b = &g->battle;
 
-    if (g->battle.battle_over) {
+    if (b->battle_over) {
         if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
-            if (g->battle.result == BATTLE_RESULT_VICTORY || g->battle.result == BATTLE_RESULT_FLED) {
-                g->world.player.hp = g->battle.player.hp;
-                g->state.party.members[0].hp = g->battle.player.hp;
+            if (b->result == BATTLE_RESULT_VICTORY || b->result == BATTLE_RESULT_FLED) {
+                g->world.player.hp = b->player.hp;
+                g->state.party.members[0].hp = b->player.hp;
                 audio_play_music(MUSIC_OVERWORLD);
                 telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
-                if (g->battle.result == BATTLE_RESULT_VICTORY) {
+                if (b->result == BATTLE_RESULT_VICTORY) {
                     world_on_battle_end(g, true);
                     screen_change(g, game_screen_after_victory(g));
                 } else {
@@ -33,68 +35,55 @@ void battle_screen_update(Game *g)
         return;
     }
 
-    if (g->battle.phase == BATTLE_PHASE_PLAYER_SELECT ||
-        g->battle.phase == BATTLE_PHASE_PLAYER_DEFEND) {
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT ||
+        b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         if (input_pressed(INPUT_START)) {
             g->item_menu_index = 0;
             g->item_menu_tab = 0;
             screen_change(g, SCREEN_ITEM);
         } else if (input_pressed(INPUT_LEFT)) {
-            battle_cursor_move(&g->battle, -1);
+            battle_cursor_move(b, -1);
         } else if (input_pressed(INPUT_RIGHT)) {
-            battle_cursor_move(&g->battle, 1);
+            battle_cursor_move(b, 1);
+        } else if (input_pressed(INPUT_UP)) {
+            battle_target_move(b, -1);
+        } else if (input_pressed(INPUT_DOWN)) {
+            battle_target_move(b, 1);
         } else if (input_pressed(INPUT_A)) {
-            battle_card_select(&g->battle);
+            battle_card_select(b);
         } else if (input_pressed(INPUT_B)) {
-            battle_card_undo(&g->battle);
+            battle_card_undo(b);
         } else if (input_pressed(INPUT_SELECT)) {
-            battle_execute_combo(&g->battle);
+            battle_execute_combo(b);
         }
     }
 
-    battle_update(&g->battle);
+    battle_update(b);
 }
 
 void battle_screen_render(Game *g)
 {
     RenderCache *rc;
     uint8_t timer_bar;
-    uint8_t dirty;
+    Battle *b;
 
     if (!g) return;
     rc = &g->render_cache;
-    timer_bar = ui_calc_timer_bar(g->battle.timer_ticks);
-
-    dirty = (rc->prev_battle_phase != g->battle.phase) |
-            (rc->prev_player_hp != g->battle.player.hp) |
-            (rc->prev_enemy_hp != g->battle.enemy.hp) |
-            (rc->prev_battle_result != g->battle.result) |
-            (rc->prev_battle_cursor != g->battle.cursor_pos) |
-            (rc->prev_battle_combo_count != g->battle.combo_count);
+    b = &g->battle;
+    timer_bar = ui_calc_timer_bar(b->timer_ticks);
 
     if (!rc->valid || rc->prev_screen != SCREEN_BATTLE) {
         ui_lcd_off();
-        ui_draw_battle_full(&g->battle);
+        ui_draw_battle_full(b);
         ui_lcd_on();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_BATTLE, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_BATTLE;
-    } else if (dirty) {
-        ui_lcd_off();
-        ui_update_battle(&g->battle);
-        ui_lcd_on();
+    } else if (b->dirty) {
+        ui_update_battle(b);
     } else if (rc->prev_battle_timer_bar != timer_bar) {
-        ui_draw_battle_timer(&g->battle);
-    } else {
-        return;
+        ui_draw_battle_timer(b);
     }
-
-    rc->prev_battle_turn = g->battle.turn;
-    rc->prev_battle_phase = g->battle.phase;
-    rc->prev_player_hp = g->battle.player.hp;
-    rc->prev_enemy_hp = g->battle.enemy.hp;
-    rc->prev_battle_result = g->battle.result;
-    rc->prev_battle_cursor = g->battle.cursor_pos;
-    rc->prev_battle_combo_count = g->battle.combo_count;
+    b->dirty = 0;
     rc->prev_battle_timer_bar = timer_bar;
 }

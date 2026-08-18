@@ -1,0 +1,29 @@
+{
+  "name": "combo_3card",
+  "test": true,
+  "description": "Three-card straight flush (SW2 + SW3 + SW4, same type, consecutive values).  Evaluator: straight=true, same_type=true, eff_count=3, power=9*1.65=14 (sum=9, scaled).  Kills 5HP enemy.",
+  "actions": [
+    {"type": "set_hand_card", "index": 0, "card_type": "SW", "value": 2},
+    {"type": "set_hand_card", "index": 1, "card_type": "SW", "value": 3},
+    {"type": "set_hand_card", "index": 2, "card_type": "SW", "value": 4},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "SELECT"},
+    {"type": "wait", "frames": 10}
+  ],
+  "assertions": [
+    {"type": "screen", "expected": "BATTLE"},
+    {"type": "event_occurred", "event": "DAMAGE_DEALT"},
+    {"type": "event_occurred", "event": "ENTITY_DEFEATED"}
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {"x": 13, "y": 8, "facing": "DOWN"},
+    "seed": 3000,
+    "start_battle": true
+  }
+}
