@@ -102,6 +102,20 @@ const DialogueDefinition g_dialogues[] = {
         1,
         {"Nothing here now."},
         0
+    },
+    {
+        DIALOGUE_ID_SIGNPOST,
+        "",
+        8,
+        {"This is the Field.",
+         "East: Town (shop,",
+         "save point).",
+         "North: Forest (danger).",
+         "",
+         "Combat: A to pick",
+         "cards, SELECT to play.",
+         "Pairs, flushes & straights hit harder!"},
+        0
     }
 };
 

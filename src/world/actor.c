@@ -14,7 +14,7 @@ static const WorldActorTable *g_actor_tables = NULL;
 static uint8_t g_actor_table_count = 0;
 static uint8_t g_actor_bank = 2;
 
-static WorldActorDefinition g_static_actors[6];
+static WorldActorDefinition g_static_actors[7];
 static uint8_t g_static_actor_count = 0;
 
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank)
