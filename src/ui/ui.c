@@ -110,32 +110,8 @@ void ui_init(void)
 
     SHOW_BKG;
 
-    /* HUD window layer: the window uses tilemap 0x9C00 (LCDC bit 6) so the
-     * SCX/SCY-scrolled BG map (0x9800) is separate from the fixed HUD.
-     * WX=7 puts the window at the display left edge; the window stays
-     * disabled until ui_hud_show() (overworld) enables it, and
-     * ui_hud_hide() disables it on every other screen. */
-    LCDC_REG |= 0x40;   /* window tilemap base 0x9C00 */
-    WX_REG = 7;
-    WY_REG = 96;
-
     ui_sprite_init();
     DISPLAY_ON;
-}
-
-/* Show the HUD window at the bottom of the display (the overworld only).
- * The window is always enabled while the HUD is visible; its tilemap
- * (0x9C00) holds the HUD. */
-void ui_hud_show(void)
-{
-    SHOW_WIN;
-    WY_REG = 96;
-}
-
-/* Hide the HUD window (every screen but the overworld). */
-void ui_hud_hide(void)
-{
-    HIDE_WIN;
 }
 
 /* Load the player sprite tile and enable the OAM sprite.  Called from
@@ -478,17 +454,6 @@ void ui_update_camera(const World *world)
 #endif
 }
 
-/* Write one char to the HUD window tilemap (0x9C00) row `y` (0-5, displayed
- * at screen rows 12-17) and mirror it into the semantic g_ui_screen_buf.
- * The console font packs its glyphs starting at space, so char `ch` is tile
- * base + (ch - ' ').  Callers pass in-range coordinates (x < 20, y < 6). */
-static void ui_hud_put_char(uint8_t x, uint8_t y, char ch)
-{
-    VBK_REG = 0;
-    ((volatile uint8_t *)0x9C00)[((uint16_t)y << 5) + x] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-    g_ui_screen_buf[12 + y][x] = ch;
-}
-
 static void ui_put_char(uint8_t x, uint8_t y, char ch)
 {
     if (y < 18 && x < 20) {
@@ -502,26 +467,6 @@ static void ui_put_char(uint8_t x, uint8_t y, char ch)
     }
 }
 
-static void ui_hud_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
-{
-    uint8_t i = 0;
-    uint8_t ended = (text == NULL);
-    while (i < max_chars) {
-        if (!ended && text[i] == '\0') ended = 1;
-        ui_hud_put_char((uint8_t)(x + i), y, ended ? ' ' : text[i]);
-        i++;
-    }
-}
-
-static void ui_hud_num2(uint8_t x, uint8_t y, uint8_t val)
-{
-    uint8_t d = 0;
-    if (val > 99) val = 99;
-    while (val >= 10) { val -= 10; d++; }
-    ui_hud_put_char(x, y, d ? (char)('0' + d) : ' ');
-    ui_hud_put_char((uint8_t)(x + 1), y, (char)('0' + val));
-}
-
 void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
 {
     uint8_t d = 0;
@@ -529,19 +474,6 @@ void ui_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     while (val >= 10) { val -= 10; d++; }
     ui_put_char(x, y, d ? (char)('0' + d) : ' ');
     ui_put_char((uint8_t)(x + 1), y, (char)('0' + val));
-}
-
-static const char * const s_map_names = "FIELD\0TOWN \0FORST\0MOUNT\0CASTL";
-
-static const char *map_name_str(uint8_t m)
-{
-    return (m < 5) ? (s_map_names + (m * 6)) : s_map_names;
-}
-
-static void ui_hud_hline(uint8_t y, char ch)
-{
-    uint8_t x;
-    for (x = 0; x < 20; x++) ui_hud_put_char(x, y, ch);
 }
 
 void ui_draw_hline(uint8_t y, char ch)
@@ -561,25 +493,6 @@ void ui_draw_hline(uint8_t y, char ch)
             g_ui_screen_buf[y][x] = ch;
         }
     }
-}
-
-void ui_draw_overworld_hud(const World *world)
-{
-    uint8_t r;
-
-    if (!world) return;
-
-    /* The HUD lives in the WINDOW layer (0x9C00), so the SCX/SCY-scrolled
-     * background map never carries it.  Window row y -> screen row 12+y. */
-    ui_hud_hline(0, '=');
-    ui_hud_text_line(0, 1, "MAP: ", 5);
-    ui_hud_text_line(5, 1, map_name_str(world->map_id), 5);
-    ui_hud_text_line(10, 1, "| HP:", 5);
-    ui_hud_num2(15, 1, world->player.hp);
-    ui_hud_put_char(17, 1, '/');
-    ui_hud_num2(18, 1, world->player.max_hp);
-    for (r = 2; r <= 4; r++) ui_hud_hline(r, ' ');
-    ui_hud_text_line(0, 5, " [D-PAD] MOVE HERO", 20);
 }
 
 void ui_draw_world_full(const World *world)

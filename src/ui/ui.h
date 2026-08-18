@@ -30,7 +30,6 @@ void ui_lcd_off(void);
 void ui_lcd_on(void);
 
 void ui_draw_world_map(const World *world);
-void ui_draw_overworld_hud(const World *world);
 void ui_draw_world_full(const World *world);
 void ui_draw_actors_sprites(const World *world);
 void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars);
@@ -40,11 +39,6 @@ void ui_draw_hline(uint8_t y, char ch);
 /* Set SCX/SCY from the overworld camera pixel position.  Called every
  * overworld frame so the background glides smoothly. */
 void ui_update_camera(const World *world);
-
-/* HUD window layer (0x9C00): fixed at the bottom of the overworld display,
- * off-screen elsewhere (the SCX/SCY-scrolled BG map must not carry the HUD). */
-void ui_hud_show(void);
-void ui_hud_hide(void);
 
 /* Write value as a decimal string into out (at least 7 bytes).  Avoids the
  * stdio/console chain so _HOME stays under 0x8000. */
