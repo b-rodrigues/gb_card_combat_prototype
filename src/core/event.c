@@ -2,7 +2,7 @@
 #include "game.h"
 #include "telemetry.h"
 #include "screen.h"
-#include "rpg/inventory.h"
+#include "rpg/deck.h"
 #include "rpg/currency.h"
 #include "banked.h"
 
@@ -47,7 +47,7 @@ static bool event_condition_met(const GameState *state, const EventCond *cond)
     if (t == EVENT_COND_VARIABLE) {
         v = game_variable_get(state, (VariableId)cond->id);
     } else if (t == EVENT_COND_ITEM_COUNT) {
-        v = (int16_t)inventory_count(&state->inventory, (ItemId)cond->id);
+        v = (int16_t)deck_collection_count(&state->cards, (CardId)cond->id);
     } else {
         return true;
     }
@@ -86,11 +86,11 @@ static void event_execute_actions(Game *g, const EventDefinition *def,
         } else if (t == EVENT_ACTION_SCENE_CHANGE) {
             scene_load(g, (SceneId)a0, (uint8_t)a1, (uint8_t)a->arg2);
         } else if (t == EVENT_ACTION_ADD_ITEM) {
-            inventory_add(&g->state.inventory, (ItemId)a0, (uint8_t)a1);
+            deck_collection_add(&g->state.cards, (CardId)a0, (uint8_t)a1);
         } else if (t == EVENT_ACTION_ADD_CURRENCY) {
             currency_add(&g->state, (CurrencyId)a0, a1);
         } else if (t == EVENT_ACTION_REMOVE_ITEM) {
-            inventory_remove(&g->state.inventory, (ItemId)a0, (uint8_t)a1);
+            deck_collection_remove(&g->state.cards, (CardId)a0, (uint8_t)a1);
         }
     }
 }

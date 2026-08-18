@@ -1,5 +1,5 @@
 #include "rpg/items.h"
-#include "rpg/inventory.h"
+#include "rpg/deck.h"
 #include "rpg/currency.h"
 #include "rpg/party.h"
 #include "telemetry.h"
@@ -35,14 +35,9 @@ const ItemDefinition *item_get_def(ItemId id)
 
 bool item_equip(GameState *state, ItemId id)
 {
-    const ItemDefinition *def;
-    if (!state) return false;
-    def = item_get_def(id);
-    if (!def || def->kind != ITEM_KIND_WEAPON) return false;
-
-    state->equipment.weapon = id;
-    telemetry_emit(EVENT_ITEM_EQUIPPED, (uint8_t)id, 0, 0, 0);
-    return true;
+    (void)state;
+    (void)id;
+    return false;
 }
 
 bool item_use(GameState *state, ItemId id, CharacterId target)
@@ -57,7 +52,7 @@ bool item_use(GameState *state, ItemId id, CharacterId target)
         telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 0, 0, 0);
         return false;
     }
-    if (inventory_count(&state->inventory, id) == 0) {
+    if (deck_collection_count(&state->cards, (CardId)id) == 0) {
         telemetry_emit(EVENT_ITEM_USE_FAILED, (uint8_t)id, 1, 0, 0);
         return false;
     }
@@ -78,7 +73,7 @@ bool item_use(GameState *state, ItemId id, CharacterId target)
     member->hp = (uint8_t)(member->hp + healed);
     telemetry_emit(EVENT_HEALED, healed, (uint8_t)id, 0, 0);
 
-    inventory_remove(&state->inventory, id, 1);
+    deck_collection_remove(&state->cards, (CardId)id, 1);
     telemetry_emit(EVENT_ITEM_USED, (uint8_t)id, (uint8_t)target, 0, 0);
     return true;
 }
@@ -97,10 +92,8 @@ ItemPurchaseResult item_purchase(GameState *state, ItemId id)
     }
     price = (int16_t)def->price;
 
-    /* A new slot is only needed when the item is not already held; an
-     * existing entry stacks (inventory_add never needs a new slot). */
-    if (inventory_count(&state->inventory, id) == 0 &&
-        state->inventory.count >= MAX_INVENTORY_ITEMS) {
+    if (deck_collection_count(&state->cards, (CardId)id) == 0 &&
+        state->cards.collection.count >= MAX_CARD_COLLECTION) {
         telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)id,
                        (uint8_t)ITEM_PURCHASE_NO_CAPACITY, 0, 0);
         return ITEM_PURCHASE_NO_CAPACITY;
@@ -111,9 +104,8 @@ ItemPurchaseResult item_purchase(GameState *state, ItemId id)
         return ITEM_PURCHASE_NO_GOLD;
     }
 
-    /* Commit (both can no longer fail after the checks above). */
     currency_add(state, def->currency, -price);
-    inventory_add(&state->inventory, id, 1);
+    deck_collection_add(&state->cards, (CardId)id, 1);
     telemetry_emit(EVENT_ITEM_PURCHASED, (uint8_t)id, (uint8_t)price, 0, 0);
     return ITEM_PURCHASE_OK;
 }

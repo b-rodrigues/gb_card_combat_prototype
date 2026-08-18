@@ -27,7 +27,7 @@ void deck_draw(Deck *d, Card *out_card)
     uint8_t i, j;
     if (!out_card) return;
     if (!d || d->count == 0) {
-        out_card->type = CARD_TYPE_SWORD;
+        out_card->type = BATTLE_CARD_TYPE_SWORD;
         out_card->value = 2;
         return;
     }

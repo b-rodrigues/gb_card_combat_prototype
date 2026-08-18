@@ -135,11 +135,11 @@ void debug_state_snapshot(void)
         *p++ = st->party.members[i].max_hp;
     }
 
-    b[STATE_SNAP_INVENTORY_OFFSET] = st->inventory.count;
+    b[STATE_SNAP_INVENTORY_OFFSET] = st->cards.collection.count;
     p = b + STATE_SNAP_INVENTORY_OFFSET + 1;
-    for (i = 0; i < st->inventory.count && i < 16; i++) {
-        *p++ = (uint8_t)st->inventory.entries[i].item_id;
-        *p++ = st->inventory.entries[i].quantity;
+    for (i = 0; i < st->cards.collection.count && i < 16; i++) {
+        *p++ = st->cards.collection.entries[i].id;
+        *p++ = st->cards.collection.entries[i].count;
     }
 
     b[STATE_SNAP_WORLD_OFFSET] = st->world.count;
@@ -161,7 +161,7 @@ void debug_state_snapshot(void)
         p += 2;
     }
 
-    b[STATE_SNAP_EQUIPMENT_OFF] = (uint8_t)st->equipment.weapon;
+    b[STATE_SNAP_EQUIPMENT_OFF] = 0;
 
     /* Runtime overworld camera + scene dims */
     b[STATE_SNAP_SCROLL_X_OFF]        = g_game.world.scroll_x;

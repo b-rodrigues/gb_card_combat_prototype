@@ -35,6 +35,7 @@ void game_events_register(void);
 void game_dialogue_register(void);
 void game_actors_register(void);
 void game_items_register(void);
+void game_cards_register(void);
 void game_quest_register(void);
 
 #endif /* GAME_CONTENT_H */

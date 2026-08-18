@@ -221,7 +221,7 @@ void battle_execute_combo(Battle *b)
             b->combo_count = 1;
         }
         power = battle_eval_current_combo(b);
-        if (b->last_combo.cards[0].type == CARD_TYPE_HEAL) {
+        if (b->last_combo.cards[0].type == BATTLE_CARD_TYPE_HEAL) {
             b->player.hp += power;
             if (b->player.hp > b->player.max_hp) b->player.hp = b->player.max_hp;
             telemetry_emit(EVENT_HEALED, power, 0, 0, 0);

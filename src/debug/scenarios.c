@@ -9,7 +9,7 @@
 #include "actor.h"
 #include "scene.h"
 #include "rpg/items.h"
-#include "rpg/inventory.h"
+#include "rpg/deck.h"
 #include "rpg/currency.h"
 #include "rpg/progression.h"
 #include "rpg/save.h"
@@ -105,9 +105,8 @@ static void scenario_load_state(void)
 
     p = b + STATE_LOAD_DESC_INVENTORY_ENTRY_OFF;
     for (i = 0; i < b[STATE_LOAD_DESC_INVENTORY_COUNT_OFF]; i++) {
-        g_game.state.inventory.entries[i].item_id = (ItemId)*p++;
-        g_game.state.inventory.entries[i].quantity = *p++;
-        g_game.state.inventory.count = (uint8_t)(i + 1);
+        deck_collection_add(&g_game.state.cards, (CardId)*p, *(p + 1));
+        p += 2;
     }
 
     p = b + STATE_LOAD_DESC_WORLD_ENTRY_OFF;
@@ -126,7 +125,7 @@ static void scenario_load_state(void)
         progression_ensure(&g_game.state, t_type, t_id, *p, snap_read16(p + 1));
         p += 3;
     }
-    g_game.state.equipment.weapon = (ItemId)b[STATE_LOAD_DESC_EQUIPMENT_OFF];
+    /* equipment field removed; skipped */
 
     g_game.state.scene.scene_id = scene;
     g_game.state.scene.player_x = x;
@@ -189,10 +188,10 @@ static void debug_run_action(void)
 
     switch (action) {
         case DBG_ACT_ADD_ITEM:
-            inventory_add(&g_game.state.inventory, (ItemId)a0, a2);
+            deck_collection_add(&g_game.state.cards, (CardId)a0, a2);
             break;
         case DBG_ACT_REMOVE_ITEM:
-            inventory_remove(&g_game.state.inventory, (ItemId)a0, a2);
+            deck_collection_remove(&g_game.state.cards, (CardId)a0, a2);
             break;
         case DBG_ACT_ADD_CURRENCY:
             currency_add(&g_game.state, (CurrencyId)a0, a1);
@@ -225,7 +224,7 @@ static void debug_run_action(void)
             break;
         case DBG_ACT_SET_HAND_CARD:
             if (a0 < BATTLE_HAND_SIZE) {
-                g_game.battle.hand[a0].type = (CardType)((uint16_t)a1 & 0xFF);
+                g_game.battle.hand[a0].type = (BattleCardType)((uint16_t)a1 & 0xFF);
                 g_game.battle.hand[a0].value = a2;
             }
             break;

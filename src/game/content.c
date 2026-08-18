@@ -19,6 +19,7 @@ void game_content_init(void)
     game_dialogue_register();
     game_actors_register();
     game_items_register();
+    game_cards_register();
     game_quest_register();
 }
 
@@ -43,12 +44,7 @@ void game_new_game(GameState *state)
 
 uint8_t game_hero_attack(const GameState *state)
 {
-    const ItemDefinition *def;
-    if (!state) return HERO_BASE_ATTACK;
-    def = item_get_def(state->equipment.weapon);
-    if (def && def->kind == ITEM_KIND_WEAPON) {
-        return (uint8_t)(HERO_BASE_ATTACK + def->attack_bonus);
-    }
+    (void)state;
     return HERO_BASE_ATTACK;
 }
 

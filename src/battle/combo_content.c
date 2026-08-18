@@ -45,14 +45,14 @@ void combo_evaluate_banked(void)
         uint8_t v = cards[i].value;
 
         if (phase == COMBO_PHASE_ATTACK) {
-            if (t != CARD_TYPE_SHIELD) sum += v;
+            if (t != BATTLE_CARD_TYPE_SHIELD) sum += v;
             if (i > 0) {
                 if (v != (uint8_t)(prev_val + 1)) straight = false;
                 if (t != cards[0].type) same_type = false;
             }
             prev_val = v;
             eff_count++;
-        } else if (t == CARD_TYPE_SHIELD) {
+        } else if (t == BATTLE_CARD_TYPE_SHIELD) {
             sum += v;
             if (eff_count > 0 && v != (uint8_t)(prev_val + 1)) straight = false;
             prev_val = v;
