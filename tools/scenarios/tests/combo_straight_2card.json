@@ -1,0 +1,26 @@
+{
+  "name": "combo_straight_2card",
+  "test": true,
+  "description": "Two-card straight (SW2 + BO3, different types, consecutive values).  Evaluator: straight=true, eff_count=2, power=sum*1.1=5 (2+3=5, scaled).  Kills 5HP enemy.  Verifies straight bonus in banked combo_evaluate.",
+  "actions": [
+    {"type": "set_hand_card", "index": 0, "card_type": "SW", "value": 2},
+    {"type": "set_hand_card", "index": 1, "card_type": "BO", "value": 3},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "A"},
+    {"type": "wait", "frames": 6},
+    {"type": "press", "button": "SELECT"},
+    {"type": "wait", "frames": 10}
+  ],
+  "assertions": [
+    {"type": "screen", "expected": "BATTLE"},
+    {"type": "event_occurred", "event": "DAMAGE_DEALT"},
+    {"type": "event_occurred", "event": "ENTITY_DEFEATED"}
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {"x": 13, "y": 8, "facing": "DOWN"},
+    "seed": 3000,
+    "start_battle": true
+  }
+}

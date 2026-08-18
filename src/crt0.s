@@ -1,5 +1,12 @@
 ; Minimal CRT0: reuses GBDK vectors/dispatch/logo, minimal init.
         .module crt0
+; The project links with -yo8: the fixed-bank _CODE/_HOME area spans file
+; 0x0000-0x7FFF and the second half is reached at CPU 0x4000-0x7FFF with
+; ROMB=1 (see the banked-content copy trampoline notes below).  This is the
+; architectural home bank: every bank-switching trampoline restores it, and
+; boot init stores it into __current_bank.  Keep the trampolines' restore
+; sites in sync with this single constant.
+HOME_BANK .equ 1
         .globl  _main
         .globl  _audio_update
         .globl  _g_harness_mode
@@ -59,7 +66,7 @@ clear_loop:
         xor     a
         ld      (__is_GBA), a
         inc     a
-        ld      (__current_bank), a
+        ld      (__current_bank), a ; a was 0 -> __current_bank = HOME_BANK (1)
 
         ; Copy the RAM-resident timer ISR into WRAM (always mapped,
         ; independent of ROM banking).  Music runs on the hardware timer
@@ -257,6 +264,13 @@ copy_isr_loop:
         .globl  _g_bank_copy_dst
         .globl  _g_bank_copy_src
         .globl  _g_bank_copy_n
+; The banked_copy_init byte-copy copies this whole body into the linker-
+; allocated WRAM buffer g_banked_tramp[64] (banked.c).  These start/end
+; symbols are exported so tools/memmap.py can verify at build time that the
+; body still fits the buffer (fail instead of silently overwriting the
+; banked-call staging globals that follow it in WRAM).
+        .globl  _banked_copy_tramp
+        .globl  _banked_copy_tramp_end
 _banked_copy_tramp:
         push    bc
         push    de
@@ -289,8 +303,8 @@ _banked_copy_tramp:
         dec     c
         jr      nz, banked_copy_loop
  banked_copy_done:
-        ld      a, #0x01
-        ld      (0x2000), a          ; restore home bank 1 (see below)
+        ld      a, #HOME_BANK
+        ld      (0x2000), a          ; restore home bank (HOME_BANK, see below)
         ld      (__current_bank), a
         ld      a, (_g_harness_mode)
         or      a
@@ -357,6 +371,9 @@ banked_copy_init_loop:
         .globl  _g_bk_call_bank
         .globl  _g_bk_call_target
         .globl  _g_banked_call_tramp
+; _banked_call_tramp and _banked_call_tramp_end (both .globl below / above)
+; bound the body copied into g_banked_call_tramp[64] (see the size contract
+; at _banked_call_tramp_end).
 _banked_call_tramp:
         push    bc
         push    de
@@ -381,18 +398,24 @@ _banked_call_tramp:
         ld      h, d
         ld      l, e
         jp      (hl)                ; run the banked function
-banked_call_ret_wram:
-        ld      a, #0x01
-        ld      (0x2000), a          ; restore home bank 1
+ banked_call_ret_wram:
+        ld      a, #HOME_BANK
+        ld      (0x2000), a          ; restore home bank (HOME_BANK)
         ld      (__current_bank), a
         ld      a, (_g_harness_mode)
         or      a
         jr      nz, banked_call_ret
         ei                            ; home bank restored, interrupts safe again
-banked_call_ret:
+ banked_call_ret:
         pop     de
         pop     bc
         ret
+; Same build-time size contract as the copy trampoline above: the
+; banked_call_init byte-copy must fit the linker-allocated WRAM buffer
+; g_banked_call_tramp[64] (banked.c).  Start/end are exported so
+; tools/memmap.py can verify the body size at build time.
+        .globl  _banked_call_tramp
+        .globl  _banked_call_tramp_end
 _banked_call_tramp_end:
 
 ; ROM stub for the fixed-bank C wrapper (src/core/banked.c): jumps into the

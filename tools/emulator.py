@@ -167,6 +167,9 @@ ITEM_ID_MAP = {"NONE": 0,
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
+# Card type names -> CardType enum (src/battle/card.h):
+# SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, FI=FIRE 3, HE=HEAL 4.
+CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "FI": 3, "HE": 4}
 DIALOGUE_NAME_TO_ID = {v: k for k, v in DIALOGUE_ID_MAP.items()}
 CURRENCY_ID_MAP = {"GOLD": 1}
 
@@ -863,6 +866,7 @@ class EmulatorSession:
     DBG_ACT_EQUIP_ITEM = 7
     DBG_ACT_SAVE = 8
     DBG_ACT_LOAD = 9
+    DBG_ACT_SET_HAND_CARD = 10
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

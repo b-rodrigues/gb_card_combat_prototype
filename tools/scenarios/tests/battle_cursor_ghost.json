@@ -1,7 +1,7 @@
 {
   "name": "battle_cursor_ghost",
   "test": true,
-  "description": "Regression guard for ghost battle cursors: stresses the hand and target cursors through many moves and asserts exactly one caret remains on the target row (4) and the hand row (11)",
+  "description": "Regression guard for ghost battle cursors: stresses the hand and target cursors through many moves and asserts exactly one caret remains on the target row (4) and the hand row (15)",
   "actions": [
     {
       "type": "press",

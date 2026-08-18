@@ -20,7 +20,7 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
                       CHARACTER_ID_TO_NAME, ITEM_ID_TO_NAME, ACTOR_ID_TO_NAME,
                       CURRENCY_ID_MAP, PROGRESSION_TARGET_MAP,
                       CURRENCY_ID_TO_NAME, PROG_TYPE_HERO,
-                      ITEM_ATTACK_BONUS, HERO_BASE_ATTACK)
+                      ITEM_ATTACK_BONUS, HERO_BASE_ATTACK, CARD_TYPE_MAP)
 
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
@@ -218,6 +218,17 @@ def run_scenario(scenario):
             elif act_type == "load":
                 slot = act.get("slot", 1) - 1 if "slot" in act else 0
                 session.debug_action(session.DBG_ACT_LOAD, slot, 0, 0)
+            elif act_type == "set_hand_card":
+                # Overwrite one battle hand slot (index 0-4) with a specific
+                # card (type like"SW"/"SH"/"BO"/"FI"/"HE", value 1-9).  Used by
+                # combo-regression scenarios to build a guaranteed hand rather
+                # than depending on the RNG-shuffled deal.  Runs through the
+                # ROM's real mechanic state (g_game.battle.hand), not test-only
+                # logic.
+                session.debug_action(session.DBG_ACT_SET_HAND_CARD,
+                                     act.get("index", 0) & 0xFF,
+                                     CARD_TYPE_MAP[act.get("card_type", "SW")] & 0xFF,
+                                     act.get("value", 1) & 0xFF)
 
         # Read final snapshot, canonical state buffer and telemetry
         snap = session.snapshot()

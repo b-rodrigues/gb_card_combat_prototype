@@ -16,6 +16,7 @@
 #include "content.h"
 #include "game_ids.h"
 #include "ui.h"
+#include "battle.h"
 
 extern Game g_game;
 
@@ -34,7 +35,8 @@ enum {
     DBG_ACT_USE_ITEM = 6,
     DBG_ACT_EQUIP_ITEM = 7,
     DBG_ACT_SAVE = 8,
-    DBG_ACT_LOAD = 9
+    DBG_ACT_LOAD = 9,
+    DBG_ACT_SET_HAND_CARD = 10
 };
 
 static void scenario_begin(uint16_t seed)
@@ -219,6 +221,12 @@ static void debug_run_action(void)
                 scene_load(&g_game, g_game.state.scene.scene_id,
                            g_game.state.scene.player_x, g_game.state.scene.player_y);
                 g_game.world.player.facing = (Direction)g_game.state.scene.player_facing;
+            }
+            break;
+        case DBG_ACT_SET_HAND_CARD:
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].type = (CardType)((uint16_t)a1 & 0xFF);
+                g_game.battle.hand[a0].value = a2;
             }
             break;
         default:
