@@ -298,10 +298,12 @@ void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
         } else {
             ch = ' ';
         }
-        ui_vram_sync_write(
-            &((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + i + ox) & 31)],
-            (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' ')));
-        g_ui_screen_buf[y][x + i] = ch;
+        if (g_ui_screen_buf[y][x + i] != ch) {
+            ui_vram_sync_write(
+                &((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + i + ox) & 31)],
+                (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' ')));
+            g_ui_screen_buf[y][x + i] = ch;
+        }
     }
 }
 
