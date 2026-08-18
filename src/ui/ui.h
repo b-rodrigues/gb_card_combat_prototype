@@ -45,6 +45,8 @@ void ui_update_camera(const World *world);
 void ui_format_int(int16_t value, char *out);
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y);
+void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
+                           uint8_t max_chars, uint8_t ox, uint8_t oy);
 void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
 void ui_draw_battle_timer(const Battle *battle);

@@ -276,6 +276,37 @@ void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars
     }
 }
 
+void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
+                           uint8_t max_chars, uint8_t ox, uint8_t oy)
+{
+    uint8_t i;
+    char ch;
+    uint8_t ended;
+
+    if (y >= 18 || x >= 20) return;
+    if ((uint8_t)(x + max_chars) > 20) max_chars = (uint8_t)(20 - x);
+
+    VBK_REG = 0;
+    ended = (text == NULL);
+    for (i = 0; i < max_chars; i++) {
+        if (!ended) {
+            ch = text[i];
+            if (ch == '\0') {
+                ended = 1;
+                ch = ' ';
+            }
+        } else {
+            ch = ' ';
+        }
+        if (g_ui_screen_buf[y][x + i] != ch) {
+            ui_vram_sync_write(
+                &((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + i + ox) & 31)],
+                (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' ')));
+            g_ui_screen_buf[y][x + i] = ch;
+        }
+    }
+}
+
 
 
 static const uint16_t s_p10[4] = { 10000, 1000, 100, 10 };

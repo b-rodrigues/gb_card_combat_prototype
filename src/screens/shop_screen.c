@@ -65,14 +65,16 @@ void shop_screen_update(Game *g)
     if (count > 0) {
         if (input_pressed(INPUT_UP) && g->item_menu_index > 0) {
             g->item_menu_index--;
+            g->render_cache.valid = false;
         } else if (input_pressed(INPUT_DOWN) && (uint8_t)(g->item_menu_index + 1) < count) {
             g->item_menu_index++;
+            g->render_cache.valid = false;
         } else if (input_pressed(INPUT_A) && g->item_menu_index < count) {
             ItemId item_id = def->items[g->item_menu_index];
             g->shop_message = (item_purchase(&g->state, item_id) == ITEM_PURCHASE_OK)
                               ? SHOP_MSG_BOUGHT : SHOP_MSG_NO_GOLD;
+            g->render_cache.valid = false;
         }
-        g->render_cache.valid = false;
     }
     if (input_pressed(INPUT_B) || input_pressed(INPUT_START)) {
         g->shop_message = SHOP_MSG_NONE;

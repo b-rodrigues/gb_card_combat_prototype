@@ -3,6 +3,7 @@
 #include "dialogue.h"
 #include "interaction.h"
 #include "telemetry.h"
+#include "ui.h"
 
 void dialogue_screen_update(Game *g)
 {
@@ -35,20 +36,25 @@ void dialogue_screen_render(Game *g)
         return;
     }
 
-    ui_lcd_off();
-    if (first_enter && rc->prev_screen != SCREEN_OVERWORLD) {
-        ui_draw_world_full(w);
-    }
-    ui_draw_dialogue(d, w->scroll_x, w->scroll_y);
-    ui_lcd_on();
-
     if (first_enter) {
+        ui_lcd_off();
+        if (rc->prev_screen != SCREEN_OVERWORLD) {
+            ui_draw_world_full(w);
+        }
+        ui_draw_dialogue(d, w->scroll_x, w->scroll_y);
+        ui_lcd_on();
+
         ui_sprite_move((uint8_t)(world_player_px(w) - w->camera_px_x),
                        (uint8_t)(world_player_py(w) - w->camera_px_y));
         ui_draw_actors_sprites(w);
         rc->valid = true;
         rc->prev_screen = SCREEN_DIALOGUE;
         rc->prev_dialogue_active = true;
+    } else {
+        ui_draw_dialogue_line(1, 13, d->speaker ? d->speaker : "", 18,
+                              w->scroll_x, w->scroll_y);
+        ui_draw_dialogue_line(1, 14, d->lines[d->current_line], 18,
+                              w->scroll_x, w->scroll_y);
     }
 
     telemetry_emit(EVENT_RENDER_DIALOGUE, (uint8_t)d->id,
