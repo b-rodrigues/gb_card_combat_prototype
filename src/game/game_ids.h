@@ -24,6 +24,7 @@
 #define ENTITY_ID_MERCHANT    (ENTITY_ID_FIRST_GAME + 6)
 #define ENTITY_ID_AMULET      (ENTITY_ID_FIRST_GAME + 7)
 #define ENTITY_ID_WIZARD      (ENTITY_ID_FIRST_GAME + 8)
+#define ENTITY_ID_SIGNPOST    (ENTITY_ID_FIRST_GAME + 9)
 
 /* ── Items (engine range: NONE=0; game range >= 0x80) ── */
 #define ITEM_POTION  (ITEM_FIRST_GAME + 0)
@@ -60,6 +61,7 @@
 #define DIALOGUE_ID_MERCHANT_THANKS   (DIALOGUE_ID_FIRST_GAME + 9)
 #define DIALOGUE_ID_AMULET_FOUND      (DIALOGUE_ID_FIRST_GAME + 10)
 #define DIALOGUE_ID_AMULET_NOTHING    (DIALOGUE_ID_FIRST_GAME + 11)
+#define DIALOGUE_ID_SIGNPOST          (DIALOGUE_ID_FIRST_GAME + 12)
 
 /* Story flags.  Each maps to bit (id-1) of GameState.flags.bytes[].
  * STORY_FLAG_ID_COUNT is the exclusive upper bound passed to story_init(). */
@@ -96,6 +98,6 @@ typedef enum {
  * compile-time-asserted against the tables in the content files. */
 #define GAME_CONTENT_BANK 2
 #define GAME_EVENT_COUNT 12
-#define GAME_DIALOGUE_COUNT 12
+#define GAME_DIALOGUE_COUNT 13
 
 #endif /* GAME_IDS_H */

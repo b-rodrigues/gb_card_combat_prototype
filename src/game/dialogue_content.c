@@ -102,6 +102,20 @@ const DialogueDefinition g_dialogues[] = {
         1,
         {"Nothing here now."},
         0
+    },
+    {
+        DIALOGUE_ID_SIGNPOST,
+        "",
+        8,
+        {"East: Town. North:",
+         "Forest (danger!).",
+         "",
+         "ATK: A then SELECT",
+         "Shields add to",
+         "combos (no dmg).",
+         "DEF: shields block",
+         "Combos are poker!"},
+        0
     }
 };
 
