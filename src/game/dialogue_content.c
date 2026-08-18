@@ -107,14 +107,14 @@ const DialogueDefinition g_dialogues[] = {
         DIALOGUE_ID_SIGNPOST,
         "",
         8,
-        {"This is the Field.",
-         "East: Town (shop,",
-         "save point).",
-         "North: Forest (danger).",
+        {"East: Town. North:",
+         "Forest (danger!).",
          "",
-         "Combat: A to pick",
-         "cards, SELECT to play.",
-         "Pairs, flushes & straights hit harder!"},
+         "ATK: A then SELECT",
+         "Shields add to",
+         "combos (no dmg).",
+         "DEF: shields block",
+         "Combos are poker!"},
         0
     }
 };
