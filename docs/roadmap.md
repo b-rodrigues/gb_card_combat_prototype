@@ -35,10 +35,9 @@ testable, save/load works, and the memory budget is understood.
   GB tiles (`src/gfx/world_tiles.h`) into the 0x9800 tilemap.
 - **Camera / scroll — B3 + B4 DONE**: the overworld background scrolls
   smoothly with SCX/SCY (set every frame from the pixel camera; the tile
-  window is redrawn only when the camera crosses a tile boundary).  The HUD
-  moved to the WINDOW layer (0x9C00, `ui_hud_show/hide`, toggled in
-  screen_change) so it stays fixed under the scroll; HUD tiles use the
-  console font base (`ibm_font + ch`).  B4 made the camera player-centred
+  window is redrawn only when the camera crosses a tile boundary).  The
+  viewport is full-screen (18 rows, no HUD overlay — the map occupies all
+  144px of vertical display).  B4 made the camera player-centred
   (`camera_px = player_px - view/2`, clamped at the scene edges); covered by
   `large_map_scroll`, `field_east_scroll` and `camera_boundary_clamp`.
   Render verification: the overworld background uses a 32-column background ring

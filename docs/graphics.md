@@ -99,7 +99,7 @@ frames); see AGENTS.md §52.15-52.17.
 ### Dialogue overlay rule
 
 A dialogue started from the overworld draws **only its box** over the
-overworld's last full redraw (the box covers the HUD rows); it must NOT call
+overworld's last full redraw (the box covers the bottom map rows); it must NOT call
 `ui_draw_world_full()` — that would wipe the map the player just saw.
 `dialogue_screen_render()` skips the world draw when `rc->prev_screen ==
 SCREEN_OVERWORLD`.  A dialogue that is NOT preceded by the overworld
