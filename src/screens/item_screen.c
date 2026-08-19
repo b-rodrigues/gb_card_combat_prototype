@@ -56,6 +56,33 @@ static void draw_quest(Game *g)
     ui_draw_text_line(0, 16, "[B] CLOSE", 10);
 }
 
+static void draw_card_detail(Game *g)
+{
+    const CardDefinition *def;
+    CardId id;
+    uint8_t n;
+
+    n = (g->item_menu_tab == TAB_CARDS) ?
+        g->state.cards.collection.count : g->state.cards.deck.count;
+    if (n == 0) return;
+
+    id = (g->item_menu_tab == TAB_CARDS) ?
+        g->state.cards.collection.entries[g->item_menu_index].id :
+        g->state.cards.deck.cards[g->item_menu_index];
+    def = card_get_def(id);
+    if (!def) return;
+
+    ui_draw_text_line(0, 14, "PWR", 3);
+    ui_draw_num2(4, 14, def->power);
+    ui_draw_text_line(8, 14, "COST", 4);
+    ui_draw_num2(13, 14, def->cost);
+    ui_draw_text_line(16, 14, "U", 1);
+    if (def->uses_per_battle == 0)
+        ui_draw_text_line(18, 14, "-", 1);
+    else
+        ui_draw_num2(18, 14, def->uses_per_battle);
+}
+
 static void draw_card_list(Game *g)
 {
     uint8_t n, i, y;
@@ -72,6 +99,7 @@ static void draw_card_list(Game *g)
         if (i == g->item_menu_index) ui_draw_text_line(0, y, ">", 1);
         ui_draw_text_line(2, y, def ? def->name : "???", 8);
     }
+    draw_card_detail(g);
     if (g->item_menu_tab == TAB_CARDS)
         ui_draw_text_line(0, 15, "[A]ADD  [B]CLOSE", 16);
     else

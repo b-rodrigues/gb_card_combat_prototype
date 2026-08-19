@@ -2,6 +2,7 @@
 #include "audio.h"
 #include "screen.h"
 #include "actor.h"
+#include "banked.h"
 uint8_t g_snap_buf[SNAPSHOT_TOTAL_SIZE];
 uint8_t g_state_snap_buf[STATE_SNAP_TOTAL_SIZE];
 GameEvent g_telemetry_buffer[MAX_TELEMETRY_EVENTS];
@@ -9,14 +10,6 @@ uint8_t g_telemetry_count = 0;
 uint8_t g_telemetry_head = 0;
 static uint32_t event_seq = 0;
 static const uint32_t *telemetry_frame_ptr = NULL;
-
-/* Direct byte copy into the snapshot buffer.  SM83 / Game Boy architecture is
- * little-endian, matching the snapshot wire format expected by the host Python harness. */
-static void snap_copy(uint8_t *dst, const void *src, uint8_t n)
-{
-    const uint8_t *s = (const uint8_t *)src;
-    while (n--) *dst++ = *s++;
-}
 
 void telemetry_init(void)
 {
@@ -107,68 +100,12 @@ void debug_snapshot(void)
 
 void debug_state_snapshot(void)
 {
-    const GameState *st;
-    uint8_t i;
-    uint8_t *p;
-    uint8_t *b = g_state_snap_buf;
-
-    if (!&g_game) return;
-    st = &g_game.state;
-
-    b[0] = STATE_SNAP_VERSION_BYTE;
-    snap_copy(b + STATE_SNAP_FLAGS_OFFSET, st->flags.bytes, MAX_STATE_FLAGS / 8);
-    snap_copy(b + STATE_SNAP_VARIABLES_OFFSET, st->variables.values, MAX_STATE_VARIABLES * 2);
-
-    b[STATE_SNAP_CURRENCY_COUNT_OFF] = MAX_CURRENCIES;
-    p = b + STATE_SNAP_CURRENCY_ENTRY_OFF;
-    for (i = 0; i < MAX_CURRENCIES; i++) {
-        *p++ = (uint8_t)(i + 1);
-        snap_copy(p, &st->currency.amount[i], 2);
-        p += 2;
-    }
-
-    b[STATE_SNAP_PARTY_OFFSET] = st->party.count;
-    p = b + STATE_SNAP_PARTY_OFFSET + 1;
-    for (i = 0; i < st->party.count && i < MAX_PARTY_MEMBERS; i++) {
-        *p++ = (uint8_t)st->party.members[i].id;
-        *p++ = st->party.members[i].hp;
-        *p++ = st->party.members[i].max_hp;
-    }
-
-    b[STATE_SNAP_INVENTORY_OFFSET] = st->cards.collection.count;
-    p = b + STATE_SNAP_INVENTORY_OFFSET + 1;
-    for (i = 0; i < st->cards.collection.count && i < MAX_CARD_COLLECTION; i++) {
-        *p++ = st->cards.collection.entries[i].id;
-        *p++ = st->cards.collection.entries[i].count;
-    }
-
-    b[STATE_SNAP_WORLD_OFFSET] = st->world.count;
-    p = b + STATE_SNAP_WORLD_OFFSET + 1;
-    for (i = 0; i < st->world.count && i < 16; i++) {
-        snap_copy(p, &st->world.actors[i].actor_id, 2);
-        p += 2;
-        *p++ = st->world.actors[i].state;
-    }
-
-    b[STATE_SNAP_PROGRESSION_COUNT_OFF] = st->progression.count;
-    p = b + STATE_SNAP_PROGRESSION_ENTRY_OFF;
-    for (i = 0; i < st->progression.count && i < MAX_PROGRESSION_TARGETS; i++) {
-        *p++ = st->progression.entries[i].target.type;
-        snap_copy(p, &st->progression.entries[i].target.id, 2);
-        p += 2;
-        *p++ = st->progression.entries[i].state.level;
-        snap_copy(p, &st->progression.entries[i].state.progress, 2);
-        p += 2;
-    }
-
-    b[STATE_SNAP_EQUIPMENT_OFF] = 0;
-
-    /* Runtime overworld camera + scene dims */
-    b[STATE_SNAP_SCROLL_X_OFF]        = g_game.world.scroll_x;
-    b[STATE_SNAP_SCROLL_Y_OFF]        = g_game.world.scroll_y;
-    b[STATE_SNAP_WORLD_WIDTH_OFF]     = g_game.world.width;
-    b[STATE_SNAP_WORLD_HEIGHT_OFF]    = g_game.world.height;
-    b[STATE_SNAP_CAMERA_PX_X_OFF]     = g_game.world.camera_px_x;
-    b[STATE_SNAP_CAMERA_PX_Y_OFF]     = g_game.world.camera_px_y;
+    /* The ~460-byte builder runs banked (src/debug/telemetry_snap.c, ROM
+     * bank 2) through the WRAM banked-call trampoline so it does not consume
+     * the fixed-bank _CODE budget.  It reads g_game / g_state_snap_buf
+     * directly, so no staging args are needed. */
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&debug_state_snapshot_banked;
+    banked_call_run();
 }
 #endif

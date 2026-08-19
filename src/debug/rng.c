@@ -10,11 +10,6 @@ uint16_t rng_next(void)
     return rng_state;
 }
 
-uint16_t rng_get_seed(void)
-{
-    return rng_state;
-}
-
 void rng_set_seed(uint16_t seed)
 {
     rng_state = seed ? seed : 1;

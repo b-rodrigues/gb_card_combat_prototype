@@ -170,4 +170,9 @@ void telemetry_set_frame_ptr(const uint32_t *frame_ptr);
 void debug_snapshot(void);
 void debug_state_snapshot(void);
 
+/* Banked no-arg body of debug_state_snapshot() (src/debug/telemetry_snap.c,
+ * ROM bank 2), run via the WRAM banked-call trampoline.  Self-contained:
+ * reads g_game / g_state_snap_buf and its own static snap_copy. */
+void debug_state_snapshot_banked(void);
+
 #endif /* TELEMETRY_H */

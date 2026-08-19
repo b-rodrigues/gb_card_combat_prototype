@@ -1,0 +1,44 @@
+{
+  "name": "card_detail",
+  "test": true,
+  "description": "The CARDS tab shows the selected card's power/cost/uses detail line",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "PWR"
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "COST"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410,
+    "inventory": {
+      "HEALING_HERB": 1
+    }
+  }
+}
