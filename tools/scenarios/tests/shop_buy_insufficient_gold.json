@@ -29,7 +29,7 @@
     },
     {
       "type": "inventory",
-      "item": "POTION",
+      "item": "HEALING_HERB",
       "expected": 0
     },
     {

@@ -26,13 +26,11 @@
 #define ENTITY_ID_WIZARD      (ENTITY_ID_FIRST_GAME + 8)
 #define ENTITY_ID_SIGNPOST    (ENTITY_ID_FIRST_GAME + 9)
 
-/* ── Items (engine range: NONE=0; game range >= 0x80) ── */
-#define ITEM_POTION  (ITEM_FIRST_GAME + 0)
-#define ITEM_BOMB    (ITEM_FIRST_GAME + 1)
-#define ITEM_ETHER   (ITEM_FIRST_GAME + 2)
+/* ── Items (engine range: NONE=0; game range >= 0x80) ──
+ * Retained for event-system quest items that live outside the card
+ * definition catalog (e.g. delivery quests).  Not sold in shops. */
 #define ITEM_SWORD   (ITEM_FIRST_GAME + 3)
 #define ITEM_AMULET  (ITEM_FIRST_GAME + 4)
-#define ITEM_NUT     (ITEM_FIRST_GAME + 5)
 
 /* ── Cards (engine range: NONE=0; game range >= CARD_FIRST_GAME) ── */
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)

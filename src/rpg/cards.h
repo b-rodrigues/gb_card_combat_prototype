@@ -41,6 +41,8 @@ typedef struct {
     uint8_t uses_per_battle;
     uint8_t max_copies;
     uint8_t effect;     /* CardEffectType */
+    uint8_t battle_type; /* BattleCardType for combat deck mapping */
+    uint8_t price;      /* shop price in gold (0 = not sold) */
     const char *name;   /* 4-8 char display name */
 } CardDefinition;
 

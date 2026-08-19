@@ -8,7 +8,6 @@
 #include "content.h"
 #include "rpg/progression.h"
 #include "rpg/party.h"
-#include "rpg/items.h"
 #include "banked.h"
 
 void game_render_reset(Game *g)

@@ -91,6 +91,7 @@ bool deck_add_card(CardState *cs, CardId id)
     if (!def) return false;
     in_deck = deck_count_in_deck(&cs->deck, id);
     if (in_deck >= def->max_copies) return false;
+    if (in_deck >= deck_collection_count(cs, id)) return false;
 
     cs->deck.cards[cs->deck.count] = id;
     cs->deck.count++;

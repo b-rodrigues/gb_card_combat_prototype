@@ -161,9 +161,10 @@ VARIABLE_ID_MAP = {"CHAPTER": 1, "MONSTERS_DEFEATED": 2,
                    "MERCHANT_QUEST": 5}
 CHARACTER_ID_MAP = {"HERO": 1}
 ITEM_ID_MAP = {"NONE": 0,
-               "POTION": GAME_ID_BASE + 0, "BOMB": GAME_ID_BASE + 1,
-               "ETHER": GAME_ID_BASE + 2, "SWORD": GAME_ID_BASE + 3,
-               "AMULET": GAME_ID_BASE + 4, "NUT": GAME_ID_BASE + 5}
+               "IRON_SWORD": 0x40, "WOODEN_SHIELD": 0x41,
+               "HEALING_HERB": 0x42, "FIRE_TOME": 0x43,
+               "POISON_DAGGER": 0x44,
+               "SWORD": 0x83, "AMULET": 0x84}
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}

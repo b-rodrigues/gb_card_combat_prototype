@@ -1,32 +1,32 @@
 #include "battle.h"
 #include "telemetry.h"
 #include "rpg/cards.h"
+#include "rpg/deck.h"
 #include "game/game_ids.h"
 #include <string.h>
 
-/* ── Battle-card uses-per-battle initialisation (Phase 9) ───────────
- * Maps the anonymous BattleCardType stored in each packed starter-deck
- * card to a CardId so we can read the CardDefinition.uses_per_battle
- * value and write it into Card.uses_remaining.  BOW has no registered
- * card yet so it stays at the unlimited default (0xFF). */
-static const CardId s_type_to_card_id[BATTLE_CARD_TYPE_COUNT] = {
-    CARD_IRON_SWORD,    /* BATTLE_CARD_TYPE_SWORD (0) */
-    CARD_WOODEN_SHIELD, /* BATTLE_CARD_TYPE_SHIELD (1) */
-    CARD_NONE,          /* BATTLE_CARD_TYPE_BOW (2) — no card registered */
-    CARD_FIRE_TOME,     /* BATTLE_CARD_TYPE_FIRE (3) */
-    CARD_HEALING_HERB   /* BATTLE_CARD_TYPE_HEAL (4) */
-};
-
-static void battle_init_card_uses(Battle *b)
+/* ── Bridge: persistent DeckState → battle Deck ───────────────────
+ * When a DeckState is provided (player has cards), build the battle
+ * deck from the player's owned cards.  When NULL, fall back to the
+ * hardcoded starter deck (all unlimited uses). */
+static void battle_init_from_deck_state(Battle *b, const DeckState *ds)
 {
     uint8_t i;
     const CardDefinition *def;
-    for (i = 0; i < b->deck.count; i++) {
-        if (b->deck.cards[i].type < BATTLE_CARD_TYPE_COUNT) {
-            def = card_get_def(s_type_to_card_id[b->deck.cards[i].type]);
-            if (def) {
-                b->deck.cards[i].uses_remaining = def->uses_per_battle;
-            }
+    b->deck.count = ds->count;
+    b->deck.draw_idx = 0;
+    b->deck.discard_count = 0;
+    for (i = 0; i < ds->count; i++) {
+        def = card_get_def(ds->cards[i]);
+        if (def) {
+            b->deck.cards[i].type = def->battle_type;
+            b->deck.cards[i].value = def->power;
+            b->deck.cards[i].uses_remaining =
+                (def->uses_per_battle == 0) ? 0xFF : def->uses_per_battle;
+        } else {
+            b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;
+            b->deck.cards[i].value = 2;
+            b->deck.cards[i].uses_remaining = 0xFF;
         }
     }
 }
@@ -42,7 +42,8 @@ static const int g_battle_timer_cadence_ok[
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
-                  uint8_t enemy_hp, uint8_t enemy_max_hp)
+                  uint8_t enemy_hp, uint8_t enemy_max_hp,
+                  const DeckState *ds)
 {
     uint8_t *p = (uint8_t *)b;
     uint16_t n = sizeof(Battle);
@@ -61,8 +62,11 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemies[0].attack = 3;
     b->enemy_count = 1;
 
-    deck_init_default(&b->deck);
-    battle_init_card_uses(b);
+    if (ds && ds->count > 0) {
+        battle_init_from_deck_state(b, ds);
+    } else {
+        deck_init_default(&b->deck);
+    }
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         deck_draw(&b->deck, &b->hand[i]);
     }
@@ -261,6 +265,22 @@ void battle_execute_combo(Battle *b)
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
         if (b->combo_count == 0) {
+            if (b->hand[b->cursor_pos].uses_remaining == 0) {
+                uint8_t s;
+                for (s = 0; s < BATTLE_HAND_SIZE; s++) {
+                    if (b->hand[s].uses_remaining != 0 &&
+                        !battle_is_card_selected(b, s)) {
+                        b->cursor_pos = s;
+                        break;
+                    }
+                }
+                if (b->hand[b->cursor_pos].uses_remaining == 0) {
+                    b->phase = BATTLE_PHASE_PLAYER_ANIM;
+                    b->delay_timer = 30;
+                    b->dirty = BATTLE_DIRTY_ALL;
+                    return;
+                }
+            }
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
         }

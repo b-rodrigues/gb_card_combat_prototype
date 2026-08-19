@@ -1,7 +1,7 @@
 {
   "name": "merchant_shop_open",
   "test": true,
-  "description": "After returning the amulet the Merchant's shop opens: the hero can buy a NUT (rewarded gold 15, then price 10)",
+  "description": "After returning the amulet the Merchant's shop opens: the hero can buy an IRON_SWORD (rewarded gold 15, then price 10)",
   "scenario_id": "TOWN_BOOT",
   "actions": [
     {
@@ -70,7 +70,7 @@
     },
     {
       "type": "inventory",
-      "item": "NUT",
+      "item": "IRON_SWORD",
       "expected": 1
     },
     {

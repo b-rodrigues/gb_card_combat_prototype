@@ -178,17 +178,6 @@ def run_scenario(scenario):
                 # and facing the target (set via initial_state); press A.
                 session.press("A")
                 session.wait(act.get("frames", 5))
-            elif act_type == "use_item":
-                # Open the quick screen (START is the universal open key in
-                # both the overworld and battle) and use the cursor item (A).
-                # ITEM is the default tab; cursor starts at the first item.
-                session.press("START")
-                session.wait(4)
-                session.press("A")
-                session.wait(act.get("frames", 4))
-            elif act_type == "equip_item":
-                session.debug_action(session.DBG_ACT_EQUIP_ITEM,
-                                     ITEM_ID_MAP[act.get("item")], 0, 0)
             elif act_type == "add_item":
                 session.debug_action(session.DBG_ACT_ADD_ITEM,
                                      ITEM_ID_MAP[act.get("item")],
@@ -208,10 +197,6 @@ def run_scenario(scenario):
             elif act_type == "buy_item":
                 session.debug_action(session.DBG_ACT_BUY_ITEM,
                                      ITEM_ID_MAP[act.get("item")], 0, 0)
-            elif act_type == "use_item_direct":
-                session.debug_action(session.DBG_ACT_USE_ITEM,
-                                     ITEM_ID_MAP[act.get("item")],
-                                     0, act.get("member", 1))
             elif act_type == "save":
                 slot = act.get("slot", 1) - 1 if "slot" in act else 0
                 session.debug_action(session.DBG_ACT_SAVE, slot, 0, 0)

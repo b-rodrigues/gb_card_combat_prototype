@@ -4,7 +4,7 @@
 #include "event.h"
 #include "dialogue.h"
 #include "actor.h"
-#include "rpg/items.h"
+#include "rpg/cards.h"
 #include "rpg/party.h"
 #include "core/game.h"
 
@@ -18,7 +18,6 @@ void game_content_init(void)
     game_events_register();
     game_dialogue_register();
     game_actors_register();
-    game_items_register();
     game_cards_register();
     game_quest_register();
 }
@@ -44,8 +43,16 @@ void game_new_game(GameState *state)
 
 uint8_t game_hero_attack(const GameState *state)
 {
-    (void)state;
-    return HERO_BASE_ATTACK;
+    uint8_t total = HERO_BASE_ATTACK;
+    uint8_t i;
+    const CardDefinition *def;
+    if (!state) return total;
+    for (i = 0; i < state->cards.deck.count; i++) {
+        def = card_get_def(state->cards.deck.cards[i]);
+        if (def && def->type == CARD_TYPE_ATTACK)
+            total = (uint8_t)(total + def->power);
+    }
+    return total;
 }
 
 void game_on_level_up(GameState *state, ProgressionTarget target,

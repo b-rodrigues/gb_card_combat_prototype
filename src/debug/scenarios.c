@@ -8,8 +8,8 @@
 #include "dialogue.h"
 #include "actor.h"
 #include "scene.h"
-#include "rpg/items.h"
 #include "rpg/deck.h"
+#include "rpg/cards.h"
 #include "rpg/currency.h"
 #include "rpg/progression.h"
 #include "rpg/save.h"
@@ -204,13 +204,17 @@ static void debug_run_action(void)
             }
             break;
         case DBG_ACT_BUY_ITEM:
-            item_purchase(&g_game.state, (ItemId)a0);
-            break;
-        case DBG_ACT_USE_ITEM:
-            item_use(&g_game.state, (ItemId)a0, (CharacterId)a2);
-            break;
-        case DBG_ACT_EQUIP_ITEM:
-            item_equip(&g_game.state, (ItemId)a0);
+            {
+                const CardDefinition *def = card_get_def((CardId)a0);
+                if (def && def->price != 0 &&
+                    currency_get(&g_game.state, CURRENCY_ID_GOLD) >= def->price) {
+                    currency_add(&g_game.state, CURRENCY_ID_GOLD, -(int16_t)def->price);
+                    deck_collection_add(&g_game.state.cards, (CardId)a0, 1);
+                    telemetry_emit(EVENT_ITEM_PURCHASED, a0, (uint8_t)def->price, 0, 0);
+                } else {
+                    telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, a0, 1, 0, 0);
+                }
+            }
             break;
         case DBG_ACT_SAVE:
             save_game_slot(a0 < SAVE_SLOT_COUNT ? a0 : 0, &g_game.state);

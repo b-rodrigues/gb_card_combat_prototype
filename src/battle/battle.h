@@ -5,6 +5,7 @@
 #include "card.h"
 #include "combo.h"
 #include "deck.h"
+#include "rpg/deck.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -80,7 +81,8 @@ typedef struct {
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp, uint8_t player_attack,
-                  uint8_t enemy_hp, uint8_t enemy_max_hp);
+                  uint8_t enemy_hp, uint8_t enemy_max_hp,
+                  const DeckState *ds);
 void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack);
 void battle_cursor_move(Battle *b, int8_t dir);
 void battle_target_move(Battle *b, int8_t dir);

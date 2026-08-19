@@ -49,7 +49,7 @@
     },
     {
       "type": "inventory",
-      "item": "POTION",
+      "item": "HEALING_HERB",
       "expected": 2
     },
     {
@@ -96,7 +96,7 @@
       }
     },
     "inventory": {
-      "POTION": 2
+      "HEALING_HERB": 2
     },
     "world": {
       "SLIME_FOREST": "DEFEATED",

@@ -5,11 +5,12 @@
 #include <stdbool.h>
 #include "rpg/cards.h"
 
-/* Deck and collection sizes.  These are deliberately conservative to keep
- * GameState within the 252-byte save slot limit.  Tune upward when the
- * save format and UI are ready. */
+/* Deck and collection sizes.
+ * MAX_DECK_CARDS = 20 matches the target deck size from deck.md.
+ * GameState is ~202 bytes with these limits, well within the 252-byte
+ * save slot limit. */
 #define MAX_CARD_COLLECTION 12
-#define MAX_DECK_CARDS      10
+#define MAX_DECK_CARDS      20
 
 /* A single owned card in the collection. */
 typedef struct {

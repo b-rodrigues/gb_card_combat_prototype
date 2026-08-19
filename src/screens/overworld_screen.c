@@ -22,7 +22,8 @@ void start_battle_from_world(Game *g)
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
                  game_hero_attack(&g->state),
-                 act->hp, act->max_hp);
+                 act->hp, act->max_hp,
+                 &g->state.cards.deck);
 
     if (act->battle_type == BATTLE_SLIME_TRIO) {
         battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);

@@ -1,8 +1,9 @@
 #include "game.h"
 #include "screen.h"
 #include "telemetry.h"
-#include "rpg/items.h"
+#include "rpg/cards.h"
 #include "rpg/currency.h"
+#include "rpg/deck.h"
 #include "menu.h"
 #include "shops.h"
 #include "game_ids.h"
@@ -37,11 +38,11 @@ static void shop_draw(Game *g)
     }
 
     for (i = 0; i < def->count; i++) {
-        const ItemDefinition *item = item_get_def(def->items[i]);
+        const CardDefinition *card = card_get_def(def->items[i]);
         y = (uint8_t)(5 + i);
         ui_draw_text_line(0, y, (g->item_menu_index == i) ? ">" : " ", 1);
-        ui_draw_text_line(1, y, item ? item->name : "???", 10);
-        ui_format_int(item ? (int16_t)item->price : 0, str);
+        ui_draw_text_line(1, y, card ? card->name : "???", 10);
+        ui_format_int((int16_t)def->prices[i], str);
         ui_draw_text_line(12, y, str, 4);
         ui_draw_text_line(16, y, "G", 1);
     }
@@ -70,9 +71,17 @@ void shop_screen_update(Game *g)
             g->item_menu_index++;
             g->render_cache.valid = false;
         } else if (input_pressed(INPUT_A) && g->item_menu_index < count) {
-            ItemId item_id = def->items[g->item_menu_index];
-            g->shop_message = (item_purchase(&g->state, item_id) == ITEM_PURCHASE_OK)
-                              ? SHOP_MSG_BOUGHT : SHOP_MSG_NO_GOLD;
+            CardId card_id = def->items[g->item_menu_index];
+            uint8_t price = def->prices[g->item_menu_index];
+            if (currency_get(&g->state, CURRENCY_ID_GOLD) < price) {
+                g->shop_message = SHOP_MSG_NO_GOLD;
+                telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)card_id, 1, 0, 0);
+            } else {
+                currency_add(&g->state, CURRENCY_ID_GOLD, -(int16_t)price);
+                deck_collection_add(&g->state.cards, card_id, 1);
+                telemetry_emit(EVENT_ITEM_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
+                g->shop_message = SHOP_MSG_BOUGHT;
+            }
             g->render_cache.valid = false;
         }
     }
