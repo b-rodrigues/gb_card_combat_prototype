@@ -39,7 +39,7 @@ typedef struct {
     uint8_t power;      /* numerical value */
     uint8_t cost;       /* energy cost to play (0 = free) */
     uint8_t uses_per_battle;
-    uint8_t max_copies;
+    uint8_t max_copies;   /* 0 = unlimited in collection & deck */
     uint8_t effect;     /* CardEffectType */
     uint8_t battle_type; /* BattleCardType for combat deck mapping */
     uint8_t price;      /* shop price in gold (0 = not sold) */

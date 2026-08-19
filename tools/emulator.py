@@ -73,9 +73,6 @@ EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 10: "MERCHANT_DELIVER",
                 GAME_ID_BASE + 11: "AMULET_PICKUP"}
 
-# Weapon attack bonuses (host-side mirror of src/rpg/items.c).
-ITEM_ATTACK_BONUS = {"SWORD": 3}
-HERO_BASE_ATTACK = 3
 DIRECTION_MAP = {0: "UP", 1: "DOWN", 2: "LEFT", 3: "RIGHT"}
 
 # Static per-actor semantics resolved from the snapshot's actor ids.
@@ -289,9 +286,6 @@ def serialize_initial_state(initial_state):
     buf[STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF] = initial_state.get("game_over_choice", 0)
     if initial_state.get("font_test"):
         buf[STATE_LOAD_DESC_FONT_TEST_OFF] = 1
-    equipment = initial_state.get("equipment") or {}
-    weapon = equipment.get("weapon", "NONE")
-    buf[STATE_LOAD_DESC_EQUIPMENT_OFF] = ITEM_ID_MAP.get(weapon, 0)
     return buf
 
 def decode_story_flags(flags_mask):
@@ -835,9 +829,6 @@ class EmulatorSession:
                 "progress": progress,
             })
 
-        weapon_id = buf[self.STATE_SNAP_EQUIPMENT_OFF]
-        equipment = {"weapon": ITEM_ID_TO_NAME.get(weapon_id, "NONE")}
-
         return {
             "flags": flags,
             "variables": variables,
@@ -846,7 +837,6 @@ class EmulatorSession:
             "inventory": inventory,
             "world": world,
             "progression": progression,
-            "equipment": equipment,
             "scroll_x": buf[self.STATE_SNAP_SCROLL_X_OFF],
             "scroll_y": buf[self.STATE_SNAP_SCROLL_Y_OFF],
             "world_width": buf[self.STATE_SNAP_WORLD_WIDTH_OFF],

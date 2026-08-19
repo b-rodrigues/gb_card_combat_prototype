@@ -59,9 +59,6 @@
       "facing": "DOWN"
     },
     "seed": 8408,
-    "equipment": {
-      "weapon": "SWORD"
-    },
     "start_battle": true
   }
 }

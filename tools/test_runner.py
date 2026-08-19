@@ -19,8 +19,7 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
                       ACTOR_STATE_NAME_MAP, CHARACTER_ID_MAP, SCENE_MAP,
                       CHARACTER_ID_TO_NAME, ITEM_ID_TO_NAME, ACTOR_ID_TO_NAME,
                       CURRENCY_ID_MAP, PROGRESSION_TARGET_MAP,
-                      CURRENCY_ID_TO_NAME, PROG_TYPE_HERO,
-                      ITEM_ATTACK_BONUS, HERO_BASE_ATTACK, CARD_TYPE_MAP)
+                       CURRENCY_ID_TO_NAME, PROG_TYPE_HERO, CARD_TYPE_MAP)
 
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
@@ -29,7 +28,7 @@ VALID_ASSERTION_TYPES = {
     "event_occurred", "event_not_occurred", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
-    "currency", "progression_level", "progression_progress", "attack",
+    "currency", "progression_level", "progression_progress",
     "camera", "scroll_x", "scroll_y", "world_width", "world_height",
     "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell"
 }
@@ -122,9 +121,6 @@ def validate_scenario(data, filepath):
         for pname, pstats in (init.get("progression") or {}).items():
             if pname not in VALID_PROGRESSION_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown progression target '{pname}'. Valid targets: {sorted(list(VALID_PROGRESSION_NAMES))}")
-        equip = init.get("equipment") or {}
-        if "weapon" in equip and equip["weapon"] not in VALID_ITEM_NAMES:
-            raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown equipment weapon '{equip.get('weapon')}'. Valid items: {sorted(list(VALID_ITEM_NAMES))}")
         scene = init.get("scene")
         if scene and scene not in set(SCENE_MAP.values()):
             raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown scene '{scene}'. Valid scenes: {sorted(set(SCENE_MAP.values()))}")
@@ -513,13 +509,6 @@ def run_scenario(scenario):
             actual = entry.get("progress") if entry else None
             passed = (actual == int(a.get("expected")))
 
-        elif a_type == "attack":
-            equipment = (state_snap or {}).get("equipment", {})
-            weapon = equipment.get("weapon", "NONE")
-            actual = HERO_BASE_ATTACK + ITEM_ATTACK_BONUS.get(weapon, 0)
-            expected = f"hero attack == {expected}"
-            passed = (actual == int(a.get("expected")))
-
         status_str = "PASS" if passed else "FAIL"
         assertion_results.append({
             "type": a_type,
@@ -606,10 +595,6 @@ def format_state(snap, state_snap):
             lines.append("  {}: level={} progress={}".format(
                 p.get("name"), p.get("level"), p.get("progress")))
 
-    equipment = (state_snap or {}).get("equipment", {})
-    weapon = equipment.get("weapon", "NONE")
-    lines.append(f"EQUIPMENT: {weapon}")
-    lines.append(f"ATTACK: {HERO_BASE_ATTACK + ITEM_ATTACK_BONUS.get(weapon, 0)}")
     return "\n".join(lines)
 
 
@@ -681,11 +666,6 @@ def build_initial_state_from_snapshot(snap, state_snap):
     if progression:
         initial["progression"] = progression
 
-    equipment = state_snap.get("equipment", {})
-    weapon = equipment.get("weapon", "NONE")
-    if weapon != "NONE":
-        initial["equipment"] = {"weapon": weapon}
-
     return initial
 
 
@@ -705,8 +685,7 @@ def normalize_semantic_state(snap, state_snap):
         "world": sorted((w.get("actor_id"), w.get("state"))
                         for w in (state_snap or {}).get("world", [])),
         "progression": sorted((p.get("name"), p.get("level"), p.get("progress"))
-                              for p in (state_snap or {}).get("progression", [])),
-        "equipment": (state_snap or {}).get("equipment", {}),
+                               for p in (state_snap or {}).get("progression", [])),
     }
 
 

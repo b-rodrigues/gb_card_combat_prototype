@@ -63,9 +63,6 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "equipment": {
-      "weapon": "SWORD"
-    },
     "seed": 5002,
     "start_battle": true
   }

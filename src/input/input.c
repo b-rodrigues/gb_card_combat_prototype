@@ -90,4 +90,3 @@ bool input_held(InputButton button)
     return (pad_state & mask) != 0;
 }
 
-
