@@ -69,7 +69,7 @@ static void draw_card_list(Game *g)
             g->state.cards.collection.entries[i].id : g->state.cards.deck.cards[i];
         def = card_get_def(id);
         y = (uint8_t)(6 + i);
-        if (i == g->item_menu_index) ui_draw_text_line(0, y, ">", 1);
+        if (def && i == g->item_menu_index) ui_draw_text_line(0, y, ">", 1);
         if (def) ui_draw_text_line(2, y, def->name, 8);
     }
     if (g->item_menu_tab == TAB_CARDS)
