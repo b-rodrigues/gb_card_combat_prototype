@@ -78,14 +78,14 @@ void shop_screen_update(Game *g)
             uint8_t price = card ? card->price : 0;
             if (currency_get(&g->state, CURRENCY_ID_GOLD) < price) {
                 g->shop_message = SHOP_MSG_NO_GOLD;
-                telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)card_id, 1, 0, 0);
+                telemetry_emit(EVENT_CARD_PURCHASE_FAILED, (uint8_t)card_id, 1, 0, 0);
             } else {
                 if (!deck_collection_add(&g->state.cards, card_id, 1)) {
                     g->shop_message = SHOP_MSG_MAX_COPIES;
-                    telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)card_id, 2, 0, 0);
+                    telemetry_emit(EVENT_CARD_PURCHASE_FAILED, (uint8_t)card_id, 2, 0, 0);
                 } else {
                     currency_add(&g->state, CURRENCY_ID_GOLD, -(int16_t)price);
-                    telemetry_emit(EVENT_ITEM_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
+                    telemetry_emit(EVENT_CARD_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
                     g->shop_message = SHOP_MSG_BOUGHT;
                 }
             }

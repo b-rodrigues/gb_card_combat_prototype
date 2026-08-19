@@ -12,8 +12,8 @@
   "assertions": [
     {"type": "currency", "currency": "GOLD", "expected": 10},
     {"type": "inventory", "item": "HEALING_HERB", "expected": 3},
-    {"type": "event_occurred", "event": "ITEM_PURCHASED"},
-    {"type": "event_occurred", "event": "ITEM_PURCHASE_FAILED"}
+    {"type": "event_occurred", "event": "CARD_PURCHASED"},
+    {"type": "event_occurred", "event": "CARD_PURCHASE_FAILED"}
   ],
   "initial_state": {
     "scene": "FIELD",

@@ -86,11 +86,15 @@ static void event_execute_actions(Game *g, const EventDefinition *def,
         } else if (t == EVENT_ACTION_SCENE_CHANGE) {
             scene_load(g, (SceneId)a0, (uint8_t)a1, (uint8_t)a->arg2);
         } else if (t == EVENT_ACTION_ADD_ITEM) {
-            deck_collection_add(&g->state.cards, (CardId)a0, (uint8_t)a1);
+            if (deck_collection_add(&g->state.cards, (CardId)a0, (uint8_t)a1)) {
+                telemetry_emit(EVENT_CARD_ADDED_TO_COLLECTION, (uint8_t)a0, (uint8_t)a1, 0, 0);
+            }
         } else if (t == EVENT_ACTION_ADD_CURRENCY) {
             currency_add(&g->state, (CurrencyId)a0, a1);
         } else if (t == EVENT_ACTION_REMOVE_ITEM) {
-            deck_collection_remove(&g->state.cards, (CardId)a0, (uint8_t)a1);
+            if (deck_collection_remove(&g->state.cards, (CardId)a0, (uint8_t)a1)) {
+                telemetry_emit(EVENT_CARD_REMOVED_FROM_COLLECTION, (uint8_t)a0, (uint8_t)a1, 0, 0);
+            }
         }
     }
 }

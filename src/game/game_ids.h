@@ -26,19 +26,14 @@
 #define ENTITY_ID_WIZARD      (ENTITY_ID_FIRST_GAME + 8)
 #define ENTITY_ID_SIGNPOST    (ENTITY_ID_FIRST_GAME + 9)
 
-/* ── Items (engine range: NONE=0; game range >= 0x80) ──
- * Retained for event-system quest items that live outside the card
- * definition catalog (e.g. delivery quests).  Not sold in shops. */
-#define ITEM_SWORD   (ITEM_FIRST_GAME + 3)
-#define ITEM_AMULET  (ITEM_FIRST_GAME + 4)
-
-/* ── Cards (engine range: NONE=0; game range >= CARD_FIRST_GAME) ── */
+/* ── Events (engine range: NONE=0; game range >= 0x80) ── */
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)
 #define CARD_WOODEN_SHIELD (CARD_FIRST_GAME + 1)
 #define CARD_HEALING_HERB  (CARD_FIRST_GAME + 2)
 #define CARD_FIRE_TOME     (CARD_FIRST_GAME + 3)
 #define CARD_POISON_DAGGER (CARD_FIRST_GAME + 4)
-#define GAME_CARD_COUNT    5
+#define CARD_AMULET        (CARD_FIRST_GAME + 5)
+#define GAME_CARD_COUNT    6
 
 /* ── Events (engine range: NONE=0; game range >= 0x80) ── */
 #define EVENT_ID_TOWN_ARRIVAL    (EVENT_ID_FIRST_GAME + 0)

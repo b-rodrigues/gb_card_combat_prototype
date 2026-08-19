@@ -80,7 +80,7 @@
     },
     {
       "type": "event_occurred",
-      "event": "ITEM_PURCHASED"
+      "event": "CARD_PURCHASED"
     }
   ],
   "initial_state": {

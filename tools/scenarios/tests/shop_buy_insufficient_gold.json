@@ -34,7 +34,7 @@
     },
     {
       "type": "event_not_occurred",
-      "event": "ITEM_ADDED"
+      "event": "CARD_PURCHASED"
     }
   ],
   "initial_state": {

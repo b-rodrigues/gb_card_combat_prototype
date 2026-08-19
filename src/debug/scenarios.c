@@ -210,12 +210,12 @@ static void debug_run_action(void)
                     currency_get(&g_game.state, CURRENCY_ID_GOLD) >= def->price) {
                     if (deck_collection_add(&g_game.state.cards, (CardId)a0, 1)) {
                         currency_add(&g_game.state, CURRENCY_ID_GOLD, -(int16_t)def->price);
-                        telemetry_emit(EVENT_ITEM_PURCHASED, a0, (uint8_t)def->price, 0, 0);
+                        telemetry_emit(EVENT_CARD_PURCHASED, a0, (uint8_t)def->price, 0, 0);
                     } else {
-                        telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, a0, 2, 0, 0);
+                        telemetry_emit(EVENT_CARD_PURCHASE_FAILED, a0, 2, 0, 0);
                     }
                 } else {
-                    telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, a0, 1, 0, 0);
+                    telemetry_emit(EVENT_CARD_PURCHASE_FAILED, a0, 1, 0, 0);
                 }
             }
             break;

@@ -22,11 +22,11 @@
     },
     {
       "type": "event_occurred",
-      "event": "ITEM_PURCHASE_FAILED"
+      "event": "CARD_PURCHASE_FAILED"
     },
     {
       "type": "event_not_occurred",
-      "event": "ITEM_ADDED"
+      "event": "CARD_PURCHASED"
     }
   ],
   "initial_state": {

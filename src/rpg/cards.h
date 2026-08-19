@@ -17,18 +17,20 @@ typedef enum {
     CARD_TYPE_DEFENSE = 1,
     CARD_TYPE_HEAL    = 2,
     CARD_TYPE_STATUS  = 3,
-    CARD_TYPE_UTILITY = 4
+    CARD_TYPE_UTILITY = 4,
+    CARD_TYPE_SPECIAL = 5    /* quest-only card: no battle use, not deckable */
 } CardType;
 
-#define CARD_TYPE_COUNT 5
+#define CARD_TYPE_COUNT 6
 
 /* What happens when a card is played. */
 typedef enum {
-    CARD_EFFECT_DAMAGE_TARGET = 0,
-    CARD_EFFECT_BLOCK_DAMAGE   = 1,
-    CARD_EFFECT_HEAL_HP        = 2,
-    CARD_EFFECT_STATUS_BUFF    = 3,
-    CARD_EFFECT_DRAW_CARDS     = 4
+    CARD_EFFECT_NONE          = 0,
+    CARD_EFFECT_DAMAGE_TARGET = 1,
+    CARD_EFFECT_BLOCK_DAMAGE   = 2,
+    CARD_EFFECT_HEAL_HP        = 3,
+    CARD_EFFECT_STATUS_BUFF    = 4,
+    CARD_EFFECT_DRAW_CARDS     = 5
 } CardEffectType;
 
 /* Static card definition.  Registered at boot via card_register_defs().
@@ -41,7 +43,7 @@ typedef struct {
     uint8_t uses_per_battle;
     uint8_t max_copies;   /* 0 = unlimited in collection & deck */
     uint8_t effect;     /* CardEffectType */
-    uint8_t battle_type; /* BattleCardType for combat deck mapping */
+    uint8_t battle_type; /* BattleCardType for combat deck mapping; unused for SPECIAL */
     uint8_t price;      /* shop price in gold (0 = not sold) */
     const char *name;   /* 4-8 char display name */
 } CardDefinition;

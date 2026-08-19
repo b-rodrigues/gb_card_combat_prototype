@@ -238,6 +238,7 @@ static void battle_resolve_hand_discard(Battle *b)
         if (b->hand[idx].uses_remaining != 0xFF && b->hand[idx].uses_remaining > 0) {
             b->hand[idx].uses_remaining--;
         }
+        telemetry_emit(EVENT_CARD_PLAYED, idx, b->hand[idx].type, b->hand[idx].value, b->hand[idx].uses_remaining);
         deck_discard(&b->deck, b->hand[idx]);
         deck_draw(&b->deck, &b->hand[idx]);
     }

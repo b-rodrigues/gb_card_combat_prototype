@@ -123,7 +123,7 @@ void item_screen_update(Game *g)
             CardState *cs = &g->state.cards;
             if (g->item_menu_index < cs->collection.count) {
                 if (deck_add_card(cs, cs->collection.entries[g->item_menu_index].id))
-                    telemetry_emit(EVENT_ITEM_ADDED,
+                    telemetry_emit(EVENT_CARD_ADDED_TO_DECK,
                                    cs->collection.entries[g->item_menu_index].id, 0, 0, 0);
             }
         } else {
@@ -131,7 +131,7 @@ void item_screen_update(Game *g)
             if (g->item_menu_index < cs->deck.count) {
                 CardId rm = cs->deck.cards[g->item_menu_index];
                 if (deck_remove_card(cs, rm)) {
-                    telemetry_emit(EVENT_ITEM_REMOVED, rm, 0, 0, 0);
+                    telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, rm, 0, 0, 0);
                     if (g->item_menu_index >= cs->deck.count && g->item_menu_index > 0)
                         g->item_menu_index--;
                 }
