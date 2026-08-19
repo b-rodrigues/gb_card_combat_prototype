@@ -41,7 +41,7 @@ static const int g_battle_timer_cadence_ok[
 ];
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
-                  uint8_t player_max_hp, uint8_t player_attack,
+                  uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
                   const DeckState *ds)
 {
@@ -54,7 +54,6 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->player.name = "Hero";
     b->player.hp = player_hp;
     b->player.max_hp = player_max_hp;
-    b->player.attack = player_attack;
 
     b->enemies[0].name = enemy_name ? enemy_name : "Enemy";
     b->enemies[0].hp = enemy_hp;

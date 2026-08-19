@@ -18,9 +18,6 @@ void game_content_init(void);
  * starting scene/position, chapter variable, starting gold). */
 void game_new_game(GameState *state);
 
-/* Derived hero attack: base 3 plus the equipped weapon's attack bonus. */
-uint8_t game_hero_attack(const GameState *state);
-
 /* Game-specific consequence of a generic progression level-up. */
 void game_on_level_up(GameState *state, ProgressionTarget target,
                       const ProgressionAddResult *result);

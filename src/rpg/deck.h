@@ -49,9 +49,6 @@ bool deck_collection_remove(CardState *cs, CardId id, uint8_t quantity);
 /* How many copies of a card the player owns. */
 uint8_t deck_collection_count(const CardState *cs, CardId id);
 
-/* Does the player own at least one copy? */
-bool deck_collection_is_owned(const CardState *cs, CardId id);
-
 /* ── Deck API ───────────────────────────────────────────────────── */
 
 /* Add a card to the deck.  The card must be owned in the collection.
@@ -62,14 +59,7 @@ bool deck_add_card(CardState *cs, CardId id);
  * in the deck. */
 bool deck_remove_card(CardState *cs, CardId id);
 
-/* Number of cards currently in the deck. */
-uint8_t deck_count(const CardState *cs);
-
 /* How many copies of a specific card are in the deck. */
 uint8_t deck_count_in_deck(const DeckState *d, CardId id);
-
-/* Validate that every card in the deck is owned in the collection
- * and does not exceed max_copies.  Returns false on any violation. */
-bool deck_validate(const CardState *cs);
 
 #endif /* RPG_DECK_H */

@@ -20,16 +20,23 @@ static CardCollectionEntry *collection_find(CardCollectionState *col,
 
 bool deck_collection_add(CardState *cs, CardId id, uint8_t quantity)
 {
+    const CardDefinition *def;
     CardCollectionEntry *e;
     if (!cs || id == CARD_NONE || quantity == 0) return false;
 
+    def = card_get_def(id);
+
     e = collection_find(&cs->collection, id);
     if (e) {
+        if (def && def->max_copies > 0 &&
+            (uint8_t)(e->count + quantity) > def->max_copies)
+            return false;
         e->count = (uint8_t)(e->count + quantity);
         return true;
     }
 
     if (cs->collection.count >= MAX_CARD_COLLECTION) return false;
+    if (def && def->max_copies > 0 && quantity > def->max_copies) return false;
     e = &cs->collection.entries[cs->collection.count];
     e->id = id;
     e->count = quantity;
@@ -61,11 +68,6 @@ uint8_t deck_collection_count(const CardState *cs, CardId id)
     return e ? e->count : 0;
 }
 
-bool deck_collection_is_owned(const CardState *cs, CardId id)
-{
-    return deck_collection_count(cs, id) > 0;
-}
-
 /* ── Deck internals ─────────────────────────────────────────────── */
 
 uint8_t deck_count_in_deck(const DeckState *d, CardId id)
@@ -85,7 +87,7 @@ bool deck_add_card(CardState *cs, CardId id)
     uint8_t in_deck;
     if (!cs || id == CARD_NONE) return false;
     if (cs->deck.count >= MAX_DECK_CARDS) return false;
-    if (!deck_collection_is_owned(cs, id)) return false;
+    if (deck_collection_count(cs, id) == 0) return false;
 
     def = card_get_def(id);
     if (!def) return false;
@@ -112,27 +114,4 @@ bool deck_remove_card(CardState *cs, CardId id)
     return false;
 }
 
-uint8_t deck_count(const CardState *cs)
-{
-    if (!cs) return 0;
-    return cs->deck.count;
-}
 
-bool deck_validate(const CardState *cs)
-{
-    const CardDefinition *def;
-    uint8_t i, owned, in_deck;
-    CardId id;
-    if (!cs) return false;
-
-    for (i = 0; i < cs->deck.count; i++) {
-        id = cs->deck.cards[i];
-        owned = deck_collection_count(cs, id);
-        if (owned == 0) return false;
-        def = card_get_def(id);
-        if (!def) return false;
-        in_deck = deck_count_in_deck(&cs->deck, id);
-        if (in_deck > def->max_copies) return false;
-    }
-    return true;
-}

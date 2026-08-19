@@ -12,6 +12,7 @@
 #define SHOP_MSG_NONE 0
 #define SHOP_MSG_BOUGHT 1
 #define SHOP_MSG_NO_GOLD 2
+#define SHOP_MSG_MAX_COPIES 3
 
 /* The active shop is chosen by the actor that was engaged (g->shop_id).
  * Cursor state lives in g->item_menu_index. */
@@ -50,7 +51,8 @@ static void shop_draw(Game *g)
     ui_draw_text_line(0, (uint8_t)(6 + def->count), "[A] Buy  [B] Leave", 18);
     if (g->shop_message != SHOP_MSG_NONE) {
         ui_draw_text_line(0, (uint8_t)(8 + def->count),
-                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" : "Not enough!", 12);
+                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" :
+                          (g->shop_message == SHOP_MSG_MAX_COPIES) ? "Too many!" : "Not enough!", 12);
     }
 }
 
@@ -78,10 +80,14 @@ void shop_screen_update(Game *g)
                 g->shop_message = SHOP_MSG_NO_GOLD;
                 telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)card_id, 1, 0, 0);
             } else {
-                currency_add(&g->state, CURRENCY_ID_GOLD, -(int16_t)price);
-                deck_collection_add(&g->state.cards, card_id, 1);
-                telemetry_emit(EVENT_ITEM_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
-                g->shop_message = SHOP_MSG_BOUGHT;
+                if (!deck_collection_add(&g->state.cards, card_id, 1)) {
+                    g->shop_message = SHOP_MSG_MAX_COPIES;
+                    telemetry_emit(EVENT_ITEM_PURCHASE_FAILED, (uint8_t)card_id, 2, 0, 0);
+                } else {
+                    currency_add(&g->state, CURRENCY_ID_GOLD, -(int16_t)price);
+                    telemetry_emit(EVENT_ITEM_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
+                    g->shop_message = SHOP_MSG_BOUGHT;
+                }
             }
             g->render_cache.valid = false;
         }

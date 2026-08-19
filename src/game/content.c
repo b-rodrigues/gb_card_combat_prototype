@@ -4,11 +4,9 @@
 #include "event.h"
 #include "dialogue.h"
 #include "actor.h"
-#include "rpg/cards.h"
 #include "rpg/party.h"
 #include "core/game.h"
 
-#define HERO_BASE_ATTACK 3
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
 
@@ -39,20 +37,6 @@ void game_new_game(GameState *state)
 
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
-}
-
-uint8_t game_hero_attack(const GameState *state)
-{
-    uint8_t total = HERO_BASE_ATTACK;
-    uint8_t i;
-    const CardDefinition *def;
-    if (!state) return total;
-    for (i = 0; i < state->cards.deck.count; i++) {
-        def = card_get_def(state->cards.deck.cards[i]);
-        if (def && def->type == CARD_TYPE_ATTACK)
-            total = (uint8_t)(total + def->power);
-    }
-    return total;
 }
 
 void game_on_level_up(GameState *state, ProgressionTarget target,

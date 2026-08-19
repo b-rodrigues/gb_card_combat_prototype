@@ -1,0 +1,24 @@
+{
+  "name": "shop_max_copies",
+  "test": true,
+  "description": "Buying a card up to its max_copies limit succeeds; a 4th purchase is rejected with ITEM_PURCHASE_FAILED and gold unchanged",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {"type": "buy_item", "item": "HEALING_HERB"},
+    {"type": "buy_item", "item": "HEALING_HERB"},
+    {"type": "buy_item", "item": "HEALING_HERB"},
+    {"type": "buy_item", "item": "HEALING_HERB"}
+  ],
+  "assertions": [
+    {"type": "currency", "currency": "GOLD", "expected": 10},
+    {"type": "inventory", "item": "HEALING_HERB", "expected": 3},
+    {"type": "event_occurred", "event": "ITEM_PURCHASED"},
+    {"type": "event_occurred", "event": "ITEM_PURCHASE_FAILED"}
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {"x": 4, "y": 4, "facing": "DOWN"},
+    "seed": 8205,
+    "currency": {"GOLD": 70}
+  }
+}

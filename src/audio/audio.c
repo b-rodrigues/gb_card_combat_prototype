@@ -92,11 +92,6 @@ MusicTrack audio_get_current_track(void)
     return current_track;
 }
 
-void audio_stop(void)
-{
-    audio_play_music(MUSIC_NONE);
-}
-
 void audio_update(void)
 {
 #ifdef DEBUG_BUILD

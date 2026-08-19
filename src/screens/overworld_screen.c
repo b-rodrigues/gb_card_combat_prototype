@@ -21,7 +21,6 @@ void start_battle_from_world(Game *g)
                  act->display_name ? act->display_name : "ENEMY",
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
-                 game_hero_attack(&g->state),
                  act->hp, act->max_hp,
                  &g->state.cards.deck);
 

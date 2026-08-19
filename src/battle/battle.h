@@ -80,7 +80,7 @@ typedef struct {
 } Battle;
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
-                  uint8_t player_max_hp, uint8_t player_attack,
+                  uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
                   const DeckState *ds);
 void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack);

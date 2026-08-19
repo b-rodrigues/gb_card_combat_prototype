@@ -90,7 +90,4 @@ bool input_held(InputButton button)
     return (pad_state & mask) != 0;
 }
 
-void input_inject_press(InputButton button)
-{
-    injected_pad_state |= (1 << button);
-}
+
