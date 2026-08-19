@@ -68,7 +68,7 @@ bool deck_collection_is_owned(const CardState *cs, CardId id)
 
 /* ── Deck internals ─────────────────────────────────────────────── */
 
-static uint8_t deck_count_in_deck(const DeckState *d, CardId id)
+uint8_t deck_count_in_deck(const DeckState *d, CardId id)
 {
     uint8_t i, n = 0;
     for (i = 0; i < d->count; i++) {

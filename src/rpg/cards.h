@@ -37,6 +37,7 @@ typedef struct {
     CardId id;
     uint8_t type;       /* CardType */
     uint8_t power;      /* numerical value */
+    uint8_t cost;       /* energy cost to play (0 = free) */
     uint8_t uses_per_battle;
     uint8_t max_copies;
     uint8_t effect;     /* CardEffectType */
