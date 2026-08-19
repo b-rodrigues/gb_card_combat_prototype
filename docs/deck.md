@@ -580,7 +580,7 @@ No player interaction is required between battles.
 
 ---
 
-# 15. Phase 13 — Deck-Building Screen
+# 15. Phase 13 — Deck-Building Screen ✅ DONE
 
 Create:
 
@@ -610,7 +610,7 @@ Shows every card owned by the player.
 
 ---
 
-# 16. Phase 14 — Deck UI
+# 16. Phase 14 — Deck UI ✅ DONE
 
 The deck view should show:
 
