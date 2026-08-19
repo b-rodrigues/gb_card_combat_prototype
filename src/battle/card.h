@@ -15,8 +15,9 @@ typedef enum {
 #define BATTLE_CARD_TYPE_COUNT 5
 
 typedef struct {
-    uint8_t type;   /* BattleCardType */
-    uint8_t value;  /* Number 1 - 9 */
+    uint8_t type;           /* BattleCardType */
+    uint8_t value;          /* Number 1 - 9 */
+    uint8_t uses_remaining; /* 0 = depleted; 0xFF = unlimited */
 } Card;
 
 /* Get one-line short description for card type */

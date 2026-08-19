@@ -19,6 +19,7 @@ void deck_init_default(Deck *d)
         p = s_default_starter_deck_packed[i];
         d->cards[i].type = (uint8_t)(p >> 4);
         d->cards[i].value = (uint8_t)(p & 0x0F);
+        d->cards[i].uses_remaining = 0xFF; /* unlimited until overridden */
     }
 }
 
@@ -29,6 +30,7 @@ void deck_draw(Deck *d, Card *out_card)
     if (!d || d->count == 0) {
         out_card->type = BATTLE_CARD_TYPE_SWORD;
         out_card->value = 2;
+        out_card->uses_remaining = 0xFF;
         return;
     }
 

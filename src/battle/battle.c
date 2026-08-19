@@ -1,6 +1,35 @@
 #include "battle.h"
 #include "telemetry.h"
+#include "rpg/cards.h"
+#include "game/game_ids.h"
 #include <string.h>
+
+/* ── Battle-card uses-per-battle initialisation (Phase 9) ───────────
+ * Maps the anonymous BattleCardType stored in each packed starter-deck
+ * card to a CardId so we can read the CardDefinition.uses_per_battle
+ * value and write it into Card.uses_remaining.  BOW has no registered
+ * card yet so it stays at the unlimited default (0xFF). */
+static const CardId s_type_to_card_id[BATTLE_CARD_TYPE_COUNT] = {
+    CARD_IRON_SWORD,    /* BATTLE_CARD_TYPE_SWORD (0) */
+    CARD_WOODEN_SHIELD, /* BATTLE_CARD_TYPE_SHIELD (1) */
+    CARD_NONE,          /* BATTLE_CARD_TYPE_BOW (2) — no card registered */
+    CARD_FIRE_TOME,     /* BATTLE_CARD_TYPE_FIRE (3) */
+    CARD_HEALING_HERB   /* BATTLE_CARD_TYPE_HEAL (4) */
+};
+
+static void battle_init_card_uses(Battle *b)
+{
+    uint8_t i;
+    const CardDefinition *def;
+    for (i = 0; i < b->deck.count; i++) {
+        if (b->deck.cards[i].type < BATTLE_CARD_TYPE_COUNT) {
+            def = card_get_def(s_type_to_card_id[b->deck.cards[i].type]);
+            if (def) {
+                b->deck.cards[i].uses_remaining = def->uses_per_battle;
+            }
+        }
+    }
+}
 
 /* Compile-time guarantee that the timer window is an exact integer number of
  * bar cells and whole seconds: every '=' drains one cell per
@@ -33,6 +62,7 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemy_count = 1;
 
     deck_init_default(&b->deck);
+    battle_init_card_uses(b);
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         deck_draw(&b->deck, &b->hand[i]);
     }
@@ -72,12 +102,18 @@ bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
 
 void battle_cursor_move(Battle *b, int8_t dir)
 {
+    uint8_t start, step;
     if (!b) return;
     if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) return;
-    if (dir < 0) {
-        b->cursor_pos = (b->cursor_pos == 0) ? (BATTLE_HAND_SIZE - 1) : (uint8_t)(b->cursor_pos - 1);
-    } else {
-        b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
+    start = b->cursor_pos;
+    for (step = 0; step < BATTLE_HAND_SIZE; step++) {
+        if (dir < 0) {
+            b->cursor_pos = (b->cursor_pos == 0) ? (BATTLE_HAND_SIZE - 1) : (uint8_t)(b->cursor_pos - 1);
+        } else {
+            b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
+        }
+        if (b->hand[b->cursor_pos].uses_remaining != 0) break;
+        if (b->cursor_pos == start) break;
     }
     b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 }
@@ -143,6 +179,10 @@ void battle_card_select(Battle *b)
         return;
     }
 
+    if (b->hand[b->cursor_pos].uses_remaining == 0) {
+        return;
+    }
+
     if (b->combo_count < BATTLE_HAND_SIZE) {
         b->selected_indices[b->combo_count++] = b->cursor_pos;
         b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
@@ -151,7 +191,8 @@ void battle_card_select(Battle *b)
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {
             next_pos++;
             if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
-            if (!battle_is_card_selected(b, next_pos)) {
+            if (!battle_is_card_selected(b, next_pos) &&
+                b->hand[next_pos].uses_remaining != 0) {
                 b->cursor_pos = next_pos;
                 break;
             }
@@ -191,6 +232,9 @@ static void battle_resolve_hand_discard(Battle *b)
     uint8_t i, idx;
     for (i = 0; i < b->combo_count; i++) {
         idx = b->selected_indices[i];
+        if (b->hand[idx].uses_remaining != 0xFF && b->hand[idx].uses_remaining > 0) {
+            b->hand[idx].uses_remaining--;
+        }
         deck_discard(&b->deck, b->hand[idx]);
         deck_draw(&b->deck, &b->hand[idx]);
     }

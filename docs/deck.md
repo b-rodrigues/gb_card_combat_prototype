@@ -437,7 +437,7 @@ These values are placeholders for testing the system, not final balance.
 
 ---
 
-# 11. Phase 9 — Battle Runtime Card State
+# 11. Phase 9 — Battle Runtime Card State ✅ DONE
 
 Do not store remaining uses inside the persistent `CardDefinition`.
 
@@ -479,7 +479,7 @@ No counter needs to be maintained.
 
 ---
 
-# 12. Phase 10 — Card Play
+# 12. Phase 10 — Card Play ✅ DONE
 
 Create a generic operation:
 
@@ -526,7 +526,7 @@ still unlimited
 
 ---
 
-# 13. Phase 11 — Card Availability
+# 13. Phase 11 — Card Availability ✅ DONE
 
 A card should become unavailable when:
 
@@ -546,7 +546,7 @@ The deck does not shrink during combat.
 
 ---
 
-# 14. Phase 12 — Battle Reset
+# 14. Phase 12 — Battle Reset ✅ DONE
 
 At the beginning of every battle:
 
