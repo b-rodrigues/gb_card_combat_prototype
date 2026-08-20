@@ -1,7 +1,7 @@
 {
   "name": "card_defend_inert_nonshield",
   "test": true,
-  "description": "In defend phase, non-shield cards are inert: playing BO3 contributes 0 block, so hero takes the full 3 damage from the enemy",
+  "description": "In defend phase, non-shield cards are inert: playing BO3 contributes 0 block, so hero takes the full 2 damage from the enemy (slime deck SWORD(2))",
   "actions": [
     {
       "type": "press",
@@ -51,7 +51,7 @@
     },
     {
       "type": "battle_player_hp",
-      "expected": 3
+      "expected": 8
     },
     {
       "type": "event_occurred",

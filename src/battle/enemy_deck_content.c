@@ -49,7 +49,11 @@ void enemy_deck_setup_banked(void)
     if (!src) return;
     if (count == 0 || count > ENEMY_DECK_SIZE) return;
 
-    for (i = 0; i < count; i++) ed->cards[i] = src[i];
+    for (i = 0; i < count; i++) {
+        ed->cards[i].type = src[i].type;
+        ed->cards[i].value = src[i].value;
+        ed->cards[i].uses_remaining = src[i].uses_remaining;
+    }
     ed->count = count;
     ed->draw_idx = 0;
 }

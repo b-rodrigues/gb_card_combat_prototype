@@ -123,7 +123,7 @@ static void battle_draw_enemy_columns(const Battle *battle)
             if (blink_name && k == battle->attacking_enemy_idx) {
                 battle_draw_text_line(x, 2, NULL, 6);
             } else {
-                battle_draw_text_line(x, 2, e->name ? e->name : "ENEMY", 6);
+                battle_draw_text_line(x, 2, e->name[0] ? e->name : "ENEMY", 6);
             }
             battle_draw_num2(x, 3, e->hp);
             battle_put_char((uint8_t)(x + 2), 3, '/');

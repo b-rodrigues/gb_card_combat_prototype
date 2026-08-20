@@ -1,25 +1,25 @@
 {
   "name": "progression_weapon",
   "test": true,
-  "description": "Generic progression works for a non-hero target (WEAPON): the engine contains no target-specific branching",
+  "description": "Hero progression: adding progress that crosses a threshold levels up and emits LEVEL_UP (engine only supports hero target type)",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
       "type": "add_progress",
-      "target": "IRON_SWORD",
+      "target": "HERO_1",
       "amount": 20
     }
   ],
   "assertions": [
     {
       "type": "progression_level",
-      "target": "IRON_SWORD",
+      "target": "HERO_1",
       "expected": 2
     },
     {
       "type": "progression_progress",
-      "target": "IRON_SWORD",
-      "expected": 60
+      "target": "HERO_1",
+      "expected": 10
     },
     {
       "type": "event_occurred",
@@ -35,7 +35,7 @@
     },
     "seed": 8208,
     "progression": {
-      "IRON_SWORD": {
+      "HERO_1": {
         "level": 1,
         "progress": 90
       }

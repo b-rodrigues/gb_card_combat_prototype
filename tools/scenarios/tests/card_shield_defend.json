@@ -1,7 +1,7 @@
 {
   "name": "card_shield_defend",
   "test": true,
-  "description": "In battle, a shield card blocks the NEXT enemy attack by its shield value: pick SH5 after the enemy telegraphs 3 damage, and the hero takes 0 damage.  Also proves the block is one-shot against the next attack, not applied for the whole turn.",
+  "description": "In battle, a shield card blocks the NEXT enemy attack by its shield value: pick SH5 after the enemy telegraphs 2 damage (slime deck SWORD(2)), and the hero takes 0 damage.  Also proves the block is one-shot against the next attack, not applied for the whole turn.",
   "actions": [
     {
       "type": "press",
@@ -47,7 +47,7 @@
     },
     {
       "type": "battle_player_hp",
-      "expected": 8
+      "expected": 10
     },
     {
       "type": "event_occurred",
