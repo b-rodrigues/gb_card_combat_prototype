@@ -231,6 +231,14 @@ static void draw_card_list(Game *g)
         ui_draw_text_line(0, 15, "[A]REMOVE [B]CLOSE", 19);
 }
 
+static void scroll_to_index(Game *g)
+{
+    if (g->item_menu_index < g->item_menu_scroll)
+        g->item_menu_scroll = g->item_menu_index;
+    else if (g->item_menu_index >= (uint8_t)(g->item_menu_scroll + 8))
+        g->item_menu_scroll = (uint8_t)(g->item_menu_index - 7);
+}
+
 void item_screen_reset(Game *g)
 {
     g->item_menu_index = 0;
@@ -288,14 +296,12 @@ void item_screen_update(Game *g)
     if (input_pressed(INPUT_UP)) {
         g->item_menu_index = (g->item_menu_index > 0) ?
             (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1);
-        if (g->item_menu_index < g->item_menu_scroll)
-            g->item_menu_scroll = g->item_menu_index;
+        scroll_to_index(g);
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_DOWN)) {
         g->item_menu_index = (g->item_menu_index < (uint8_t)(total - 1)) ?
             (uint8_t)(g->item_menu_index + 1) : 0;
-        if (g->item_menu_index >= (uint8_t)(g->item_menu_scroll + 8))
-            g->item_menu_scroll = (uint8_t)(g->item_menu_index - 7);
+        scroll_to_index(g);
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_A)) {
         if (g->item_menu_tab == TAB_CARDS) {
