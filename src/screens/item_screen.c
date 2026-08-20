@@ -239,6 +239,24 @@ static void scroll_to_index(Game *g)
         g->item_menu_scroll = (uint8_t)(g->item_menu_index - 7);
 }
 
+static void draw_deck_summary(Game *g)
+{
+    uint8_t i, n, c[3];
+    const CardDefinition *d;
+
+    c[0] = c[1] = c[2] = 0;
+    n = g->state.cards.deck.count;
+    for (i = 0; i < n; i++) {
+        d = card_get_def(g->state.cards.deck.cards[i]);
+        if (d && d->type <= CARD_TYPE_HEAL) c[d->type]++;
+    }
+
+    ui_draw_text_line(0, 16, "ATK   DEF   HEA", 15);
+    ui_draw_num2(3, 16, c[0]);
+    ui_draw_num2(9, 16, c[1]);
+    ui_draw_num2(15, 16, c[2]);
+}
+
 void item_screen_reset(Game *g)
 {
     g->item_menu_index = 0;
@@ -349,6 +367,8 @@ void item_screen_render(Game *g)
             build_view(g);
             draw_filter_sort(g);
             draw_card_list(g);
+            if (g->item_menu_tab == TAB_DECK)
+                draw_deck_summary(g);
         }
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_ITEM, 0, 0, 0);
         rc->valid = true;

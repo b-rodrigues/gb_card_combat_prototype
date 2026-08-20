@@ -18,6 +18,9 @@ typedef struct {
 /* Initialize standard starter deck (deterministic fixed order) */
 void deck_init_default(Deck *d);
 
+/* Banked no-arg body (ROM bank 2) dispatched by deck_init_default(). */
+void deck_init_default_banked(void);
+
 /* Draw next card from deck, reshuffling discard pile if empty */
 void deck_draw(Deck *d, Card *out_card);
 

@@ -642,7 +642,11 @@ B BACK
 
 ---
 
-# 17. Phase 15 — Collection UI
+# 17. Phase 15 — Collection UI ✅ DONE
+
+> Note: implemented as the CARDS tab in `src/screens/item_screen.c`. Selecting a
+> card shows a single inline PWR/COST/U row (row 14) rather than a full detail
+> screen; `A` adds the selected card to the deck.
 
 The collection view should show:
 
@@ -674,7 +678,11 @@ B BACK
 
 ---
 
-# 18. Phase 16 — Filtering
+# 18. Phase 16 — Filtering ✅ DONE
+
+> Note: the type filter is implemented (SELECT cycles ALL→ATTACK→DEFENSE→HEAL→
+> STATUS→UTILITY). Cost, power, and deck-status filters are deferred (see the
+> roadmap); they are not yet composable.
 
 Implement filters in this order:
 
@@ -730,7 +738,10 @@ NOT IN DECK
 
 ---
 
-# 19. Phase 17 — Sorting
+# 19. Phase 17 — Sorting ✅ DONE
+
+> Note: START cycles sort mode: OFF→TYPE→POWER↑→COST↑→POWER↓→COST↓. NAME and
+> USES sorts are deferred.
 
 Implement:
 
@@ -766,7 +777,12 @@ finds cards with high battle availability.
 
 ---
 
-# 20. Phase 18 — Filter/Sort Implementation
+# 20. Phase 18 — Filter/Sort Implementation ✅ DONE
+
+> Note: `s_view_indices[20]` (static in item_screen.c) maps view position to
+> source index; a stable insertion sort (`sort_view`) reorders only the index
+> buffer. Collection/deck order is never mutated. Scrolling (8-row window) keeps
+> the cursor visible, including on wraparound.
 
 Do not modify the underlying collection.
 
@@ -790,7 +806,11 @@ The important invariant is:
 
 ---
 
-# 21. Phase 19 — Deck Summary
+# 21. Phase 19 — Deck Summary ✅ DONE
+
+> Note: the DECK tab shows a single compact summary row (`ATK N DEF N HEA N`)
+> with per-type counts. Average cost and STATUS/UTILITY counts were deferred to
+> keep the fixed-bank _CODE budget under control.
 
 Add a compact summary to the deck screen:
 
@@ -811,7 +831,7 @@ Do not make deck validation overly complicated initially.
 
 ---
 
-# 22. Phase 20 — Remove Legacy Systems
+# 22. Phase 20 — Remove Legacy Systems ✅ DONE
 
 Once the card system works, remove obsolete gameplay concepts.
 
@@ -870,7 +890,7 @@ effect
 
 ---
 
-# 23. Phase 21 — Remove Equipment
+# 23. Phase 21 — Remove Equipment ✅ DONE
 
 There should be no:
 
@@ -896,7 +916,12 @@ If the game eventually needs persistent character upgrades, those should be a se
 
 ---
 
-# 24. Phase 22 — Save Data
+# 24. Phase 22 — Save Data ✅ DONE
+
+> Note: `save.c` copies the whole `GameState` (including `cards.collection` and
+> `cards.deck`) to SRAM. Remaining uses are battle-runtime state (`Battle`), never
+> part of `GameState`, so they are never persisted — satisfying this phase's
+> requirement by construction.
 
 The persistent save state should contain:
 
@@ -943,7 +968,11 @@ Transient state discarded.
 
 ---
 
-# 25. Phase 23 — Debug / Test Harness
+# 25. Phase 23 — Debug / Test Harness ✅ DONE
+
+> Note: card-specific scenarios live in `tools/scenarios/tests/` (card_*, deck_*,
+> battle_*). Semantic state is exposed via the extended snapshot; card telemetry
+> covers collection/deck/battle transitions.
 
 The repository already has deterministic scenario infrastructure and semantic state inspection.
 
@@ -1018,7 +1047,13 @@ potion uses = 3
 
 ---
 
-# 26. Phase 24 — Telemetry
+# 26. Phase 24 — Telemetry ✅ DONE
+
+> Note: legacy ITEM_* events were renamed in place to CARD_ADDED_TO_COLLECTION,
+> CARD_REMOVED_FROM_COLLECTION, CARD_ADDED_TO_DECK, CARD_REMOVED_FROM_DECK, and
+> CARD_PLAYED (new events 44-46). CARD_DEPLETED was dropped — CARD_PLAYED carries
+> the post-play `uses_remaining`. DECK_VALIDATED was not implemented (no
+> `deck_validate()` exists).
 
 Add explicit card events.
 
@@ -1048,7 +1083,12 @@ This is particularly useful because the repository is designed around semantic o
 
 ---
 
-# 27. Phase 25 — Initial Card Combat Integration
+# 27. Phase 25 — Initial Card Combat Integration ✅ DONE
+
+> Note: the vertical slice is live — `battle_start()` bridges the persistent
+> `DeckState` into the battle `Deck`, cards are playable as combos, limited-use
+> cards decrement and reset between battles. Remaining gap: enemy AI still uses a
+> flat `attack` value (no enemy card decks yet).
 
 Do not build the complete card combat system at the same time as the deck UI.
 

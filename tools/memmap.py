@@ -109,6 +109,7 @@ def main():
     # under the harness at runtime.
     banked_targets = {
         "_combo_evaluate_banked": "combo evaluator (bank 2)",
+        "_deck_init_default_banked": "starter deck unpacker (bank 2)",
     }
     print()
     print("Banked target address validation")

@@ -1,0 +1,99 @@
+{
+  "name": "deck_summary",
+  "test": true,
+  "description": "The DECK tab shows a summary row with per-type card counts",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 16,
+      "contains": "ATK 1"
+    },
+    {
+      "type": "screen_row",
+      "row": 16,
+      "contains": "DEF 1"
+    },
+    {
+      "type": "screen_row",
+      "row": 16,
+      "contains": "HEA 1"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410,
+    "inventory": {
+      "IRON_SWORD": 1,
+      "WOODEN_SHIELD": 1,
+      "HEALING_HERB": 1
+    }
+  }
+}
