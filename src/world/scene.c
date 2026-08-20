@@ -9,7 +9,6 @@ extern const SceneDefinition g_scenes[];
 
 static SceneDefinition s_scene_scratch;
 static SceneExit s_exit_scratch;
-static SceneTerrainBlock s_block_scratch;
 
 const SceneDefinition *scene_definition_for_map(MapId map_id)
 {
@@ -38,42 +37,15 @@ const SceneExit *scene_exit_at(const SceneDefinition *def, uint8_t x, uint8_t y)
     return NULL;
 }
 
+/* scene_load_tiles() is a fixed-bank wrapper around the banked body in
+ * src/world/scene_load.c (ROM bank 2).  The wrapper stages the World pointer
+ * and map id into the _DATA globals (banked.c) and runs the banked no-arg
+ * function through the WRAM banked-call trampoline (crt0.s). */
 void scene_load_tiles(World *w, MapId map_id)
 {
-    const SceneDefinition *def;
-    uint8_t i, x, y;
-
-    if (!w) return;
-    def = scene_definition_for_map(map_id);
-    if (!def) return;
-
-    for (y = 0; y < w->height; y++) {
-        uint8_t *row = w->map[y];
-        for (x = 0; x < w->width; x++) {
-            row[x] = (x == 0 || x == (uint8_t)(w->width - 1) || y == 0 || y == (uint8_t)(w->height - 1)) ? TILE_WALL : TILE_FLOOR;
-        }
-    }
-
-    if (def->terrain_blocks) {
-        for (i = 0; ; i++) {
-            uint8_t ex, ey;
-            banked_copy(2, &s_block_scratch, &def->terrain_blocks[i], sizeof(SceneTerrainBlock));
-            if (s_block_scratch.w == 0) break;
-            ey = (uint8_t)(s_block_scratch.y + s_block_scratch.h);
-            ex = (uint8_t)(s_block_scratch.x + s_block_scratch.w);
-            if (ey > w->height) ey = w->height;
-            if (ex > w->width) ex = w->width;
-            for (y = s_block_scratch.y; y < ey; y++) {
-                uint8_t *row = w->map[y];
-                for (x = s_block_scratch.x; x < ex; x++) {
-                    row[x] = s_block_scratch.tile;
-                }
-            }
-        }
-    }
-
-    for (x = 0; x < def->exit_count; x++) {
-        banked_copy(2, &s_exit_scratch, &def->exits[x], sizeof(SceneExit));
-        w->map[s_exit_scratch.gate_y][s_exit_scratch.gate_x] = TILE_EXIT;
-    }
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&scene_load_tiles_banked;
+    g_bk_ptr_a = (void *)w;
+    g_bk_byte_a = (uint8_t)map_id;
+    banked_call_run();
 }

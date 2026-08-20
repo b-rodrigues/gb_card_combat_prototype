@@ -309,33 +309,18 @@ void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
 
 
 
-static const uint16_t s_p10[4] = { 10000, 1000, 100, 10 };
-
+/* ui_format_int() is a fixed-bank wrapper around the banked body in
+ * src/ui/ui_format.c (ROM bank 2).  The wrapper stages its arguments into
+ * the _DATA globals (banked.c) and runs the banked no-arg function through
+ * the WRAM banked-call trampoline (crt0.s): see src/core/banked.h. */
 void ui_format_int(int16_t value, char *out)
 {
-    uint16_t uval;
-    uint8_t i, started = 0;
-    if (!out) return;
-    if (value < 0) {
-        *out++ = '-';
-        uval = (uint16_t)(-value);
-    } else {
-        uval = (uint16_t)value;
-    }
-    for (i = 0; i < 4; i++) {
-        uint16_t p = s_p10[i];
-        uint8_t d = 0;
-        while (uval >= p) {
-            uval -= p;
-            d++;
-        }
-        if (d != 0 || started) {
-            *out++ = (char)('0' + d);
-            started = 1;
-        }
-    }
-    *out++ = (char)('0' + (uint8_t)uval);
-    *out = '\0';
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&ui_format_int_banked;
+    g_bk_byte_a = (uint8_t)(value & 0xFF);
+    g_bk_byte_b = (uint8_t)((uint16_t)value >> 8);
+    g_bk_ptr_a = (void *)out;
+    banked_call_run();
 }
 
 /* One world cell into the 32x32 background tilemap ring at the wrapped

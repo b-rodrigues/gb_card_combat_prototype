@@ -44,6 +44,9 @@ void ui_update_camera(const World *world);
  * stdio/console chain so _HOME stays under 0x8000. */
 void ui_format_int(int16_t value, char *out);
 
+/* Banked no-arg body (ROM bank 2) dispatched by ui_format_int(). */
+void ui_format_int_banked(void);
+
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y);
 void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
                            uint8_t max_chars, uint8_t ox, uint8_t oy);

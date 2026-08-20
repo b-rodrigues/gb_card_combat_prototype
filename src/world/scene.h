@@ -64,6 +64,9 @@ const SceneExit *scene_exit_at(const SceneDefinition *def, uint8_t x, uint8_t y)
  * and exit gates for map_id.  Uses map bounds from the scene definition. */
 void scene_load_tiles(World *w, MapId map_id);
 
+/* Banked no-arg body (ROM bank 2) dispatched by scene_load_tiles(). */
+void scene_load_tiles_banked(void);
+
 #define scene_id_to_map(scene) ((MapId)(scene))
 #define map_to_scene_id(map) ((SceneId)(map))
 
