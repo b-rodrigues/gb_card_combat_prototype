@@ -26,7 +26,7 @@
 #define ENTITY_ID_WIZARD      (ENTITY_ID_FIRST_GAME + 8)
 #define ENTITY_ID_SIGNPOST    (ENTITY_ID_FIRST_GAME + 9)
 
-/* ── Events (engine range: NONE=0; game range >= 0x80) ── */
+/* ── Cards (engine range: NONE=0; game range >= CARD_FIRST_GAME) ── */
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)
 #define CARD_WOODEN_SHIELD (CARD_FIRST_GAME + 1)
 #define CARD_HEALING_HERB  (CARD_FIRST_GAME + 2)

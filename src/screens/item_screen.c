@@ -64,7 +64,7 @@ static void draw_card_detail(Game *g)
 
     n = (g->item_menu_tab == TAB_CARDS) ?
         g->state.cards.collection.count : g->state.cards.deck.count;
-    if (n == 0) return;
+    if (n == 0 || g->item_menu_index >= n) return;
 
     id = (g->item_menu_tab == TAB_CARDS) ?
         g->state.cards.collection.entries[g->item_menu_index].id :
