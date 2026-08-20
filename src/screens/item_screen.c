@@ -12,6 +12,19 @@
 #define TAB_QUEST 2
 #define NUM_TABS  3
 
+#define FILTER_ALL      0xFF
+#define SORT_NONE       0
+#define SORT_TYPE       1
+#define SORT_POWER      2
+#define SORT_COST       3
+#define SORT_POWER_DESC 4
+#define SORT_COST_DESC  5
+
+/* Filtered/sorted view over the active tab's source array.  s_view_indices
+ * holds source indices; s_view_count is the number of visible cards. */
+static uint8_t s_view_indices[MAX_DECK_CARDS];
+static uint8_t s_view_count;
+
 static void quest_draw_status(Game *g, const QuestDefinition *q, uint8_t y)
 {
     QuestStatus st;
@@ -56,20 +69,133 @@ static void draw_quest(Game *g)
     ui_draw_text_line(0, 16, "[B] CLOSE", 10);
 }
 
+/* Source array of the active tab: the collection for CARDS, the deck for
+ * DECK.  QUEST has no card list. */
+static uint8_t source_count(Game *g)
+{
+    return (g->item_menu_tab == TAB_CARDS) ?
+        g->state.cards.collection.count : g->state.cards.deck.count;
+}
+
+static CardId card_id_at(Game *g, uint8_t i)
+{
+    if (g->item_menu_tab == TAB_CARDS)
+        return g->state.cards.collection.entries[i].id;
+    return g->state.cards.deck.cards[i];
+}
+
+static bool filter_matches(Game *g, CardId id)
+{
+    const CardDefinition *def;
+    if (g->item_menu_filter == FILTER_ALL) return true;
+    def = card_get_def(id);
+    if (!def) return false;
+    return def->type == g->item_menu_filter;
+}
+
+static uint8_t sort_value(const CardDefinition *def, uint8_t sort)
+{
+    switch (sort) {
+        case SORT_TYPE:  return def->type;
+        case SORT_POWER:
+        case SORT_POWER_DESC: return def->power;
+        case SORT_COST:
+        case SORT_COST_DESC:  return def->cost;
+        default: return 0;
+    }
+}
+
+static void sort_view(Game *g)
+{
+    uint8_t i, j, tmp, va, vb;
+    uint8_t desc = (g->item_menu_sort == SORT_POWER_DESC ||
+                    g->item_menu_sort == SORT_COST_DESC);
+
+    for (i = 1; i < s_view_count; i++) {
+        tmp = s_view_indices[i];
+        va = sort_value(card_get_def(card_id_at(g, tmp)), g->item_menu_sort);
+        j = i;
+        while (j > 0) {
+            vb = sort_value(card_get_def(card_id_at(g, s_view_indices[j - 1])),
+                            g->item_menu_sort);
+            if (desc ? (vb < va) : (vb > va)) {
+                s_view_indices[j] = s_view_indices[j - 1];
+                j--;
+            } else {
+                break;
+            }
+        }
+        s_view_indices[j] = tmp;
+    }
+}
+
+static void build_view(Game *g)
+{
+    uint8_t total, i;
+    s_view_count = 0;
+    total = source_count(g);
+    for (i = 0; i < total; i++) {
+        if (filter_matches(g, card_id_at(g, i)))
+            s_view_indices[s_view_count++] = i;
+    }
+    if (g->item_menu_sort != SORT_NONE && s_view_count > 1)
+        sort_view(g);
+}
+
+static void draw_filter_sort(Game *g)
+{
+    const char *f = "ALL";
+    const char *s = "OFF";
+    uint8_t fv = g->item_menu_filter;
+    uint8_t sv = g->item_menu_sort;
+
+    if (fv == CARD_TYPE_ATTACK) f = "ATK";
+    else if (fv == CARD_TYPE_DEFENSE) f = "DEF";
+    else if (fv == CARD_TYPE_HEAL) f = "HEL";
+    else if (fv == CARD_TYPE_STATUS) f = "STS";
+    else if (fv == CARD_TYPE_UTILITY) f = "UTL";
+
+    if (sv == SORT_TYPE) s = "TYPE";
+    else if (sv == SORT_POWER) s = "PWR+";
+    else if (sv == SORT_COST) s = "CST+";
+    else if (sv == SORT_POWER_DESC) s = "PWR-";
+    else if (sv == SORT_COST_DESC) s = "CST-";
+
+    ui_draw_text_line(0, 5, "F:", 2);
+    ui_draw_text_line(2, 5, f, 3);
+    ui_draw_text_line(8, 5, "S:", 2);
+    ui_draw_text_line(10, 5, s, 4);
+}
+
+static void cycle_filter(Game *g)
+{
+    if (g->item_menu_filter == FILTER_ALL)
+        g->item_menu_filter = CARD_TYPE_ATTACK;
+    else if (g->item_menu_filter == CARD_TYPE_ATTACK)
+        g->item_menu_filter = CARD_TYPE_DEFENSE;
+    else if (g->item_menu_filter == CARD_TYPE_DEFENSE)
+        g->item_menu_filter = CARD_TYPE_HEAL;
+    else if (g->item_menu_filter == CARD_TYPE_HEAL)
+        g->item_menu_filter = CARD_TYPE_STATUS;
+    else if (g->item_menu_filter == CARD_TYPE_STATUS)
+        g->item_menu_filter = CARD_TYPE_UTILITY;
+    else
+        g->item_menu_filter = FILTER_ALL;
+}
+
+static void cycle_sort(Game *g)
+{
+    g->item_menu_sort = (uint8_t)((g->item_menu_sort + 1) % (SORT_COST_DESC + 1));
+}
+
 static void draw_card_detail(Game *g)
 {
     const CardDefinition *def;
-    CardId id;
-    uint8_t n;
+    uint8_t idx;
 
-    n = (g->item_menu_tab == TAB_CARDS) ?
-        g->state.cards.collection.count : g->state.cards.deck.count;
-    if (n == 0 || g->item_menu_index >= n) return;
-
-    id = (g->item_menu_tab == TAB_CARDS) ?
-        g->state.cards.collection.entries[g->item_menu_index].id :
-        g->state.cards.deck.cards[g->item_menu_index];
-    def = card_get_def(id);
+    if (s_view_count == 0 || g->item_menu_index >= s_view_count) return;
+    idx = s_view_indices[g->item_menu_index];
+    def = card_get_def(card_id_at(g, idx));
     if (!def) return;
 
     ui_draw_text_line(0, 14, "PWR", 3);
@@ -85,19 +211,18 @@ static void draw_card_detail(Game *g)
 
 static void draw_card_list(Game *g)
 {
-    uint8_t n, i, y;
+    uint8_t i, y, src, pos;
     const CardDefinition *def;
-    CardId id;
 
-    n = (g->item_menu_tab == TAB_CARDS) ?
-        g->state.cards.collection.count : g->state.cards.deck.count;
-    for (i = 0; i < n && i < 8; i++) {
-        id = (g->item_menu_tab == TAB_CARDS) ?
-            g->state.cards.collection.entries[i].id : g->state.cards.deck.cards[i];
-        def = card_get_def(id);
+    for (i = 0; i < 8; i++) {
         y = (uint8_t)(6 + i);
-        if (i == g->item_menu_index) ui_draw_text_line(0, y, ">", 1);
-        ui_draw_text_line(2, y, def ? def->name : "???", 8);
+        pos = (uint8_t)(g->item_menu_scroll + i);
+        if (pos < s_view_count) {
+            src = s_view_indices[pos];
+            def = card_get_def(card_id_at(g, src));
+            if (pos == g->item_menu_index) ui_draw_text_line(0, y, ">", 1);
+            ui_draw_text_line(2, y, def ? def->name : "???", 8);
+        }
     }
     draw_card_detail(g);
     if (g->item_menu_tab == TAB_CARDS)
@@ -106,64 +231,97 @@ static void draw_card_list(Game *g)
         ui_draw_text_line(0, 15, "[A]REMOVE [B]CLOSE", 19);
 }
 
+void item_screen_reset(Game *g)
+{
+    g->item_menu_index = 0;
+    g->item_menu_tab = TAB_CARDS;
+    g->item_menu_scroll = 0;
+    g->item_menu_filter = FILTER_ALL;
+    g->item_menu_sort = SORT_NONE;
+}
+
 void item_screen_update(Game *g)
 {
     uint8_t total;
 
-    if (input_pressed(INPUT_SELECT) || input_pressed(INPUT_RIGHT)) {
+    if (input_pressed(INPUT_RIGHT)) {
         g->item_menu_tab = (uint8_t)((g->item_menu_tab + 1) % NUM_TABS);
         g->item_menu_index = 0;
+        g->item_menu_scroll = 0;
         g->render_cache.valid = false;
         return;
     }
     if (input_pressed(INPUT_LEFT)) {
         g->item_menu_tab = (uint8_t)((g->item_menu_tab + NUM_TABS - 1) % NUM_TABS);
         g->item_menu_index = 0;
+        g->item_menu_scroll = 0;
         g->render_cache.valid = false;
         return;
     }
     if (input_pressed(INPUT_B)) {
-        g->item_menu_index = 0;
-        g->item_menu_tab = TAB_CARDS;
+        item_screen_reset(g);
         screen_change(g, g->prev_screen);
         return;
     }
 
-    if (g->item_menu_tab == TAB_CARDS) {
-        total = g->state.cards.collection.count;
-    } else if (g->item_menu_tab == TAB_DECK) {
-        total = g->state.cards.deck.count;
-    } else {
+    if (g->item_menu_tab == TAB_QUEST) return;
+
+    if (input_pressed(INPUT_SELECT)) {
+        cycle_filter(g);
+        g->item_menu_index = 0;
+        g->item_menu_scroll = 0;
+        g->render_cache.valid = false;
         return;
     }
+    if (input_pressed(INPUT_START)) {
+        cycle_sort(g);
+        g->item_menu_index = 0;
+        g->item_menu_scroll = 0;
+        g->render_cache.valid = false;
+        return;
+    }
+
+    build_view(g);
+    total = s_view_count;
     if (total == 0) return;
 
     if (input_pressed(INPUT_UP)) {
         g->item_menu_index = (g->item_menu_index > 0) ?
             (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1);
+        if (g->item_menu_index < g->item_menu_scroll)
+            g->item_menu_scroll = g->item_menu_index;
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_DOWN)) {
         g->item_menu_index = (g->item_menu_index < (uint8_t)(total - 1)) ?
             (uint8_t)(g->item_menu_index + 1) : 0;
+        if (g->item_menu_index >= (uint8_t)(g->item_menu_scroll + 8))
+            g->item_menu_scroll = (uint8_t)(g->item_menu_index - 7);
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_A)) {
         if (g->item_menu_tab == TAB_CARDS) {
             CardState *cs = &g->state.cards;
-            if (g->item_menu_index < cs->collection.count) {
-                if (deck_add_card(cs, cs->collection.entries[g->item_menu_index].id))
+            uint8_t src = s_view_indices[g->item_menu_index];
+            if (src < cs->collection.count) {
+                if (deck_add_card(cs, cs->collection.entries[src].id))
                     telemetry_emit(EVENT_CARD_ADDED_TO_DECK,
-                                   cs->collection.entries[g->item_menu_index].id, 0, 0, 0);
+                                   cs->collection.entries[src].id, 0, 0, 0);
             }
         } else {
             CardState *cs = &g->state.cards;
-            if (g->item_menu_index < cs->deck.count) {
-                CardId rm = cs->deck.cards[g->item_menu_index];
+            uint8_t src = s_view_indices[g->item_menu_index];
+            if (src < cs->deck.count) {
+                CardId rm = cs->deck.cards[src];
                 if (deck_remove_card(cs, rm)) {
                     telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, rm, 0, 0, 0);
-                    if (g->item_menu_index >= cs->deck.count && g->item_menu_index > 0)
-                        g->item_menu_index--;
                 }
             }
+            build_view(g);
+            if (g->item_menu_index >= s_view_count && g->item_menu_index > 0)
+                g->item_menu_index--;
+            if (g->item_menu_scroll > 0 &&
+                (uint8_t)(g->item_menu_scroll + 8) > s_view_count)
+                g->item_menu_scroll = (s_view_count > 8) ?
+                    (uint8_t)(s_view_count - 8) : 0;
         }
         g->render_cache.valid = false;
     }
@@ -179,8 +337,13 @@ void item_screen_render(Game *g)
         else menu_draw_frame("CARDS");
         ui_draw_text_line(0, 2, "CARDS DECKQUEST   ", 17);
         ui_draw_text_line((uint8_t)(g->item_menu_tab * 5), 3, "^", 1);
-        if (g->item_menu_tab == TAB_QUEST) draw_quest(g);
-        else draw_card_list(g);
+        if (g->item_menu_tab == TAB_QUEST) {
+            draw_quest(g);
+        } else {
+            build_view(g);
+            draw_filter_sort(g);
+            draw_card_list(g);
+        }
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_ITEM, 0, 0, 0);
         rc->valid = true;
         rc->prev_screen = SCREEN_ITEM;

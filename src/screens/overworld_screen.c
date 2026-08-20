@@ -74,8 +74,7 @@ void overworld_screen_update(Game *g)
     }
 
     if (input_pressed(INPUT_START)) {
-        g->item_menu_index = 0;
-        g->item_menu_tab = 0;
+        item_screen_reset(g);
         screen_change(g, SCREEN_ITEM);
         return;
     }

@@ -1,7 +1,7 @@
 {
-  "name": "quest_list_merchant_complete",
+  "name": "card_filter_type",
   "test": true,
-  "description": "A completed LOST AMULET quest stays listed in the QUEST tab as 'complete - MERCHANT'",
+  "description": "Type filter (ATTACK) shows only attack cards in the CARDS tab",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -13,16 +13,8 @@
       "frames": 5
     },
     {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
+      "type": "set_filter",
+      "filter": "ATTACK"
     },
     {
       "type": "wait",
@@ -36,13 +28,18 @@
     },
     {
       "type": "screen_row",
-      "row": 9,
-      "contains": "LOST AMULET"
+      "row": 6,
+      "contains": "IRON SW"
     },
     {
-      "type": "screen_row",
-      "row": 10,
-      "contains": "complete - MERCHANT"
+      "type": "screen_row_not_contains",
+      "row": 7,
+      "contains": "WD SHLD"
+    },
+    {
+      "type": "screen_row_not_contains",
+      "row": 7,
+      "contains": "HERB"
     }
   ],
   "initial_state": {
@@ -52,9 +49,11 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8412,
-    "variables": {
-      "MERCHANT_QUEST": 2
+    "seed": 1234,
+    "inventory": {
+      "IRON_SWORD": 1,
+      "WOODEN_SHIELD": 1,
+      "HEALING_HERB": 1
     }
   }
 }

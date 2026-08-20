@@ -169,6 +169,12 @@ ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
 # Card type names -> CardType enum (src/battle/card.h):
 # SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, FI=FIRE 3, HE=HEAL 4.
 CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "FI": 3, "HE": 4}
+# Deck-builder filter names -> CardType (src/rpg/cards.h), plus ALL.
+FILTER_TYPE_MAP = {"ALL": 0xFF, "ATTACK": 0, "DEFENSE": 1, "HEAL": 2,
+                   "STATUS": 3, "UTILITY": 4}
+# Deck-builder sort modes (src/screens/item_screen.c).
+SORT_MODE_MAP = {"OFF": 0, "TYPE": 1, "POWER": 2, "COST": 3,
+                 "POWER_DESC": 4, "COST_DESC": 5}
 DIALOGUE_NAME_TO_ID = {v: k for k, v in DIALOGUE_ID_MAP.items()}
 CURRENCY_ID_MAP = {"GOLD": 1}
 
@@ -859,6 +865,8 @@ class EmulatorSession:
     DBG_ACT_SAVE = 8
     DBG_ACT_LOAD = 9
     DBG_ACT_SET_HAND_CARD = 10
+    DBG_ACT_SET_FILTER = 11
+    DBG_ACT_SET_SORT = 12
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

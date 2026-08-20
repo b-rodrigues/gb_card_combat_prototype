@@ -34,7 +34,9 @@ typedef enum {
 } CardEffectType;
 
 /* Static card definition.  Registered at boot via card_register_defs().
- * name is a short display string (4-8 chars). */
+ * name is a short display string (4-8 chars) stored INLINE so the whole row
+ * travels through banked_copy() into WRAM; a banked pointer would be
+ * unreadable from the fixed bank (see the quest engine's identical pattern). */
 typedef struct {
     CardId id;
     uint8_t type;       /* CardType */
@@ -45,7 +47,7 @@ typedef struct {
     uint8_t effect;     /* CardEffectType */
     uint8_t battle_type; /* BattleCardType for combat deck mapping; unused for SPECIAL */
     uint8_t price;      /* shop price in gold (0 = not sold) */
-    const char *name;   /* 4-8 char display name */
+    char name[9];       /* 4-8 char display name + NUL */
 } CardDefinition;
 
 /* Register the game's card catalog (content, banked ROM).

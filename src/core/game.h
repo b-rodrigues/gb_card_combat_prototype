@@ -35,7 +35,11 @@ typedef struct Game {
     uint32_t frame;
     uint8_t game_over_choice;  /* 0 = YES, 1 = NO on the continue prompt */
     uint8_t item_menu_index;   /* cursor into the active tab's list */
-    uint8_t item_menu_tab;     /* 0 = ITEM, 1 = EQUIP, 2 = QUEST, 3 = STATUS */
+    uint8_t item_menu_tab;     /* 0 = CARDS, 1 = DECK, 2 = QUEST */
+    uint8_t item_menu_scroll;  /* first visible row of the card list */
+    uint8_t item_menu_filter;  /* 0xFF = ALL, else a CardType value */
+    uint8_t item_menu_sort;    /* 0 = none, 1 = type, 2 = power, 3 = cost,
+                                  4 = power desc, 5 = cost desc */
     uint8_t shop_message;      /* 0 = none, 1 = bought, 2 = not enough gold */
     uint8_t shop_id;           /* active shop (set when a shop actor is engaged) */
     uint8_t save_slot_index;   /* 0 = Slot 1, 1 = Slot 2, 2 = Slot 3 */

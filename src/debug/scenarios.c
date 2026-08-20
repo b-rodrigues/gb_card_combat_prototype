@@ -36,7 +36,9 @@ enum {
     DBG_ACT_EQUIP_ITEM = 7,
     DBG_ACT_SAVE = 8,
     DBG_ACT_LOAD = 9,
-    DBG_ACT_SET_HAND_CARD = 10
+    DBG_ACT_SET_HAND_CARD = 10,
+    DBG_ACT_SET_FILTER = 11,
+    DBG_ACT_SET_SORT = 12
 };
 
 static void scenario_begin(uint16_t seed)
@@ -234,6 +236,14 @@ static void debug_run_action(void)
                 g_game.battle.hand[a0].type = (BattleCardType)((uint16_t)a1 & 0xFF);
                 g_game.battle.hand[a0].value = a2;
             }
+            break;
+        case DBG_ACT_SET_FILTER:
+            g_game.item_menu_filter = a0;
+            g_game.render_cache.valid = false;
+            break;
+        case DBG_ACT_SET_SORT:
+            g_game.item_menu_sort = a0;
+            g_game.render_cache.valid = false;
             break;
         default:
             break;

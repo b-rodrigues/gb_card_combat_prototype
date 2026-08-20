@@ -19,7 +19,8 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
                       ACTOR_STATE_NAME_MAP, CHARACTER_ID_MAP, SCENE_MAP,
                       CHARACTER_ID_TO_NAME, ITEM_ID_TO_NAME, ACTOR_ID_TO_NAME,
                       CURRENCY_ID_MAP, PROGRESSION_TARGET_MAP,
-                       CURRENCY_ID_TO_NAME, PROG_TYPE_HERO, CARD_TYPE_MAP)
+                       CURRENCY_ID_TO_NAME, PROG_TYPE_HERO, CARD_TYPE_MAP,
+                      FILTER_TYPE_MAP, SORT_MODE_MAP)
 
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
@@ -210,6 +211,12 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      CARD_TYPE_MAP[act.get("card_type", "SW")] & 0xFF,
                                      act.get("value", 1) & 0xFF)
+            elif act_type == "set_filter":
+                session.debug_action(session.DBG_ACT_SET_FILTER,
+                                     FILTER_TYPE_MAP[act.get("filter", "ALL")] & 0xFF, 0, 0)
+            elif act_type == "set_sort":
+                session.debug_action(session.DBG_ACT_SET_SORT,
+                                     SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
 
         # Read final snapshot, canonical state buffer and telemetry
         snap = session.snapshot()
