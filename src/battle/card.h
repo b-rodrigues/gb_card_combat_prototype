@@ -12,8 +12,6 @@ typedef enum {
     BATTLE_CARD_TYPE_HEAL = 4    /* HE: Restore HP */
 } BattleCardType;
 
-#define BATTLE_CARD_TYPE_COUNT 5
-
 typedef struct {
     uint8_t type;           /* BattleCardType */
     uint8_t value;          /* Number 1 - 9 */

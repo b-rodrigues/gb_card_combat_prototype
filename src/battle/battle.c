@@ -1,5 +1,6 @@
 #include "battle.h"
 #include "telemetry.h"
+#include "banked.h"
 #include "rpg/cards.h"
 #include "rpg/deck.h"
 #include "game/game_ids.h"
@@ -43,7 +44,7 @@ static const int g_battle_timer_cadence_ok[
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds)
+                  const DeckState *ds, uint8_t battle_id)
 {
     uint8_t *p = (uint8_t *)b;
     uint16_t n = sizeof(Battle);
@@ -58,8 +59,8 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemies[0].name = enemy_name ? enemy_name : "Enemy";
     b->enemies[0].hp = enemy_hp;
     b->enemies[0].max_hp = enemy_max_hp;
-    b->enemies[0].attack = 3;
     b->enemy_count = 1;
+    b->enemy_battle_id = battle_id;
 
     if (ds && ds->count > 0) {
         battle_init_from_deck_state(b, ds);
@@ -68,6 +69,12 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     }
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         deck_draw(&b->deck, &b->hand[i]);
+    }
+
+    if (battle_id != 0) {
+        g_bk_byte_a = battle_id;
+        g_bk_ptr_a = (void *)&b->enemy_deck;
+        enemy_deck_setup();
     }
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
@@ -79,7 +86,7 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }
 
-void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack)
+void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
 {
     uint8_t idx;
     if (!b || b->enemy_count >= MAX_BATTLE_ENEMIES) return;
@@ -87,7 +94,6 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, u
     b->enemies[idx].name = name ? name : "Enemy";
     b->enemies[idx].hp = hp;
     b->enemies[idx].max_hp = max_hp;
-    b->enemies[idx].attack = attack;
     b->dirty = BATTLE_DIRTY_ALL;
 }
 
@@ -158,18 +164,6 @@ bool battle_all_enemies_dead(const Battle *b)
     return true;
 }
 
-uint8_t battle_calc_enemy_attack(const Battle *b)
-{
-    uint8_t i, total = 0;
-    if (!b || b->enemy_count == 0) return 3;
-    for (i = 0; i < b->enemy_count; i++) {
-        if (b->enemies[i].hp != 0) {
-            total = (uint8_t)(total + (b->enemies[i].attack ? b->enemies[i].attack : 3));
-        }
-    }
-    return total ? total : 3;
-}
-
 void battle_card_select(Battle *b)
 {
     uint8_t step, next_pos;
@@ -217,16 +211,17 @@ void battle_set_result(Battle *b, uint8_t res)
 
 void battle_card_undo(Battle *b)
 {
+    BattleResult prev_result;
     if (!b) return;
-    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) {
-        return;
-    }
 
-    if (b->combo_count > 0) {
-        b->cursor_pos = b->selected_indices[--b->combo_count];
-        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
-    } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        battle_set_result(b, BATTLE_RESULT_FLED);
+    prev_result = b->result;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&battle_card_undo_banked;
+    g_bk_ptr_a = (void *)b;
+    banked_call_run();
+
+    if (prev_result != BATTLE_RESULT_FLED && b->result == BATTLE_RESULT_FLED) {
+        telemetry_emit(EVENT_BATTLE_FLED, 0, 0, 0, 0);
     }
 }
 
@@ -340,7 +335,20 @@ void battle_update(Battle *b)
             uint8_t count = 0;
             b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             b->turn = BATTLE_TURN_ENEMY;
-            b->enemy_incoming_dmg = battle_calc_enemy_attack(b);
+            if (b->enemy_deck.count > 0) {
+                b->enemy_played_card = b->enemy_deck.cards[b->enemy_deck.draw_idx];
+                b->enemy_incoming_dmg = b->enemy_played_card.value;
+                telemetry_emit(EVENT_ENEMY_CARD_PLAYED,
+                               b->enemy_deck.draw_idx,
+                               b->enemy_played_card.type,
+                               b->enemy_played_card.value, 0);
+                b->enemy_deck.draw_idx++;
+                if (b->enemy_deck.draw_idx >= b->enemy_deck.count) {
+                    b->enemy_deck.draw_idx = 0;
+                }
+            } else {
+                b->enemy_incoming_dmg = 3;
+            }
             b->delay_timer = 20;
             while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);

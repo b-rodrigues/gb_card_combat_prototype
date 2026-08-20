@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 extern char g_ui_screen_buf[18][21];
+extern uint8_t ui_font_tile_base;
 
 void ui_init(void);
 void ui_clear_screen(void);
@@ -52,6 +53,7 @@ void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
                            uint8_t max_chars, uint8_t ox, uint8_t oy);
 void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
+void ui_update_battle_banked(void);
 void ui_draw_battle_timer(const Battle *battle);
 uint8_t ui_calc_timer_bar(uint16_t t);
 

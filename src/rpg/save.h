@@ -22,9 +22,4 @@ bool load_game_slot(uint8_t slot, GameState *state);
 /* True when specified SRAM slot holds a valid save for this build. */
 bool save_present_slot(uint8_t slot);
 
-/* Legacy / default slot 0 helpers. */
-#define save_game(state)     save_game_slot(0, (state))
-#define load_game(state)     load_game_slot(0, (state))
-#define save_present()       save_present_slot(0)
-
 #endif /* RPG_SAVE_H */

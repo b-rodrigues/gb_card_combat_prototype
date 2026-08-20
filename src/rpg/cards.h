@@ -28,9 +28,7 @@ typedef enum {
     CARD_EFFECT_NONE          = 0,
     CARD_EFFECT_DAMAGE_TARGET = 1,
     CARD_EFFECT_BLOCK_DAMAGE   = 2,
-    CARD_EFFECT_HEAL_HP        = 3,
-    CARD_EFFECT_STATUS_BUFF    = 4,
-    CARD_EFFECT_DRAW_CARDS     = 5
+    CARD_EFFECT_HEAL_HP        = 3
 } CardEffectType;
 
 /* Static card definition.  Registered at boot via card_register_defs().

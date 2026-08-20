@@ -44,7 +44,6 @@ typedef enum {
 /* BattleTurn enum preserved for telemetry & backward compatibility */
 typedef enum {
     BATTLE_TURN_PLAYER = 0,
-    BATTLE_TURN_ENEMY_DELAY = 1,
     BATTLE_TURN_ENEMY = 2,
     BATTLE_TURN_RESULT = 3
 } BattleTurn;
@@ -77,20 +76,23 @@ typedef struct {
     ComboResult last_combo;
     uint8_t enemy_incoming_dmg;                /* Enemy attack power telegraphed */
     uint8_t attacking_enemy_idx;               /* Index of enemy currently attacking / blinking */
+    EnemyCompactDeck enemy_deck;               /* Enemy AI card deck */
+    uint8_t enemy_battle_id;                   /* Battle ID for enemy deck lookup */
+    Card enemy_played_card;                    /* Card drawn by enemy this turn */
 } Battle;
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds);
-void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp, uint8_t attack);
+                  const DeckState *ds, uint8_t battle_id);
+void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp);
 void battle_cursor_move(Battle *b, int8_t dir);
 void battle_target_move(Battle *b, int8_t dir);
 void battle_target_auto_advance(Battle *b);
 bool battle_all_enemies_dead(const Battle *b);
-uint8_t battle_calc_enemy_attack(const Battle *b);
 void battle_card_select(Battle *b);
 void battle_card_undo(Battle *b);
+void battle_card_undo_banked(void);
 void battle_execute_combo(Battle *b);
 void battle_update(Battle *b);
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx);

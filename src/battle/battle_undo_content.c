@@ -1,0 +1,30 @@
+#pragma bank 2
+
+#include "battle.h"
+#include "banked.h"
+
+/* Banked body of battle_card_undo (src/battle/battle.c).
+ * Self-contained: reads/writes only Battle struct fields (WRAM)
+ * and calls no fixed-bank functions.  For the flee path, it sets
+ * the result fields directly; the fixed-bank wrapper emits telemetry
+ * after the call returns. */
+
+void battle_card_undo_banked(void)
+{
+    Battle *b = (Battle *)g_bk_ptr_a;
+    if (!b) return;
+    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) {
+        return;
+    }
+
+    if (b->combo_count > 0) {
+        b->cursor_pos = b->selected_indices[--b->combo_count];
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+    } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        b->result = BATTLE_RESULT_FLED;
+        b->phase = BATTLE_PHASE_RESULT;
+        b->turn = BATTLE_TURN_RESULT;
+        b->battle_over = true;
+        b->dirty = BATTLE_DIRTY_ALL;
+    }
+}

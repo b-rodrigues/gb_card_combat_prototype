@@ -10,8 +10,6 @@
  * game layer via story_init() (e.g. STORY_FLAG_ID_COUNT in game_ids.h). */
 
 #define story_init(flag_count) ((void)0)
-#define story_has_flag(state, flag_id) game_flag_is_set((state), (flag_id))
 #define story_set_flag(state, flag_id) game_flag_set((state), (flag_id))
-#define story_clear_flag(state, flag_id) game_flag_clear((state), (flag_id))
 
 #endif /* STORY_H */

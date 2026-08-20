@@ -24,10 +24,6 @@ typedef uint16_t CurrencyId;
 
 /* Item identity.  Retained for event-system compatibility; the card system
  * (deck.h) provides the replacement persistent collection. */
-typedef uint8_t ItemId;
-
-#define ITEM_NONE       0
-#define ITEM_FIRST_GAME 0x80
 
 /* Party member identity. */
 typedef enum {

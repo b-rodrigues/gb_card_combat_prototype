@@ -22,8 +22,9 @@ extern uint8_t console_mode;
 static void ui_put_char(uint8_t x, uint8_t y, char ch);
 
 /* First VRAM tile the font occupies.  Tile 0 is space (0x20), so the tile
- * for char `ch` is base + (ch - ' '). */
-static uint8_t ui_font_tile_base;
+ * for char `ch` is base + (ch - ' ').  Also read by the banked battle
+ * rendering module (ui_battle_content.c) so it must be extern. */
+uint8_t ui_font_tile_base;
 
 static const palette_color_t cgb_palette[4] = {
     RGB8(255, 255, 255),
@@ -518,114 +519,6 @@ void ui_draw_world_full(const World *world)
     ui_draw_world_map(world);
 }
 
-static void ui_draw_card_at(uint8_t x, uint8_t y, Card card)
-{
-    const char *code = card_type_code(card.type);
-    ui_put_char(x, y, code[0]);
-    ui_put_char((uint8_t)(x + 1), y, code[1]);
-    ui_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
-}
-
-static void ui_draw_enemy_columns(const Battle *battle)
-{
-    uint8_t k, x = 0;
-    const Combatant *e;
-    bool blink_name = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) &&
-                      (((battle->timer_ticks >> 4) & 1) == 0);
-
-    for (k = 0; k < MAX_BATTLE_ENEMIES; k++, x = (uint8_t)(x + 7)) {
-        if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
-            e = &battle->enemies[k];
-            if (blink_name && k == battle->attacking_enemy_idx) {
-                ui_draw_text_line(x, 2, NULL, 6);
-            } else {
-                ui_draw_text_line(x, 2, e->name ? e->name : "ENEMY", 6);
-            }
-            ui_draw_num2(x, 3, e->hp);
-            ui_put_char((uint8_t)(x + 2), 3, '/');
-            ui_draw_num2((uint8_t)(x + 3), 3, e->max_hp);
-            ui_put_char((uint8_t)(x + 5), 3, ' ');
-            if (k == battle->target_idx &&
-                (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                ui_draw_text_line(x, 4, "  ^   ", 6);
-                continue;
-            }
-        } else {
-            ui_draw_text_line(x, 2, NULL, 6);
-            ui_draw_text_line(x, 3, NULL, 6);
-        }
-        ui_draw_text_line(x, 4, NULL, 6);
-    }
-}
-
-static void ui_draw_hero_row(const Battle *battle)
-{
-    ui_draw_text_line(0, 6, "HERO        HP:", 15);
-    ui_draw_num2(15, 6, battle->player.hp);
-    ui_put_char(17, 6, '/');
-    ui_draw_num2(18, 6, battle->player.max_hp);
-}
-
-static const char *ui_combo_hand_name(const Battle *b)
-{
-    uint8_t i, j, prev, t0, v, straight, same, n;
-
-    n = b->combo_count;
-    if (n < 2 || n > 5) return "";
-    prev = b->hand[b->selected_indices[0]].value;
-    t0 = b->hand[b->selected_indices[0]].type;
-    straight = same = 1;
-    for (i = 1; i < n; i++) {
-        v = b->hand[b->selected_indices[i]].value;
-        if (v != (uint8_t)(prev + 1)) straight = 0;
-        if (b->hand[b->selected_indices[i]].type != t0) same = 0;
-        prev = v;
-    }
-    if (straight) return "STRAIGHT";
-    if (same) return "FLUSH";
-    for (i = 0; i < n; i++) {
-        for (j = (uint8_t)(i + 1); j < n; j++) {
-            if (b->hand[b->selected_indices[i]].value == b->hand[b->selected_indices[j]].value) return "PAIR";
-        }
-    }
-    return "";
-}
-
-static void ui_draw_battle_combo(const Battle *battle)
-{
-    const char *name = ui_combo_hand_name(battle);
-
-    ui_draw_text_line(0, 13, "COMBO:", 6);
-    if (name[0] != '\0') {
-        ui_draw_text_line(7, 13, " ", 1);
-        ui_draw_text_line(8, 13, name, 12);
-    } else {
-        ui_draw_text_line(7, 13, NULL, 13);
-    }
-}
-
-static void ui_draw_battle_hand(const Battle *battle)
-{
-    uint8_t i;
-    for (i = 0; i < BATTLE_HAND_SIZE; i++) {
-        uint8_t col = (uint8_t)(i << 2);
-        uint8_t k;
-        char marker = ' ';
-        for (k = 0; k < battle->combo_count; k++) {
-            if (battle->selected_indices[k] == i) {
-                marker = (char)('0' + (k + 1));
-                break;
-            }
-        }
-        ui_draw_card_at(col, 14, battle->hand[i]);
-        if (i == battle->cursor_pos) {
-            ui_put_char((uint8_t)(col + 1), 15, '^');
-        } else {
-            ui_put_char((uint8_t)(col + 1), 15, marker);
-        }
-    }
-}
-
 uint8_t ui_calc_timer_bar(uint16_t t)
 {
     uint8_t bar = 0;
@@ -663,56 +556,17 @@ void ui_draw_battle_full(const Battle *battle)
     ui_draw_battle_timer(battle);
 }
 
-static void ui_draw_banner_line(uint8_t y, const char *text, uint8_t width)
-{
-    uint8_t len = 0, x;
-    if (text) {
-        while (len < width && text[len] != '\0') len++;
-    }
-    x = (width - len) / 2;
-    ui_draw_text_line(0, y, NULL, width);
-    ui_draw_text_line(x, y, text, (uint8_t)(width - x));
-}
-
+/* ui_update_battle() is a fixed-bank wrapper that dispatches the full battle
+ * rendering logic through the banked-call trampoline into ROM bank 2
+ * (ui_battle_content.c).  The banked body contains all the per-dirty-bit
+ * helpers (enemy columns, hero row, hand, combo, banner, card description). */
 void ui_update_battle(const Battle *battle)
 {
-    uint8_t d;
-    const char *turn_banner = "";
-    const char *desc_msg = "";
-
     if (!battle) return;
-    d = battle->dirty ? battle->dirty : BATTLE_DIRTY_ALL;
-
-    if (d & (BATTLE_DIRTY_BANNER | BATTLE_DIRTY_DESC)) {
-        if (battle->result == BATTLE_RESULT_VICTORY) {
-            turn_banner = "VICTORY!";
-        } else if (battle->result == BATTLE_RESULT_DEFEAT) {
-            turn_banner = "DEFEATED!";
-        } else if (battle->result == BATTLE_RESULT_FLED) {
-            turn_banner = "FLED!";
-        } else {
-            if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
-                turn_banner = "PLAYER TURN";
-                desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-            } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
-                turn_banner = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
-            } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
-                turn_banner = "ENEMY ATTACK!";
-            } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-                turn_banner = "DEFENSE TURN";
-                desc_msg = card_get_description(battle->hand[battle->cursor_pos].type);
-            } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
-                turn_banner = "BLOCKED ATTACK!";
-            }
-        }
-    }
-
-    if (d & BATTLE_DIRTY_BANNER) ui_draw_banner_line(0, turn_banner, 20);
-    if (d & (BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BLINK)) ui_draw_enemy_columns(battle);
-    if (d & BATTLE_DIRTY_HERO) ui_draw_hero_row(battle);
-    if (d & BATTLE_DIRTY_COMBO) ui_draw_battle_combo(battle);
-    if (d & BATTLE_DIRTY_HAND) ui_draw_battle_hand(battle);
-    if (d & BATTLE_DIRTY_DESC) ui_draw_text_line(0, 16, desc_msg, 20);
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&ui_update_battle_banked;
+    g_bk_ptr_a = (void *)battle;
+    banked_call_run();
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

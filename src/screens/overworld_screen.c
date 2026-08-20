@@ -22,11 +22,12 @@ void start_battle_from_world(Game *g)
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
                  act->hp, act->max_hp,
-                 &g->state.cards.deck);
+                 &g->state.cards.deck,
+                 act->battle_type);
 
     if (act->battle_type == BATTLE_SLIME_TRIO) {
-        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
-        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
+        battle_add_enemy(&g->battle, "SLIME", 5, 5);
+        battle_add_enemy(&g->battle, "SLIME", 5, 5);
     }
 
     audio_play_music(MUSIC_BATTLE);

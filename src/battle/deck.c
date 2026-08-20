@@ -10,6 +10,13 @@ void deck_init_default(Deck *d)
     banked_call_run();
 }
 
+void enemy_deck_setup(void)
+{
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&enemy_deck_setup_banked;
+    banked_call_run();
+}
+
 void deck_draw(Deck *d, Card *out_card)
 {
     uint8_t i, j;
