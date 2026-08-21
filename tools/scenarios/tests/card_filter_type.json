@@ -1,7 +1,7 @@
 {
   "name": "card_filter_type",
   "test": true,
-  "description": "Type filter (ATTACK) shows only attack cards in the CARDS tab",
+  "description": "Type filter ATTACK shows only attack cards in the CARDS tab: the merged collection's single SW3 entry",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -29,17 +29,17 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "IRON SW"
+      "contains": "SW3"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 7,
-      "contains": "WD SHLD"
+      "row": 8,
+      "contains": "SH2"
     },
     {
       "type": "screen_row_not_contains",
-      "row": 7,
-      "contains": "HERB"
+      "row": 8,
+      "contains": "HE5"
     }
   ],
   "initial_state": {
@@ -49,11 +49,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 1234,
-    "inventory": {
-      "IRON_SWORD": 1,
-      "WOODEN_SHIELD": 1,
-      "HEALING_HERB": 1
-    }
+    "seed": 8410
   }
 }

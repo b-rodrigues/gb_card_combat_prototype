@@ -2359,11 +2359,16 @@ lives in `GameState`.  Transient UI state (`game_over_choice`,
 reset on exit.  A screen must never become the home of gameplay state
 (quest progress, HP, etc.).
 
-The quick screen (`SCREEN_ITEM`) is a tabbed menu: ITEM (use consumables),
-EQUIP (equip weapons), QUEST (ongoing quests), STATUS (hero HP/gold/level).
-START is the universal open key (overworld and battle player-turn); SELECT
-in the overworld does nothing.  Inside, SELECT focuses the tab row,
-LEFT/RIGHT moves tabs, A confirms, B closes.
+The quick screen (`SCREEN_ITEM`) is a tabbed menu: CARDS (collection/deck
+management: paired rows with T/F deck membership, A toggles one copy through
+the real `deck_add_card`/`deck_remove_card`, SELECT opens a detail page whose
+FILTER/SORT entry opens an inline picker) and QUEST (ongoing quests; SELECT
+shows a placeholder detail line).  START is the universal open key (overworld
+and battle player-turn).  Inside, LEFT/RIGHT switches tabs, UP/DOWN moves the
+list, A confirms/toggles, B backs out (two-step on the CARDS list: first B
+jumps to the first card row, B again on the top row closes), SELECT opens the
+detail submenu.  Rejections (`DECK FULL`, `MAX COPIES`) show a transient
+message cleared by a frame TTL, never a silent no-op.
 
 ## 54.3 Actor lifecycle
 

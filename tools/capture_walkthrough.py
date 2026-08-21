@@ -16,9 +16,9 @@ Two sessions, each starting from a fresh boot (fresh persistent state):
     03-guard-dialogue    dialogue box over the scrolled town (camera offset)
     04-dialogue-next     second dialogue line
     05-shop              shopkeeper shop screen
-    06-item-menu         START quick screen (ITEM tab)
-    07-quests-tab        QUEST tab
-    08-status-tab        STATUS tab
+    06-cards-menu        START quick screen (CARDS tab, cursor on FILTER/SORT)
+    07-filter-picker     filter/sort picker (A on the top row)
+    08-quests-tab        QUEST tab (RIGHT from CARDS)
     12-wizard-save       wizard interaction (save game menu)
     13-wizard-saved      game state saved to slot 1
 
@@ -119,9 +119,9 @@ def window_enabled(pb):
 
 def caret_tile(pb):
     """Tile column of the quick screen's active-tab caret (^ at screen row
-    3): ITEM=0, EQUIP=5, QUEST=10, STATUS=15.  Returns -1 when the caret is
-    not found (not a menu frame).  The caret is the only small glyph on row
-    3, so the 8x8 dark-pixel window disambiguates it from terrain."""
+    3): CARDS=0, QUEST=6.  Returns -1 when the caret is not found (not a
+    menu frame).  The caret is the only small glyph on row 3, so the 8x8
+    dark-pixel window disambiguates it from terrain."""
     im = pb.screen.image.convert("L")
     px = im.load()
     for tx in range(20):
@@ -132,6 +132,17 @@ def caret_tile(pb):
     return -1
 
 
+def picker_up(pb):
+    """The filter/sort picker replaces the card list's footer hint row
+    (screen row 16): menu_draw_frame clears the content area when the
+    picker opens, so an empty footer band means the picker is up."""
+    im = pb.screen.image.convert("L")
+    px = im.load()
+    d = sum(1 for yy in range(128, 136)
+            for xx in range(0, 160) if px[xx, yy] < 200)
+    return d < 5
+
+
 def main():
     if not os.path.isfile(ROM):
         print(f"error: ROM not found: {ROM}", file=sys.stderr)
@@ -139,6 +150,11 @@ def main():
         return 1
 
     os.makedirs(OUT, exist_ok=True)
+    # Drop frames from previous runs: renamed/removed milestones must not
+    # linger as stale PNGs next to the current set.
+    for old in os.listdir(OUT):
+        if old.endswith(".png"):
+            os.remove(os.path.join(OUT, old))
     from pyboy import PyBoy
 
     # ── Walk A: town, dialogue, shop, quick screen ───────────────────
@@ -255,15 +271,16 @@ def main():
     # (the shop treats START like B) and the retry then opens the menu.
     press_until("b", lambda: window_enabled(pb), settle=30)
     press_until("start", lambda: not window_enabled(pb), settle=30)
-    shoot(pb, "06-item-menu")
+    shoot(pb, "06-cards-menu")
 
-    # RIGHT cycles ITEM -> EQUIP -> QUEST -> STATUS (item_screen.c: RIGHT and
-    # SELECT advance the tab directly).  Each target caret position is
-    # verified, so a dropped press just repeats the RIGHT.
-    tab_to(10)
-    shoot(pb, "07-quests-tab")
-    tab_to(15)
-    shoot(pb, "08-status-tab")
+    # The menu opens on the CARDS tab with the cursor on the top
+    # FILTER/SORT row: A opens the picker, B backs out, RIGHT switches to
+    # the QUEST tab (caret column 6).  Each transition is verified.
+    press_until("a", lambda: picker_up(pb), settle=30)
+    shoot(pb, "07-filter-picker")
+    press_until("b", lambda: not picker_up(pb), settle=30)
+    tab_to(6)
+    shoot(pb, "08-quests-tab")
 
     # Close the quick screen with B (window layer comes back on overworld)
     press_until("b", lambda: window_enabled(pb), settle=30)

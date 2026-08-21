@@ -1,58 +1,426 @@
 {
   "name": "battle_gold_drop",
   "test": true,
-  "description": "Defeating a slime grants its gold reward (earn money)",
+  "description": "Defeating the slime trio grants its gold reward: 25 gold via CURRENCY_ADDED on victory",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 8 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 10 }
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    }
   ],
   "assertions": [
     {
       "type": "game_state",
       "expected": "OVERWORLD"
+    },
+    {
+      "type": "event_occurred",
+      "event": "BATTLE_WON"
     },
     {
       "type": "currency",
@@ -62,10 +430,6 @@
     {
       "type": "event_occurred",
       "event": "CURRENCY_ADDED"
-    },
-    {
-      "type": "event_occurred",
-      "event": "ENTITY_DEFEATED"
     }
   ],
   "initial_state": {
@@ -75,6 +439,12 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 5002
+    "seed": 5002,
+    "party": {
+      "HERO": {
+        "hp": 60,
+        "max_hp": 60
+      }
+    }
   }
 }

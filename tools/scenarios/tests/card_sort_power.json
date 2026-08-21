@@ -1,7 +1,7 @@
 {
   "name": "card_sort_power",
   "test": true,
-  "description": "Power-desc sort shows strongest cards first in the CARDS tab",
+  "description": "Power-desc sort shows strongest cards first in the CARDS tab: FI4, SW3, SH2 for the granted starter collection",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -29,17 +29,17 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "FIRE TM"
-    },
-    {
-      "type": "screen_row",
-      "row": 7,
-      "contains": "IRON SW"
+      "contains": "FI4"
     },
     {
       "type": "screen_row",
       "row": 8,
-      "contains": "HERB"
+      "contains": "SW3"
+    },
+    {
+      "type": "screen_row",
+      "row": 10,
+      "contains": "SH2"
     }
   ],
   "initial_state": {
@@ -49,13 +49,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 1234,
-    "inventory": {
-      "IRON_SWORD": 1,
-      "WOODEN_SHIELD": 1,
-      "FIRE_TOME": 1,
-      "POISON_DAGGER": 1,
-      "HEALING_HERB": 1
-    }
+    "seed": 8410
   }
 }

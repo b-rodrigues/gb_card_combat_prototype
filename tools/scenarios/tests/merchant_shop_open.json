@@ -1,7 +1,7 @@
 {
   "name": "merchant_shop_open",
   "test": true,
-  "description": "After returning the amulet the Merchant's shop opens: the hero can buy an IRON_SWORD (rewarded gold 15, then price 10)",
+  "description": "After returning the amulet the Merchant's shop opens (rewarded gold 15). The starter deck already owns both IRON_SWORD copies (max_copies 2), so buying a third is rejected atomically: gold keeps the reward, no CARD_PURCHASED fires",
   "scenario_id": "TOWN_BOOT",
   "actions": [
     {
@@ -50,7 +50,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 10
     }
   ],
   "assertions": [
@@ -65,13 +65,13 @@
     },
     {
       "type": "currency",
-      "expected": 55,
+      "expected": 65,
       "currency": "GOLD"
     },
     {
       "type": "inventory",
       "item": "IRON_SWORD",
-      "expected": 1
+      "expected": 2
     },
     {
       "type": "inventory",
@@ -79,7 +79,7 @@
       "expected": 0
     },
     {
-      "type": "event_occurred",
+      "type": "event_not_occurred",
       "event": "CARD_PURCHASED"
     }
   ],

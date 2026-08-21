@@ -1,7 +1,7 @@
 {
   "name": "battle_attack",
   "test": true,
-  "description": "Enter battle with Slime and attack once, asserting the on-screen enemy HP readout decreases from 5 to 2",
+  "description": "Enter battle with Slime and attack once: the starter deck's first card SW3 deals 3 damage, dropping the slime from 5 to 2 HP",
   "scenario_id": "BATTLE_ATTACK",
   "actions": [
     {
@@ -44,12 +44,12 @@
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 3
+      "expected": 2
     },
     {
       "type": "screen_row",
       "row": 3,
-      "contains": " 3/ 5"
+      "contains": " 2/ 5"
     }
   ],
   "initial_state": {

@@ -1,7 +1,7 @@
 {
   "name": "battle_run",
   "test": true,
-  "description": "Running away flees without winning: the enemy stays on the map at its damaged HP, no gold/defeat/quest progress",
+  "description": "Running away flees without winning: the enemy stays on the map at its damaged HP (2/5 after one SW3 hit), no gold/defeat/quest progress",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
     {
@@ -68,7 +68,7 @@
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 3
+      "expected": 2
     },
     {
       "type": "event_occurred",

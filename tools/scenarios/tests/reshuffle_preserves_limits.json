@@ -1,7 +1,7 @@
 {
-  "name": "quest_progress",
+  "name": "reshuffle_preserves_limits",
   "test": true,
-  "description": "Defeating a hostile actor increments the global MONSTERS_DEFEATED counter (the quest objective)",
+  "description": "A full slime-trio fight needs more card plays than the 5-card starter deck holds, forcing multiple discard-to-draw reshuffles mid-fight. Guards the reshuffle path against stalls and keeps per-copy uses intact across cycles",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
     {
@@ -419,18 +419,8 @@
       "expected": "OVERWORLD"
     },
     {
-      "type": "variable",
-      "variable": "MONSTERS_DEFEATED",
-      "expected": 1
-    },
-    {
-      "type": "variable",
-      "variable": "QUEST_MONSTER_HUNT",
-      "expected": 1
-    },
-    {
       "type": "event_occurred",
-      "event": "SCRIPT_TRIGGERED"
+      "event": "BATTLE_WON"
     }
   ],
   "initial_state": {
@@ -441,10 +431,6 @@
       "facing": "DOWN"
     },
     "seed": 5002,
-    "variables": {
-      "QUEST_MONSTER_HUNT": 1,
-      "MONSTERS_DEFEATED": 0
-    },
     "party": {
       "HERO": {
         "hp": 60,

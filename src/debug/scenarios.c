@@ -162,10 +162,13 @@ static void scenario_load_state(void)
         g_game.screen = SCREEN_DIALOGUE;
     }
     if (start_battle) {
+        /* Engage the last spawned hostile.  Scenes list their headline
+         * hostile last (e.g. CASTLE: wandering BAT, then the gated boss),
+         * so this picks the intended encounter without an adjacency scan
+         * (fixed-bank budget). */
         for (i = 0; i < MAX_WORLD_ACTORS; i++) {
             if (g_game.world.actors[i].active) {
                 g_game.world.encounter_actor_index = i;
-                break;
             }
         }
         start_battle_from_world(&g_game);

@@ -1267,13 +1267,23 @@ divergences, driven by Game Boy memory limits and the engine/game layer split
   paid at resolve time. The pool size keeps all pre-energy scenarios valid
   (a 5-card combo of cost-1 starters still fits).
 - **Deck-size ceiling unreachable**: the 20-card deck limit cannot be hit by
-  current content — total deckable copies across the catalog are 8
-  (IRON_SWORD ×1 + WOODEN_SHIELD ×1 + HEALING_HERB ×3 + FIRE_TOME ×2 +
+  current content — total deckable copies across the catalog are 9
+  (IRON_SWORD ×2 + WOODEN_SHIELD ×2 + HEALING_HERB ×3 + FIRE_TOME ×2 +
   POISON_DAGGER ×1; AMULET is SPECIAL and not deckable). Recorded as a known
   gap; no synthetic content was added just to test it.
+- **Starter deck granted at new game**: a new game grants the collection
+  IRON_SWORD ×2 + WOODEN_SHIELD ×2 + FIRE_TOME ×1 (and decks all five), so
+  the first battle already draws from the real deck system (IRON_SWORD's
+  `max_copies` was raised 1→2 to allow the pair). The engine's fallback
+  battle deck (`deck_init_default`) mirrors the same five cards so legacy
+  and empty states behave identically. The grant is silent by design:
+  `deck_add_card` emits no telemetry; callers do.
 - **Test coverage** (`tools/scenarios/tests/`): `card_cost_energy` (pool
   gating + reservation), `unlimited_card_can_repeat` (uses 0xFF never
   depletes), `limited_card_resets_next_battle` (per-battle reset; also pins
   that fleeing does not write battle HP back to the party),
   `deck_copy_limit` (max_copies enforcement via real `deck_add_card`),
-  `deck_requires_owned_card` (ownership gate).
+  `deck_requires_owned_card` (ownership gate),
+  `reshuffle_preserves_limits` (a full slime-trio fight needs more plays
+  than the 5-card deck holds, exercising the discard-to-draw reshuffle path
+  end to end).

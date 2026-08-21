@@ -1,7 +1,7 @@
 {
   "name": "deck_summary",
   "test": true,
-  "description": "The DECK tab shows a summary row with per-type card counts",
+  "description": "The CARDS tab lists every owned card as a paired row (short code + combat description) with its deck membership in the rightmost column: all three starter cards show T",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -14,51 +14,11 @@
     },
     {
       "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
       "button": "DOWN"
     },
     {
       "type": "wait",
       "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "DOWN"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
     }
   ],
   "assertions": [
@@ -68,18 +28,38 @@
     },
     {
       "type": "screen_row",
-      "row": 16,
-      "contains": "ATK 1"
+      "row": 0,
+      "contains": "CARDS"
     },
     {
       "type": "screen_row",
-      "row": 16,
-      "contains": "DEF 1"
+      "row": 6,
+      "contains": "SW3"
     },
     {
       "type": "screen_row",
-      "row": 16,
-      "contains": "HEA 1"
+      "row": 6,
+      "contains": "T"
+    },
+    {
+      "type": "screen_row",
+      "row": 8,
+      "contains": "SH2"
+    },
+    {
+      "type": "screen_row",
+      "row": 8,
+      "contains": "T"
+    },
+    {
+      "type": "screen_row",
+      "row": 10,
+      "contains": "FI4"
+    },
+    {
+      "type": "screen_row",
+      "row": 10,
+      "contains": "T"
     }
   ],
   "initial_state": {
@@ -89,11 +69,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8410,
-    "inventory": {
-      "IRON_SWORD": 1,
-      "WOODEN_SHIELD": 1,
-      "HEALING_HERB": 1
-    }
+    "seed": 8410
   }
 }

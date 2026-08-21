@@ -1,8 +1,42 @@
 {
   "name": "card_battle_selection_cycle",
   "test": true,
-  "description": "Select multiple cards into combo and undo, verifying cursor, selection markers, and card descriptions stay intact",
+  "description": "Select two cards into the combo and undo one, verifying cursor movement, selection-order markers, and the per-card description line stay intact",
   "actions": [
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "set_hand_card",
+      "index": 1,
+      "card_type": "SH",
+      "value": 2
+    },
+    {
+      "type": "set_hand_card",
+      "index": 2,
+      "card_type": "FI",
+      "value": 4
+    },
+    {
+      "type": "set_hand_card",
+      "index": 3,
+      "card_type": "SW",
+      "value": 4
+    },
+    {
+      "type": "set_hand_card",
+      "index": 4,
+      "card_type": "HE",
+      "value": 7
+    },
     {
       "type": "press",
       "button": "A"
@@ -41,7 +75,7 @@
     {
       "type": "screen_row",
       "row": 14,
-      "contains": "SW2 SH5 BO3 SW4 HE7"
+      "contains": "SW3 SH2 FI4 SW4 HE7"
     },
     {
       "type": "screen_row",

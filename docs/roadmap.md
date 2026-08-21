@@ -1214,6 +1214,19 @@ Missing:
 * richer rewards (XP/leveling from battle, loot);
 * flee chance / consequences.
 
+### 9.1 Deck management UI — DONE
+
+The START quick screen's CARDS tab manages collection vs deck through the
+real deck mutators (paired rows with T/F membership, A toggles one copy,
+SELECT detail page, inline FILTER/SORT picker), and new games grant a
+5-card starter deck so battles draw from the real system from the first
+fight.  Spec: `docs/deck-management.md`; implementation deviations:
+`docs/deck.md` §40.  Known gaps: per-copy membership display (T/F is
+per-id), AMULET hidden from the list, QUEST detail page is a placeholder.
+Note: the fixed-bank budget is nearly exhausted (~15 B headroom after this
+feature; `make memmap` enforces the invariant) — the next substantial
+feature must plan banked placement (§52.11.1) up front.
+
 ## 10. Card System
 
 Finally introduce the Baten Kaitos-inspired card mechanics on top of the stable RPG/battle foundation rather than allowing the card system to dictate the architecture.

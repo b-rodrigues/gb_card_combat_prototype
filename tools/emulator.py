@@ -448,6 +448,9 @@ class EmulatorSession:
         if not os.path.exists(self.rom_path):
             raise FileNotFoundError(f"ROM not found: {self.rom_path}")
 
+        # Private ROM copy per session (below) keeps battery SRAM isolated;
+        # no stale-save cleanup needed here anymore.
+
         self.symbols = load_sym_map(self.sym_path)
 
         self.master, slave = pty.openpty()
@@ -460,10 +463,22 @@ class EmulatorSession:
         # runner with no sound device the audio callback never fires at the
         # expected rate, so after `c` the core stalls before game_render and
         # the frame-sync breakpoint never hits.
+        #
+        # Private ROM copy per session: mGBA writes battery SRAM next to the
+        # ROM (<rom>.sav).  Parallel test workers share the same ROM path, so
+        # a save written by one worker leaks into every other worker's
+        # session (a stray SAVE_LOAD A-press loads foreign state and breaks
+        # scenario determinism, AGENTS.md 20).  Each session runs on its own
+        # copy so its .sav is private.
+        import shutil, tempfile
+        session_dir = tempfile.mkdtemp(prefix="gbharness_")
+        self._session_dir = session_dir
+        rom_copy = os.path.join(session_dir, "rom.gb")
+        shutil.copyfile(self.rom_path, rom_copy)
         server_num = str((os.getpid() % 800) + 100)
         cmd = ['xvfb-run', '-a', '-n', server_num, 'mgba',
                '-C', 'audioSync=false', '-C', 'videoSync=false',
-               '-d', self.rom_path]
+               '-d', rom_copy]
         self.proc = subprocess.Popen(cmd, stdin=slave, stdout=slave, stderr=slave,
                                      close_fds=True, start_new_session=True)
         os.close(slave)
@@ -582,6 +597,13 @@ class EmulatorSession:
             except Exception:
                 pass
             self.master = None
+        if getattr(self, "_session_dir", None):
+            try:
+                import shutil as _shutil
+                _shutil.rmtree(self._session_dir, ignore_errors=True)
+            except Exception:
+                pass
+            self._session_dir = None
 
     # ── Frame control ───────────────────────────────────────────────
 

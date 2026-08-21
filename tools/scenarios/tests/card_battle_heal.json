@@ -1,39 +1,23 @@
 {
   "name": "card_battle_heal",
   "test": true,
-  "description": "Select HEAL card in battle to restore Hero HP",
+  "description": "Playing a HE5 card in the attack phase heals the hero by its power (5) instead of dealing damage",
   "actions": [
     {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
       "type": "wait",
       "frames": 5
     },
     {
-      "type": "press",
-      "button": "RIGHT"
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "HE",
+      "value": 5
     },
     {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 5
+      "type": "set_hand_card_meta",
+      "index": 0,
+      "cost": 1,
+      "uses": 3
     },
     {
       "type": "press",
@@ -41,7 +25,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 6
     },
     {
       "type": "press",
@@ -49,7 +33,7 @@
     },
     {
       "type": "wait",
-      "frames": 10
+      "frames": 15
     }
   ],
   "assertions": [
@@ -60,6 +44,15 @@
     {
       "type": "event_occurred",
       "event": "HEALED"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_PLAYED",
+      "count": 1
+    },
+    {
+      "type": "battle_player_hp",
+      "expected": 15
     }
   ],
   "initial_state": {
@@ -71,11 +64,11 @@
     },
     "party": {
       "HERO": {
-        "hp": 5,
-        "max_hp": 10
+        "hp": 10,
+        "max_hp": 40
       }
     },
-    "seed": 5002,
+    "seed": 6001,
     "start_battle": true
   }
 }

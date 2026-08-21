@@ -5,6 +5,7 @@
 #include "dialogue.h"
 #include "actor.h"
 #include "rpg/party.h"
+#include "rpg/deck.h"
 #include "core/game.h"
 
 #define HERO_START_HP    10
@@ -37,6 +38,18 @@ void game_new_game(GameState *state)
 
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
+
+    /* Starter deck (docs/deck-management.md §1): 2x SW3, 2x SH2, 1x FI4.
+     * Granted as real owned state via the silent mutators so battles draw
+     * from the player's actual deck from turn one. */
+    deck_collection_add(&state->cards, CARD_IRON_SWORD, 2);
+    deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 2);
+    deck_collection_add(&state->cards, CARD_FIRE_TOME, 1);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
+    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
+    deck_add_card(&state->cards, CARD_FIRE_TOME);
 }
 
 void game_on_level_up(GameState *state, ProgressionTarget target,

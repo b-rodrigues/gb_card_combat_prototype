@@ -1,12 +1,28 @@
 {
   "name": "card_detail",
   "test": true,
-  "description": "The CARDS tab shows the selected card's power/cost/uses detail line",
+  "description": "SELECT on a card row opens the detail page showing type, power/cost, uses/max-copies, owned/decked counts and price",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
       "type": "press",
       "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
     },
     {
       "type": "wait",
@@ -20,13 +36,28 @@
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 5,
+      "contains": "IRON SW"
+    },
+    {
+      "type": "screen_row",
+      "row": 9,
       "contains": "PWR"
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 9,
       "contains": "COST"
+    },
+    {
+      "type": "screen_row",
+      "row": 11,
+      "contains": "USES"
+    },
+    {
+      "type": "screen_row",
+      "row": 13,
+      "contains": "OWN"
     }
   ],
   "initial_state": {
@@ -36,9 +67,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8410,
-    "inventory": {
-      "HEALING_HERB": 1
-    }
+    "seed": 8410
   }
 }

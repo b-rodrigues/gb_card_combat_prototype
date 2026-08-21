@@ -1,0 +1,83 @@
+{
+  "name": "cards_menu_toggle",
+  "test": true,
+  "description": "A on a card row toggles deck membership through deck_remove_card/deck_add_card one copy at a time: the starter holds two SW3 copies, so two presses flip its flag T -> F (CARD_REMOVED_FROM_DECK x2) and a third re-decks one copy (CARD_ADDED_TO_DECK)",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_REMOVED_FROM_DECK",
+      "count": 2
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_ADDED_TO_DECK",
+      "count": 1
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "SW3"
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "T"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410
+  }
+}
