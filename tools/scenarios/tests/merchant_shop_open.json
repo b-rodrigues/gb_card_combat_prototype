@@ -59,6 +59,16 @@
       "expected": "SHOP"
     },
     {
+      "type": "screen_row",
+      "row": 5,
+      "contains": "SW3"
+    },
+    {
+      "type": "screen_row",
+      "row": 5,
+      "contains": "10"
+    },
+    {
       "type": "variable",
       "variable": "MERCHANT_QUEST",
       "expected": 2

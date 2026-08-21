@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "actor.h"
 #include "scene.h"
+#include "card.h"
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <gbdk/console.h>
@@ -567,6 +568,26 @@ void ui_update_battle(const Battle *battle)
     g_bk_call_target = (uint16_t)&ui_update_battle_banked;
     g_bk_ptr_a = (void *)battle;
     banked_call_run();
+}
+
+/* Indexed by BattleCardType (src/battle/card.h). */
+static const char *const s_card_bt_codes[5] = {
+    "SW", "SH", "BO", "FI", "HE"
+};
+
+static const char *ui_card_code(uint8_t battle_type)
+{
+    return (battle_type <= BATTLE_CARD_TYPE_HEAL) ?
+        s_card_bt_codes[battle_type] : "??";
+}
+
+void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
+{
+    const char *bt = ui_card_code(battle_type);
+    out[0] = bt[0];
+    out[1] = bt[1];
+    out[2] = (char)('0' + (power % 10));
+    out[3] = '\0';
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

@@ -45,6 +45,11 @@ void ui_update_camera(const World *world);
  * stdio/console chain so _HOME stays under 0x8000. */
 void ui_format_int(int16_t value, char *out);
 
+/* Write "XYn" — two-letter battle code ("SW"/"SH"/"BO"/"FI"/"HE" per
+ * BattleCardType in src/battle/card.h) plus power digit — into out
+ * (at least 4 bytes); "??" when battle_type is out of range. */
+void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out);
+
 /* Banked no-arg body (ROM bank 2) dispatched by ui_format_int(). */
 void ui_format_int_banked(void);
 

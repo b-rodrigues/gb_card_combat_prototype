@@ -137,11 +137,6 @@ static const char *const s_card_type_names[CARD_TYPE_COUNT] = {
     "ATK", "DEF", "HEL", "STS", "UTL", "SPL"
 };
 
-/* Indexed by BattleCardType (src/battle/card.h). */
-static const char *const s_bt_codes[5] = {
-    "SW", "SH", "BO", "FI", "HE"
-};
-
 static const char *card_type_name(uint8_t t)
 {
     return (t < CARD_TYPE_COUNT) ? s_card_type_names[t] : "SPL";
@@ -164,9 +159,12 @@ static const char *sort_name(uint8_t s)
     }
 }
 
-static const char *battle_type_code(uint8_t bt)
+static void switch_tab(Game *g)
 {
-    return (bt <= BATTLE_CARD_TYPE_HEAL) ? s_bt_codes[bt] : "??";
+    g->item_menu_tab = (g->item_menu_tab == TAB_CARDS) ? TAB_QUEST : TAB_CARDS;
+    g->item_menu_index = ROW_TOP;
+    g->item_menu_scroll = 0;
+    g->render_cache.valid = false;
 }
 
 static void scroll_to_index(Game *g)
@@ -186,7 +184,6 @@ static void scroll_to_index(Game *g)
 static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 {
     const CardDefinition *def;
-    const char *bt;
     char code[4];
     CardId id;
     uint8_t in_deck;
@@ -197,11 +194,7 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
-    bt = battle_type_code(def->battle_type);
-    code[0] = bt[0];
-    code[1] = bt[1];
-    code[2] = (char)('0' + (def->power % 10));
-    code[3] = '\0';
+    ui_card_code_str(def->battle_type, def->power, code);
     ui_draw_text_line(2, y, code, 3);
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
@@ -411,6 +404,10 @@ void item_screen_update(Game *g)
             g->render_cache.valid = false;
             return;
         }
+        if (input_pressed(INPUT_LEFT) || input_pressed(INPUT_RIGHT)) {
+            switch_tab(g);
+            return;
+        }
         build_view(g);
         total = quest_count();
         if (total == 0) return;
@@ -455,11 +452,7 @@ void item_screen_update(Game *g)
 
     /* Tab switch (LIST mode only — submenus consume LR first). */
     if (input_pressed(INPUT_LEFT) || input_pressed(INPUT_RIGHT)) {
-        g->item_menu_tab = (g->item_menu_tab == TAB_CARDS) ?
-            TAB_QUEST : TAB_CARDS;
-        g->item_menu_index = ROW_TOP;
-        g->item_menu_scroll = 0;
-        g->render_cache.valid = false;
+        switch_tab(g);
         return;
     }
 

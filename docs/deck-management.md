@@ -27,6 +27,9 @@ Consequences:
 - Healing is **not** free at the start. The only heal source is the shop's
   HEALING_HERB card — **HE5** (power 5, `uses_per_battle` 3, price 20g).
   Buy it, then add it to the deck from the CARDS menu.
+- Shop rows render the battle code derived from the card definition
+  (`ui_card_code_str`: type code + power digit, e.g. `HE5`, `SW3`) plus its
+  `price` — no display strings are duplicated in the shop layer.
 - The old 20-card starter table is gone; the deck grows toward the 20-card
   cap through play.
 
