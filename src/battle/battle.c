@@ -153,7 +153,8 @@ void battle_cursor_move(Battle *b, int8_t dir)
     b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 }
 
-void battle_target_move(Battle *b, int8_t dir){
+void battle_target_move(Battle *b, int8_t dir)
+{
     uint8_t i, t;
     if (!b || b->enemy_count <= 1) return;
 
