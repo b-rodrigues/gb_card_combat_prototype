@@ -2565,18 +2565,29 @@ the commit/PR without booting anything.
   lands in that dead window, and a dropped shop-close `B` makes `START`
   *close the shop* instead of opening the quick screen.  Every screen change
   is therefore **state-verified, not time-expected**, and retried on failure:
-  * the overworld is the only screen with the HUD window layer enabled
-    (`LCDC` bit 5), so dialogue/shop/menu presence is checked by reading that
-    bit (`window_enabled`) after each interaction;
-  * the quick screen's active tab is verified by the `^` caret position
-    (tile column 0/5/10/15 = ITEM/EQUIP/QUEST/STATUS on the row-3 tile row)
-    and `RIGHT` is repeated until the target caret appears.
-* Frames are saved with PyBoy's `screen.image` (headless framebuffer render).
+  * every screen is verified by its **BG tilemap text** (`bg_text` reads the
+    visible tilemap through SCX/SCY; the font lives at tile base 0, so
+    cells read directly as ASCII): guard dialogue by the `GUARD:` speaker
+    tag, shop/save menu by their row-0 titles, the quick screen by the
+    `CARDS QUEST` tab labels, the filter/sort picker by its
+    `LR CYCLE  A:OK B:NO` footer.  Pixel heuristics are NOT usable here:
+    an earlier LCDC-bit-5 check was vacuous (nothing in the ROM ever sets
+    bit 5), and a dark-pixel caret scan false-positived on terrain glyphs,
+    silently desynchronizing every later milestone.  Membership gotcha:
+    `"X" in rows` on a *list* of strings tests element equality, never
+    substrings — always use `any("X" in r ...)` / `all("X" not in r ...)`;
+    a bare `in` made a close condition fire instantly and poisoned the run.
+  * the quick screen's active tab is verified by the `^` caret column read
+    from BG text row 3 (column 0 = CARDS, 6 = QUEST) and `RIGHT` is repeated
+    until the target caret appears.
+* Frames are saved with PyBoy's `screen.image` (headless framebuffer render);
+  each save prints the first non-blank `bg_text` row so a mislabeled frame
+  is obvious in the build log without decoding PNGs.
 * Two fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
   quick screen) and Walk B (slime battle on the Field), so persistent state
   never bleeds between milestones.
-* Determinism is verified: the walk's position/caret/window checks make the
-  12 frames byte-identical across repeated runs.
+* Determinism is verified: the walk's position/caret/text checks make the
+  15 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2587,12 +2598,15 @@ the commit/PR without booting anything.
 03-guard-dialogue    dialogue box over the scrolled town (camera offset)
 04-dialogue-next     second dialogue line
 05-shop              shopkeeper shop screen
-06-item-menu         START quick screen (ITEM tab)
-07-quests-tab        QUEST tab
-08-status-tab        STATUS tab
+06-cards-menu        START quick screen (CARDS tab)
+07-filter-picker     filter/sort picker over the card list
+08-quests-tab        QUEST tab
 09-battle            slime encounter (battle screen)
 10-battle-attack     after a player attack (damage dealt)
 11-battle-run        after fleeing (result line)
+12-wizard-save       save menu at the wizard
+13-wizard-saved      after saving to Slot 1
+14-forest-arrived    FOREST gate arrival after Walk B
 ```
 
 ## 56.4 Rules

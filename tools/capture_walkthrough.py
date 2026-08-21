@@ -103,44 +103,28 @@ def shoot(pb, label, settle=True):
         print(f"warning: {label}: screen never became non-blank; "
               "capturing anyway", file=sys.stderr)
     pb.screen.image.save(path)
-    print("saved", os.path.relpath(path, REPO))
+    rows = bg_text(pb)
+    top = next((r.strip() for r in rows if r.strip()), "")
+    print("saved", os.path.relpath(path, REPO), f"[{top[:18]}]")
     return path
 
 
-def window_enabled(pb):
-    """The HUD window layer (LCDC bit 5) is enabled on the overworld only:
-    dialogue, the shop, and the quick screen all disable it.  It is the
-    reliable semantic signal that a full-screen screen transition has
-    settled (input is otherwise eaten for ~10-40 frames mid-transition,
-    so a bare press-then-sleep can land in the dead window and be dropped
-    by PyBoy or swallowed by the shop's own START/close handler)."""
-    return bool(pb.memory[0xFF40] & 0x20)
-
-
-def caret_tile(pb):
-    """Tile column of the quick screen's active-tab caret (^ at screen row
-    3): CARDS=0, QUEST=6.  Returns -1 when the caret is not found (not a
-    menu frame).  The caret is the only small glyph on row 3, so the 8x8
-    dark-pixel window disambiguates it from terrain."""
-    im = pb.screen.image.convert("L")
-    px = im.load()
-    for tx in range(20):
-        d = sum(1 for yy in range(24, 32)
-                for xx in range(tx * 8, tx * 8 + 8) if px[xx, yy] < 200)
-        if 3 <= d <= 14:
-            return tx
-    return -1
-
-
-def picker_up(pb):
-    """The filter/sort picker replaces the card list's footer hint row
-    (screen row 16): menu_draw_frame clears the content area when the
-    picker opens, so an empty footer band means the picker is up."""
-    im = pb.screen.image.convert("L")
-    px = im.load()
-    d = sum(1 for yy in range(128, 136)
-            for xx in range(0, 160) if px[xx, yy] < 200)
-    return d < 5
+def bg_text(pb):
+    """The visible BG tilemap as 18 rows of 20 chars.  The console font
+    lives at tile base 0 (tile = ASCII - 32), so map cells read directly
+    as text; non-font tiles (terrain) become '?'.  SCX/SCY are applied so
+    the read is correct over a scrolled camera too."""
+    scx = pb.memory[0xFF43]
+    scy = pb.memory[0xFF42]
+    rows = []
+    for r in range(18):
+        line = ""
+        for c in range(20):
+            t = pb.memory[0x9800 + ((scy // 8 + r) % 32) * 32
+                           + (scx // 8 + c) % 32]
+            line += chr(t + 32) if t < 96 else "?"
+        rows.append(line)
+    return rows
 
 
 def main():
@@ -201,11 +185,12 @@ def main():
         for _ in range(n):
             pb.tick()
 
-    def press_until(btn, cond, tries=8, settle=40, timeout=90):
+    def press_until(btn, cond, tries=8, settle=40, timeout=90, label=""):
         """Press ``btn`` repeatedly until ``cond()`` holds (a dropped PyBoy
         press or an in-transition eat is retried until the intended screen
-        state is reached)."""
-        for _ in range(tries):
+        state is reached).  Warns loudly when the state is never reached:
+        a silently-exhausted retry loop poisons every later milestone."""
+        for t_i in range(tries):
             if cond():
                 return True
             press(btn, settle=settle)
@@ -213,16 +198,32 @@ def main():
                 if cond():
                     return True
                 pb.tick()
+        if not cond():
+            print(f"warning: press_until({btn}{' ' + label if label else ''})"
+                  " never reached its condition", file=sys.stderr)
         return cond()
 
-    def tab_to(target, tries=8):
-        """Press RIGHT until the quick screen's caret reaches ``target``
-        (RIGHT cycles ITEM -> EQUIP -> QUEST -> STATUS -> ITEM)."""
+    def tab_to(col, tries=8):
+        """Press RIGHT until the quick screen's caret (^ on BG row 3)
+        reaches tile column ``col`` (CARDS=0, QUEST=6)."""
         for _ in range(tries):
-            if caret_tile(pb) == target:
+            if bg_text(pb)[3][col] == "^":
                 return True
             press("right", settle=30)
-        return caret_tile(pb) == target
+        return bg_text(pb)[3][col] == "^"
+
+    def stable(cond, frames=20):
+        """True when ``cond`` holds now AND keeps holding for ``frames``
+        consecutive ticks.  Guards against oscillating states (a stray A
+        on the overworld re-engages an adjacent guard's dialogue right
+        after it closed)."""
+        if not cond():
+            return False
+        for _ in range(frames):
+            pb.tick()
+            if not cond():
+                return False
+        return True
 
     x, y = pos()
     print(f"boot: player at ({x},{y}) (WRAM 0x{pos_addr:04X})")
@@ -246,50 +247,75 @@ def main():
     if not ok:
         print("warning: walk did not reach the guard; sampling anyway")
 
-    # Bump the guard at (10,8): a blocked RIGHT press engages the dialogue.
-    press_until("right", lambda: not window_enabled(pb), settle=30)
-    shoot(pb, "03-guard-dialogue")
+    # Bump the guard at (10,8): a blocked RIGHT press engages the dialogue,
+    # verified by the GUARD: speaker tag on the BG tilemap (the window bit
+    # alone also drops for menus and the shop).
+    press_until("right",
+                lambda: any("GUARD:" in r for r in bg_text(pb)), settle=30,
+                label="guard dialogue")
+    ok = shoot(pb, "03-guard-dialogue") and ok
     press("a", settle=30)
     shoot(pb, "04-dialogue-next")
     # GUARD_GREETING has exactly two lines ("Halt! Keep peace." /
     # "Watch for slimes."): the A above advanced line 1 -> line 2 (captured
-    # above); the next A closes the dialogue (verified by the window layer
-    # coming back).  A dropped A is harmless: a stray A on the overworld
-    # re-engages the still-adjacent guard and the next A closes it.
-    press_until("a", lambda: window_enabled(pb), settle=30)
+    # above); the next A closes the dialogue.  Two traps here: (a) a stray
+    # A on the overworld re-engages the still-adjacent guard, and (b) the
+    # closing A itself can leak across the dialogue->overworld transition
+    # (the screen change resets input state, so the tail of the held press
+    # registers as a fresh interact) -- the dialogue re-opens by itself.
+    # Require the text to be gone for a full leak cycle (~45 frames) and
+    # keep retrying so a re-opened greeting gets closed again.
+    press_until("a",
+                lambda: stable(
+                    lambda: all("GUARD:" not in r for r in bg_text(pb)),
+                    frames=45),
+                tries=12, settle=30, timeout=120)
 
     # Walk to the shopkeeper at (9,3): from (9,8) up to (9,4), then bump UP
-    # to open the shop (window layer disabled = shop screen up).
+    # to open the shop -- verified by the SHOP title on the BG tilemap.
     ok = walk("up", lambda: pos()[1] == 4) and ok
-    press_until("up", lambda: not window_enabled(pb), settle=30)
+    press_until("up", lambda: "SHOP" in bg_text(pb)[0], settle=30,
+                label="shop open")
     wait(20)
     shoot(pb, "05-shop")
 
-    # Close the shop (B restores the overworld window), then open the quick
-    # screen (START, window disabled again).  Each transition is verified so
-    # a dropped press is retried; if B was dropped, START closes the shop
-    # (the shop treats START like B) and the retry then opens the menu.
-    press_until("b", lambda: window_enabled(pb), settle=30)
-    press_until("start", lambda: not window_enabled(pb), settle=30)
+    # Close the shop (B restores the overworld), then open the quick
+    # screen (START).  Each transition is content-verified so a dropped
+    # press is retried; if B was dropped, START closes the shop (the shop
+    # treats START like B) and the retry then opens the menu.  The menu
+    # draws "CARDS QUEST" tab labels on row 2, so its presence/absence is
+    # a text check -- pixel heuristics false-positive on terrain glyphs.
+    def quick_open():
+        return any("CARDS QUEST" in r for r in bg_text(pb))
+
+    def picker_open():
+        return any("LR CYCLE" in r for r in bg_text(pb))
+
+    press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
+                label="shop close")
+    press_until("start", quick_open, settle=30, label="quick screen")
+    wait(10)
     shoot(pb, "06-cards-menu")
 
     # The menu opens on the CARDS tab with the cursor on the top
-    # FILTER/SORT row: A opens the picker, B backs out, RIGHT switches to
-    # the QUEST tab (caret column 6).  Each transition is verified.
-    press_until("a", lambda: picker_up(pb), settle=30)
+    # FILTER/SORT row: A opens the picker (footer "LR CYCLE  A:OK B:NO"),
+    # B backs out, RIGHT switches to the QUEST tab (^ caret under QUEST).
+    press_until("a", picker_open, settle=30, label="filter picker")
     shoot(pb, "07-filter-picker")
-    press_until("b", lambda: not picker_up(pb), settle=30)
+    press_until("b", lambda: not picker_open(), settle=30, label="picker close")
     tab_to(6)
     shoot(pb, "08-quests-tab")
 
-    # Close the quick screen with B (window layer comes back on overworld)
-    press_until("b", lambda: window_enabled(pb), settle=30)
+    # Close the quick screen with B (back to the bare overworld)
+    press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
+                label="quick screen close")
 
     # Walk to the Wizard at (6,10): from (9,4) down to (6,11), then bump UP
-    # to open the Save Menu (window layer disabled = save screen up).
+    # to open the Save Menu -- verified by its SAVE GAME title.
     ok = walk("down", lambda: pos()[1] == 11)
     ok = walk("left", lambda: pos()[0] == 6) and ok
-    press_until("up", lambda: not window_enabled(pb), settle=30)
+    press_until("up", lambda: "SAVE GAME" in bg_text(pb)[0], settle=30,
+                label="save menu")
     shoot(pb, "12-wizard-save")
 
     # Press A to save the current game state to Slot 1 (message "SAVED TO SLOT 1")
