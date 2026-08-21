@@ -10,9 +10,17 @@
  *   bytes  0-19 : core game state (see telemetry.c debug_snapshot)
  *   bytes 20+   : scene actors as (id, x, y, facing) entries */
 #define SNAPSHOT_BASE_SIZE      20
+
 #define MAX_SNAPSHOT_ACTORS     4
+
 #define SNAPSHOT_ACTOR_ENTRY_SIZE 4
-#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE))
+
+/* Appended after the actor block (append-only wire contract; existing bytes
+ * 0-35 never move).  Battle-runtime observability that is not part of
+ * GameState lives here. */
+#define SNAPSHOT_BATTLE_ENERGY_OFF (SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE))
+
+#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BATTLE_ENERGY_OFF + 1)
 
 /* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x02):
  *   byte  0            : version/validity (0x02)

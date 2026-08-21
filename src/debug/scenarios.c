@@ -38,7 +38,10 @@ enum {
     DBG_ACT_LOAD = 9,
     DBG_ACT_SET_HAND_CARD = 10,
     DBG_ACT_SET_FILTER = 11,
-    DBG_ACT_SET_SORT = 12
+    DBG_ACT_SET_SORT = 12,
+    DBG_ACT_DECK_ADD = 13,
+    DBG_ACT_SET_HAND_CARD_META = 14,
+    DBG_ACT_START_BATTLE = 15
 };
 
 static void scenario_begin(uint16_t seed)
@@ -185,6 +188,7 @@ static void debug_run_action(void)
     uint8_t a0 = g_debug_action[1];
     int16_t a1 = (int16_t)snap_read16((const uint8_t *)&g_debug_action[2]);
     uint8_t a2 = g_debug_action[4];
+    uint8_t i;
     ProgressionTarget target;
     ProgressionAddResult pres;
 
@@ -236,6 +240,36 @@ static void debug_run_action(void)
                 g_game.battle.hand[a0].type = (BattleCardType)((uint16_t)a1 & 0xFF);
                 g_game.battle.hand[a0].value = a2;
             }
+            break;
+        case DBG_ACT_DECK_ADD:
+            /* Real mechanic call: all deck_add_card validations apply.  The
+             * event is emitted here (mirroring the UI caller) so scenarios
+             * can assert acceptance/rejection via event_occurred. */
+            if (deck_add_card(&g_game.state.cards, (CardId)a0)) {
+                telemetry_emit(EVENT_CARD_ADDED_TO_DECK, a0, 0, 0, 0);
+            }
+            break;
+        case DBG_ACT_SET_HAND_CARD_META:
+            /* Companion to SET_HAND_CARD: pins the injected hand card's
+             * energy cost and remaining uses so combo/energy scenarios are
+             * independent of the dealt deck contents. */
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].cost = a1;
+                g_game.battle.hand[a0].uses_remaining = a2;
+            }
+            break;
+        case DBG_ACT_START_BATTLE:
+            /* Re-arm an encounter against the first living active actor
+             * (mirrors the loader's start_battle path) and enter through the
+             * real start_battle_from_world mechanic. */
+            for (i = 0; i < MAX_WORLD_ACTORS; i++) {
+                if (g_game.world.actors[i].active &&
+                    g_game.world.actors[i].hp > 0) {
+                    g_game.world.encounter_actor_index = i;
+                    break;
+                }
+            }
+            start_battle_from_world(&g_game);
             break;
         case DBG_ACT_SET_FILTER:
             g_game.item_menu_filter = a0;

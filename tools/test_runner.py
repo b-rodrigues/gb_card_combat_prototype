@@ -25,8 +25,9 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
     "enemy_hp", "battle_turn", "battle_result", "battle_player_hp", "battle_enemy_hp",
+    "battle_energy",
     "game_over_choice", "story_flag", "screen", "scene",
-    "event_occurred", "event_not_occurred", "dialogue_active", "dialogue_line", "dialogue_id",
+    "event_occurred", "event_not_occurred", "event_count", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
     "currency", "progression_level", "progression_progress",
@@ -211,6 +212,25 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      CARD_TYPE_MAP[act.get("card_type", "SW")] & 0xFF,
                                      act.get("value", 1) & 0xFF)
+            elif act_type == "set_hand_card_meta":
+                # Companion to set_hand_card: pin the injected card's energy
+                # cost and remaining uses so energy/limited-use scenarios do
+                # not depend on the dealt deck contents.
+                session.debug_action(session.DBG_ACT_SET_HAND_CARD_META,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("cost", 1) & 0xFF,
+                                     act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "deck_add":
+                # Direct deck_add_card() call (real mechanic, all validations:
+                # ownership, SPECIAL exclusion, max_copies, 20-card size).
+                # Emits CARD_ADDED_TO_DECK on success only.
+                session.debug_action(session.DBG_ACT_DECK_ADD,
+                                     ITEM_ID_MAP[act.get("card")], 0, 0)
+            elif act_type == "start_battle":
+                # Start a battle from the current world state (the same path
+                # an overworld encounter uses); used for multi-battle
+                # scenarios such as limited-use reset coverage.
+                session.debug_action(session.DBG_ACT_START_BATTLE, 0, 0, 0)
             elif act_type == "set_filter":
                 session.debug_action(session.DBG_ACT_SET_FILTER,
                                      FILTER_TYPE_MAP[act.get("filter", "ALL")] & 0xFF, 0, 0)
@@ -371,6 +391,10 @@ def run_scenario(scenario):
             actual = snap.get("battle_enemy_hp", 0)
             passed = (actual == int(expected))
 
+        elif a_type == "battle_energy":
+            actual = snap.get("battle_energy")
+            passed = (actual is not None and actual == int(expected))
+
         elif a_type == "game_over_choice":
             actual = snap.get("game_over_choice", 0)
             passed = (actual == int(expected))
@@ -430,6 +454,13 @@ def run_scenario(scenario):
 
             passed = len(matching_events) > 0
             actual = f"EMITTED ({len(matching_events)} time(s))" if passed else "NOT_EMITTED"
+
+        elif a_type == "event_count":
+            exp_event = a.get("event", expected)
+            expected = f"{exp_event} x{a.get('count', 0)}"
+            actual = sum(1 for ev in telemetry if ev.get("type") == exp_event)
+            passed = (actual == int(a.get("count", 0)))
+            actual = f"{exp_event} x{actual}"
 
         elif a_type == "event_not_occurred":
             exp_event = a.get("event", expected)

@@ -53,6 +53,7 @@ void enemy_deck_setup_banked(void)
         ed->cards[i].type = src[i].type;
         ed->cards[i].value = src[i].value;
         ed->cards[i].uses_remaining = src[i].uses_remaining;
+        ed->cards[i].cost = 0; /* enemies never pay energy */
     }
     ed->count = count;
     ed->draw_idx = 0;

@@ -24,10 +24,12 @@ static void battle_init_from_deck_state(Battle *b, const DeckState *ds)
             b->deck.cards[i].value = def->power;
             b->deck.cards[i].uses_remaining =
                 (def->uses_per_battle == 0) ? 0xFF : def->uses_per_battle;
+            b->deck.cards[i].cost = def->cost;
         } else {
             b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;
             b->deck.cards[i].value = 2;
             b->deck.cards[i].uses_remaining = 0xFF;
+            b->deck.cards[i].cost = 1;
         }
     }
 }
@@ -79,6 +81,7 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
     b->timer_max = BATTLE_TIMER_MAX_FRAMES;
+    b->energy = BATTLE_ENERGY_PER_TURN;
     b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;
     b->dirty = BATTLE_DIRTY_ALL;
@@ -109,6 +112,29 @@ bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
     return false;
 }
 
+/* Total energy cost reserved by the cards currently selected into the combo.
+ * Selection validates against the un-reserved remainder, so this never
+ * exceeds b->energy. */
+static uint8_t combo_reserved_cost(const Battle *b)
+{
+    uint8_t i, sum = 0;
+    for (i = 0; i < b->combo_count; i++) {
+        sum += b->hand[b->selected_indices[i]].cost;
+    }
+    return sum;
+}
+
+/* A hand card can be added to the current combo only while it has uses left
+ * AND its cost fits in the phase energy not yet reserved by the pending
+ * combo (deck.md Phase 10: check affordability at select, pay at resolve). */
+static bool hand_card_playable(const Battle *b, uint8_t hand_idx)
+{
+    uint8_t available;
+    if (b->hand[hand_idx].uses_remaining == 0) return false;
+    available = b->energy - combo_reserved_cost(b);
+    return b->hand[hand_idx].cost <= available;
+}
+
 void battle_cursor_move(Battle *b, int8_t dir)
 {
     uint8_t start, step;
@@ -121,14 +147,13 @@ void battle_cursor_move(Battle *b, int8_t dir)
         } else {
             b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
         }
-        if (b->hand[b->cursor_pos].uses_remaining != 0) break;
+        if (hand_card_playable(b, b->cursor_pos)) break;
         if (b->cursor_pos == start) break;
     }
     b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
 }
 
-void battle_target_move(Battle *b, int8_t dir)
-{
+void battle_target_move(Battle *b, int8_t dir){
     uint8_t i, t;
     if (!b || b->enemy_count <= 1) return;
 
@@ -176,7 +201,7 @@ void battle_card_select(Battle *b)
         return;
     }
 
-    if (b->hand[b->cursor_pos].uses_remaining == 0) {
+    if (!hand_card_playable(b, b->cursor_pos)) {
         return;
     }
 
@@ -189,7 +214,7 @@ void battle_card_select(Battle *b)
             next_pos++;
             if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
             if (!battle_is_card_selected(b, next_pos) &&
-                b->hand[next_pos].uses_remaining != 0) {
+                hand_card_playable(b, next_pos)) {
                 b->cursor_pos = next_pos;
                 break;
             }
@@ -228,8 +253,10 @@ void battle_card_undo(Battle *b)
 static void battle_resolve_hand_discard(Battle *b)
 {
     uint8_t i, idx;
+    uint8_t cost = 0;
     for (i = 0; i < b->combo_count; i++) {
         idx = b->selected_indices[i];
+        cost += b->hand[idx].cost;
         if (b->hand[idx].uses_remaining != 0xFF && b->hand[idx].uses_remaining > 0) {
             b->hand[idx].uses_remaining--;
         }
@@ -237,6 +264,8 @@ static void battle_resolve_hand_discard(Battle *b)
         deck_discard(&b->deck, b->hand[idx]);
         deck_draw(&b->deck, &b->hand[idx]);
     }
+    /* Pay the combo's energy cost (selection already proved affordability). */
+    b->energy = (b->energy >= cost) ? (uint8_t)(b->energy - cost) : 0;
     b->combo_count = 0;
 }
 
@@ -260,16 +289,16 @@ void battle_execute_combo(Battle *b)
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
         if (b->combo_count == 0) {
-            if (b->hand[b->cursor_pos].uses_remaining == 0) {
+            if (!hand_card_playable(b, b->cursor_pos)) {
                 uint8_t s;
                 for (s = 0; s < BATTLE_HAND_SIZE; s++) {
-                    if (b->hand[s].uses_remaining != 0 &&
+                    if (hand_card_playable(b, s) &&
                         !battle_is_card_selected(b, s)) {
                         b->cursor_pos = s;
                         break;
                     }
                 }
-                if (b->hand[b->cursor_pos].uses_remaining == 0) {
+                if (!hand_card_playable(b, b->cursor_pos)) {
                     b->phase = BATTLE_PHASE_PLAYER_ANIM;
                     b->delay_timer = 30;
                     b->dirty = BATTLE_DIRTY_ALL;
@@ -358,6 +387,7 @@ void battle_update(Battle *b)
             b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
             b->turn = BATTLE_TURN_PLAYER;
             b->combo_count = 0;
+            b->energy = BATTLE_ENERGY_PER_TURN;
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
             if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);

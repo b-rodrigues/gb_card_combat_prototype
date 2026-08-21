@@ -481,28 +481,25 @@ No counter needs to be maintained.
 
 # 12. Phase 10 — Card Play ✅ DONE
 
-Create a generic operation:
-
-```c
-bool battle_play_card(
-    BattleState *battle,
-    uint8_t deck_index
-);
-```
-
-The operation should:
-
-1. Resolve the card from the deck.
-2. Look up its definition.
-3. Check whether it has remaining uses.
-4. Check whether the player can afford its cost.
-5. Pay the cost.
-6. Execute the card effect.
-7. Decrement remaining uses if limited.
-8. Emit telemetry.
-9. Return success/failure.
-
-For a Potion:
+> **Implemented flow** (differs from the original single-call sketch below —
+> see "Deviations from spec" at the end of this document): cards are played by
+> building a combo, not one at a time. Affordability is checked at
+> *selection* time and the cost is paid at *resolve* time.
+>
+> 1. `battle_card_select()` (`src/battle/battle.c`) adds the cursor card to
+>    the combo if `hand_card_playable()` passes: uses remaining AND
+>    `cost <= energy - combo_reserved_cost()` (the sum of costs already in
+>    the pending combo). The cursor then auto-advances to the next playable,
+>    unselected card.
+> 2. Confirming the combo (or the turn timer expiring) runs
+>    `battle_execute_combo()`, which evaluates and resolves the effect.
+> 3. `battle_resolve_hand_discard()` pays the summed combo cost (saturating
+>    at 0), decrements limited uses, emits `CARD_PLAYED` per card, discards
+>    them and refills those hand slots from the deck.
+> 4. `energy` is a per-turn pool (`BATTLE_ENERGY_PER_TURN`, currently 5),
+>    refreshed to full at every decision-phase entry (attack AND defend).
+>
+> For a Potion:
 
 ```text
 remaining = 3
@@ -1087,8 +1084,10 @@ This is particularly useful because the repository is designed around semantic o
 
 > Note: the vertical slice is live — `battle_start()` bridges the persistent
 > `DeckState` into the battle `Deck`, cards are playable as combos, limited-use
-> cards decrement and reset between battles. Remaining gap: enemy AI still uses a
-> flat `attack` value (no enemy card decks yet).
+> cards decrement and reset between battles. Enemy decks have also landed:
+> each enemy draws from its own registered card deck
+> (`src/battle/enemy_deck_content.c`, `EVENT_ENEMY_CARD_PLAYED`); the flat
+> attack value remains only as a fallback for enemies without a deck.
 
 Do not build the complete card combat system at the same time as the deck UI.
 
@@ -1233,3 +1232,48 @@ The most important rule is:
 A Potion with `3 uses/battle` is therefore not an inventory item and not a consumable item. It is a permanent card whose **combat availability is limited**.
 
 This should be the foundation for the entire card system.
+
+---
+
+# 40. Deviations from spec
+
+The implementation follows the spec's semantics (collection vs deck split,
+per-battle availability, deterministic reset) with these deliberate
+divergences, driven by Game Boy memory limits and the engine/game layer split
+(AGENTS.md §55):
+
+- **Sizes**: `MAX_CARD_COLLECTION` is 12 (not 64); the battle deck is 20
+  (`MAX_DECK_SIZE`, `src/battle/deck.h`). Card ids start at
+  `CARD_FIRST_GAME = 0x40` (`src/rpg/cards.h`), not 0x80 — the card range
+  shares the item-id space convention of the game layer.
+- **API shape**: there is no single `battle_play_card()`. Cards are selected
+  into combos (`battle_card_select`) and resolved together
+  (`battle_execute_combo`), which is what makes combos/energy meaningful.
+  Persistent-side API: `deck_collection_add(cs, id, qty)`,
+  `deck_add_card(cs, id)`, `deck_remove_card(cs, id)`; no
+  `deck_validate`/`deck_contains` (validation happens inside the mutators,
+  which return `bool`). The `CARD_DEPLETED` / `DECK_VALIDATED` telemetry
+  events do not exist; depletion is observable via `CARD_PLAYED` payloads and
+  hand state.
+- **CardDefinition extras**: `battle_type` (maps a collection card to its
+  combat `BattleCardType`), `price` (shop integration), and an inline
+  `name[9]` for display.
+- **`max_copies` caps both collection and deck** (spec said the collection is
+  uncapped). Enforced in `src/rpg/deck.c`; capping the collection too keeps
+  the fixed-size entry array honest at 12 slots.
+- **Energy model**: per-turn pool of 5 (`BATTLE_ENERGY_PER_TURN`) refreshed at
+  every decision-phase entry rather than a per-combat budget. Affordability
+  is checked at selection time against `energy - combo_reserved_cost()` and
+  paid at resolve time. The pool size keeps all pre-energy scenarios valid
+  (a 5-card combo of cost-1 starters still fits).
+- **Deck-size ceiling unreachable**: the 20-card deck limit cannot be hit by
+  current content — total deckable copies across the catalog are 8
+  (IRON_SWORD ×1 + WOODEN_SHIELD ×1 + HEALING_HERB ×3 + FIRE_TOME ×2 +
+  POISON_DAGGER ×1; AMULET is SPECIAL and not deckable). Recorded as a known
+  gap; no synthetic content was added just to test it.
+- **Test coverage** (`tools/scenarios/tests/`): `card_cost_energy` (pool
+  gating + reservation), `unlimited_card_can_repeat` (uses 0xFF never
+  depletes), `limited_card_resets_next_battle` (per-battle reset; also pins
+  that fleeing does not write battle HP back to the party),
+  `deck_copy_limit` (max_copies enforcement via real `deck_add_card`),
+  `deck_requires_owned_card` (ownership gate).

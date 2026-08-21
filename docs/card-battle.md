@@ -1069,11 +1069,14 @@ or a small weighted random table.
 
 The enemy does not need to use the card system yet, but will in the future.
 
-> **DONE:** Enemies currently use one fixed non-card attack. After the player's
-> attack resolves, the battle enters an enemy telegraph phase that sets the
-> incoming damage to the enemy's attack value (defaulting to 3), then hands the
-> player the defend phase (`src/battle/battle.c::battle_update`). No enemy AI/weighted
-> random table yet — that is future work.
+> **DONE (updated):** Enemies now draw from per-enemy card decks
+> (`src/battle/enemy_deck_content.c`, registered game content). After the
+> player's attack resolves, the battle enters an enemy telegraph phase that
+> plays the enemy deck's next card (`EVENT_ENEMY_CARD_PLAYED`) and sets the
+> incoming damage to that card's value, then hands the player the defend phase
+> (`src/battle/battle.c::battle_update`). When the draw index wraps the deck,
+> it cycles back to the top. A fallback flat attack (value 3) remains only for
+> enemies with no registered deck.
 
 ---
 

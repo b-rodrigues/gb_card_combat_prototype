@@ -12,6 +12,11 @@
 #define MAX_BATTLE_ENEMIES 3
 #define BATTLE_HAND_SIZE 5
 #define BATTLE_TIMER_MAX_FRAMES 1200 /* 20 seconds at 60fps */
+/* Energy available per decision phase (attack AND defend).  Selecting a card
+ * whose cost exceeds the remaining energy is rejected; the pool refreshes to
+ * this value at battle start and at every transition into a decision phase
+ * (deck.md Phase 10: check affordability at select, pay at resolve). */
+#define BATTLE_ENERGY_PER_TURN 5
 /* Timer cadence.  The bar is BATTLE_TIMER_BAR_LENGTH cells, each draining one
  * tile every BATTLE_TIMER_BAR_DIVISOR frames (= BATTLE_TIMER_SECONDS), so the
  * whole window is an exact integer number of cells.  The divisor is derived
@@ -66,6 +71,7 @@ typedef struct {
     uint8_t selected_indices[BATTLE_HAND_SIZE]; /* Hand indices in combo order */
     uint8_t combo_count;                       /* Number of selected cards (0..5) */
     uint8_t cursor_pos;                        /* 0..4 in hand */
+    uint8_t energy;                            /* Energy remaining this decision phase */
     uint16_t timer_ticks;                      /* Countdown timer ticks remaining */
     uint16_t timer_max;                        /* Max timer ticks (1200) */
     BattlePhase phase;

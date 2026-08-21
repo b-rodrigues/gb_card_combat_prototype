@@ -25,6 +25,7 @@ void deck_draw(Deck *d, Card *out_card)
         out_card->type = BATTLE_CARD_TYPE_SWORD;
         out_card->value = 2;
         out_card->uses_remaining = 0xFF;
+        out_card->cost = 1;
         return;
     }
 

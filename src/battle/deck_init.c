@@ -31,5 +31,6 @@ void deck_init_default_banked(void)
         d->cards[i].type = (uint8_t)(p >> 4);
         d->cards[i].value = (uint8_t)(p & 0x0F);
         d->cards[i].uses_remaining = 0xFF; /* unlimited until overridden */
+        d->cards[i].cost = 1;              /* basic starter cards are cheap */
     }
 }

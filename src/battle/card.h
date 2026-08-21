@@ -16,6 +16,7 @@ typedef struct {
     uint8_t type;           /* BattleCardType */
     uint8_t value;          /* Number 1 - 9 */
     uint8_t uses_remaining; /* 0 = depleted; 0xFF = unlimited */
+    uint8_t cost;           /* Energy cost to play (paid from Battle.energy) */
 } Card;
 
 /* Get one-line short description for card type */

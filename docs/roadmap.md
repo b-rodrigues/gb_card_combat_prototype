@@ -53,7 +53,12 @@ testable, save/load works, and the memory budget is understood.
   branch has landed the player OAM sprite + the `png2gb.py` PNG→tileset
   stage (`make gfx`), the tilemap/OAM/dedup and renderer rewiring remain
 - Battle system expansion (per-enemy stats/AI, command menu, variance, etc.)
-- Card battle prototype (hand/deck/discard, draw, play, resolve)
+
+### DONE
+
+- Card battle prototype (hand/deck/discard, draw, play, resolve; per-card
+  energy costs with a 5-point pool refreshed each decision phase — see
+  `docs/deck.md`)
 
 ### LATER
 
