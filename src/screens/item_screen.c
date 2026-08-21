@@ -25,7 +25,6 @@
 
 #define MSG_NONE       0
 #define MSG_DECK_FULL  1
-#define MSG_MAX_COPIES 2
 
 #define FILTER_ALL      0xFF
 #define SORT_NONE       0
@@ -190,6 +189,7 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     const char *bt;
     char code[4];
     CardId id;
+    uint8_t in_deck;
 
     id = view_card_id(g, pos);
     def = card_get_def(id);
@@ -203,9 +203,12 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     code[2] = (char)('0' + (def->power % 10));
     code[3] = '\0';
     ui_draw_text_line(2, y, code, 3);
-    ui_draw_text_line(19, y,
-                      deck_count_in_deck(&g->state.cards.deck, id) > 0 ?
-                      "T" : "F", 1);
+    /* Membership glyph is the decked-copy count (0..n), so partial stacks
+     * (starter 2x SW3/SH2, herb up to 3) are visible. */
+    in_deck = deck_count_in_deck(&g->state.cards.deck, id);
+    code[0] = (char)('0' + (in_deck % 10));
+    code[1] = '\0';
+    ui_draw_text_line(19, y, code, 1);
     ui_draw_text_line(2, (uint8_t)(y + 1),
                       card_get_description(def->battle_type), 17);
 }
@@ -231,10 +234,8 @@ static void draw_cards_list(Game *g)
 
     if (g->item_menu_message == MSG_DECK_FULL)
         ui_draw_text_line(0, 16, "DECK FULL", 9);
-    else if (g->item_menu_message == MSG_MAX_COPIES)
-        ui_draw_text_line(0, 16, "MAX COPIES", 10);
     else
-        ui_draw_text_line(0, 16, "A:TOGGLE SEL:INFO", 17);
+        ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
 }
 
 static void quest_draw_status_line(Game *g, const QuestDefinition *q, uint8_t y)
@@ -334,7 +335,7 @@ static void draw_picker(Game *g)
     ui_draw_text_line(12, 7, filter_name(g->item_menu_filter), 3);
     ui_draw_text_line(2, 9, "SORT", 4);
     ui_draw_text_line(12, 9, sort_name(g->item_menu_sort), 4);
-    ui_draw_text_line(0, 14, "LR:CHANGE A:OK B:NO", 19);
+    ui_draw_text_line(0, 14, "LR CYCLE  A:OK B:NO", 19);
 }
 
 void item_screen_reset(Game *g)
@@ -485,18 +486,17 @@ void item_screen_update(Game *g)
             if ((uint8_t)(g->item_menu_index - FIRST_CARD) >= s_view_count)
                 return;
             id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
-            if (deck_count_in_deck(&cs->deck, id) > 0) {
-                if (deck_remove_card(cs, id))
-                    telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, id, 0, 0, 0);
+            /* Count-up-then-clear: A adds one copy; once the card is fully
+             * decked (add rejected for per-card reasons, not a full deck),
+             * A clears every decked copy of it. */
+            if (deck_add_card(cs, id)) {
+                telemetry_emit(EVENT_CARD_ADDED_TO_DECK, id, 0, 0, 0);
+            } else if (cs->deck.count >= MAX_DECK_CARDS) {
+                g->item_menu_message = MSG_DECK_FULL;
+                g->item_menu_msg_ttl = 45;
             } else {
-                if (deck_add_card(cs, id)) {
-                    telemetry_emit(EVENT_CARD_ADDED_TO_DECK, id, 0, 0, 0);
-                } else {
-                    g->item_menu_message =
-                        (cs->deck.count >= MAX_DECK_CARDS) ?
-                        MSG_DECK_FULL : MSG_MAX_COPIES;
-                    g->item_menu_msg_ttl = 45;
-                }
+                while (deck_remove_card(cs, id))
+                    telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, id, 0, 0, 0);
             }
         }
         g->render_cache.valid = false;

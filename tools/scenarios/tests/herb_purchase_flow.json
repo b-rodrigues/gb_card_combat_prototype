@@ -108,7 +108,7 @@
     {
       "type": "screen_row",
       "row": 12,
-      "contains": "T"
+      "contains": "1"
     }
   ],
   "initial_state": {

@@ -53,8 +53,9 @@ Each card occupies a **pair of rows**:
   identical to the combat hand display.
 - **Description**: `card_get_description(battle_type)` — the same string the
   battle HUD shows.
-- **Membership column** (rightmost): `T` = at least one copy in the deck,
-  `F` = none. (Placeholder for the future per-copy box UI.)
+- **Membership column** (rightmost): the decked-copy count as a digit
+  (`0` = none, `1`..`n` = copies in the deck), so partial stacks (starter
+  2x SW3/SH2, herb up to 3) are visible at a glance.
 - SPECIAL cards (e.g. AMULET) are not deckable and are hidden from the list.
 - ~6 pairs visible; scrolling moves by pair.
 
@@ -65,7 +66,7 @@ Each card occupies a **pair of rows**:
 | START | overworld / menu | open / close the menu |
 | LEFT / RIGHT | menu | switch tab |
 | UP / DOWN | card rows | move cursor by entry (UP from first card reaches the top row) |
-| A | card row | toggle deck membership (§3) |
+| A | card row | add one copy; clear all copies when fully decked (§3) |
 | SELECT | CARDS row | detail submenu (§5) |
 | SELECT | QUEST row | placeholder quest detail text |
 | B | main list, not on top row | jump to first card row (**step 1**) |
@@ -75,23 +76,28 @@ Each card occupies a **pair of rows**:
 The two-step B is deliberate: B never closes the menu directly from the card
 list, so an accidental press cannot lose your place.
 
-## 3. Deck membership toggle (A)
+## 3. Deck membership: count-up-then-clear (A)
 
 A routes through the real mechanics — no UI-side shortcuts:
 
-- `F` row: `deck_add_card()` — adds one copy. Emits `CARD_ADDED_TO_DECK`.
-- `T` row: `deck_remove_card()` — removes one copy. Emits
-  `CARD_REMOVED_FROM_DECK`.
-- Rejection (deck full / max copies / none owned) shows a transient message
-  line instead of a silent no-op:
+- A adds **one** copy via `deck_add_card()`. Emits `CARD_ADDED_TO_DECK`.
+- Once the card is fully decked (the add is rejected for per-card reasons —
+  no owned copies left beyond `max_copies`), A **clears every decked copy**
+  of it via repeated `deck_remove_card()`. Emits `CARD_REMOVED_FROM_DECK`
+  per copy.
+- Rejection (deck full) shows a transient message line instead of a silent
+  no-op:
   - `DECK FULL` — hard limit of **20** cards (`MAX_DECK_CARDS`).
-  - `MAX COPIES` — per-card `CardDefinition.max_copies` reached.
+
+(The earlier per-press boolean toggle could never rebuild a multi-copy stack
+— pressing A on a 2-copy row silently dropped it to 1 with no path back —
+so the semantics were redesigned around the visible count digit.)
 
 ## 4. Filter/sort top row
 
 The first list entry is `* FILTER/SORT *`. Reach it with UP from the first
 card (or B's step-1 jump followed by UP). A opens a small picker (hint line
-`LR:CHANGE A:OK B:NO`) where LEFT/RIGHT cycles the existing filter
+`LR CYCLE  A:OK B:NO`) where LEFT/RIGHT cycle the existing filter
 (ALL/ATK/DEF/HEL/STS/UTL) and sort (OFF/TYPE/PWR+/PWR-/CST+/CST-)
 values; A validates and applies them to the list; B backs out unchanged.
 
@@ -130,7 +136,7 @@ restated here because it constrains the menu's promises:
 
 No new events. The menu reuses:
 
-- `CARD_ADDED_TO_DECK` / `CARD_REMOVED_FROM_DECK` (toggle)
+- `CARD_ADDED_TO_DECK` / `CARD_REMOVED_FROM_DECK` (add / clear)
 - `CARD_PURCHASED` / `CARD_PURCHASE_FAILED` (shop)
 - `RENDER_SCREEN` (menu redraws)
 
@@ -142,7 +148,8 @@ semantic assertion names.
 
 | Scenario | Proves |
 |---|---|
-| `cards_menu_toggle` | grant exists at new game; A toggles T/F with events; limits reject |
+| `cards_menu_toggle` | grant exists at new game; A on a maxed card clears it, adds rebuild the count, events emitted |
+| `fallback_deck_starter` | emptying the persistent deck routes battles onto the packed starter-deck fallback (hand renders SW3 SW3 SH2 SH2 FI4) |
 | `reshuffle_preserves_limits` | FI4 depletes after 3 plays and stays dead across reshuffle; SW keeps cycling |
 | `herb_purchase_flow` | buy herb → add to deck → battle heal 5 |
 

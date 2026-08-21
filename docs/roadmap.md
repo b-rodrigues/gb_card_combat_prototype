@@ -1217,14 +1217,16 @@ Missing:
 ### 9.1 Deck management UI — DONE
 
 The START quick screen's CARDS tab manages collection vs deck through the
-real deck mutators (paired rows with T/F membership, A toggles one copy,
+real deck mutators (paired rows whose membership glyph is the decked-copy
+count, A adds one copy and clears every copy once the card is fully decked,
 SELECT detail page, inline FILTER/SORT picker), and new games grant a
 5-card starter deck so battles draw from the real system from the first
 fight.  Spec: `docs/deck-management.md`; implementation deviations:
-`docs/deck.md` §40.  Known gaps: per-copy membership display (T/F is
-per-id), AMULET hidden from the list, QUEST detail page is a placeholder.
-Note: the fixed-bank budget is nearly exhausted (~15 B headroom after this
-feature; `make memmap` enforces the invariant) — the next substantial
+`docs/deck.md` §40.  Known gaps: picker LEFT/RIGHT both cycle forward
+(relabelled hint; true bidirectional cycling is future polish), AMULET
+hidden from the list, QUEST detail page is a placeholder.
+Note: the fixed-bank budget is tight (~88 B headroom after the review-fix
+round; `make memmap` enforces the invariant) — the next substantial
 feature must plan banked placement (§52.11.1) up front.
 
 ## 10. Card System

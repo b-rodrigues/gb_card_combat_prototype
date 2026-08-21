@@ -1,7 +1,7 @@
 {
   "name": "cards_menu_toggle",
   "test": true,
-  "description": "A on a card row toggles deck membership through deck_remove_card/deck_add_card one copy at a time: the starter holds two SW3 copies, so two presses flip its flag T -> F (CARD_REMOVED_FROM_DECK x2) and a third re-decks one copy (CARD_ADDED_TO_DECK)",
+  "description": "CARDS tab A semantics on a fully-decked multi-copy card: A clears every decked copy of the maxed starter sword (glyph 2 -> 0), then single adds walk the count back up (1, 2). Membership glyph shows the decked-copy count",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -58,7 +58,7 @@
     {
       "type": "event_count",
       "event": "CARD_ADDED_TO_DECK",
-      "count": 1
+      "count": 2
     },
     {
       "type": "screen_row",
@@ -68,7 +68,7 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "T"
+      "contains": "2"
     }
   ],
   "initial_state": {

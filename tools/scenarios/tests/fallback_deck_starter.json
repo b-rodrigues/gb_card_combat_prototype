@@ -1,0 +1,134 @@
+{
+  "scenario_id": "FIRST_ENCOUNTER",
+  "description": "Regression for the battle fallback deck: emptying the persistent deck through the CARDS menu (each maxed starter card clears on one A; 5 CARD_REMOVED events) forces battle_init_from_deck_state onto the packed starter-deck fallback. The battle hand must render the mirrored composition SW3 SW3 SH2 SH2 FI4 -- a mis-packed table would show a shuffled order and garbage type-15 codes",
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 9100
+  },
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "B"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "B"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "wait",
+      "frames": 90
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_REMOVED_FROM_DECK",
+      "count": 5
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "SW3 SW3"
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "SH2 SH2"
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "FI4"
+    }
+  ],
+  "name": "fallback_deck_starter"
+}
