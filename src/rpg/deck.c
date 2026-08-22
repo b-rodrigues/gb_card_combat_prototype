@@ -105,6 +105,7 @@ bool deck_remove_card(CardState *cs, CardId id)
 {
     uint8_t i;
     if (!cs || id == CARD_NONE) return false;
+    if (cs->deck.count <= DECK_MIN_CARDS) return false;
 
     for (i = 0; i < cs->deck.count; i++) {
         if (cs->deck.cards[i] == id) {

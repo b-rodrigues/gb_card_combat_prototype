@@ -1,8 +1,26 @@
 {
   "name": "cards_menu_toggle",
   "test": true,
-  "description": "CARDS tab A semantics on a fully-decked multi-copy card: A clears every decked copy of the maxed starter sword (glyph 2 -> 0), then single adds walk the count back up (1, 2). Membership glyph shows the decked-copy count",
+  "description": "CARDS tab A semantics on a fully-decked multi-copy card: A clears every decked copy of the maxed starter sword (glyph 2 -> 0), then single adds walk the count back up (1, 2). Membership glyph shows the decked-copy count. Deck headroom comes from initial_state (3 herbs owned and decked on top of the starter five) because DECK_MIN_CARDS=5 now rejects a clear that would drop below 5",
   "scenario_id": "NEW_GAME",
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410,
+    "inventory": {
+      "HEALING_HERB": 3
+    },
+    "deck": {
+      "IRON_SWORD": 2,
+      "WOODEN_SHIELD": 2,
+      "FIRE_TOME": 1,
+      "HEALING_HERB": 3
+    }
+  },
   "actions": [
     {
       "type": "press",
@@ -70,14 +88,5 @@
       "row": 6,
       "contains": "2"
     }
-  ],
-  "initial_state": {
-    "scene": "FIELD",
-    "player": {
-      "x": 4,
-      "y": 4,
-      "facing": "DOWN"
-    },
-    "seed": 8410
-  }
+  ]
 }

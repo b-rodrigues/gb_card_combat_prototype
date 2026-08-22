@@ -2269,9 +2269,16 @@ in sync; changing one without the other silently breaks every scenario.
 
 * Core snapshot (`g_snap_buf`, 36 bytes): byte 12 is `state.flags.bytes[0]`,
   byte 19 is `state.scene.scene_id`.  Existing scenarios depend on these.
-* Extended snapshot (`g_state_snap_buf`, 183 bytes, version 0x03): version
+* Extended snapshot (`g_state_snap_buf`, 210 bytes, version 0x06): version
   byte 0, flags 1..8, variables 9..24, currency 25..37, party 38..50,
-  inventory 51..83, world 84..132, progression 133..181, equipment 182.
+  inventory (collection) 51..83, world 84..132, progression 133..181,
+  equipment 182, camera/world geometry 183..188, battle-deck count at 189
+  followed by up to 20 deck card ids at 190..209.
+* State-load descriptor (`g_scen_state_buf`, version 0x04): the optional
+  deck section at 229 (present flag) / 230 (count) / 231..250 (card ids)
+  replaces the starter deck when present — an explicit empty deck is how
+  scenarios reach `battle_start`'s packed fallback path now that
+  `DECK_MIN_CARDS` blocks emptying a deck through gameplay.
 * Every important gameplay transition must emit a telemetry event; state
   assertions must be possible without screenshots.
 

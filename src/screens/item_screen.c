@@ -25,6 +25,7 @@
 
 #define MSG_NONE       0
 #define MSG_DECK_FULL  1
+#define MSG_DECK_MIN   2
 
 #define FILTER_ALL      0xFF
 #define SORT_NONE       0
@@ -227,6 +228,8 @@ static void draw_cards_list(Game *g)
 
     if (g->item_menu_message == MSG_DECK_FULL)
         ui_draw_text_line(0, 16, "DECK FULL", 9);
+    else if (g->item_menu_message == MSG_DECK_MIN)
+        ui_draw_text_line(0, 16, "DECK MIN 5", 10);
     else
         ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
 }
@@ -481,11 +484,17 @@ void item_screen_update(Game *g)
             id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
             /* Count-up-then-clear: A adds one copy; once the card is fully
              * decked (add rejected for per-card reasons, not a full deck),
-             * A clears every decked copy of it. */
+             * A clears every decked copy of it — but only if the remaining
+             * deck would still hold DECK_MIN_CARDS cards (all-or-nothing). */
             if (deck_add_card(cs, id)) {
                 telemetry_emit(EVENT_CARD_ADDED_TO_DECK, id, 0, 0, 0);
             } else if (cs->deck.count >= MAX_DECK_CARDS) {
                 g->item_menu_message = MSG_DECK_FULL;
+                g->item_menu_msg_ttl = 45;
+            } else if ((uint8_t)(cs->deck.count -
+                                 deck_count_in_deck(&cs->deck, id)) <
+                       DECK_MIN_CARDS) {
+                g->item_menu_message = MSG_DECK_MIN;
                 g->item_menu_msg_ttl = 45;
             } else {
                 while (deck_remove_card(cs, id))

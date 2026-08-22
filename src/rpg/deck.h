@@ -11,6 +11,10 @@
  * save slot limit. */
 #define MAX_CARD_COLLECTION 12
 #define MAX_DECK_CARDS      20
+/* Minimum playable deck size: must cover a full opening hand
+ * (BATTLE_HAND_SIZE in battle/battle.h).  deck_remove_card refuses to
+ * go below this so battles never rely on phantom fallback cards. */
+#define DECK_MIN_CARDS      5
 
 /* A single owned card in the collection. */
 typedef struct {
@@ -56,7 +60,7 @@ uint8_t deck_collection_count(const CardState *cs, CardId id);
 bool deck_add_card(CardState *cs, CardId id);
 
 /* Remove a card from the deck.  Returns false if the card is not
- * in the deck. */
+ * in the deck or the deck is at DECK_MIN_CARDS. */
 bool deck_remove_card(CardState *cs, CardId id);
 
 /* How many copies of a specific card are in the deck. */

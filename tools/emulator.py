@@ -117,8 +117,6 @@ SCENARIO_IDS = {
 # Mirrors STATE_LOAD_DESC_* in src/debug/telemetry.h.  The host serializes
 # a scenario's initial_state JSON into this fixed-size byte descriptor and
 # writes it to g_scen_state_buf, then sets g_scen_load_state.
-STATE_LOAD_DESC_SIZE = 229
-STATE_LOAD_DESC_VERSION = 0x03
 STATE_LOAD_DESC_SCREEN_OFF = 1
 STATE_LOAD_DESC_SCENE_OFF = 2
 STATE_LOAD_DESC_PLAYER_X_OFF = 3
@@ -150,6 +148,14 @@ STATE_LOAD_DESC_START_BATTLE_OFF = 225
 STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF = 226
 STATE_LOAD_DESC_FONT_TEST_OFF = 227
 STATE_LOAD_DESC_EQUIPMENT_OFF = 228
+# Deck section (v4): only applied by the ROM when present=1; count may be 0
+# for an intentionally empty deck (battle fallback-deck coverage).
+STATE_LOAD_DESC_DECK_PRESENT_OFF = 229
+STATE_LOAD_DESC_DECK_COUNT_OFF = 230
+STATE_LOAD_DESC_DECK_ENTRY_OFF = 231
+MAX_DESC_DECK_CARDS = 20
+STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_DECK_ENTRY_OFF + MAX_DESC_DECK_CARDS
+STATE_LOAD_DESC_VERSION = 0x04
 
 SCENE_NAME_TO_ID = {v: k for k, v in SCENE_MAP.items()}
 SCREEN_NAME_TO_ID = {v: k for k, v in SCREEN_MAP.items()}
@@ -260,6 +266,21 @@ def serialize_initial_state(initial_state):
         off = STATE_LOAD_DESC_INVENTORY_ENTRY_OFF + i * STATE_LOAD_DESC_INVENTORY_ENTRY_SIZE
         buf[off] = ITEM_ID_MAP[name]
         buf[off + 1] = qty
+
+    if "deck" in initial_state:
+        # Explicit deck construction: replaces the starter deck entirely.
+        # An empty dict is meaningful (empty deck -> battle fallback path).
+        # {name: copies} expands to COUNT sequential card ids.
+        flat = []
+        for name, qty in ((initial_state.get("deck") or {}).items()):
+            flat.extend([ITEM_ID_MAP[name]] * int(qty))
+        if len(flat) > MAX_DESC_DECK_CARDS:
+            raise ValueError(
+                f"deck expands to {len(flat)} cards; max is {MAX_DESC_DECK_CARDS}")
+        buf[STATE_LOAD_DESC_DECK_PRESENT_OFF] = 1
+        buf[STATE_LOAD_DESC_DECK_COUNT_OFF] = len(flat)
+        for i, card_id in enumerate(flat):
+            buf[STATE_LOAD_DESC_DECK_ENTRY_OFF + i] = card_id
 
     world = initial_state.get("world") or {}
     actors = list(world.items())
@@ -752,10 +773,10 @@ class EmulatorSession:
             return parsed
         return self.current_snapshot
 
-    # Extended RPG state snapshot: parses g_state_snap_buf (189 bytes,
+    # Extended RPG state snapshot: parses g_state_snap_buf (210 bytes,
     # layout in src/debug/telemetry.h STATE_SNAP_*).
-    STATE_SNAP_SIZE = 189
-    STATE_SNAP_VERSION = 5
+    STATE_SNAP_SIZE = 210
+    STATE_SNAP_VERSION = 6
     STATE_SNAP_FLAGS_OFF = 1
     STATE_SNAP_FLAGS_SIZE = 8
     STATE_SNAP_VARIABLES_OFF = 9
@@ -778,6 +799,7 @@ class EmulatorSession:
     STATE_SNAP_WORLD_HEIGHT_OFF = 186
     STATE_SNAP_CAMERA_PX_X_OFF = 187
     STATE_SNAP_CAMERA_PX_Y_OFF = 188
+    STATE_SNAP_DECK_COUNT_OFF = 189
 
     def state_snapshot(self):
         """Read g_state_snap_buf and return the canonical GameState as a dict."""
@@ -864,6 +886,14 @@ class EmulatorSession:
                 "progress": progress,
             })
 
+        deck = []
+        deck_count = buf[self.STATE_SNAP_DECK_COUNT_OFF]
+        for i in range(deck_count):
+            off = self.STATE_SNAP_DECK_COUNT_OFF + 1 + i
+            if off >= len(buf):
+                break
+            deck.append(buf[off])
+
         return {
             "flags": flags,
             "variables": variables,
@@ -872,6 +902,7 @@ class EmulatorSession:
             "inventory": inventory,
             "world": world,
             "progression": progression,
+            "deck": deck,
             "scroll_x": buf[self.STATE_SNAP_SCROLL_X_OFF],
             "scroll_y": buf[self.STATE_SNAP_SCROLL_Y_OFF],
             "world_width": buf[self.STATE_SNAP_WORLD_WIDTH_OFF],
@@ -898,6 +929,7 @@ class EmulatorSession:
     DBG_ACT_DECK_ADD = 13
     DBG_ACT_SET_HAND_CARD_META = 14
     DBG_ACT_START_BATTLE = 15
+    DBG_ACT_DECK_REMOVE = 16
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

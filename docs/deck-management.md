@@ -88,9 +88,14 @@ A routes through the real mechanics — no UI-side shortcuts:
   no owned copies left beyond `max_copies`), A **clears every decked copy**
   of it via repeated `deck_remove_card()`. Emits `CARD_REMOVED_FROM_DECK`
   per copy.
-- Rejection (deck full) shows a transient message line instead of a silent
-  no-op:
+- Rejections show a transient message line instead of a silent no-op:
   - `DECK FULL` — hard limit of **20** cards (`MAX_DECK_CARDS`).
+  - `DECK MIN 5` — the clear is rejected all-or-nothing when the cards
+    left after removing every copy of this card would drop the deck below
+    **5** (`DECK_MIN_CARDS`, one full opening hand). Nothing is removed in
+    that case. The starter deck is exactly 5 cards, so no starter card can
+    be cleared until more cards are owned and decked. `deck_remove_card()`
+    enforces the same floor as an engine backstop for any other caller.
 
 (The earlier per-press boolean toggle could never rebuild a multi-copy stack
 — pressing A on a 2-copy row silently dropped it to 1 with no path back —

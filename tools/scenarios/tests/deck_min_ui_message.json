@@ -1,0 +1,62 @@
+{
+  "name": "deck_min_ui_message",
+  "test": true,
+  "description": "CARDS tab at the DECK_MIN_CARDS floor: pressing A on the maxed starter sword (both copies decked, deck exactly 5) is rejected all-or-nothing with a transient DECK MIN 5 message and no CARD_REMOVED_FROM_DECK / CARD_ADDED_TO_DECK telemetry.",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 16,
+      "contains": "DECK MIN 5"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_REMOVED_FROM_DECK",
+      "count": 0
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_ADDED_TO_DECK",
+      "count": 0
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8411
+  }
+}

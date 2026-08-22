@@ -41,7 +41,8 @@ enum {
     DBG_ACT_SET_SORT = 12,
     DBG_ACT_DECK_ADD = 13,
     DBG_ACT_SET_HAND_CARD_META = 14,
-    DBG_ACT_START_BATTLE = 15
+    DBG_ACT_START_BATTLE = 15,
+    DBG_ACT_DECK_REMOVE = 16
 };
 
 static void scenario_begin(uint16_t seed)
@@ -61,9 +62,10 @@ static void scenario_load_state(void)
 {
     const uint8_t *b = g_scen_state_buf;
     const uint8_t *p;
+    uint8_t *dst;
     SceneId scene;
     MapId map;
-    uint8_t x, y, facing, screen, dialogue_id, start_battle, i;
+    uint8_t x, y, facing, screen, dialogue_id, start_battle, i, n;
     uint16_t seed;
 
     if (b[0] != STATE_LOAD_DESC_VERSION) return;
@@ -112,6 +114,25 @@ static void scenario_load_state(void)
     for (i = 0; i < b[STATE_LOAD_DESC_INVENTORY_COUNT_OFF]; i++) {
         deck_collection_add(&g_game.state.cards, (CardId)*p, *(p + 1));
         p += 2;
+    }
+
+    /* Deck section: only applied when the host marks it present, so
+     * scenarios without "deck" keep the starter default.  Direct setup
+     * writes (no mechanic calls, no telemetry) per AGENTS.md 53.3.
+     * An explicit empty deck (count 0) is allowed: it is how scenarios
+     * reach battle_start's packed fallback-deck path now that the CARDS
+     * menu enforces DECK_MIN_CARDS. */
+    if (b[STATE_LOAD_DESC_DECK_PRESENT_OFF]) {
+        n = b[STATE_LOAD_DESC_DECK_COUNT_OFF];
+        if (n > MAX_DECK_CARDS) n = MAX_DECK_CARDS;
+        p = b + STATE_LOAD_DESC_DECK_ENTRY_OFF;
+        dst = g_game.state.cards.deck.cards;
+        i = n;
+        while (i) {
+            *dst++ = *p++;
+            i--;
+        }
+        g_game.state.cards.deck.count = n;
     }
 
     p = b + STATE_LOAD_DESC_WORLD_ENTRY_OFF;
@@ -245,11 +266,18 @@ static void debug_run_action(void)
             }
             break;
         case DBG_ACT_DECK_ADD:
-            /* Real mechanic call: all deck_add_card validations apply.  The
-             * event is emitted here (mirroring the UI caller) so scenarios
-             * can assert acceptance/rejection via event_occurred. */
+            /* Real mechanic call: all deck_add_card validations apply
+             * (ownership, SPECIAL exclusion, max_copies, size). */
             if (deck_add_card(&g_game.state.cards, (CardId)a0)) {
                 telemetry_emit(EVENT_CARD_ADDED_TO_DECK, a0, 0, 0, 0);
+            }
+            break;
+        case DBG_ACT_DECK_REMOVE:
+            /* Real mechanic call: membership + DECK_MIN_CARDS floor apply.
+             * Both emit on success only (mirroring the UI caller), so
+             * scenarios assert acceptance/rejection via event counts. */
+            if (deck_remove_card(&g_game.state.cards, (CardId)a0)) {
+                telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, a0, 0, 0, 0);
             }
             break;
         case DBG_ACT_SET_HAND_CARD_META:

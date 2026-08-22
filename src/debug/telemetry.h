@@ -24,8 +24,8 @@
 
 #define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BATTLE_DISCARD_OFF + 1)
 
-/* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x02):
- *   byte  0            : version/validity (0x02)
+/* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x06):
+ *   byte  0            : version/validity (0x06)
  *   bytes 1..8         : FlagState.bytes[0..7]
  *   bytes 9..24        : variables as int16 LE
  *   byte  25           : currency count
@@ -45,8 +45,10 @@
  *   byte  186          : world height (scene tile rows)
  *   byte  187          : overworld camera pixel x (camera_px_x)
  *   byte  188          : overworld camera pixel y (camera_px_y)
+ *   byte  189          : battle-deck card count
+ *   bytes 190..209     : up to 20 deck entries x {card_id}
  */
-#define STATE_SNAP_VERSION_BYTE    0x05
+#define STATE_SNAP_VERSION_BYTE    0x06
 #define STATE_SNAP_FLAGS_OFFSET    1
 #define STATE_SNAP_FLAGS_SIZE      8
 #define STATE_SNAP_VARIABLES_OFFSET  9
@@ -70,14 +72,14 @@
 #define STATE_SNAP_WORLD_HEIGHT_OFF 186
 #define STATE_SNAP_CAMERA_PX_X_OFF  187
 #define STATE_SNAP_CAMERA_PX_Y_OFF  188
-#define STATE_SNAP_TOTAL_SIZE        189
+#define STATE_SNAP_DECK_COUNT_OFF   189
+#define STATE_SNAP_TOTAL_SIZE        210
 
 /* Scenario initial-state descriptor (g_scen_state_buf) layout (version 0x02).
  * Written by the host STATE_LOAD command and applied by scenario_load_state().
  * Fixed offsets; variable-length sections carry a count and only the
  * listed entries are applied (unspecified sections keep their defaults). */
-#define STATE_LOAD_DESC_VERSION           0x03
-#define STATE_LOAD_DESC_SIZE              229
+#define STATE_LOAD_DESC_VERSION           0x04
 #define STATE_LOAD_DESC_SCREEN_OFF        1
 #define STATE_LOAD_DESC_SCENE_OFF         2
 #define STATE_LOAD_DESC_PLAYER_X_OFF      3
@@ -109,6 +111,14 @@
 #define STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF 226
 #define STATE_LOAD_DESC_FONT_TEST_OFF     227
 #define STATE_LOAD_DESC_EQUIPMENT_OFF     228
+#define STATE_LOAD_DESC_DECK_PRESENT_OFF  229
+#define STATE_LOAD_DESC_DECK_COUNT_OFF    230
+#define STATE_LOAD_DESC_DECK_ENTRY_OFF    231
+/* Descriptor layout (version 0x04): byte 229 = deck-present flag (1 = the
+ * following deck section replaces the starter deck, count may be 0 for an
+ * intentionally empty deck); byte 230 = deck card count; bytes 231..250 =
+ * up to 20 deck entries x {card_id}. */
+#define STATE_LOAD_DESC_SIZE              251
 
 typedef enum {
     EVENT_PLAYER_MOVED,

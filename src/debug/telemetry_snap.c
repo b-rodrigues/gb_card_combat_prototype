@@ -76,4 +76,10 @@ void debug_state_snapshot_banked(void)
     b[STATE_SNAP_WORLD_HEIGHT_OFF] = g_game.world.height;
     b[STATE_SNAP_CAMERA_PX_X_OFF]  = g_game.world.camera_px_x;
     b[STATE_SNAP_CAMERA_PX_Y_OFF]  = g_game.world.camera_px_y;
+
+    b[STATE_SNAP_DECK_COUNT_OFF] = st->cards.deck.count;
+    p = b + STATE_SNAP_DECK_COUNT_OFF + 1;
+    for (i = 0; i < st->cards.deck.count && i < MAX_DECK_CARDS; i++) {
+        *p++ = st->cards.deck.cards[i];
+    }
 }

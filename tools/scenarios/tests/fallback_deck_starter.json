@@ -1,6 +1,6 @@
 {
   "scenario_id": "FIRST_ENCOUNTER",
-  "description": "Regression for the battle fallback deck: emptying the persistent deck through the CARDS menu (each maxed starter card clears on one A; 5 CARD_REMOVED events) forces battle_init_from_deck_state onto the packed starter-deck fallback. The battle hand must render the mirrored composition SW3 SW3 SH2 SH2 FI4 -- a mis-packed table would show a shuffled order and garbage type-15 codes",
+  "description": "Regression for the battle fallback deck: initial_state constructs an intentionally EMPTY persistent deck (descriptor deck-present section; the CARDS menu can no longer empty a deck because of DECK_MIN_CARDS) which forces battle_init_from_deck_state onto the packed starter-deck fallback. The battle hand must render the mirrored composition SW3 SW3 SH2 SH2 FI4 -- a mis-packed table would show a shuffled order and garbage type-15 codes",
   "initial_state": {
     "scene": "FIELD",
     "player": {
@@ -8,89 +8,10 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "seed": 9100
+    "seed": 9100,
+    "deck": {}
   },
   "actions": [
-    {
-      "type": "press",
-      "button": "START"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "DOWN"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "DOWN"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "DOWN"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "DOWN"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "B"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "B"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
     {
       "type": "press",
       "button": "RIGHT"
@@ -112,7 +33,7 @@
     {
       "type": "event_count",
       "event": "CARD_REMOVED_FROM_DECK",
-      "count": 5
+      "count": 0
     },
     {
       "type": "screen_row",

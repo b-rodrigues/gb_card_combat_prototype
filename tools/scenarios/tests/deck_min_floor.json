@@ -1,0 +1,117 @@
+{
+  "name": "deck_min_floor",
+  "test": true,
+  "description": "deck_remove_card enforces DECK_MIN_CARDS=5: removals on the 5-card starter deck are rejected (no CARD_REMOVED_FROM_DECK events); after decking 3 herbs (deck=8) three single-copy removals succeed; back at exactly 5 cards a further removal is rejected again.",
+  "actions": [
+    {
+      "type": "wait",
+      "frames": 30
+    },
+    {
+      "type": "deck_remove",
+      "card": "FIRE_TOME"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_remove",
+      "card": "IRON_SWORD"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "add_item",
+      "item": "HEALING_HERB",
+      "quantity": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_add",
+      "card": "HEALING_HERB"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_add",
+      "card": "HEALING_HERB"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_add",
+      "card": "HEALING_HERB"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_remove",
+      "card": "HEALING_HERB"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_remove",
+      "card": "WOODEN_SHIELD"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_remove",
+      "card": "FIRE_TOME"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "deck_remove",
+      "card": "IRON_SWORD"
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_REMOVED_FROM_DECK",
+      "count": 3
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_ADDED_TO_DECK",
+      "count": 3
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 7004
+  }
+}

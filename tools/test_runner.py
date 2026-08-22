@@ -47,6 +47,12 @@ VALID_ACTOR_STATES = set(ACTOR_STATE_NAME_MAP)
 VALID_CURRENCY_NAMES = set(CURRENCY_ID_MAP)
 VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
 
+# New-game starter collection grants (game_new_game in src/game/content.c).
+# The roundtrip rebuild subtracts these from observed collection counts:
+# the descriptor's inventory section applies additively, so re-emitting
+# the full observed collection would double-add the starters on reload.
+NEW_GAME_COLLECTION = {"IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1}
+
 def validate_scenario(data, filepath):
     scen_id = data.get("scenario_id")
     if scen_id and scen_id not in SCENARIO_IDS:
@@ -112,6 +118,9 @@ def validate_scenario(data, filepath):
         for iname, iqty in (init.get("inventory") or {}).items():
             if iname not in VALID_ITEM_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown item '{iname}' in initial_state. Valid items: {sorted(list(VALID_ITEM_NAMES))}")
+        for dname, dqty in (init.get("deck") or {}).items():
+            if dname not in VALID_ITEM_NAMES:
+                raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown card '{dname}' in initial_state deck. Valid cards: {sorted(list(VALID_ITEM_NAMES))}")
         for aname, aval in (init.get("world") or {}).items():
             if aname not in VALID_ACTOR_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown actor '{aname}' in initial_state. Valid actors: {sorted(list(VALID_ACTOR_NAMES))}")
@@ -225,6 +234,12 @@ def run_scenario(scenario):
                 # ownership, SPECIAL exclusion, max_copies, 20-card size).
                 # Emits CARD_ADDED_TO_DECK on success only.
                 session.debug_action(session.DBG_ACT_DECK_ADD,
+                                     ITEM_ID_MAP[act.get("card")], 0, 0)
+            elif act_type == "deck_remove":
+                # Direct deck_remove_card() call (real mechanic: membership +
+                # DECK_MIN_CARDS floor).  Emits CARD_REMOVED_FROM_DECK on
+                # success only, so scenarios can assert rejection via counts.
+                session.debug_action(session.DBG_ACT_DECK_REMOVE,
                                      ITEM_ID_MAP[act.get("card")], 0, 0)
             elif act_type == "start_battle":
                 # Start a battle from the current world state (the same path
@@ -694,10 +709,28 @@ def build_initial_state_from_snapshot(snap, state_snap):
     inventory = {}
     for it in state_snap.get("inventory", []):
         iname = ITEM_ID_TO_NAME.get(it.get("item_id"))
-        if iname:
-            inventory[iname] = inventory.get(iname, 0) + it.get("quantity", 0)
+        if not iname:
+            continue
+        # Emit only the delta over the new-game starter grants
+        # (game_new_game in src/game/content.c adds IRON_SWORD x2,
+        # WOODEN_SHIELD x2, FIRE_TOME x1 to the collection): the loader
+        # applies inventory additively, so re-emitting the full observed
+        # collection would double-add the starters on reload.
+        qty = it.get("quantity", 0) - NEW_GAME_COLLECTION.get(iname, 0)
+        if qty > 0:
+            inventory[iname] = qty
     if inventory:
         initial["inventory"] = inventory
+
+    # Always emit the deck (even empty): the descriptor only replaces the
+    # starter deck when the key is present, so omitting it would silently
+    # turn an intentionally empty deck back into the starter five.
+    deck = {}
+    for cid in state_snap.get("deck", []):
+        dname = ITEM_ID_TO_NAME.get(cid)
+        if dname:
+            deck[dname] = deck.get(dname, 0) + 1
+    initial["deck"] = deck
 
     world = {}
     for w in state_snap.get("world", []):
@@ -734,6 +767,7 @@ def normalize_semantic_state(snap, state_snap):
                         for m in (state_snap or {}).get("party", [])),
         "inventory": sorted((it.get("item_id"), it.get("quantity"))
                             for it in (state_snap or {}).get("inventory", [])),
+        "deck": sorted((state_snap or {}).get("deck", [])),
         "world": sorted((w.get("actor_id"), w.get("state"))
                         for w in (state_snap or {}).get("world", [])),
         "progression": sorted((p.get("name"), p.get("level"), p.get("progress"))
