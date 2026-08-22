@@ -1,0 +1,46 @@
+{
+  "name": "card_description_render",
+  "test": true,
+  "description": "CARDS tab renders each battle card type's banked description under its row. Regression lock for s_card_desc_blob: a flat multi-literal array initializer is silently miscompiled by SDCC to 'first row + zero fill', which blanked every non-sword description while all tests stayed green.",
+  "scenario_id": "NEW_GAME",
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410
+  },
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 7,
+      "contains": "Sword: physical"
+    },
+    {
+      "type": "screen_row",
+      "row": 9,
+      "contains": "Shield: block dmg"
+    },
+    {
+      "type": "screen_row",
+      "row": 11,
+      "contains": "Fire: magic dmg"
+    }
+  ]
+}

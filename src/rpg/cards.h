@@ -55,8 +55,10 @@ void card_register_defs(const CardDefinition *defs, uint8_t count,
 
 /* Registered catalog location (ROM banked!).  Fixed-bank code must NOT
  * dereference g_card_defs -- read rows through card_get_def()'s WRAM
- * scratch instead.  Bank-2 code (same bank as the tables) may index the
- * array directly while its bank is mapped (see battle_init_content.c). */
+ * scratch instead.  Bank-2 code may index the array directly while its
+ * bank is mapped (see battle_init_content.c); this contract is enforced
+ * at registration time by a compile-time check in the game layer
+ * (src/game/cards.c): the catalog bank must be 2. */
 extern const CardDefinition *g_card_defs;
 extern uint8_t g_card_defs_count;
 

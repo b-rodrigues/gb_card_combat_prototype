@@ -32,9 +32,6 @@ typedef struct {
 /* Get one-line short description for card type */
 const char *card_get_description(uint8_t type);
 
-/* Two-letter abbreviation for CardType (e.g. "SW", "SH", "BO", "FI", "HE") */
-const char *card_type_code(uint8_t type);
-
 /* Packed description table geometry shared by card.c (fixed wrapper) and
  * card_content.c (bank-2 blob).  Stride = longest text + NUL, padded. */
 #define CARD_DESC_STRIDE 18
