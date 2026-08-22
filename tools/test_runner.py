@@ -27,7 +27,7 @@ VALID_ASSERTION_TYPES = {
     "enemy_hp", "battle_turn", "battle_result", "battle_player_hp", "battle_enemy_hp",
     "battle_energy", "battle_draw_remaining", "battle_discard_count",
     "game_over_choice", "story_flag", "screen", "scene",
-    "event_occurred", "event_not_occurred", "event_count", "dialogue_active", "dialogue_line", "dialogue_id",
+    "event_occurred", "event_not_occurred", "event_count", "event_arg", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
     "currency", "progression_level", "progression_progress",
@@ -506,6 +506,25 @@ def run_scenario(scenario):
 
             passed = len(matching_events) == 0
             actual = "NOT_EMITTED" if passed else f"EMITTED ({len(matching_events)} time(s))"
+
+        elif a_type == "event_arg":
+            # Payload assertion: passes when at least one emitted event of
+            # the given type carries data[index] == value.
+            exp_event = a.get("event", expected)
+            idx = int(a.get("index", 0))
+            exp_val = int(a.get("value", 0))
+            expected = f"{exp_event} data[{idx}] == {exp_val}"
+            matches = [ev for ev in telemetry if ev.get("type") == exp_event]
+            hits = [ev.get("data") for ev in matches
+                    if len(ev.get("data") or []) > idx and ev["data"][idx] == exp_val]
+            passed = len(hits) > 0
+            if passed:
+                actual = f"{len(hits)} match(es); first data={hits[0]}"
+            elif matches:
+                shown = "; ".join(f"data={ev.get('data')}" for ev in matches[:5])
+                actual = f"no payload match among {len(matches)} event(s): {shown}"
+            else:
+                actual = f"{exp_event} NOT_EMITTED"
 
         elif a_type == "flag":
             exp_flag = a.get("flag")

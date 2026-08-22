@@ -169,7 +169,11 @@ typedef enum {
     EVENT_CARD_REMOVED_FROM_COLLECTION,
     EVENT_CARD_PLAYED,
     EVENT_ENEMY_CARD_PLAYED,
-    EVENT_DECK_RESHUFFLED
+    EVENT_DECK_RESHUFFLED,
+    /* Append-only: these byte values are a wire contract with
+     * tools/emulator.py EVENT_TYPE_MAP (AGENTS.md §53.4). */
+    EVENT_COMBO_RESOLVED,   /* d0=multiplier d1=eff_count d2=flags(straight|suited<<1) d3=phase */
+    EVENT_EFFECT_RESOLVED   /* d0=amount d1=effect type d2=phase d3=target slot */
 } GameEventType;
 
 typedef struct {

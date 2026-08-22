@@ -108,7 +108,9 @@ def main():
     # silent jump into garbage.  Catch this at build time instead of
     # under the harness at runtime.
     banked_targets = {
-        "_combo_evaluate_banked": "combo evaluator (bank 2)",
+        "_combo_resolve_banked": "combo eval + effect dispatch (bank 2)",
+        "_effect_resolve_into": "effect scaling body (bank 2)",
+        "_battle_init_deck_banked": "battle deck bridge (bank 2)",
         "_deck_init_default_banked": "starter deck unpacker (bank 2)",
         "_deck_reshuffle_banked": "discard reshuffle (bank 2)",
         "_debug_state_snapshot_banked": "debug state snapshot (bank 2)",

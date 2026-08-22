@@ -80,6 +80,28 @@
     {
       "type": "event_occurred",
       "event": "DAMAGE_RECEIVED"
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 3,
+      "value": 1
+    },
+    {
+      "type": "event_occurred",
+      "event": "EFFECT_RESOLVED"
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 0,
+      "value": 2
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 1,
+      "value": 2
     }
   ],
   "initial_state": {

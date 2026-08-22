@@ -78,6 +78,32 @@
     {
       "type": "event_occurred",
       "event": "ENTITY_DEFEATED"
+    },
+    {
+      "type": "event_occurred",
+      "event": "COMBO_RESOLVED"
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 0,
+      "value": 120
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 1,
+      "value": 2
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 2,
+      "value": 1
+    },
+    {
+      "type": "event_occurred",
+      "event": "EFFECT_RESOLVED"
     }
   ],
   "initial_state": {

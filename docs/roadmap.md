@@ -53,6 +53,13 @@ testable, save/load works, and the memory budget is understood.
   branch has landed the player OAM sprite + the `png2gb.py` PNG→tileset
   stage (`make gfx`), the tilemap/OAM/dedup and renderer rewiring remain
 - Battle system expansion (per-enemy stats/AI, command menu, variance, etc.)
+  - Card-combat architecture per `docs/combo-system.md`: Phase A + B DONE —
+    combo evaluation (banked) produces hand quality only; a separate effect
+    layer (`src/rpg/effects.{h,c}` + bank-2 body) scales it into
+    damage/block/heal; every battle card carries its `CardEffectType` as
+    data (`Card.effect` from `CardDefinition.effect`); `COMBO_RESOLVED` /
+    `EFFECT_RESOLVED` telemetry plus the harness `event_arg` payload
+    assertion pin the numbers.  Statuses (Phase C) remain unstarted.
 
 ### DONE
 

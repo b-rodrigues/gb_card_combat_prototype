@@ -3,35 +3,25 @@
 #include "banked.h"
 #include "rpg/cards.h"
 #include "rpg/deck.h"
+#include "rpg/effects.h"
 #include "game/game_ids.h"
 #include <string.h>
 
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
  * deck from the player's owned cards.  When NULL, fall back to the
- * hardcoded starter deck (all unlimited uses). */
+ * hardcoded starter deck (all unlimited uses).
+ *
+ * The bridge body lives in ROM bank 2 (src/battle/battle_init_content.c)
+ * so it can read the registered card catalog directly without consuming
+ * the fixed-bank budget; this wrapper only stages its two pointers. */
 static void battle_init_from_deck_state(Battle *b, const DeckState *ds)
 {
-    uint8_t i;
-    const CardDefinition *def;
-    b->deck.count = ds->count;
-    b->deck.draw_idx = 0;
-    b->deck.discard_count = 0;
-    for (i = 0; i < ds->count; i++) {
-        def = card_get_def(ds->cards[i]);
-        if (def) {
-            b->deck.cards[i].type = def->battle_type;
-            b->deck.cards[i].value = def->power;
-            b->deck.cards[i].uses_remaining =
-                (def->uses_per_battle == 0) ? 0xFF : def->uses_per_battle;
-            b->deck.cards[i].cost = def->cost;
-        } else {
-            b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;
-            b->deck.cards[i].value = 2;
-            b->deck.cards[i].uses_remaining = 0xFF;
-            b->deck.cards[i].cost = 1;
-        }
-    }
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&battle_init_deck_banked;
+    g_bk_ptr_a = (void *)b;
+    g_bk_ptr_b = (void *)ds;
+    banked_call_run();
 }
 
 /* Compile-time guarantee that the timer window is an exact integer number of
@@ -303,22 +293,43 @@ static bool battle_turn_draw(Battle *b)
     return true;
 }
 
-static uint8_t battle_eval_current_combo(Battle *b)
+/* Evaluate the pending selection AND resolve its effect in one banked
+ * dispatch, announcing both steps.  The evaluator produces hand quality
+ * into last_combo; effect resolution scales it into g_effect_last, which
+ * is copied to *out for the caller to APPLY (application stays here:
+ * docs/combo-system.md §5/§7).
+ *
+ * attack_phase selects the leading card's own effect; defend play always
+ * requests BLOCK_DAMAGE -- the phase defines the action, so a shieldless
+ * selection simply resolves to base_power 0 (full damage taken). */
+static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
 {
-    uint8_t i;
-    ComboPhase phase;
-    if (b->combo_count == 0) return 0;
+    ComboPhase phase = attack_phase ? COMBO_PHASE_ATTACK : COMBO_PHASE_DEFEND;
+    uint8_t i, fx;
+
     for (i = 0; i < b->combo_count; i++) {
         b->last_combo.cards[i] = b->hand[b->selected_indices[i]];
     }
-    phase = (b->phase == BATTLE_PHASE_PLAYER_DEFEND) ? COMBO_PHASE_DEFEND : COMBO_PHASE_ATTACK;
-    combo_evaluate(b->last_combo.cards, b->combo_count, phase, &b->last_combo);
-    return (uint8_t)b->last_combo.final_power;
+    fx = attack_phase ? b->last_combo.cards[0].effect
+                      : (uint8_t)CARD_EFFECT_BLOCK_DAMAGE;
+    combo_resolve(b->last_combo.cards, b->combo_count, phase, fx,
+                  &b->last_combo);
+    telemetry_emit(EVENT_COMBO_RESOLVED,
+                   (uint8_t)b->last_combo.multiplier,
+                   b->last_combo.eff_count,
+                   (uint8_t)((b->last_combo.is_straight ? 1 : 0) |
+                             (b->last_combo.all_same_type ? 2 : 0)),
+                   (uint8_t)phase);
+    out->type = g_effect_last.type;
+    out->amount = g_effect_last.amount;
+    telemetry_emit(EVENT_EFFECT_RESOLVED, out->amount, out->type,
+                   (uint8_t)phase, b->target_idx);
 }
 
 void battle_execute_combo(Battle *b)
 {
     uint8_t power;
+    EffectResult res;
     if (!b || b->battle_over) return;
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
@@ -342,14 +353,16 @@ void battle_execute_combo(Battle *b)
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
         }
-        power = battle_eval_current_combo(b);
-        if (b->last_combo.cards[0].type == BATTLE_CARD_TYPE_HEAL) {
-            b->player.hp += power;
+        battle_play_hand(b, true, &res);
+        if (res.type == CARD_EFFECT_HEAL_HP) {
+            b->player.hp += res.amount;
             if (b->player.hp > b->player.max_hp) b->player.hp = b->player.max_hp;
-            telemetry_emit(EVENT_HEALED, power, 0, 0, 0);
+            telemetry_emit(EVENT_HEALED, res.amount, 0, 0, 0);
         } else {
-            combatant_take_damage(&b->enemies[b->target_idx], power);
-            telemetry_emit(EVENT_DAMAGE_DEALT, power, 0, 0, 0);
+            /* Damage hand: shield-led fodder deals the non-shield sum,
+             * exactly as before -- only HEAL_HP heals. */
+            combatant_take_damage(&b->enemies[b->target_idx], res.amount);
+            telemetry_emit(EVENT_DAMAGE_DEALT, res.amount, 0, 0, 0);
         }
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
@@ -363,8 +376,9 @@ void battle_execute_combo(Battle *b)
             battle_set_result(b, BATTLE_RESULT_VICTORY);
         }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-        power = battle_eval_current_combo(b);
-        power = (b->enemy_incoming_dmg > power) ? (b->enemy_incoming_dmg - power) : 0;
+        battle_play_hand(b, false, &res);
+        power = (b->enemy_incoming_dmg > res.amount)
+                    ? (uint8_t)(b->enemy_incoming_dmg - res.amount) : 0;
         combatant_take_damage(&b->player, power);
         telemetry_emit(EVENT_DAMAGE_RECEIVED, power, 0, 0, 0);
         battle_resolve_hand_discard(b);

@@ -1072,6 +1072,9 @@ DAMAGE_DEALT
 HEALING_APPLIED
 ENTITY_DEFEATED
 
+COMBO_RESOLVED
+EFFECT_RESOLVED
+
 TURN_STARTED
 TURN_ENDED
 
@@ -1286,6 +1289,30 @@ Example:
 ```
 
 The event should expose the final applied damage, not merely the pre-randomized damage value.
+
+---
+
+# 31.1 COMBO_RESOLVED / EFFECT_RESOLVED (card combat)
+
+Emitted by the battle system whenever a played hand is resolved
+(`docs/combo-system.md` §19).  `COMBO_RESOLVED` announces the QUALITY of the
+selection; `EFFECT_RESOLVED` announces the consequence computed from it.
+Both fire before the matching `DAMAGE_DEALT` / `HEALED` / `DAMAGE_RECEIVED`
+event.
+
+```text
+COMBO_RESOLVED
+  data[0] = multiplier (percent, 100-225)
+  data[1] = effective card count (attack: all cards; defend: shields only)
+  data[2] = shape flags (bit0 straight, bit1 same-type/suited)
+  data[3] = phase (0 = attack, 1 = defend)
+
+EFFECT_RESOLVED
+  data[0] = amount (damage / block / heal points after combo scaling)
+  data[1] = effect type (CardEffectType: 1 damage, 2 block, 3 heal)
+  data[2] = phase (0 = attack, 1 = defend)
+  data[3] = target slot (0 = player; otherwise enemy index)
+```
 
 ---
 
@@ -1551,7 +1578,25 @@ contains
 exists
 event_occurred
 event_not_occurred
+event_arg
 ```
+
+`event_arg` asserts a telemetry payload byte: the scenario passes when at
+least one emitted event of the given type carries `data[index] == value`.
+
+Example:
+
+```json
+{
+  "type": "event_arg",
+  "event": "COMBO_RESOLVED",
+  "index": 0,
+  "value": 175
+}
+```
+
+Failure output lists the observed payloads of every matching event, e.g.
+`no payload match among 1 event(s): data=[100, 1, 0, 0]`.
 
 Example:
 

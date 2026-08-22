@@ -1,27 +1,34 @@
 #pragma bank 2
 
 #include "combo.h"
+#include "rpg/effects.h"
 #include "banked.h"
 
-/* ── Banked combo evaluation ────────────────────────────────────────
+/* ── Banked combo evaluation + effect dispatch ──────────────────────
  * The fixed-bank wrapper (src/battle/combo.c) stages its arguments into
  * the _DATA globals (banked.c) and runs this no-arg body through the WRAM
- * banked-call trampoline (crt0.s / src/core/banked.c).  This file stays in
- * ROM bank 2 so combo_evaluate's logic does not consume the fixed-bank
- * budget.  It must be self-contained (no calls back into fixed-bank code);
- * it only reads the staged globals, its own banked const data, and writes
- * through the staged out_result pointer. */
+ * banked-call trampoline (crt0.s).  This file stays in ROM bank 2 so combo
+ * evaluation does not consume the fixed-bank budget.  Apart from the
+ * bank-local call into effects_content.c below (same ROM bank, direct
+ * call -- allowed), it is self-contained: no fixed-bank calls.
+ *
+ * Architectural rule (docs/combo-system.md §5): the combo evaluator answers
+ * "what hand did these cards form" -- shape flags, multiplier, base_power.
+ * It must never compute an effect magnitude; scaling base_power into
+ * damage/heal/block happens in effect_resolve_into() at the end of this
+ * dispatch, whose result battle reads via effect_last(). */
 
 static const uint8_t s_straight_mults[4] = { 120, 150, 175, 200 };
 
-void combo_evaluate_banked(void)
+void combo_resolve_banked(void)
 {
     const Card *cards = (const Card *)g_bk_ptr_a;
     uint8_t count = g_bk_byte_a;
-    ComboPhase phase = (ComboPhase)g_bk_byte_b;
+    uint8_t phase = (uint8_t)(g_bk_byte_b & 0x01);
+    uint8_t effect = (uint8_t)(g_bk_byte_b >> 1);
     ComboResult *out_result = (ComboResult *)g_bk_ptr_b;
     uint8_t i, eff_count = 0, prev_val = 0;
-    uint8_t sum = 0, power;
+    uint8_t sum = 0;
     bool straight = true, same_type = true;
     uint16_t mult = 100;
 
@@ -29,11 +36,13 @@ void combo_evaluate_banked(void)
 
     if (!cards || count == 0) {
         out_result->count = 0;
+        out_result->eff_count = 0;
         out_result->is_straight = false;
         out_result->all_same_type = false;
         out_result->multiplier = 100;
         out_result->base_power = 0;
-        out_result->final_power = 0;
+        g_effect_last.type = effect;
+        g_effect_last.amount = 0;
         return;
     }
 
@@ -75,16 +84,8 @@ void combo_evaluate_banked(void)
     out_result->all_same_type = same_type;
     out_result->multiplier = mult;
     out_result->base_power = sum;
+    out_result->eff_count = eff_count;
 
-    power = sum;
-    if (straight) {
-        uint8_t add = (eff_count == 5) ? sum :
-                      (eff_count == 4) ? (uint8_t)((sum >> 1) + (sum >> 2)) :
-                      (eff_count == 3) ? (uint8_t)(sum >> 1) :
-                      (uint8_t)(sum >> 2);
-        power = (uint8_t)(power + add + (same_type ? (uint8_t)(sum >> 2) : 0));
-    } else if (same_type) {
-        power = (uint8_t)(power + (uint8_t)(sum >> 3));
-    }
-    out_result->final_power = power;
+    /* Effect resolution consumes the evaluated hand (bank-local call). */
+    effect_resolve_into(effect, out_result, &g_effect_last);
 }
