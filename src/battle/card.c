@@ -1,22 +1,26 @@
 #include "card.h"
+#include "banked.h"
 
-static const char * const s_card_codes = "SW\0SH\0BO\0FI\0HE\0??";
+/* ── Battle card helpers ─────────────────────────────────────────────
+ * Descriptions live in a packed ROM-bank-2 blob (src/battle/card_content.c)
+ * and stage through banked_copy() into a WRAM scratch buffer, mirroring the
+ * CardDefinition.name / SceneDefinition pattern -- the returned pointer is
+ * valid until the next call.  Keeps ~130 B of strings + switch out of the
+ * completely-full fixed bank (make memmap).  The sole caller (item_screen)
+ * consumes the text immediately. */
 
-const char *card_type_code(uint8_t type)
-{
-    return (type < 5) ? (s_card_codes + (type * 3)) : (s_card_codes + 15);
-}
+extern const uint8_t s_card_desc_blob[CARD_DESC_TYPES * CARD_DESC_STRIDE];
+
+static uint8_t s_desc_buf[CARD_DESC_STRIDE];
 
 const char *card_get_description(uint8_t type)
 {
-    switch (type) {
-        case BATTLE_CARD_TYPE_SWORD:  return "Sword: physical";
-        case BATTLE_CARD_TYPE_SHIELD: return "Shield: block dmg";
-        case BATTLE_CARD_TYPE_BOW:    return "Bow: ranged dmg";
-        case BATTLE_CARD_TYPE_FIRE:   return "Fire: magic dmg";
-        case BATTLE_CARD_TYPE_HEAL:   return "Heal: restore HP";
-        default: return "";
+    uint8_t off;
+    if (type >= CARD_DESC_TYPES) {
+        s_desc_buf[0] = '\0';
+        return (const char *)s_desc_buf;
     }
+    off = (uint8_t)((type << 4) + (type << 1)); /* type * 18 */
+    banked_copy(2, s_desc_buf, &s_card_desc_blob[off], CARD_DESC_STRIDE);
+    return (const char *)s_desc_buf;
 }
-
-

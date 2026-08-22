@@ -261,8 +261,20 @@ static void debug_run_action(void)
             break;
         case DBG_ACT_SET_HAND_CARD:
             if (a0 < BATTLE_HAND_SIZE) {
-                g_game.battle.hand[a0].type = (BattleCardType)((uint16_t)a1 & 0xFF);
+                uint8_t t = (uint8_t)((uint16_t)a1 & 0xFF);
+                uint8_t fx = CARD_EFFECT_DAMAGE_TARGET;
+                /* Injected cards bypass CardDefinition lookup; give them
+                 * the default effect for their type so effect resolution
+                 * sees a complete card.  Debug-only mapping (this file is
+                 * excluded from the release ROM). */
+                if (t == BATTLE_CARD_TYPE_SHIELD) {
+                    fx = CARD_EFFECT_BLOCK_DAMAGE;
+                } else if (t == BATTLE_CARD_TYPE_HEAL) {
+                    fx = CARD_EFFECT_HEAL_HP;
+                }
+                g_game.battle.hand[a0].type = (BattleCardType)t;
                 g_game.battle.hand[a0].value = a2;
+                g_game.battle.hand[a0].effect = fx;
             }
             break;
         case DBG_ACT_DECK_ADD:

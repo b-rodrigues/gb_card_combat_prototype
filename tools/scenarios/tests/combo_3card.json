@@ -18,7 +18,13 @@
   "assertions": [
     {"type": "screen", "expected": "BATTLE"},
     {"type": "event_occurred", "event": "DAMAGE_DEALT"},
-    {"type": "event_occurred", "event": "ENTITY_DEFEATED"}
+    {"type": "event_occurred", "event": "ENTITY_DEFEATED"},
+    {"type": "event_occurred", "event": "COMBO_RESOLVED"},
+    {"type": "event_arg", "event": "COMBO_RESOLVED", "index": 0, "value": 175},
+    {"type": "event_arg", "event": "COMBO_RESOLVED", "index": 1, "value": 3},
+    {"type": "event_arg", "event": "COMBO_RESOLVED", "index": 2, "value": 3},
+    {"type": "event_occurred", "event": "EFFECT_RESOLVED"},
+    {"type": "event_arg", "event": "EFFECT_RESOLVED", "index": 0, "value": 15}
   ],
   "initial_state": {
     "scene": "FIELD",

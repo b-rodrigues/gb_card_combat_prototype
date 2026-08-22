@@ -22,6 +22,11 @@ typedef struct {
     uint8_t value;          /* Number 1 - 9 */
     uint8_t uses_remaining; /* 0 = depleted; 0xFF = unlimited */
     uint8_t cost;           /* Energy cost to play (paid from Battle.energy) */
+    /* What playing this card DOES (CardEffectType, rpg/cards.h).  Copied
+     * from CardDefinition.effect when the battle deck is built from the
+     * persistent collection; the definition owns the effect, combat only
+     * consumes it (docs/combo-system.md §3-4). */
+    uint8_t effect;
 } Card;
 
 /* Get one-line short description for card type */
@@ -29,5 +34,10 @@ const char *card_get_description(uint8_t type);
 
 /* Two-letter abbreviation for CardType (e.g. "SW", "SH", "BO", "FI", "HE") */
 const char *card_type_code(uint8_t type);
+
+/* Packed description table geometry shared by card.c (fixed wrapper) and
+ * card_content.c (bank-2 blob).  Stride = longest text + NUL, padded. */
+#define CARD_DESC_STRIDE 18
+#define CARD_DESC_TYPES  5
 
 #endif /* CARD_H */

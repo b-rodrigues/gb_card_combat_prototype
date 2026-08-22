@@ -53,6 +53,28 @@
     {
       "type": "battle_player_hp",
       "expected": 15
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 0,
+      "value": 100
+    },
+    {
+      "type": "event_occurred",
+      "event": "EFFECT_RESOLVED"
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 0,
+      "value": 5
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 1,
+      "value": 3
     }
   ],
   "initial_state": {

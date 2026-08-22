@@ -10,6 +10,43 @@ That separation is important because eventually a strong hand should be able to 
 
 ---
 
+# 0. Implementation status
+
+**Phase A (cards → deck → selection → combo evaluator → attack/defend → HUD)
+and Phase B (generic effect layer) are implemented.**  Phase C (statuses) is
+deliberately not started (§2).  Deviations from the plan's sketches, all
+verified behavior-neutral by the harness (`combo_*`, `card_battle_*`,
+`battle_sword_damage` scenarios assert `COMBO_RESOLVED` / `EFFECT_RESOLVED`
+payloads):
+
+* The hand table is **straights + same-type ("flush")** with suited bonuses
+  (`s_straight_mults`, Baten-Kaitos-style number sequences), not PAIR/THREE
+  KIND/FULL HOUSE.  §11's example values were illustrative; §26 leaves the
+  exact table to balance.
+* The effect vocabulary reuses the engine-generic `CardEffectType`
+  (`rpg/cards.h`: DAMAGE_TARGET / BLOCK_DAMAGE / HEAL_HP) instead of new
+  `EFFECT_*` names — same set, one enum.
+* Every battle card carries its effect as data (`Card.effect`, copied from
+  `CardDefinition.effect`): the definition owns the effect; combat consumes
+  it.
+* Combo evaluation and effect scaling share ONE banked dispatch
+  (`combo_resolve` → bank-2 body calling `effect_resolve_into`
+  bank-locally), because the fixed bank is completely full (`make memmap`).
+  The modules stay separate: the evaluator produces only quality
+  (`ComboResult`: shape flags, multiplier, base_power, eff_count); the
+  resolver produces only magnitude (`EffectResult`, readable via
+  `effect_last()`).  A standalone fixed-entry `effect_resolve()` can be
+  added when a second caller appears.
+* `EffectContext` is deferred (§8 itself says don't fill speculative
+  fields); the resolver is a pure function of (effect type, ComboResult).
+  Application stays in battle flow: effects compute magnitudes, battle
+  applies them to combatants.
+* Per-effect combo scaling (§10 EffectScaling) is Phase C: every effect
+  currently scales base_power identically (the former inline formula,
+  ported verbatim into `effects_content.c`).
+
+---
+
 # 1. Final combat architecture
 
 The intended combat pipeline is:
