@@ -60,7 +60,7 @@ EVENT_TYPE_MAP = {
     38: "PROGRESSION_GAINED", 39: "LEVEL_UP", 40: "ITEM_EQUIPPED",
     41: "BATTLE_FLED", 42: "GAME_SAVED", 43: "GAME_LOADED",
     44: "CARD_ADDED_TO_COLLECTION", 45: "CARD_REMOVED_FROM_COLLECTION",
-    46: "CARD_PLAYED", 47: "ENEMY_CARD_PLAYED"
+    46: "CARD_PLAYED", 47: "ENEMY_CARD_PLAYED", 48: "DECK_RESHUFFLED"
 }
 EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 1: "QUEST_START",
@@ -704,7 +704,9 @@ class EmulatorSession:
     SNAPSHOT_ACTOR_ENTRY_SIZE = 4
     MAX_SNAPSHOT_ACTORS = 4
     SNAPSHOT_BATTLE_ENERGY_OFF = SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE)
-    SNAPSHOT_TOTAL_SIZE = SNAPSHOT_BATTLE_ENERGY_OFF + 1
+    SNAPSHOT_BATTLE_DRAW_OFF = SNAPSHOT_BATTLE_ENERGY_OFF + 1
+    SNAPSHOT_BATTLE_DISCARD_OFF = SNAPSHOT_BATTLE_DRAW_OFF + 1
+    SNAPSHOT_TOTAL_SIZE = SNAPSHOT_BATTLE_DISCARD_OFF + 1
 
     def snapshot(self):
         """Read SNAPSHOT_TOTAL_SIZE bytes from g_snap_buf."""
@@ -742,6 +744,8 @@ class EmulatorSession:
                 "player_facing": DIRECTION_MAP.get(snap_bytes[16], f"UNKNOWN_{snap_bytes[16]}") if len(snap_bytes) >= 17 else "UNKNOWN",
                 "game_over_choice": snap_bytes[17] if len(snap_bytes) >= 18 else 0,
                 "battle_energy": snap_bytes[self.SNAPSHOT_BATTLE_ENERGY_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_ENERGY_OFF else None,
+                "battle_draw_remaining": snap_bytes[self.SNAPSHOT_BATTLE_DRAW_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_DRAW_OFF else None,
+                "battle_discard_count": snap_bytes[self.SNAPSHOT_BATTLE_DISCARD_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_DISCARD_OFF else None,
                 "actors": self._parse_actors(snap_bytes)
             }
             self.current_snapshot = parsed

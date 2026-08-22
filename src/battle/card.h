@@ -12,6 +12,11 @@ typedef enum {
     BATTLE_CARD_TYPE_HEAL = 4    /* HE: Restore HP */
 } BattleCardType;
 
+/* Sentinel for an empty hand slot (played cards stay empty until the turn-
+ * start draw refills them).  Must not collide with any BattleCardType; kept
+ * as a #define because SDCC enums are signed 8-bit (0x80+ would wrap). */
+#define BATTLE_CARD_TYPE_EMPTY 0xFF
+
 typedef struct {
     uint8_t type;           /* BattleCardType */
     uint8_t value;          /* Number 1 - 9 */

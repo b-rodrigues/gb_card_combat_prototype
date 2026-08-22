@@ -263,11 +263,36 @@ static void battle_resolve_hand_discard(Battle *b)
         }
         telemetry_emit(EVENT_CARD_PLAYED, idx, b->hand[idx].type, b->hand[idx].value, b->hand[idx].uses_remaining);
         deck_discard(&b->deck, b->hand[idx]);
-        deck_draw(&b->deck, &b->hand[idx]);
+        /* Played cards leave an empty slot; the turn-start draw refills the
+         * hand (deck.md: no mid-turn instant redraw). */
+        b->hand[idx].type = BATTLE_CARD_TYPE_EMPTY;
     }
     /* Pay the combo's energy cost (selection already proved affordability). */
     b->energy = (b->energy >= cost) ? (uint8_t)(b->energy - cost) : 0;
     b->combo_count = 0;
+}
+
+/* Refill empty hand slots from the draw pile at a decision-phase start.
+ * Returns false when the pile is dry while slots remain open AND the
+ * discard pile can feed a reshuffle — the caller then runs the reshuffle
+ * turn (reshuffle + re-deal + skip the player's action). */
+static bool battle_turn_draw(Battle *b)
+{
+    uint8_t i, need = 0;
+    for (i = 0; i < BATTLE_HAND_SIZE; i++) {
+        if (b->hand[i].type == BATTLE_CARD_TYPE_EMPTY) need++;
+    }
+    if (need == 0) return true;
+    if (b->deck.draw_idx >= b->deck.count) {
+        return (b->deck.discard_count == 0);
+    }
+    for (i = 0; i < BATTLE_HAND_SIZE && need > 0; i++) {
+        if (b->hand[i].type == BATTLE_CARD_TYPE_EMPTY) {
+            deck_draw(&b->deck, &b->hand[i]);
+            need--;
+        }
+    }
+    return true;
 }
 
 static uint8_t battle_eval_current_combo(Battle *b)
@@ -361,7 +386,8 @@ void battle_update(Battle *b)
     } else if (b->delay_timer > 0) {
         b->delay_timer--;
     } else {
-        if (b->phase == BATTLE_PHASE_PLAYER_ANIM) {
+        if (b->phase == BATTLE_PHASE_PLAYER_ANIM ||
+            b->phase == BATTLE_PHASE_SHUFFLE) {
             uint8_t count = 0;
             b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             b->turn = BATTLE_TURN_ENEMY;
@@ -392,6 +418,19 @@ void battle_update(Battle *b)
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
             if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+            }
+            if (!battle_turn_draw(b)) {
+                /* Deck and hand are dry: reshuffling consumes the player's
+                 * action for this cycle — re-deal, announce, then the enemy
+                 * still attacks (deck.md Phase 10). */
+                deck_reshuffle(&b->deck);
+                battle_turn_draw(b);
+                telemetry_emit(EVENT_DECK_RESHUFFLED,
+                               (uint8_t)(b->deck.count - b->deck.draw_idx),
+                               b->deck.discard_count, 0, 0);
+                b->phase = BATTLE_PHASE_SHUFFLE;
+                b->turn = BATTLE_TURN_ENEMY;
+                b->delay_timer = 45;
             }
         }
         b->dirty = BATTLE_DIRTY_ALL;

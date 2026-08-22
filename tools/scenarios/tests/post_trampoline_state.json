@@ -1,7 +1,7 @@
 {
   "name": "post_trampoline_state",
   "test": true,
-  "description": "Post-trampoline integration: execute a banked combo, then wait through the full attack cycle (PLAYER_ANIM->ENEMY_TELEGRAPH->PLAYER_DEFEND->PLAYER_SELECT) proving the fixed-bank code kept running after the trampoline returned.  Verifies bank restore, hand discard, phase advance, timer reset, and enemy attack resolution.",
+  "description": "Post-trampoline integration: execute a banked 2-card combo that kills the slime, then ride out the full attack cycle including the post-kill reshuffle and a full defend timer expiry, landing back in a clean PLAYER_SELECT. Verifies bank restore, hand discard, phase advance, timer reset, and enemy attack resolution.",
   "actions": [
     {"type": "set_hand_card", "index": 0, "card_type": "SW", "value": 4},
     {"type": "set_hand_card", "index": 1, "card_type": "SW", "value": 2},
@@ -10,9 +10,7 @@
     {"type": "press", "button": "A"},
     {"type": "wait", "frames": 6},
     {"type": "press", "button": "SELECT"},
-    {"type": "wait", "frames": 35},
-    {"type": "press", "button": "B"},
-    {"type": "wait", "frames": 45}
+    {"type": "wait", "frames": 1365}
   ],
   "assertions": [
     {"type": "screen", "expected": "BATTLE"},

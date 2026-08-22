@@ -43,7 +43,9 @@ typedef enum {
     BATTLE_PHASE_ENEMY_TELEGRAPH = 2,  /* Enemy announces incoming attack */
     BATTLE_PHASE_PLAYER_DEFEND = 3,    /* Player selecting shield defense cards */
     BATTLE_PHASE_DEFENSE_RESOLVE = 4,  /* Resolving defense & damage taken */
-    BATTLE_PHASE_RESULT = 5            /* Victory / Defeat / Fled */
+    BATTLE_PHASE_RESULT = 5,           /* Victory / Defeat / Fled */
+    BATTLE_PHASE_SHUFFLE = 6           /* Deck exhausted: reshuffling consumes
+                                        * the player's action (enemy still acts) */
 } BattlePhase;
 
 /* BattleTurn enum preserved for telemetry & backward compatibility */

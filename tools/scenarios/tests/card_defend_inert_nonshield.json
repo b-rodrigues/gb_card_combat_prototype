@@ -45,7 +45,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 130
     },
     {
       "type": "press",
@@ -61,7 +61,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
+      "frames": 40
     }
   ],
   "assertions": [

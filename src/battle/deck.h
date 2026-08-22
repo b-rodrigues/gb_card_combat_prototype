@@ -22,8 +22,17 @@ void deck_init_default(Deck *d);
 /* Banked no-arg body (ROM bank 2) dispatched by deck_init_default(). */
 void deck_init_default_banked(void);
 
-/* Draw next card from deck, reshuffling discard pile if empty */
+/* Draw next card from the draw pile.  Never reshuffles: a dry pile yields
+ * the phantom-card safety net (reshuffling is an explicit battle-level
+ * turn, see battle.c). */
 void deck_draw(Deck *d, Card *out_card);
+
+/* Move the discard pile back into the draw pile (Fisher-Yates via rng_next)
+ * and reset the draw index.  No-op when the discard pile is empty. */
+void deck_reshuffle(Deck *d);
+
+/* Banked no-arg body (ROM bank 2) dispatched by deck_reshuffle(). */
+void deck_reshuffle_banked(void);
 
 /* Add a card to the discard pile */
 void deck_discard(Deck *d, Card c);

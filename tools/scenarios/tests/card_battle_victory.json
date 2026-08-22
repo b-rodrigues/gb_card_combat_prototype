@@ -4,24 +4,16 @@
   "description": "Playing through the slime trio with the real starter deck (attack and defend phases, exercising draw and reshuffle) ends in BATTLE_WON and returns to the overworld",
   "actions": [
     {
-      "type": "press",
-      "button": "RIGHT"
-    },
-    {
-      "type": "wait",
-      "frames": 8
-    },
-    {
       "type": "wait",
       "frames": 5
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "RIGHT"
     },
     {
       "type": "wait",
-      "frames": 8
+      "frames": 13
     },
     {
       "type": "press",
@@ -29,19 +21,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -49,19 +29,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -69,19 +37,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -89,19 +45,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -109,19 +53,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -129,19 +61,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -149,19 +69,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -169,19 +77,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -189,19 +85,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -209,19 +93,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -229,19 +101,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -249,19 +109,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -269,19 +117,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -289,19 +125,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -309,19 +133,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -329,19 +141,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 130
     },
     {
       "type": "press",
@@ -349,19 +149,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 8
+      "frames": 55
     },
     {
       "type": "press",
@@ -369,11 +157,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
+      "frames": 130
     },
     {
       "type": "press",
@@ -381,19 +165,7 @@
     },
     {
       "type": "wait",
-      "frames": 8
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 12
-    },
-    {
-      "type": "wait",
-      "frames": 45
+      "frames": 20
     },
     {
       "type": "press",
@@ -401,19 +173,31 @@
     },
     {
       "type": "wait",
-      "frames": 8
+      "frames": 20
     },
     {
       "type": "press",
-      "button": "SELECT"
+      "button": "A"
     },
     {
       "type": "wait",
-      "frames": 12
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
     },
     {
       "type": "wait",
-      "frames": 45
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
     }
   ],
   "assertions": [

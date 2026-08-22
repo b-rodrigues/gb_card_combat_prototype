@@ -96,6 +96,9 @@ void debug_snapshot(void)
     actor_write_snapshot(&g->world, &g_snap_buf[SNAPSHOT_BASE_SIZE], MAX_SNAPSHOT_ACTORS);
 
     g_snap_buf[SNAPSHOT_BATTLE_ENERGY_OFF] = g->battle.energy;
+    g_snap_buf[SNAPSHOT_BATTLE_DRAW_OFF] =
+        (uint8_t)(g->battle.deck.count - g->battle.deck.draw_idx);
+    g_snap_buf[SNAPSHOT_BATTLE_DISCARD_OFF] = g->battle.deck.discard_count;
 
     debug_state_snapshot();
 }

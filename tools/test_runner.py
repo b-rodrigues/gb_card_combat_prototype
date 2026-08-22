@@ -25,7 +25,7 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
     "enemy_hp", "battle_turn", "battle_result", "battle_player_hp", "battle_enemy_hp",
-    "battle_energy",
+    "battle_energy", "battle_draw_remaining", "battle_discard_count",
     "game_over_choice", "story_flag", "screen", "scene",
     "event_occurred", "event_not_occurred", "event_count", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
@@ -395,6 +395,14 @@ def run_scenario(scenario):
             actual = snap.get("battle_energy")
             passed = (actual is not None and actual == int(expected))
 
+        elif a_type == "battle_draw_remaining":
+            actual = snap.get("battle_draw_remaining")
+            passed = (actual is not None and actual == int(expected))
+
+        elif a_type == "battle_discard_count":
+            actual = snap.get("battle_discard_count")
+            passed = (actual is not None and actual == int(expected))
+
         elif a_type == "game_over_choice":
             actual = snap.get("game_over_choice", 0)
             passed = (actual == int(expected))
@@ -632,6 +640,12 @@ def format_state(snap, state_snap):
         for p in progression:
             lines.append("  {}: level={} progress={}".format(
                 p.get("name"), p.get("level"), p.get("progress")))
+
+    if snap.get("battle_turn") is not None and snap.get("game_state") == "BATTLE":
+        lines.append("BATTLE: turn={} player_hp={} enemy_hp={} energy={} draw={} discard={}".format(
+            snap.get("battle_turn"), snap.get("battle_player_hp"),
+            snap.get("battle_enemy_hp"), snap.get("battle_energy"),
+            snap.get("battle_draw_remaining"), snap.get("battle_discard_count")))
 
     return "\n".join(lines)
 

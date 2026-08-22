@@ -110,6 +110,7 @@ def main():
     banked_targets = {
         "_combo_evaluate_banked": "combo evaluator (bank 2)",
         "_deck_init_default_banked": "starter deck unpacker (bank 2)",
+        "_deck_reshuffle_banked": "discard reshuffle (bank 2)",
         "_debug_state_snapshot_banked": "debug state snapshot (bank 2)",
         "_ui_format_int_banked": "int formatter (bank 2)",
         "_scene_load_tiles_banked": "scene tile loader (bank 2)",

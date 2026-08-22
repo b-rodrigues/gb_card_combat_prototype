@@ -19,8 +19,10 @@
  * 0-35 never move).  Battle-runtime observability that is not part of
  * GameState lives here. */
 #define SNAPSHOT_BATTLE_ENERGY_OFF (SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE))
+#define SNAPSHOT_BATTLE_DRAW_OFF   (SNAPSHOT_BATTLE_ENERGY_OFF + 1)
+#define SNAPSHOT_BATTLE_DISCARD_OFF (SNAPSHOT_BATTLE_DRAW_OFF + 1)
 
-#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BATTLE_ENERGY_OFF + 1)
+#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BATTLE_DISCARD_OFF + 1)
 
 /* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x02):
  *   byte  0            : version/validity (0x02)
@@ -156,7 +158,8 @@ typedef enum {
     EVENT_CARD_ADDED_TO_COLLECTION,
     EVENT_CARD_REMOVED_FROM_COLLECTION,
     EVENT_CARD_PLAYED,
-    EVENT_ENEMY_CARD_PLAYED
+    EVENT_ENEMY_CARD_PLAYED,
+    EVENT_DECK_RESHUFFLED
 } GameEventType;
 
 typedef struct {

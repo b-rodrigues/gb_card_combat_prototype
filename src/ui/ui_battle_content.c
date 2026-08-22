@@ -104,7 +104,12 @@ static const char *battle_card_get_description(uint8_t type)
 
 static void battle_draw_card_at(uint8_t x, uint8_t y, Card card)
 {
-    const char *code = battle_card_type_code(card.type);
+    const char *code;
+    if (card.type == BATTLE_CARD_TYPE_EMPTY) {
+        battle_draw_text_line(x, y, NULL, 3);
+        return;
+    }
+    code = battle_card_type_code(card.type);
     battle_put_char(x, y, code[0]);
     battle_put_char((uint8_t)(x + 1), y, code[1]);
     battle_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
@@ -253,6 +258,8 @@ void ui_update_battle_banked(void)
                 desc_msg = battle_card_get_description(battle->hand[battle->cursor_pos].type);
             } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
                 turn_banner = "BLOCKED ATTACK!";
+            } else if (battle->phase == BATTLE_PHASE_SHUFFLE) {
+                turn_banner = "RESHUFFLE!";
             }
         }
     }
