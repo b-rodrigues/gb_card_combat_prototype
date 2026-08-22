@@ -43,6 +43,14 @@ static const int g_battle_timer_cadence_ok[
     (BATTLE_TIMER_BAR_DIVISOR == BATTLE_TIMER_MAX_FRAMES / BATTLE_TIMER_BAR_LENGTH) ? 1 : 0
 ];
 
+/* Compile-time guarantee that the deck-removal floor equals the dealt hand
+ * size: every battle must open with DECK_MIN_CARDS real cards, so a battle
+ * hand-size change that forgets rpg/deck.h would silently reintroduce the
+ * phantom-card fallback path.  Same array-size trap as above. */
+static const int g_deck_min_matches_hand_size[
+    (DECK_MIN_CARDS == BATTLE_HAND_SIZE) ? 1 : 0
+];
+
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,

@@ -51,6 +51,13 @@ VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
 # The roundtrip rebuild subtracts these from observed collection counts:
 # the descriptor's inventory section applies additively, so re-emitting
 # the full observed collection would double-add the starters on reload.
+#
+# Scope caveat: this subtraction assumes the snapshot came from a
+# NEW_GAME-initialized run (starters guaranteed present, so counts stay
+# >= 0).  Reusing build_initial_state_from_snapshot on snapshots from
+# scenarios that never ran NEW_GAME would under-report inventory by these
+# starter amounts.  If that use ever broadens, gate the delta on the
+# snapshot's actual origin instead.
 NEW_GAME_COLLECTION = {"IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1}
 
 def validate_scenario(data, filepath):

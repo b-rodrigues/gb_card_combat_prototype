@@ -403,7 +403,9 @@ Rules:
   (e.g. leaving `variables` out keeps `CHAPTER == 1`).
 * `inventory` applies additively on top of the new-game starter grants
   (`inventory_initial` relies on this coexistence); the roundtrip rebuild
-  therefore emits only the delta over those grants.
+  therefore emits only the delta over those grants.  That delta assumes
+  NEW_GAME-origin snapshots — rebuilding from any other origin would
+  under-report inventory by the starter amounts.
 * `deck` is the exception: when the key is present it *replaces* the
   starter deck entirely (descriptor v4 carries a deck-present flag), and
   an explicit `"deck": {}` constructs an intentionally empty deck — the
