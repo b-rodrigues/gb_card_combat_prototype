@@ -80,6 +80,7 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     }
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+    b->timer_max = BATTLE_TIMER_MAX_FRAMES;
     b->energy = BATTLE_ENERGY_PER_TURN;
     b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;

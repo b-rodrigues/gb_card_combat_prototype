@@ -87,7 +87,7 @@ void audio_play_music(MusicTrack track)
     }
 }
 
-MusicTrack audio_get_g_audio_current_track(void)
+MusicTrack audio_get_current_track(void)
 {
     return g_audio_current_track;
 }

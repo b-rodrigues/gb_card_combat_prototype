@@ -75,6 +75,8 @@ static void card_copy_banked(Card *dst, const Card *src)
     dst->uses_remaining = src->uses_remaining;
     dst->cost = src->cost;
     dst->effect = src->effect;
+    dst->status_id = src->status_id;
+    dst->status_chance = src->status_chance;
 }
 
 static void card_swap_banked(Card *a, Card *b)
@@ -85,16 +87,22 @@ static void card_swap_banked(Card *a, Card *b)
     t.uses_remaining = a->uses_remaining;
     t.cost = a->cost;
     t.effect = a->effect;
+    t.status_id = a->status_id;
+    t.status_chance = a->status_chance;
     a->type = b->type;
     a->value = b->value;
     a->uses_remaining = b->uses_remaining;
     a->cost = b->cost;
     a->effect = b->effect;
+    a->status_id = b->status_id;
+    a->status_chance = b->status_chance;
     b->type = t.type;
     b->value = t.value;
     b->uses_remaining = t.uses_remaining;
     b->cost = t.cost;
     b->effect = t.effect;
+    b->status_id = t.status_id;
+    b->status_chance = t.status_chance;
 }
 
 /* Banked body of deck_reshuffle() (see deck.c).  Self-contained: reads only
