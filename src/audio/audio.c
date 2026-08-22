@@ -1,6 +1,6 @@
 #include "audio.h"
 
-static MusicTrack current_track = MUSIC_NONE;
+MusicTrack g_audio_current_track = MUSIC_NONE;
 static uint8_t step_counter = 0;
 static uint8_t note_index = 0;
 
@@ -62,7 +62,7 @@ void audio_init(void)
     NR52_REG = 0x80;
     NR50_REG = 0x77;
     NR51_REG = 0xFF;
-    current_track = MUSIC_NONE;
+    g_audio_current_track = MUSIC_NONE;
     step_counter = 0;
     note_index = 0;
 
@@ -78,8 +78,8 @@ void audio_init(void)
 
 void audio_play_music(MusicTrack track)
 {
-    if (current_track == track) return;
-    current_track = track;
+    if (g_audio_current_track == track) return;
+    g_audio_current_track = track;
     step_counter = 0;
     note_index = 0;
     if (track == MUSIC_NONE) {
@@ -87,9 +87,9 @@ void audio_play_music(MusicTrack track)
     }
 }
 
-MusicTrack audio_get_current_track(void)
+MusicTrack audio_get_g_audio_current_track(void)
 {
-    return current_track;
+    return g_audio_current_track;
 }
 
 void audio_update(void)
@@ -97,15 +97,15 @@ void audio_update(void)
 #ifdef DEBUG_BUILD
     g_audio_ticks++;
 #endif
-    if (current_track == MUSIC_NONE) return;
+    if (g_audio_current_track == MUSIC_NONE) return;
 
-    if (current_track == MUSIC_OVERWORLD) {
+    if (g_audio_current_track == MUSIC_OVERWORLD) {
         if (++step_counter >= 43) {
             step_counter = 0;
             play_note(s_note_freqs[lacrimosa_notes[note_index]]);
             note_index = (uint8_t)((note_index + 1) & 31);
         }
-    } else if (current_track == MUSIC_BATTLE) {
+    } else if (g_audio_current_track == MUSIC_BATTLE) {
         if (++step_counter >= 17) {
             step_counter = 0;
             play_note(s_note_freqs[summer_notes[note_index]]);

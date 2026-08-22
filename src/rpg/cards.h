@@ -45,6 +45,11 @@ typedef struct {
     uint8_t effect;     /* CardEffectType */
     uint8_t battle_type; /* BattleCardType for combat deck mapping; unused for SPECIAL */
     uint8_t price;      /* shop price in gold (0 = not sold) */
+    /* On-hit status rider (docs/combo-system.md §13): battle rolls the
+     * deterministic RNG and applies status_id when the roll passes.
+     * chance is in 1/255 units (e.g. 160 ~= 63%); 0 = no rider. */
+    uint8_t status_id;    /* StatusId (rpg/status.h); 0 = none */
+    uint8_t status_chance; /* roll threshold, 1/255 units */
     char name[9];       /* 4-8 char display name + NUL */
 } CardDefinition;
 

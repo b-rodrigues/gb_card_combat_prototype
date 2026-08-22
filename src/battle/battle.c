@@ -4,6 +4,8 @@
 #include "rpg/cards.h"
 #include "rpg/deck.h"
 #include "rpg/effects.h"
+#include "rpg/status.h"
+#include "rng.h"
 #include "game/game_ids.h"
 #include <string.h>
 
@@ -78,11 +80,12 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     }
 
     b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
-    b->timer_max = BATTLE_TIMER_MAX_FRAMES;
     b->energy = BATTLE_ENERGY_PER_TURN;
     b->phase = BATTLE_PHASE_PLAYER_SELECT;
     b->turn = BATTLE_TURN_PLAYER;
     b->dirty = BATTLE_DIRTY_ALL;
+
+    status_reset_battle();
 
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }
@@ -363,6 +366,15 @@ void battle_execute_combo(Battle *b)
              * exactly as before -- only HEAL_HP heals. */
             combatant_take_damage(&b->enemies[b->target_idx], res.amount);
             telemetry_emit(EVENT_DAMAGE_DEALT, res.amount, 0, 0, 0);
+            /* On-hit status rider (Phase C): the leading card's data
+             * decides; the deterministic RNG roll decides landing
+             * (docs/combo-system.md §13/§17). */
+            if (b->enemies[b->target_idx].hp != 0 &&
+                b->last_combo.cards[0].status_id != STATUS_NONE &&
+                (uint8_t)rng_next() < b->last_combo.cards[0].status_chance) {
+                status_apply(status_slots((uint8_t)(b->target_idx + 1)),
+                             b->last_combo.cards[0].status_id, 1, 0);
+            }
         }
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
@@ -389,6 +401,40 @@ void battle_execute_combo(Battle *b)
             telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
             battle_set_result(b, BATTLE_RESULT_DEFEAT);
         }
+    }
+}
+
+/* End-of-round status ticks (Phase C): every living combatant's active
+ * statuses deal their tick damage, durations decrement, finished
+ * instances expire (docs/combo-system.md §15).  Runs once per cycle at
+ * the transition back into PLAYER_SELECT; poison deaths resolve like
+ * combat deaths.  Returns nothing; result transitions happen here. */
+static void battle_tick_statuses(Battle *b)
+{
+    uint8_t i, dmg;
+
+    for (i = 0; i < b->enemy_count; i++) {
+        if (b->enemies[i].hp == 0) continue;
+        dmg = status_tick(status_slots((uint8_t)(i + 1)), (uint8_t)(i + 1));
+        if (dmg == 0) continue;
+        combatant_take_damage(&b->enemies[i], dmg);
+        if (b->enemies[i].hp == 0) {
+            telemetry_emit(EVENT_ENTITY_DEFEATED, (uint8_t)(i + 1), 0, 0, 0);
+        }
+    }
+    if (b->player.hp != 0) {
+        dmg = status_tick(status_slots(0), 0);
+        if (dmg != 0) {
+            combatant_take_damage(&b->player, dmg);
+            if (b->player.hp == 0) {
+                telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
+            }
+        }
+    }
+    if (battle_all_enemies_dead(b)) {
+        battle_set_result(b, BATTLE_RESULT_VICTORY);
+    } else if (b->player.hp == 0) {
+        battle_set_result(b, BATTLE_RESULT_DEFEAT);
     }
 }
 
@@ -440,6 +486,13 @@ void battle_update(Battle *b)
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
             if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
                 b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+            }
+            if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+                battle_tick_statuses(b);
+                if (b->battle_over) {
+                    b->dirty = BATTLE_DIRTY_ALL;
+                    return;
+                }
             }
             if (!battle_turn_draw(b)) {
                 /* Deck and hand are dry: reshuffling consumes the player's

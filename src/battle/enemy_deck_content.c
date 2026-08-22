@@ -57,6 +57,8 @@ void enemy_deck_setup_banked(void)
         ed->cards[i].effect = src[i].effect; /* NONE: enemies never resolve
                                               * effects -- their card value
                                               * IS the incoming damage. */
+        ed->cards[i].status_id = src[i].status_id;
+        ed->cards[i].status_chance = src[i].status_chance;
     }
     ed->count = count;
     ed->draw_idx = 0;

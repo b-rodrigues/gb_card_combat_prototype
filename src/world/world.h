@@ -182,5 +182,7 @@ void world_on_battle_end(Game *g, bool victory);
  * the hero ran (written back into the runtime actor); no reward, defeat or
  * quest progress is applied. */
 void world_on_battle_fled(Game *g);
+/* Bank-2 body (src/world/fled_banked.c) dispatched by the wrapper. */
+void world_on_battle_fled_banked(void);
 
 #endif /* WORLD_H */

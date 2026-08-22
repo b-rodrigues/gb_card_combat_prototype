@@ -14,8 +14,8 @@ static const WorldActorTable *g_actor_tables = NULL;
 static uint8_t g_actor_table_count = 0;
 static uint8_t g_actor_bank = 2;
 
-static WorldActorDefinition g_static_actors[7];
-static uint8_t g_static_actor_count = 0;
+WorldActorDefinition g_static_actors[7];
+uint8_t g_static_actor_count = 0;
 
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank)
 {
@@ -151,37 +151,3 @@ void actor_load_scene(World *world, MapId map_id, const GameState *state)
     }
 }
 
-#ifdef DEBUG_BUILD
-uint8_t actor_write_snapshot(const World *world, uint8_t *out, uint8_t max_actors)
-{
-    uint8_t i, n = 0, slot;
-    uint8_t *p = out;
-
-    if (!world || !out || max_actors == 0) return 0;
-
-    for (slot = 0; slot < MAX_WORLD_ACTORS && n < max_actors; slot++) {
-        if (world->actors[slot].active) {
-            *p++ = (uint8_t)world->actors[slot].id;
-            *p++ = world->actors[slot].x;
-            *p++ = world->actors[slot].y;
-            *p++ = (uint8_t)world->actors[slot].facing;
-            n++;
-        }
-    }
-
-    for (i = 0; i < g_static_actor_count && n < max_actors; i++) {
-        *p++ = (uint8_t)g_static_actors[i].id;
-        *p++ = g_static_actors[i].x;
-        *p++ = g_static_actors[i].y;
-        *p++ = g_static_actors[i].facing;
-        n++;
-    }
-
-    while (n < max_actors) {
-        *p++ = 0; *p++ = 0; *p++ = 0; *p++ = 0;
-        n++;
-    }
-
-    return n;
-}
-#endif

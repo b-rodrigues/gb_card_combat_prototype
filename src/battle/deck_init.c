@@ -4,6 +4,7 @@
 #include "banked.h"
 #include "rng.h"
 #include "rpg/cards.h"
+#include "rpg/status.h"
 
 /* Banked body of deck_init_default() (see deck.c).  Lives in ROM bank 2 and
  * runs through the WRAM banked-call trampoline so the starter-deck unpacker
@@ -51,6 +52,8 @@ void deck_init_default_banked(void)
         d->cards[i].cost = 1;              /* basic starter cards are cheap */
         d->cards[i].effect =
             (t < 5) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
+        d->cards[i].status_id = STATUS_NONE; /* starter cards: no rider */
+        d->cards[i].status_chance = 0;
     }
     /* FI4 mirrors FIRE_TOME: 3 uses per battle, energy cost 2. */
     d->cards[4].uses_remaining = 3;

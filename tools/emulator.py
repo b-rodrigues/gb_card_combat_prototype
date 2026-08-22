@@ -61,7 +61,8 @@ EVENT_TYPE_MAP = {
     41: "BATTLE_FLED", 42: "GAME_SAVED", 43: "GAME_LOADED",
     44: "CARD_ADDED_TO_COLLECTION", 45: "CARD_REMOVED_FROM_COLLECTION",
     46: "CARD_PLAYED", 47: "ENEMY_CARD_PLAYED", 48: "DECK_RESHUFFLED",
-    49: "COMBO_RESOLVED", 50: "EFFECT_RESOLVED"
+    49: "COMBO_RESOLVED", 50: "EFFECT_RESOLVED",
+    51: "STATUS_APPLIED", 52: "STATUS_TICKED", 53: "STATUS_EXPIRED"
 }
 EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 1: "QUEST_START",
@@ -931,6 +932,7 @@ class EmulatorSession:
     DBG_ACT_SET_HAND_CARD_META = 14
     DBG_ACT_START_BATTLE = 15
     DBG_ACT_DECK_REMOVE = 16
+    DBG_ACT_SET_HAND_CARD_STATUS = 17
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

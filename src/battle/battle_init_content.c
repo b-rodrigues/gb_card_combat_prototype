@@ -2,6 +2,7 @@
 
 #include "battle.h"
 #include "rpg/cards.h"
+#include "rpg/status.h"
 #include "banked.h"
 
 /* Banked body of battle_init_from_deck_state() (see src/battle/battle.c).
@@ -36,6 +37,8 @@ void battle_init_deck_banked(void)
                 (def->uses_per_battle == 0) ? 0xFF : def->uses_per_battle;
             b->deck.cards[i].cost = def->cost;
             b->deck.cards[i].effect = def->effect;
+            b->deck.cards[i].status_id = def->status_id;
+            b->deck.cards[i].status_chance = def->status_chance;
         } else {
             /* Unknown id: safety-net sword, mirroring the phantom draw. */
             b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;
@@ -43,6 +46,8 @@ void battle_init_deck_banked(void)
             b->deck.cards[i].uses_remaining = 0xFF;
             b->deck.cards[i].cost = 1;
             b->deck.cards[i].effect = CARD_EFFECT_DAMAGE_TARGET;
+            b->deck.cards[i].status_id = STATUS_NONE;
+            b->deck.cards[i].status_chance = 0;
         }
     }
 }

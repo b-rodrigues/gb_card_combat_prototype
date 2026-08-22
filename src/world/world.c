@@ -6,6 +6,7 @@
 #include "event.h"
 #include "rpg/currency.h"
 #include "ui.h"
+#include "banked.h"
 
 void world_load_map(World *w, MapId map_id, const GameState *state)
 {
@@ -247,18 +248,13 @@ void world_on_battle_end(Game *g, bool victory)
 
 void world_on_battle_fled(Game *g)
 {
-    World *w;
-    uint8_t idx;
+    /* Body runs banked (src/world/fled_banked.c) through the WRAM
+     * trampoline -- pure WRAM reads/writes, no staging args needed. */
     if (!g) return;
-    w = &g->world;
-
-    idx = w->encounter_actor_index;
-    w->encounter_actor_index = NO_ACTOR_INDEX;
-    if (idx == NO_ACTOR_INDEX) return;
-
-    if (w->actors[idx].active) {
-        w->actors[idx].hp = g->battle.enemies[0].hp;
-    }
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&world_on_battle_fled_banked;
+    g_bk_ptr_a = (void *)g;
+    banked_call_run();
 }
 
 static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };

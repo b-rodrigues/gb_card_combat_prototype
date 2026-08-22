@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "rpg/deck.h"
 #include "rpg/cards.h"
+#include "rpg/status.h"
 #include "rpg/currency.h"
 #include "rpg/progression.h"
 #include "rpg/save.h"
@@ -42,7 +43,8 @@ enum {
     DBG_ACT_DECK_ADD = 13,
     DBG_ACT_SET_HAND_CARD_META = 14,
     DBG_ACT_START_BATTLE = 15,
-    DBG_ACT_DECK_REMOVE = 16
+    DBG_ACT_DECK_REMOVE = 16,
+    DBG_ACT_SET_HAND_CARD_STATUS = 17
 };
 
 static void scenario_begin(uint16_t seed)
@@ -275,6 +277,20 @@ static void debug_run_action(void)
                 g_game.battle.hand[a0].type = (BattleCardType)t;
                 g_game.battle.hand[a0].value = a2;
                 g_game.battle.hand[a0].effect = fx;
+                /* Injected cards carry no status rider; reset both fields
+                 * so a previously injected rider cannot leak into a slot
+                 * that was played earlier in the same battle. */
+                g_game.battle.hand[a0].status_id = STATUS_NONE;
+                g_game.battle.hand[a0].status_chance = 0;
+            }
+            break;
+
+        case DBG_ACT_SET_HAND_CARD_STATUS:
+            /* Pin the injected hand card's on-hit status rider (Phase C
+             * scenarios).  a1 = StatusId, a2 = roll chance (1/255). */
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].status_id = a1;
+                g_game.battle.hand[a0].status_chance = a2;
             }
             break;
         case DBG_ACT_DECK_ADD:

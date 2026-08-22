@@ -1316,6 +1316,28 @@ EFFECT_RESOLVED
 
 ---
 
+# 31.2 STATUS_APPLIED / STATUS_TICKED (card combat statuses)
+
+Phase C statuses (`docs/combo-system.md` §12-§19).  `STATUS_APPLIED` fires
+when an on-hit rider lands (after the deterministic RNG roll passes);
+`STATUS_TICKED` fires once per round per afflicted combatant at the
+transition back into the player select phase.
+
+```text
+STATUS_APPLIED
+  data[0] = status id (1 = POISON)
+  data[1] = stacks after application (capped by the definition)
+  data[2] = duration in turns
+
+STATUS_TICKED
+  data[0] = tick damage taken this round (stacks x tick/stack)
+  data[1] = actor slot (0 = player; otherwise enemy index)
+  data[2] = instances expired by this tick
+  data[3] = first expired status id (valid when data[2] != 0)
+```
+
+---
+
 # 32. STORY FLAGS
 
 Story flags are semantic boolean state.

@@ -173,7 +173,11 @@ typedef enum {
     /* Append-only: these byte values are a wire contract with
      * tools/emulator.py EVENT_TYPE_MAP (AGENTS.md §53.4). */
     EVENT_COMBO_RESOLVED,   /* d0=multiplier d1=eff_count d2=flags(straight|suited<<1) d3=phase */
-    EVENT_EFFECT_RESOLVED   /* d0=amount d1=effect type d2=phase d3=target slot */
+    EVENT_EFFECT_RESOLVED,  /* d0=amount d1=effect type d2=phase d3=target slot */
+    /* Phase C statuses (docs/combo-system.md §12-§19). */
+    EVENT_STATUS_APPLIED,   /* d0=status id d1=stacks d2=duration */
+    EVENT_STATUS_TICKED,    /* d0=tick damage d1=actor slot (0=player) */
+    EVENT_STATUS_EXPIRED    /* d0=status id d1=actor slot (0=player) */
 } GameEventType;
 
 typedef struct {
@@ -194,6 +198,8 @@ void telemetry_init(void);
 void telemetry_emit(uint8_t type, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
 void telemetry_set_frame_ptr(const uint32_t *frame_ptr);
 void debug_snapshot(void);
+/* Bank-2 body (src/debug/snapshot_banked.c) dispatched by the wrapper. */
+void debug_snapshot_banked(void);
 void debug_state_snapshot(void);
 
 /* Banked no-arg body of debug_state_snapshot() (src/debug/telemetry_snap.c,

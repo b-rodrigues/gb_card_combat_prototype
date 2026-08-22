@@ -12,9 +12,25 @@ That separation is important because eventually a strong hand should be able to 
 
 # 0. Implementation status
 
-**Phase A (cards → deck → selection → combo evaluator → attack/defend → HUD)
-and Phase B (generic effect layer) are implemented.**  Phase C (statuses) is
-deliberately not started (§2).  Deviations from the plan's sketches, all
+**Phase A (cards → deck → selection → combo evaluator → attack/defend → HUD),
+Phase B (generic effect layer), and the core of Phase C (status system) are
+implemented.**  Status foundation (§12-§19 minus per-effect scaling):
+`src/rpg/status.{h,c}` + bank-2 bodies (`status_content.c`) provide
+StatusDefinition / StatusInstance / application with STACK+refresh rules
+(POISON: tick 1/stack, max 5 stacks, duration 3); battle-scoped slots live
+in the status module (0 = player, 1..n = enemies), reset at battle start.
+Cards carry an on-hit rider as DATA (`CardDefinition.status_id/status_chance`,
+copied into battle `Card`s); the deterministic RNG decides landing
+(1/255 units, §17/§18) and poison ticks once per round at the
+player-select boundary, with deaths resolving like combat deaths.
+Telemetry: `STATUS_APPLIED` / `STATUS_TICKED` (payloads in
+DEBUG_PROTOCOL.md §31.2).  Scenarios: `status_poison_apply` (apply + 3
+ticks + expiry, payload-locked) and `status_poison_resist` (roll fails).
+Still open from Phase C: per-effect combo scaling (§10 EffectScaling,
+§11 quality), additional statuses, resist/expired-as-separate-events
+telemetry refinement.
+
+Deviations from the plan's sketches, all
 verified behavior-neutral by the harness (`combo_*`, `card_battle_*`,
 `battle_sword_damage` scenarios assert `COMBO_RESOLVED` / `EFFECT_RESOLVED`
 payloads):

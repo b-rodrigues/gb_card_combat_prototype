@@ -59,7 +59,15 @@ testable, save/load works, and the memory budget is understood.
     damage/block/heal; every battle card carries its `CardEffectType` as
     data (`Card.effect` from `CardDefinition.effect`); `COMBO_RESOLVED` /
     `EFFECT_RESOLVED` telemetry plus the harness `event_arg` payload
-    assertion pin the numbers.  Statuses (Phase C) remain unstarted.
+    assertion pin the numbers.
+  - Statuses (Phase C core) DONE: `src/rpg/status.{h,c}` + bank-2 bodies —
+    StatusDefinition/Instance/application (STACK+refresh), battle-scoped
+    slots reset at battle start, on-hit riders as card data
+    (`status_id`/`status_chance`, 1/255 deterministic roll via the game
+    RNG), per-round poison ticks with combat-death resolution, and
+    `STATUS_APPLIED`/`STATUS_TICKED` telemetry.  Covered by
+    `status_poison_apply` / `status_poison_resist`.  Open: per-effect
+    combo scaling, more statuses, finer-grained status telemetry.
 
 ### DONE
 

@@ -236,6 +236,14 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      act.get("cost", 1) & 0xFF,
                                      act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "set_hand_card_status":
+                # Companion to set_hand_card: pin the injected card's on-hit
+                # status rider (StatusId + roll chance in 1/255 units) so
+                # Phase C status scenarios do not depend on the dealt deck.
+                session.debug_action(session.DBG_ACT_SET_HAND_CARD_STATUS,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("status", 1) & 0xFF,
+                                     act.get("chance", 255) & 0xFF)
             elif act_type == "deck_add":
                 # Direct deck_add_card() call (real mechanic, all validations:
                 # ownership, SPECIAL exclusion, max_copies, 20-card size).

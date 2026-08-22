@@ -2,6 +2,7 @@
 #include "banked.h"
 #include "rng.h"
 #include "rpg/cards.h"
+#include "rpg/status.h"
 
 void deck_init_default(Deck *d)
 {
@@ -30,6 +31,8 @@ void deck_draw(Deck *d, Card *out_card)
         out_card->uses_remaining = 0xFF;
         out_card->cost = 1;
         out_card->effect = CARD_EFFECT_DAMAGE_TARGET;
+        out_card->status_id = STATUS_NONE;
+        out_card->status_chance = 0;
         return;
     }
 

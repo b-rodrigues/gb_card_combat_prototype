@@ -27,6 +27,10 @@ typedef struct {
      * persistent collection; the definition owns the effect, combat only
      * consumes it (docs/combo-system.md §3-4). */
     uint8_t effect;
+    /* On-hit status rider, copied from CardDefinition (Phase C).
+     * status_chance in 1/255 units; 0/0 = no rider. */
+    uint8_t status_id;
+    uint8_t status_chance;
 } Card;
 
 /* Get one-line short description for card type */
