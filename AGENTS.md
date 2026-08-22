@@ -2091,12 +2091,14 @@ relieved the fixed-bank budget enough for the battle HUD row work.
 ### 52.11.2 Battle HUD layout (rows)
 
 The battle screen uses the fixed background rows: `0` centered banner,
-`2-4` enemies (name/HP/caret), `6` hero, `13` `COMBO:` + hand type
+`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DK:` +
+draw-pile count at columns 15-19, `battle_draw_deck_line`, drawn with the
+hero row on BATTLE_DIRTY_HERO), `13` `COMBO:` + hand type
 (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
 cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`
 card description (`card_get_description`), `17` timer bar (window row,
-`0x9A20`).  Rows `7-12` stay blank as whitespace between the hero and the
-bottom card stack.
+`0x9A20`).  Rows `8-12` stay blank as whitespace between the hero block
+and the bottom card stack.
 
 ## 52.12 Scenario state ordering
 
@@ -2615,6 +2617,10 @@ the commit/PR without booting anything.
 13-wizard-saved      after saving to Slot 1
 14-forest-arrived    FOREST gate arrival after Walk B
 ```
+
+Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land
+inside the transient save-confirmation TTL and show the message mid-display.
+If a regen diffs only that frame, re-run before hunting a rendering bug.
 
 ## 56.4 Rules
 

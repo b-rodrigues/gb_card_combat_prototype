@@ -155,6 +155,18 @@ static void battle_draw_hero_row(const Battle *battle)
     battle_draw_num2(18, 6, battle->player.max_hp);
 }
 
+/* Draw-pile counter under the hero HP: shows how many cards are still in
+ * the deck, so the player can see a reshuffle coming.  Same formula as the
+ * harness's battle_draw_remaining semantic.  The pile only changes at deal,
+ * turn-start draws and reshuffles -- all sites set BATTLE_DIRTY_ALL, so
+ * firing on BATTLE_DIRTY_HERO can never leave this line stale. */
+static void battle_draw_deck_line(const Battle *battle)
+{
+    battle_draw_text_line(15, 7, "DK:", 3);
+    battle_draw_num2(18, 7,
+                     (uint8_t)(battle->deck.count - battle->deck.draw_idx));
+}
+
 static const char *battle_combo_hand_name(const Battle *b)
 {
     uint8_t i, j, prev, t0, v, straight, same, n;
@@ -266,7 +278,10 @@ void ui_update_battle_banked(void)
 
     if (d & BATTLE_DIRTY_BANNER) battle_draw_banner_line(0, turn_banner, 20);
     if (d & (BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BLINK)) battle_draw_enemy_columns(battle);
-    if (d & BATTLE_DIRTY_HERO) battle_draw_hero_row(battle);
+    if (d & BATTLE_DIRTY_HERO) {
+        battle_draw_hero_row(battle);
+        battle_draw_deck_line(battle);
+    }
     if (d & BATTLE_DIRTY_COMBO) battle_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) battle_draw_battle_hand(battle);
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);

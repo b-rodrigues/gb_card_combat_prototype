@@ -110,6 +110,11 @@
       "expected": "BATTLE"
     },
     {
+      "type": "screen_row",
+      "row": 7,
+      "contains": "DK"
+    },
+    {
       "type": "event_occurred",
       "event": "DECK_RESHUFFLED"
     },
