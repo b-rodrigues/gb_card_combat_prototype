@@ -9,21 +9,27 @@ the *player-facing* management layer.
 
 ## 1. Starter deck
 
-A new game grants a real, owned 5-card deck (collection **and** deck state in
+A new game grants a real, owned 10-card deck (collection **and** deck state in
 `GameState.cards`, written by `game_new_game()` via the silent mutators
 `deck_collection_add` / `deck_add_card` — no boot telemetry):
 
 ```text
-IRON_SWORD   ×2   → SW3   (max_copies 2)
-WOODEN_SHIELD ×2  → SH2   (max_copies 2)
-FIRE_TOME    ×1   → FI4   (3 uses per battle)
+IRON_SWORD    ×4   → SW3   (max_copies 4)
+WOODEN_SHIELD ×3   → SH2   (max_copies 3)
+FIRE_TOME     ×3   → FI4   (3 uses per battle)
 ```
+
+The deck is inserted in deal order SW SW SH SH FI first, then the extras, so
+the opening battle hand is `SW3 SW3 SH2 SH2 FI4` and the draw pile starts at
+5. The original five-card grant was enlarged so a fresh file can actually
+cycle its deck (draw → discard → reshuffle) without shopping first.
 
 Consequences:
 
 - Battles always draw from the player's real deck. The packed fallback deck
   (`src/battle/deck_init.c`) remains only as a safety net for empty/legacy
-  state and mirrors this same 5-card set.
+  state and mirrors this same 10-card set (first five entries in the same
+  order).
 - Healing is **not** free at the start. The only heal source is the shop's
   HEALING_HERB card — **HE5** (power 5, `uses_per_battle` 3, price 20g).
   Buy it, then add it to the deck from the CARDS menu.
@@ -58,7 +64,7 @@ Each card occupies a **pair of rows**:
   battle HUD shows.
 - **Membership column** (rightmost): the decked-copy count as a digit
   (`0` = none, `1`..`n` = copies in the deck), so partial stacks (starter
-  2x SW3/SH2, herb up to 3) are visible at a glance.
+  4x SW3 / 3x SH2 / 3x FI4, herb up to 3) are visible at a glance.
 - SPECIAL cards (e.g. AMULET) are not deckable and are hidden from the list.
 - ~6 pairs visible; scrolling moves by pair.
 
@@ -93,9 +99,12 @@ A routes through the real mechanics — no UI-side shortcuts:
   - `DECK MIN 5` — the clear is rejected all-or-nothing when the cards
     left after removing every copy of this card would drop the deck below
     **5** (`DECK_MIN_CARDS`, one full opening hand). Nothing is removed in
-    that case. The starter deck is exactly 5 cards, so no starter card can
-    be cleared until more cards are owned and decked. `deck_remove_card()`
-    enforces the same floor as an engine backstop for any other caller.
+    that case. On the 10-card starter a single-card clear can no longer
+    breach the floor (the largest stack is 4 swords, leaving 6), so the
+    boundary is reached by clearing stacks in sequence — e.g. after the
+    swords are cleared to zero, rejecting the shield clear at deck 6.
+    `deck_remove_card()` enforces the same floor as an engine backstop for
+    any other caller.
 
 (The earlier per-press boolean toggle could never rebuild a multi-copy stack
 — pressing A on a 2-copy row silently dropped it to 1 with no path back —
@@ -132,9 +141,13 @@ work.
 Already implemented by the deck engine (`deck_draw`, `src/battle/deck.c`);
 restated here because it constrains the menu's promises:
 
-- Playing a card discards it and refills that hand slot immediately.
-- When the draw pile is exhausted, the discard pile is shuffled back in —
-  the player cycles through all their cards again ("fresh deck").
+- Playing a card discards it and leaves the slot empty; the turn-start draw
+  refills open slots from the draw pile (deck.md: no mid-turn instant
+  redraw). Hands may sit below five cards whenever the pile is dry.
+- When the draw pile is exhausted while a hand slot is still open and the
+  discard pile can feed it, the discard pile is shuffled back in — but that
+  reshuffle consumes the player's action for the cycle (re-deal, announce,
+  enemy still attacks).
 - `uses_remaining` travels inside the `Card` copy through discard/draw/
   reshuffle, so **limited cards stay depleted across reshuffles** while
   unlimited cards cycle freely. A depleted HE5 returns to the hand but is
@@ -156,8 +169,11 @@ semantic assertion names.
 
 | Scenario | Proves |
 |---|---|
-| `cards_menu_toggle` | grant exists at new game; A on a maxed card clears it, adds rebuild the count, events emitted |
-| `fallback_deck_starter` | emptying the persistent deck routes battles onto the packed starter-deck fallback (hand renders SW3 SW3 SH2 SH2 FI4) |
+| `cards_menu_toggle` | A on a maxed card clears every decked copy, adds rebuild the count, events emitted (13-card replaced deck) |
+| `fallback_deck_starter` | emptying the persistent deck routes battles onto the packed starter-deck fallback (opening hand renders SW3 SW3 SH2 SH2 FI4 from the 10-card table) |
+| `deck_min_floor` | removals walk 10 → 8 → grow to 11 → exactly 5; a further removal at the floor is rejected |
+| `deck_min_ui_message` | real gameplay reaches the floor boundary: sword clear allowed, shield clear rejected with the transient DECK MIN 5 message |
+| `reshuffle_turn` | one play per phase drains the pile in ~6 phases; the dry-pile reshuffle turn fires once and consumes the action |
 | `reshuffle_preserves_limits` | FI4 depletes after 3 plays and stays dead across reshuffle; SW keeps cycling |
 | `herb_purchase_flow` | buy herb → add to deck → battle heal 5 |
 

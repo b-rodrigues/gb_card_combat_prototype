@@ -1,7 +1,7 @@
 {
   "name": "deck_summary",
   "test": true,
-  "description": "The CARDS tab lists every owned card as a paired row (short code + combat description) with its deck membership in the rightmost column: all three starter cards show T",
+  "description": "The CARDS tab lists every owned card as a paired row (short code + combat description) with its deck membership in the rightmost column: the 10-card starter shows SW3 x4, SH2 x3, FI4 x3",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -39,7 +39,7 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "2"
+      "contains": "4"
     },
     {
       "type": "screen_row",
@@ -49,7 +49,7 @@
     {
       "type": "screen_row",
       "row": 8,
-      "contains": "2"
+      "contains": "3"
     },
     {
       "type": "screen_row",
@@ -59,7 +59,7 @@
     {
       "type": "screen_row",
       "row": 10,
-      "contains": "1"
+      "contains": "3"
     }
   ],
   "initial_state": {

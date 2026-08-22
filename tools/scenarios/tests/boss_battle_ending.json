@@ -1,30 +1,389 @@
 {
   "name": "boss_battle_ending",
   "test": true,
-  "description": "Defeating the LORD OF SLIMES (the castle's gated headline hostile) sets ENDING_SHOWN via the BOSS_DEFEATED script, bumps MONSTERS_DEFEATED to 4, and routes victory to the ENDING screen instead of the overworld. Locked bare-SELECT cadence (second SELECT of each cycle executes); the stream stops at the deterministic victory iteration: any later A press would hit the ENDING screen's RESTART handler and wipe state",
+  "description": "Defeating the LORD OF SLIMES sets ENDING_SHOWN via the BOSS_DEFEATED script, bumps MONSTERS_DEFEATED to 4, and routes victory to the ENDING screen instead of the overworld. Each cycle re-pins slot 0 to SW3 before a two-SELECT select/execute pair so every attack-phase execution deals a deterministic 3 damage (defend-phase and reshuffle-turn cycles consume their pairs harmlessly); 14 pairs guarantee the 4 hits needed against the boss's 10 HP regardless of phase alignment.",
   "scenario_id": "CASTLE_BOOT",
   "actions": [
-    {"type": "wait", "frames": 5},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 130},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 55},
-    {"type": "press", "button": "SELECT"}, {"type": "wait", "frames": 20},
-    {"type": "press", "button": "A"},
-    {"type": "wait", "frames": 60}
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 60
+    }
   ],
   "assertions": [
     {

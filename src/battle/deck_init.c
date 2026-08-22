@@ -12,12 +12,14 @@
  * It never calls fixed-bank code (see src/core/banked.h). */
 
 /* Safety-net fallback deck, mirroring the granted starter deck
- * (docs/deck-management.md §1): 2x SW3, 2x SH2, 1x FI4 (3 uses).  Only used
- * when the persistent DeckState is empty (legacy saves / debug states). */
+ * (docs/deck-management.md §1): 4x SW3, 3x SH2, 3x FI4 (3 uses).  Only used
+ * when the persistent DeckState is empty (legacy saves / debug states).
+ * First five entries match the granted deal order so the opening hand is
+ * identical whether battles run on real or fallback state. */
 static const uint8_t s_starter_deck_packed[MAX_DECK_SIZE] = {
     0x03, 0x03, 0x12, 0x12, 0x34,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    0x03, 0x12, 0x34, 0x34, 0x03,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
 void deck_init_default_banked(void)
@@ -26,7 +28,7 @@ void deck_init_default_banked(void)
     uint8_t i, p;
 
     if (!d) return;
-    d->count = 5;
+    d->count = 10;
     d->draw_idx = 0;
     d->discard_count = 0;
     for (i = 0; i < d->count; i++) {
@@ -39,6 +41,10 @@ void deck_init_default_banked(void)
     /* FI4 mirrors FIRE_TOME: 3 uses per battle, energy cost 2. */
     d->cards[4].uses_remaining = 3;
     d->cards[4].cost = 2;
+    d->cards[7].uses_remaining = 3;
+    d->cards[7].cost = 2;
+    d->cards[8].uses_remaining = 3;
+    d->cards[8].cost = 2;
 }
 
 /* Field-wise card copy/swap helpers.  The banked body MUST NOT use struct

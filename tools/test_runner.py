@@ -58,7 +58,7 @@ VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
 # scenarios that never ran NEW_GAME would under-report inventory by these
 # starter amounts.  If that use ever broadens, gate the delta on the
 # snapshot's actual origin instead.
-NEW_GAME_COLLECTION = {"IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1}
+NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_TOME": 3}
 
 def validate_scenario(data, filepath):
     scen_id = data.get("scenario_id")
