@@ -2091,8 +2091,8 @@ relieved the fixed-bank budget enough for the battle HUD row work.
 ### 52.11.2 Battle HUD layout (rows)
 
 The battle screen uses the fixed background rows: `0` centered banner,
-`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DK:` +
-draw-pile count at columns 15-19, `battle_draw_deck_line`, drawn with the
+`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DECK:` +
+draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
 hero row on BATTLE_DIRTY_HERO), `13` `COMBO:` + hand type
 (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
 cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`

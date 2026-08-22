@@ -162,7 +162,7 @@ static void battle_draw_hero_row(const Battle *battle)
  * firing on BATTLE_DIRTY_HERO can never leave this line stale. */
 static void battle_draw_deck_line(const Battle *battle)
 {
-    battle_draw_text_line(15, 7, "DK:", 3);
+    battle_draw_text_line(13, 7, "DECK:", 5);
     battle_draw_num2(18, 7,
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
 }

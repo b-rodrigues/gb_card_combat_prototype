@@ -112,7 +112,7 @@
     {
       "type": "screen_row",
       "row": 7,
-      "contains": "DK"
+      "contains": "DECK"
     },
     {
       "type": "event_occurred",
