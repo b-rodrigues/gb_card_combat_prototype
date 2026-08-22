@@ -8,8 +8,8 @@
 #include "dialogue.h"
 #include "actor.h"
 #include "scene.h"
-#include "rpg/items.h"
-#include "rpg/inventory.h"
+#include "rpg/deck.h"
+#include "rpg/cards.h"
 #include "rpg/currency.h"
 #include "rpg/progression.h"
 #include "rpg/save.h"
@@ -36,7 +36,13 @@ enum {
     DBG_ACT_EQUIP_ITEM = 7,
     DBG_ACT_SAVE = 8,
     DBG_ACT_LOAD = 9,
-    DBG_ACT_SET_HAND_CARD = 10
+    DBG_ACT_SET_HAND_CARD = 10,
+    DBG_ACT_SET_FILTER = 11,
+    DBG_ACT_SET_SORT = 12,
+    DBG_ACT_DECK_ADD = 13,
+    DBG_ACT_SET_HAND_CARD_META = 14,
+    DBG_ACT_START_BATTLE = 15,
+    DBG_ACT_DECK_REMOVE = 16
 };
 
 static void scenario_begin(uint16_t seed)
@@ -56,9 +62,10 @@ static void scenario_load_state(void)
 {
     const uint8_t *b = g_scen_state_buf;
     const uint8_t *p;
+    uint8_t *dst;
     SceneId scene;
     MapId map;
-    uint8_t x, y, facing, screen, dialogue_id, start_battle, i;
+    uint8_t x, y, facing, screen, dialogue_id, start_battle, i, n;
     uint16_t seed;
 
     if (b[0] != STATE_LOAD_DESC_VERSION) return;
@@ -105,9 +112,27 @@ static void scenario_load_state(void)
 
     p = b + STATE_LOAD_DESC_INVENTORY_ENTRY_OFF;
     for (i = 0; i < b[STATE_LOAD_DESC_INVENTORY_COUNT_OFF]; i++) {
-        g_game.state.inventory.entries[i].item_id = (ItemId)*p++;
-        g_game.state.inventory.entries[i].quantity = *p++;
-        g_game.state.inventory.count = (uint8_t)(i + 1);
+        deck_collection_add(&g_game.state.cards, (CardId)*p, *(p + 1));
+        p += 2;
+    }
+
+    /* Deck section: only applied when the host marks it present, so
+     * scenarios without "deck" keep the starter default.  Direct setup
+     * writes (no mechanic calls, no telemetry) per AGENTS.md 53.3.
+     * An explicit empty deck (count 0) is allowed: it is how scenarios
+     * reach battle_start's packed fallback-deck path now that the CARDS
+     * menu enforces DECK_MIN_CARDS. */
+    if (b[STATE_LOAD_DESC_DECK_PRESENT_OFF]) {
+        n = b[STATE_LOAD_DESC_DECK_COUNT_OFF];
+        if (n > MAX_DECK_CARDS) n = MAX_DECK_CARDS;
+        p = b + STATE_LOAD_DESC_DECK_ENTRY_OFF;
+        dst = g_game.state.cards.deck.cards;
+        i = n;
+        while (i) {
+            *dst++ = *p++;
+            i--;
+        }
+        g_game.state.cards.deck.count = n;
     }
 
     p = b + STATE_LOAD_DESC_WORLD_ENTRY_OFF;
@@ -126,7 +151,7 @@ static void scenario_load_state(void)
         progression_ensure(&g_game.state, t_type, t_id, *p, snap_read16(p + 1));
         p += 3;
     }
-    g_game.state.equipment.weapon = (ItemId)b[STATE_LOAD_DESC_EQUIPMENT_OFF];
+    /* equipment field removed; skipped */
 
     g_game.state.scene.scene_id = scene;
     g_game.state.scene.player_x = x;
@@ -158,10 +183,13 @@ static void scenario_load_state(void)
         g_game.screen = SCREEN_DIALOGUE;
     }
     if (start_battle) {
+        /* Engage the last spawned hostile.  Scenes list their headline
+         * hostile last (e.g. CASTLE: wandering BAT, then the gated boss),
+         * so this picks the intended encounter without an adjacency scan
+         * (fixed-bank budget). */
         for (i = 0; i < MAX_WORLD_ACTORS; i++) {
             if (g_game.world.actors[i].active) {
                 g_game.world.encounter_actor_index = i;
-                break;
             }
         }
         start_battle_from_world(&g_game);
@@ -184,15 +212,16 @@ static void debug_run_action(void)
     uint8_t a0 = g_debug_action[1];
     int16_t a1 = (int16_t)snap_read16((const uint8_t *)&g_debug_action[2]);
     uint8_t a2 = g_debug_action[4];
+    uint8_t i;
     ProgressionTarget target;
     ProgressionAddResult pres;
 
     switch (action) {
         case DBG_ACT_ADD_ITEM:
-            inventory_add(&g_game.state.inventory, (ItemId)a0, a2);
+            deck_collection_add(&g_game.state.cards, (CardId)a0, a2);
             break;
         case DBG_ACT_REMOVE_ITEM:
-            inventory_remove(&g_game.state.inventory, (ItemId)a0, a2);
+            deck_collection_remove(&g_game.state.cards, (CardId)a0, a2);
             break;
         case DBG_ACT_ADD_CURRENCY:
             currency_add(&g_game.state, (CurrencyId)a0, a1);
@@ -205,13 +234,20 @@ static void debug_run_action(void)
             }
             break;
         case DBG_ACT_BUY_ITEM:
-            item_purchase(&g_game.state, (ItemId)a0);
-            break;
-        case DBG_ACT_USE_ITEM:
-            item_use(&g_game.state, (ItemId)a0, (CharacterId)a2);
-            break;
-        case DBG_ACT_EQUIP_ITEM:
-            item_equip(&g_game.state, (ItemId)a0);
+            {
+                const CardDefinition *def = card_get_def((CardId)a0);
+                if (def && def->price != 0 &&
+                    currency_get(&g_game.state, CURRENCY_ID_GOLD) >= def->price) {
+                    if (deck_collection_add(&g_game.state.cards, (CardId)a0, 1)) {
+                        currency_add(&g_game.state, CURRENCY_ID_GOLD, -(int16_t)def->price);
+                        telemetry_emit(EVENT_CARD_PURCHASED, a0, (uint8_t)def->price, 0, 0);
+                    } else {
+                        telemetry_emit(EVENT_CARD_PURCHASE_FAILED, a0, 2, 0, 0);
+                    }
+                } else {
+                    telemetry_emit(EVENT_CARD_PURCHASE_FAILED, a0, 1, 0, 0);
+                }
+            }
             break;
         case DBG_ACT_SAVE:
             save_game_slot(a0 < SAVE_SLOT_COUNT ? a0 : 0, &g_game.state);
@@ -225,9 +261,54 @@ static void debug_run_action(void)
             break;
         case DBG_ACT_SET_HAND_CARD:
             if (a0 < BATTLE_HAND_SIZE) {
-                g_game.battle.hand[a0].type = (CardType)((uint16_t)a1 & 0xFF);
+                g_game.battle.hand[a0].type = (BattleCardType)((uint16_t)a1 & 0xFF);
                 g_game.battle.hand[a0].value = a2;
             }
+            break;
+        case DBG_ACT_DECK_ADD:
+            /* Real mechanic call: all deck_add_card validations apply
+             * (ownership, SPECIAL exclusion, max_copies, size). */
+            if (deck_add_card(&g_game.state.cards, (CardId)a0)) {
+                telemetry_emit(EVENT_CARD_ADDED_TO_DECK, a0, 0, 0, 0);
+            }
+            break;
+        case DBG_ACT_DECK_REMOVE:
+            /* Real mechanic call: membership + DECK_MIN_CARDS floor apply.
+             * Both emit on success only (mirroring the UI caller), so
+             * scenarios assert acceptance/rejection via event counts. */
+            if (deck_remove_card(&g_game.state.cards, (CardId)a0)) {
+                telemetry_emit(EVENT_CARD_REMOVED_FROM_DECK, a0, 0, 0, 0);
+            }
+            break;
+        case DBG_ACT_SET_HAND_CARD_META:
+            /* Companion to SET_HAND_CARD: pins the injected hand card's
+             * energy cost and remaining uses so combo/energy scenarios are
+             * independent of the dealt deck contents. */
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].cost = a1;
+                g_game.battle.hand[a0].uses_remaining = a2;
+            }
+            break;
+        case DBG_ACT_START_BATTLE:
+            /* Re-arm an encounter against the first living active actor
+             * (mirrors the loader's start_battle path) and enter through the
+             * real start_battle_from_world mechanic. */
+            for (i = 0; i < MAX_WORLD_ACTORS; i++) {
+                if (g_game.world.actors[i].active &&
+                    g_game.world.actors[i].hp > 0) {
+                    g_game.world.encounter_actor_index = i;
+                    break;
+                }
+            }
+            start_battle_from_world(&g_game);
+            break;
+        case DBG_ACT_SET_FILTER:
+            g_game.item_menu_filter = a0;
+            g_game.render_cache.valid = false;
+            break;
+        case DBG_ACT_SET_SORT:
+            g_game.item_menu_sort = a0;
+            g_game.render_cache.valid = false;
             break;
         default:
             break;

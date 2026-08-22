@@ -38,8 +38,7 @@ void battle_screen_update(Game *g)
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT ||
         b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         if (input_pressed(INPUT_START)) {
-            g->item_menu_index = 0;
-            g->item_menu_tab = 0;
+            item_screen_reset(g);
             screen_change(g, SCREEN_ITEM);
         } else if (input_pressed(INPUT_LEFT)) {
             battle_cursor_move(b, -1);

@@ -109,6 +109,14 @@ def main():
     # under the harness at runtime.
     banked_targets = {
         "_combo_evaluate_banked": "combo evaluator (bank 2)",
+        "_deck_init_default_banked": "starter deck unpacker (bank 2)",
+        "_deck_reshuffle_banked": "discard reshuffle (bank 2)",
+        "_debug_state_snapshot_banked": "debug state snapshot (bank 2)",
+        "_ui_format_int_banked": "int formatter (bank 2)",
+        "_scene_load_tiles_banked": "scene tile loader (bank 2)",
+        "_enemy_deck_setup_banked": "enemy deck setup (bank 2)",
+        "_battle_card_undo_banked": "battle card undo (bank 2)",
+        "_ui_update_battle_banked": "battle render (bank 2)",
     }
     print()
     print("Banked target address validation")

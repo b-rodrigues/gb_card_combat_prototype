@@ -2091,12 +2091,14 @@ relieved the fixed-bank budget enough for the battle HUD row work.
 ### 52.11.2 Battle HUD layout (rows)
 
 The battle screen uses the fixed background rows: `0` centered banner,
-`2-4` enemies (name/HP/caret), `6` hero, `13` `COMBO:` + hand type
+`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DECK:` +
+draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
+hero row on BATTLE_DIRTY_HERO), `13` `COMBO:` + hand type
 (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
 cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`
 card description (`card_get_description`), `17` timer bar (window row,
-`0x9A20`).  Rows `7-12` stay blank as whitespace between the hero and the
-bottom card stack.
+`0x9A20`).  Rows `8-12` stay blank as whitespace between the hero block
+and the bottom card stack.
 
 ## 52.12 Scenario state ordering
 
@@ -2269,9 +2271,16 @@ in sync; changing one without the other silently breaks every scenario.
 
 * Core snapshot (`g_snap_buf`, 36 bytes): byte 12 is `state.flags.bytes[0]`,
   byte 19 is `state.scene.scene_id`.  Existing scenarios depend on these.
-* Extended snapshot (`g_state_snap_buf`, 183 bytes, version 0x03): version
+* Extended snapshot (`g_state_snap_buf`, 210 bytes, version 0x06): version
   byte 0, flags 1..8, variables 9..24, currency 25..37, party 38..50,
-  inventory 51..83, world 84..132, progression 133..181, equipment 182.
+  inventory (collection) 51..83, world 84..132, progression 133..181,
+  equipment 182, camera/world geometry 183..188, battle-deck count at 189
+  followed by up to 20 deck card ids at 190..209.
+* State-load descriptor (`g_scen_state_buf`, version 0x04): the optional
+  deck section at 229 (present flag) / 230 (count) / 231..250 (card ids)
+  replaces the starter deck when present — an explicit empty deck is how
+  scenarios reach `battle_start`'s packed fallback path now that
+  `DECK_MIN_CARDS` blocks emptying a deck through gameplay.
 * Every important gameplay transition must emit a telemetry event; state
   assertions must be possible without screenshots.
 
@@ -2359,11 +2368,17 @@ lives in `GameState`.  Transient UI state (`game_over_choice`,
 reset on exit.  A screen must never become the home of gameplay state
 (quest progress, HP, etc.).
 
-The quick screen (`SCREEN_ITEM`) is a tabbed menu: ITEM (use consumables),
-EQUIP (equip weapons), QUEST (ongoing quests), STATUS (hero HP/gold/level).
-START is the universal open key (overworld and battle player-turn); SELECT
-in the overworld does nothing.  Inside, SELECT focuses the tab row,
-LEFT/RIGHT moves tabs, A confirms, B closes.
+The quick screen (`SCREEN_ITEM`) is a tabbed menu: CARDS (collection/deck
+management: paired rows whose membership glyph is the decked-copy count,
+A adds one copy and clears every copy once the card is fully decked, all
+through the real `deck_add_card`/`deck_remove_card`; SELECT opens a detail
+page whose FILTER/SORT entry opens an inline picker) and QUEST (ongoing
+quests; SELECT shows a placeholder detail line).  START is the universal
+open key (overworld and battle player-turn).  Inside, LEFT/RIGHT switches
+tabs, UP/DOWN moves the list, A confirms/toggles, B backs out (two-step on
+the CARDS list: first B jumps to the first card row, B again on the top row
+closes), SELECT opens the detail submenu.  Rejections (`DECK FULL`) show a
+transient message cleared by a frame TTL, never a silent no-op.
 
 ## 54.3 Actor lifecycle
 
@@ -2559,18 +2574,29 @@ the commit/PR without booting anything.
   lands in that dead window, and a dropped shop-close `B` makes `START`
   *close the shop* instead of opening the quick screen.  Every screen change
   is therefore **state-verified, not time-expected**, and retried on failure:
-  * the overworld is the only screen with the HUD window layer enabled
-    (`LCDC` bit 5), so dialogue/shop/menu presence is checked by reading that
-    bit (`window_enabled`) after each interaction;
-  * the quick screen's active tab is verified by the `^` caret position
-    (tile column 0/5/10/15 = ITEM/EQUIP/QUEST/STATUS on the row-3 tile row)
-    and `RIGHT` is repeated until the target caret appears.
-* Frames are saved with PyBoy's `screen.image` (headless framebuffer render).
+  * every screen is verified by its **BG tilemap text** (`bg_text` reads the
+    visible tilemap through SCX/SCY; the font lives at tile base 0, so
+    cells read directly as ASCII): guard dialogue by the `GUARD:` speaker
+    tag, shop/save menu by their row-0 titles, the quick screen by the
+    `CARDS QUEST` tab labels, the filter/sort picker by its
+    `LR CYCLE  A:OK B:NO` footer.  Pixel heuristics are NOT usable here:
+    an earlier LCDC-bit-5 check was vacuous (nothing in the ROM ever sets
+    bit 5), and a dark-pixel caret scan false-positived on terrain glyphs,
+    silently desynchronizing every later milestone.  Membership gotcha:
+    `"X" in rows` on a *list* of strings tests element equality, never
+    substrings — always use `any("X" in r ...)` / `all("X" not in r ...)`;
+    a bare `in` made a close condition fire instantly and poisoned the run.
+  * the quick screen's active tab is verified by the `^` caret column read
+    from BG text row 3 (column 0 = CARDS, 6 = QUEST) and `RIGHT` is repeated
+    until the target caret appears.
+* Frames are saved with PyBoy's `screen.image` (headless framebuffer render);
+  each save prints the first non-blank `bg_text` row so a mislabeled frame
+  is obvious in the build log without decoding PNGs.
 * Two fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
   quick screen) and Walk B (slime battle on the Field), so persistent state
   never bleeds between milestones.
-* Determinism is verified: the walk's position/caret/window checks make the
-  12 frames byte-identical across repeated runs.
+* Determinism is verified: the walk's position/caret/text checks make the
+  15 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2581,13 +2607,20 @@ the commit/PR without booting anything.
 03-guard-dialogue    dialogue box over the scrolled town (camera offset)
 04-dialogue-next     second dialogue line
 05-shop              shopkeeper shop screen
-06-item-menu         START quick screen (ITEM tab)
-07-quests-tab        QUEST tab
-08-status-tab        STATUS tab
+06-cards-menu        START quick screen (CARDS tab)
+07-filter-picker     filter/sort picker over the card list
+08-quests-tab        QUEST tab
 09-battle            slime encounter (battle screen)
 10-battle-attack     after a player attack (damage dealt)
 11-battle-run        after fleeing (result line)
+12-wizard-save       save menu at the wizard
+13-wizard-saved      after saving to Slot 1
+14-forest-arrived    FOREST gate arrival after Walk B
 ```
+
+Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land
+inside the transient save-confirmation TTL and show the message mid-display.
+If a regen diffs only that frame, re-run before hunting a rendering bug.
 
 ## 56.4 Rules
 

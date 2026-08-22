@@ -53,7 +53,12 @@ testable, save/load works, and the memory budget is understood.
   branch has landed the player OAM sprite + the `png2gb.py` PNG→tileset
   stage (`make gfx`), the tilemap/OAM/dedup and renderer rewiring remain
 - Battle system expansion (per-enemy stats/AI, command menu, variance, etc.)
-- Card battle prototype (hand/deck/discard, draw, play, resolve)
+
+### DONE
+
+- Card battle prototype (hand/deck/discard, draw, play, resolve; per-card
+  energy costs with a 5-point pool refreshed each decision phase — see
+  `docs/deck.md`)
 
 ### LATER
 
@@ -1208,6 +1213,21 @@ Missing:
 * status effects;
 * richer rewards (XP/leveling from battle, loot);
 * flee chance / consequences.
+
+### 9.1 Deck management UI — DONE
+
+The START quick screen's CARDS tab manages collection vs deck through the
+real deck mutators (paired rows whose membership glyph is the decked-copy
+count, A adds one copy and clears every copy once the card is fully decked,
+SELECT detail page, inline FILTER/SORT picker), and new games grant a
+5-card starter deck so battles draw from the real system from the first
+fight.  Spec: `docs/deck-management.md`; implementation deviations:
+`docs/deck.md` §40.  Known gaps: picker LEFT/RIGHT both cycle forward
+(relabelled hint; true bidirectional cycling is future polish), AMULET
+hidden from the list, QUEST detail page is a placeholder.
+Note: the fixed-bank budget is tight (~88 B headroom after the review-fix
+round; `make memmap` enforces the invariant) — the next substantial
+feature must plan banked placement (§52.11.1) up front.
 
 ## 10. Card System
 

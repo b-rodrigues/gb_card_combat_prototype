@@ -63,6 +63,7 @@ void shop_screen_update(Game *g);
 void shop_screen_render(Game *g);
 void item_screen_update(Game *g);
 void item_screen_render(Game *g);
+void item_screen_reset(Game *g);
 void ending_screen_update(Game *g);
 void ending_screen_render(Game *g);
 void save_load_screen_update(Game *g);

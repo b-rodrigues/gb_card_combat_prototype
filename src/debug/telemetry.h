@@ -10,12 +10,22 @@
  *   bytes  0-19 : core game state (see telemetry.c debug_snapshot)
  *   bytes 20+   : scene actors as (id, x, y, facing) entries */
 #define SNAPSHOT_BASE_SIZE      20
-#define MAX_SNAPSHOT_ACTORS     4
-#define SNAPSHOT_ACTOR_ENTRY_SIZE 4
-#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE))
 
-/* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x02):
- *   byte  0            : version/validity (0x02)
+#define MAX_SNAPSHOT_ACTORS     4
+
+#define SNAPSHOT_ACTOR_ENTRY_SIZE 4
+
+/* Appended after the actor block (append-only wire contract; existing bytes
+ * 0-35 never move).  Battle-runtime observability that is not part of
+ * GameState lives here. */
+#define SNAPSHOT_BATTLE_ENERGY_OFF (SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE))
+#define SNAPSHOT_BATTLE_DRAW_OFF   (SNAPSHOT_BATTLE_ENERGY_OFF + 1)
+#define SNAPSHOT_BATTLE_DISCARD_OFF (SNAPSHOT_BATTLE_DRAW_OFF + 1)
+
+#define SNAPSHOT_TOTAL_SIZE     (SNAPSHOT_BATTLE_DISCARD_OFF + 1)
+
+/* Extended RPG state snapshot (g_state_snap_buf) layout (version 0x06):
+ *   byte  0            : version/validity (0x06)
  *   bytes 1..8         : FlagState.bytes[0..7]
  *   bytes 9..24        : variables as int16 LE
  *   byte  25           : currency count
@@ -35,8 +45,10 @@
  *   byte  186          : world height (scene tile rows)
  *   byte  187          : overworld camera pixel x (camera_px_x)
  *   byte  188          : overworld camera pixel y (camera_px_y)
+ *   byte  189          : battle-deck card count
+ *   bytes 190..209     : up to 20 deck entries x {card_id}
  */
-#define STATE_SNAP_VERSION_BYTE    0x05
+#define STATE_SNAP_VERSION_BYTE    0x06
 #define STATE_SNAP_FLAGS_OFFSET    1
 #define STATE_SNAP_FLAGS_SIZE      8
 #define STATE_SNAP_VARIABLES_OFFSET  9
@@ -60,14 +72,14 @@
 #define STATE_SNAP_WORLD_HEIGHT_OFF 186
 #define STATE_SNAP_CAMERA_PX_X_OFF  187
 #define STATE_SNAP_CAMERA_PX_Y_OFF  188
-#define STATE_SNAP_TOTAL_SIZE        189
+#define STATE_SNAP_DECK_COUNT_OFF   189
+#define STATE_SNAP_TOTAL_SIZE        210
 
 /* Scenario initial-state descriptor (g_scen_state_buf) layout (version 0x02).
  * Written by the host STATE_LOAD command and applied by scenario_load_state().
  * Fixed offsets; variable-length sections carry a count and only the
  * listed entries are applied (unspecified sections keep their defaults). */
-#define STATE_LOAD_DESC_VERSION           0x03
-#define STATE_LOAD_DESC_SIZE              229
+#define STATE_LOAD_DESC_VERSION           0x04
 #define STATE_LOAD_DESC_SCREEN_OFF        1
 #define STATE_LOAD_DESC_SCENE_OFF         2
 #define STATE_LOAD_DESC_PLAYER_X_OFF      3
@@ -99,6 +111,14 @@
 #define STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF 226
 #define STATE_LOAD_DESC_FONT_TEST_OFF     227
 #define STATE_LOAD_DESC_EQUIPMENT_OFF     228
+#define STATE_LOAD_DESC_DECK_PRESENT_OFF  229
+#define STATE_LOAD_DESC_DECK_COUNT_OFF    230
+#define STATE_LOAD_DESC_DECK_ENTRY_OFF    231
+/* Descriptor layout (version 0x04): byte 229 = deck-present flag (1 = the
+ * following deck section replaces the starter deck, count may be 0 for an
+ * intentionally empty deck); byte 230 = deck card count; bytes 231..250 =
+ * up to 20 deck entries x {card_id}. */
+#define STATE_LOAD_DESC_SIZE              251
 
 typedef enum {
     EVENT_PLAYER_MOVED,
@@ -128,15 +148,15 @@ typedef enum {
     EVENT_ACTOR_INTERACTION,
     EVENT_ACTOR_COMBAT_START,
     EVENT_VARIABLE_SET,
-    EVENT_ITEM_ADDED,
-    EVENT_ITEM_REMOVED,
+    EVENT_CARD_ADDED_TO_DECK,
+    EVENT_CARD_REMOVED_FROM_DECK,
     EVENT_ACTOR_STATE_CHANGE,
     EVENT_SCRIPT_TRIGGERED,
     EVENT_HEALED,
     EVENT_ITEM_USED,
     EVENT_ITEM_USE_FAILED,
-    EVENT_ITEM_PURCHASED,
-    EVENT_ITEM_PURCHASE_FAILED,
+    EVENT_CARD_PURCHASED,
+    EVENT_CARD_PURCHASE_FAILED,
     EVENT_CURRENCY_ADDED,
     EVENT_CURRENCY_SPENT,
     EVENT_PROGRESSION_GAINED,
@@ -144,7 +164,12 @@ typedef enum {
     EVENT_ITEM_EQUIPPED,
     EVENT_BATTLE_FLED,
     EVENT_GAME_SAVED,
-    EVENT_GAME_LOADED
+    EVENT_GAME_LOADED,
+    EVENT_CARD_ADDED_TO_COLLECTION,
+    EVENT_CARD_REMOVED_FROM_COLLECTION,
+    EVENT_CARD_PLAYED,
+    EVENT_ENEMY_CARD_PLAYED,
+    EVENT_DECK_RESHUFFLED
 } GameEventType;
 
 typedef struct {
@@ -166,5 +191,10 @@ void telemetry_emit(uint8_t type, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3
 void telemetry_set_frame_ptr(const uint32_t *frame_ptr);
 void debug_snapshot(void);
 void debug_state_snapshot(void);
+
+/* Banked no-arg body of debug_state_snapshot() (src/debug/telemetry_snap.c,
+ * ROM bank 2), run via the WRAM banked-call trampoline.  Self-contained:
+ * reads g_game / g_state_snap_buf and its own static snap_copy. */
+void debug_state_snapshot_banked(void);
 
 #endif /* TELEMETRY_H */

@@ -4,11 +4,10 @@
 #include "event.h"
 #include "dialogue.h"
 #include "actor.h"
-#include "rpg/items.h"
 #include "rpg/party.h"
+#include "rpg/deck.h"
 #include "core/game.h"
 
-#define HERO_BASE_ATTACK 3
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
 
@@ -18,7 +17,7 @@ void game_content_init(void)
     game_events_register();
     game_dialogue_register();
     game_actors_register();
-    game_items_register();
+    game_cards_register();
     game_quest_register();
 }
 
@@ -39,17 +38,25 @@ void game_new_game(GameState *state)
 
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
-}
 
-uint8_t game_hero_attack(const GameState *state)
-{
-    const ItemDefinition *def;
-    if (!state) return HERO_BASE_ATTACK;
-    def = item_get_def(state->equipment.weapon);
-    if (def && def->kind == ITEM_KIND_WEAPON) {
-        return (uint8_t)(HERO_BASE_ATTACK + def->attack_bonus);
-    }
-    return HERO_BASE_ATTACK;
+    /* Starter deck (docs/deck-management.md §1): 10 cards — 4x SW3, 3x SH2,
+     * 3x FI4.  The original five are decked first so the opening battle hand
+     * (SW SW SH SH FI) is unchanged; the extras only deepen the draw pile.
+     * Granted as real owned state via the silent mutators so battles draw
+     * from the player's actual deck from turn one. */
+    deck_collection_add(&state->cards, CARD_IRON_SWORD, 4);
+    deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 3);
+    deck_collection_add(&state->cards, CARD_FIRE_TOME, 3);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
+    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
+    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
+    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_IRON_SWORD);
 }
 
 void game_on_level_up(GameState *state, ProgressionTarget target,

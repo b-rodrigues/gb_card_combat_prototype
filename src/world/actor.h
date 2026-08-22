@@ -106,11 +106,6 @@ ActorEngageResult actor_engage(const WorldActorDefinition *actor, DialogueState 
  * state are not spawned (persistent defeat). */
 void actor_load_scene(World *world, MapId map_id, const GameState *state);
 
-/* Write the active scene's actors as compact (id, x, y, facing) 4-byte
- * entries into out.  Returns the number of entries written.  Used by the
- * debug snapshot. */
-#define ACTOR_SNAPSHOT_ENTRY_SIZE 4
-
 uint8_t actor_write_snapshot(const World *world, uint8_t *out, uint8_t max_actors);
 
 #endif /* ACTOR_H */

@@ -1,19 +1,19 @@
 {
   "name": "inventory_initial",
   "test": true,
-  "description": "Declarative initial_state injects inventory quantities into the canonical GameState",
+  "description": "Declarative initial_state injects card collection quantities into the canonical GameState; injected HEALING_HERB x2 coexists with the new-game starter grant (IRON_SWORD x4)",
   "scenario_id": "NEW_GAME",
   "actions": [],
   "assertions": [
     {
       "type": "inventory",
-      "item": "POTION",
+      "item": "HEALING_HERB",
       "expected": 2
     },
     {
       "type": "inventory",
-      "item": "BOMB",
-      "expected": 0
+      "item": "IRON_SWORD",
+      "expected": 4
     }
   ],
   "initial_state": {
@@ -25,7 +25,7 @@
     },
     "seed": 7003,
     "inventory": {
-      "POTION": 2
+      "HEALING_HERB": 2
     }
   }
 }

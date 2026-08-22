@@ -14,15 +14,7 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
+      "button": "RIGHT"
     },
     {
       "type": "wait",
@@ -36,12 +28,12 @@
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 7,
       "contains": "LOST AMULET"
     },
     {
       "type": "screen_row",
-      "row": 10,
+      "row": 8,
       "contains": "complete - MERCHANT"
     }
   ],
@@ -52,7 +44,7 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8412,
+    "seed": 8410,
     "variables": {
       "MERCHANT_QUEST": 2
     }

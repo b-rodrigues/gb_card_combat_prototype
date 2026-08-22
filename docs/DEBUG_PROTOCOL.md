@@ -386,6 +386,7 @@ Supported `initial_state` fields:
   "variables": { "GOLD": 150, "CHAPTER": 2 },
   "party": { "HERO": { "level": 3, "hp": 24, "max_hp": 30 } },
   "inventory": { "POTION": 2, "BOMB": 1 },
+  "deck": { "IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1 },
   "world": { "SLIME_FIELD": "DEFEATED" },
   "screen": "BATTLE",
   "dialogue": "MAYOR_GREETING",
@@ -400,6 +401,17 @@ Rules:
 * Each variable-length section carries a count; only the listed entries
   are applied, so unspecified sections keep the game's default state
   (e.g. leaving `variables` out keeps `CHAPTER == 1`).
+* `inventory` applies additively on top of the new-game starter grants
+  (`inventory_initial` relies on this coexistence); the roundtrip rebuild
+  therefore emits only the delta over those grants.  That delta assumes
+  NEW_GAME-origin snapshots — rebuilding from any other origin would
+  under-report inventory by the starter amounts.
+* `deck` is the exception: when the key is present it *replaces* the
+  starter deck entirely (descriptor v4 carries a deck-present flag), and
+  an explicit `"deck": {}` constructs an intentionally empty deck — the
+  only way for scenarios to reach `battle_start`'s packed fallback-deck
+  path now that `DECK_MIN_CARDS` blocks emptying through gameplay.
+  `{name: copies}` expands to one descriptor byte per copy.
 * A `DEFEATED` actor in `world` is honoured by `actor_load_scene()`: the
   actor is not spawned into the scene.
 * Scenario setup must never emit gameplay telemetry; all descriptor state
@@ -489,8 +501,13 @@ dialogue + sets `MET_MAYOR`), `MAYOR_GREETING` (already met),
   game-specific consequence (`game_on_level_up`) is applied by the caller.
 * Semantic harness actions exercise the real mechanics without the UI:
   `add_item`, `remove_item`, `add_currency`, `add_progress`, `buy_item`,
-  `use_item_direct` (via the ROM `g_debug_action` channel).  The button-driven
-  `use_item` action still tests the item menu UI.
+  `use_item_direct`, `deck_add`, `deck_remove` (via the ROM
+  `g_debug_action` channel).  The button-driven `use_item` action still
+  tests the item menu UI.  `deck_add`/`deck_remove` call the real
+  `deck_add_card`/`deck_remove_card`, so every validation (ownership,
+  per-card caps, `DECK_MIN_CARDS`) applies; they emit
+  `CARD_ADDED_TO_DECK` / `CARD_REMOVED_FROM_DECK` on success only, so
+  scenarios assert rejection via event counts.
 * Save/load: the `save` and `load` scenario actions (via the `g_debug_action`
   channel, codes 8 and 9) call `save_game`/`load_game`
   (`src/rpg/save.{h,c}`) — SRAM battery persistence of `GameState`.  After a

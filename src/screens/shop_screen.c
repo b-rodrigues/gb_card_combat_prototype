@@ -1,8 +1,9 @@
 #include "game.h"
 #include "screen.h"
 #include "telemetry.h"
-#include "rpg/items.h"
+#include "rpg/cards.h"
 #include "rpg/currency.h"
+#include "rpg/deck.h"
 #include "menu.h"
 #include "shops.h"
 #include "game_ids.h"
@@ -11,6 +12,7 @@
 #define SHOP_MSG_NONE 0
 #define SHOP_MSG_BOUGHT 1
 #define SHOP_MSG_NO_GOLD 2
+#define SHOP_MSG_MAX_COPIES 3
 
 /* The active shop is chosen by the actor that was engaged (g->shop_id).
  * Cursor state lives in g->item_menu_index. */
@@ -37,11 +39,18 @@ static void shop_draw(Game *g)
     }
 
     for (i = 0; i < def->count; i++) {
-        const ItemDefinition *item = item_get_def(def->items[i]);
+        const CardDefinition *card = card_get_def(def->items[i]);
+        char code[4];
         y = (uint8_t)(5 + i);
         ui_draw_text_line(0, y, (g->item_menu_index == i) ? ">" : " ", 1);
-        ui_draw_text_line(1, y, item ? item->name : "???", 10);
-        ui_format_int(item ? (int16_t)item->price : 0, str);
+        if (card) {
+            /* Label derives from the card definition, never a string. */
+            ui_card_code_str(card->battle_type, card->power, code);
+            ui_draw_text_line(1, y, code, 3);
+        } else {
+            ui_draw_text_line(1, y, "???", 3);
+        }
+        ui_format_int(card ? (int16_t)card->price : 0, str);
         ui_draw_text_line(12, y, str, 4);
         ui_draw_text_line(16, y, "G", 1);
     }
@@ -49,7 +58,8 @@ static void shop_draw(Game *g)
     ui_draw_text_line(0, (uint8_t)(6 + def->count), "[A] Buy  [B] Leave", 18);
     if (g->shop_message != SHOP_MSG_NONE) {
         ui_draw_text_line(0, (uint8_t)(8 + def->count),
-                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" : "Not enough gold!", 16);
+                          (g->shop_message == SHOP_MSG_BOUGHT) ? "Bought!" :
+                          (g->shop_message == SHOP_MSG_MAX_COPIES) ? "Too many!" : "Not enough!", 12);
     }
 }
 
@@ -70,9 +80,22 @@ void shop_screen_update(Game *g)
             g->item_menu_index++;
             g->render_cache.valid = false;
         } else if (input_pressed(INPUT_A) && g->item_menu_index < count) {
-            ItemId item_id = def->items[g->item_menu_index];
-            g->shop_message = (item_purchase(&g->state, item_id) == ITEM_PURCHASE_OK)
-                              ? SHOP_MSG_BOUGHT : SHOP_MSG_NO_GOLD;
+            CardId card_id = def->items[g->item_menu_index];
+            const CardDefinition *card = card_get_def(card_id);
+            uint8_t price = card ? card->price : 0;
+            if (currency_get(&g->state, CURRENCY_ID_GOLD) < price) {
+                g->shop_message = SHOP_MSG_NO_GOLD;
+                telemetry_emit(EVENT_CARD_PURCHASE_FAILED, (uint8_t)card_id, 1, 0, 0);
+            } else {
+                if (!deck_collection_add(&g->state.cards, card_id, 1)) {
+                    g->shop_message = SHOP_MSG_MAX_COPIES;
+                    telemetry_emit(EVENT_CARD_PURCHASE_FAILED, (uint8_t)card_id, 2, 0, 0);
+                } else {
+                    currency_add(&g->state, CURRENCY_ID_GOLD, -(int16_t)price);
+                    telemetry_emit(EVENT_CARD_PURCHASED, (uint8_t)card_id, (uint8_t)price, 0, 0);
+                    g->shop_message = SHOP_MSG_BOUGHT;
+                }
+            }
             g->render_cache.valid = false;
         }
     }

@@ -53,12 +53,14 @@ EVENT_TYPE_MAP = {
     18: "INTERACTION_ATTEMPT", 19: "RENDER_SCREEN", 20: "RENDER_DIALOGUE",
     21: "SCREEN_CHANGED", 22: "SCENE_CHANGED",
     23: "ACTOR_COLLISION", 24: "ACTOR_INTERACTION", 25: "ACTOR_COMBAT_START",
-    26: "VARIABLE_SET", 27: "ITEM_ADDED", 28: "ITEM_REMOVED",
+    26: "VARIABLE_SET", 27: "CARD_ADDED_TO_DECK", 28: "CARD_REMOVED_FROM_DECK",
     29: "ACTOR_STATE_CHANGE", 30: "SCRIPT_TRIGGERED", 31: "HEALED",
-    32: "ITEM_USED", 33: "ITEM_USE_FAILED", 34: "ITEM_PURCHASED",
-    35: "ITEM_PURCHASE_FAILED", 36: "CURRENCY_ADDED", 37: "CURRENCY_SPENT",
+    32: "ITEM_USED", 33: "ITEM_USE_FAILED", 34: "CARD_PURCHASED",
+    35: "CARD_PURCHASE_FAILED", 36: "CURRENCY_ADDED", 37: "CURRENCY_SPENT",
     38: "PROGRESSION_GAINED", 39: "LEVEL_UP", 40: "ITEM_EQUIPPED",
-    41: "BATTLE_FLED", 42: "GAME_SAVED", 43: "GAME_LOADED"
+    41: "BATTLE_FLED", 42: "GAME_SAVED", 43: "GAME_LOADED",
+    44: "CARD_ADDED_TO_COLLECTION", 45: "CARD_REMOVED_FROM_COLLECTION",
+    46: "CARD_PLAYED", 47: "ENEMY_CARD_PLAYED", 48: "DECK_RESHUFFLED"
 }
 EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 1: "QUEST_START",
@@ -73,9 +75,6 @@ EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 10: "MERCHANT_DELIVER",
                 GAME_ID_BASE + 11: "AMULET_PICKUP"}
 
-# Weapon attack bonuses (host-side mirror of src/rpg/items.c).
-ITEM_ATTACK_BONUS = {"SWORD": 3}
-HERO_BASE_ATTACK = 3
 DIRECTION_MAP = {0: "UP", 1: "DOWN", 2: "LEFT", 3: "RIGHT"}
 
 # Static per-actor semantics resolved from the snapshot's actor ids.
@@ -118,8 +117,6 @@ SCENARIO_IDS = {
 # Mirrors STATE_LOAD_DESC_* in src/debug/telemetry.h.  The host serializes
 # a scenario's initial_state JSON into this fixed-size byte descriptor and
 # writes it to g_scen_state_buf, then sets g_scen_load_state.
-STATE_LOAD_DESC_SIZE = 229
-STATE_LOAD_DESC_VERSION = 0x03
 STATE_LOAD_DESC_SCREEN_OFF = 1
 STATE_LOAD_DESC_SCENE_OFF = 2
 STATE_LOAD_DESC_PLAYER_X_OFF = 3
@@ -151,6 +148,14 @@ STATE_LOAD_DESC_START_BATTLE_OFF = 225
 STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF = 226
 STATE_LOAD_DESC_FONT_TEST_OFF = 227
 STATE_LOAD_DESC_EQUIPMENT_OFF = 228
+# Deck section (v4): only applied by the ROM when present=1; count may be 0
+# for an intentionally empty deck (battle fallback-deck coverage).
+STATE_LOAD_DESC_DECK_PRESENT_OFF = 229
+STATE_LOAD_DESC_DECK_COUNT_OFF = 230
+STATE_LOAD_DESC_DECK_ENTRY_OFF = 231
+MAX_DESC_DECK_CARDS = 20
+STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_DECK_ENTRY_OFF + MAX_DESC_DECK_CARDS
+STATE_LOAD_DESC_VERSION = 0x04
 
 SCENE_NAME_TO_ID = {v: k for k, v in SCENE_MAP.items()}
 SCREEN_NAME_TO_ID = {v: k for k, v in SCREEN_MAP.items()}
@@ -161,15 +166,21 @@ VARIABLE_ID_MAP = {"CHAPTER": 1, "MONSTERS_DEFEATED": 2,
                    "MERCHANT_QUEST": 5}
 CHARACTER_ID_MAP = {"HERO": 1}
 ITEM_ID_MAP = {"NONE": 0,
-               "POTION": GAME_ID_BASE + 0, "BOMB": GAME_ID_BASE + 1,
-               "ETHER": GAME_ID_BASE + 2, "SWORD": GAME_ID_BASE + 3,
-               "AMULET": GAME_ID_BASE + 4, "NUT": GAME_ID_BASE + 5}
+               "IRON_SWORD": 0x40, "WOODEN_SHIELD": 0x41,
+               "HEALING_HERB": 0x42, "FIRE_TOME": 0x43,
+               "POISON_DAGGER": 0x44, "AMULET": 0x45}
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
 # Card type names -> CardType enum (src/battle/card.h):
 # SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, FI=FIRE 3, HE=HEAL 4.
 CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "FI": 3, "HE": 4}
+# Deck-builder filter names -> CardType (src/rpg/cards.h), plus ALL.
+FILTER_TYPE_MAP = {"ALL": 0xFF, "ATTACK": 0, "DEFENSE": 1, "HEAL": 2,
+                   "STATUS": 3, "UTILITY": 4}
+# Deck-builder sort modes (src/screens/item_screen.c).
+SORT_MODE_MAP = {"OFF": 0, "TYPE": 1, "POWER": 2, "COST": 3,
+                 "POWER_DESC": 4, "COST_DESC": 5}
 DIALOGUE_NAME_TO_ID = {v: k for k, v in DIALOGUE_ID_MAP.items()}
 CURRENCY_ID_MAP = {"GOLD": 1}
 
@@ -256,6 +267,21 @@ def serialize_initial_state(initial_state):
         buf[off] = ITEM_ID_MAP[name]
         buf[off + 1] = qty
 
+    if "deck" in initial_state:
+        # Explicit deck construction: replaces the starter deck entirely.
+        # An empty dict is meaningful (empty deck -> battle fallback path).
+        # {name: copies} expands to COUNT sequential card ids.
+        flat = []
+        for name, qty in ((initial_state.get("deck") or {}).items()):
+            flat.extend([ITEM_ID_MAP[name]] * int(qty))
+        if len(flat) > MAX_DESC_DECK_CARDS:
+            raise ValueError(
+                f"deck expands to {len(flat)} cards; max is {MAX_DESC_DECK_CARDS}")
+        buf[STATE_LOAD_DESC_DECK_PRESENT_OFF] = 1
+        buf[STATE_LOAD_DESC_DECK_COUNT_OFF] = len(flat)
+        for i, card_id in enumerate(flat):
+            buf[STATE_LOAD_DESC_DECK_ENTRY_OFF + i] = card_id
+
     world = initial_state.get("world") or {}
     actors = list(world.items())
     buf[STATE_LOAD_DESC_WORLD_COUNT_OFF] = len(actors)
@@ -288,9 +314,6 @@ def serialize_initial_state(initial_state):
     buf[STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF] = initial_state.get("game_over_choice", 0)
     if initial_state.get("font_test"):
         buf[STATE_LOAD_DESC_FONT_TEST_OFF] = 1
-    equipment = initial_state.get("equipment") or {}
-    weapon = equipment.get("weapon", "NONE")
-    buf[STATE_LOAD_DESC_EQUIPMENT_OFF] = ITEM_ID_MAP.get(weapon, 0)
     return buf
 
 def decode_story_flags(flags_mask):
@@ -446,6 +469,9 @@ class EmulatorSession:
         if not os.path.exists(self.rom_path):
             raise FileNotFoundError(f"ROM not found: {self.rom_path}")
 
+        # Private ROM copy per session (below) keeps battery SRAM isolated;
+        # no stale-save cleanup needed here anymore.
+
         self.symbols = load_sym_map(self.sym_path)
 
         self.master, slave = pty.openpty()
@@ -458,10 +484,22 @@ class EmulatorSession:
         # runner with no sound device the audio callback never fires at the
         # expected rate, so after `c` the core stalls before game_render and
         # the frame-sync breakpoint never hits.
+        #
+        # Private ROM copy per session: mGBA writes battery SRAM next to the
+        # ROM (<rom>.sav).  Parallel test workers share the same ROM path, so
+        # a save written by one worker leaks into every other worker's
+        # session (a stray SAVE_LOAD A-press loads foreign state and breaks
+        # scenario determinism, AGENTS.md 20).  Each session runs on its own
+        # copy so its .sav is private.
+        import shutil, tempfile
+        session_dir = tempfile.mkdtemp(prefix="gbharness_")
+        self._session_dir = session_dir
+        rom_copy = os.path.join(session_dir, "rom.gb")
+        shutil.copyfile(self.rom_path, rom_copy)
         server_num = str((os.getpid() % 800) + 100)
         cmd = ['xvfb-run', '-a', '-n', server_num, 'mgba',
                '-C', 'audioSync=false', '-C', 'videoSync=false',
-               '-d', self.rom_path]
+               '-d', rom_copy]
         self.proc = subprocess.Popen(cmd, stdin=slave, stdout=slave, stderr=slave,
                                      close_fds=True, start_new_session=True)
         os.close(slave)
@@ -580,6 +618,13 @@ class EmulatorSession:
             except Exception:
                 pass
             self.master = None
+        if getattr(self, "_session_dir", None):
+            try:
+                import shutil as _shutil
+                _shutil.rmtree(self._session_dir, ignore_errors=True)
+            except Exception:
+                pass
+            self._session_dir = None
 
     # ── Frame control ───────────────────────────────────────────────
 
@@ -679,7 +724,10 @@ class EmulatorSession:
     SNAPSHOT_BASE_SIZE = 20
     SNAPSHOT_ACTOR_ENTRY_SIZE = 4
     MAX_SNAPSHOT_ACTORS = 4
-    SNAPSHOT_TOTAL_SIZE = SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE)
+    SNAPSHOT_BATTLE_ENERGY_OFF = SNAPSHOT_BASE_SIZE + (MAX_SNAPSHOT_ACTORS * SNAPSHOT_ACTOR_ENTRY_SIZE)
+    SNAPSHOT_BATTLE_DRAW_OFF = SNAPSHOT_BATTLE_ENERGY_OFF + 1
+    SNAPSHOT_BATTLE_DISCARD_OFF = SNAPSHOT_BATTLE_DRAW_OFF + 1
+    SNAPSHOT_TOTAL_SIZE = SNAPSHOT_BATTLE_DISCARD_OFF + 1
 
     def snapshot(self):
         """Read SNAPSHOT_TOTAL_SIZE bytes from g_snap_buf."""
@@ -716,16 +764,19 @@ class EmulatorSession:
                 "dialogue_id_name": DIALOGUE_ID_MAP.get(snap_bytes[15], f"UNKNOWN_{snap_bytes[15]}") if len(snap_bytes) >= 16 else "NONE",
                 "player_facing": DIRECTION_MAP.get(snap_bytes[16], f"UNKNOWN_{snap_bytes[16]}") if len(snap_bytes) >= 17 else "UNKNOWN",
                 "game_over_choice": snap_bytes[17] if len(snap_bytes) >= 18 else 0,
+                "battle_energy": snap_bytes[self.SNAPSHOT_BATTLE_ENERGY_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_ENERGY_OFF else None,
+                "battle_draw_remaining": snap_bytes[self.SNAPSHOT_BATTLE_DRAW_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_DRAW_OFF else None,
+                "battle_discard_count": snap_bytes[self.SNAPSHOT_BATTLE_DISCARD_OFF] if len(snap_bytes) > self.SNAPSHOT_BATTLE_DISCARD_OFF else None,
                 "actors": self._parse_actors(snap_bytes)
             }
             self.current_snapshot = parsed
             return parsed
         return self.current_snapshot
 
-    # Extended RPG state snapshot: parses g_state_snap_buf (189 bytes,
+    # Extended RPG state snapshot: parses g_state_snap_buf (210 bytes,
     # layout in src/debug/telemetry.h STATE_SNAP_*).
-    STATE_SNAP_SIZE = 189
-    STATE_SNAP_VERSION = 5
+    STATE_SNAP_SIZE = 210
+    STATE_SNAP_VERSION = 6
     STATE_SNAP_FLAGS_OFF = 1
     STATE_SNAP_FLAGS_SIZE = 8
     STATE_SNAP_VARIABLES_OFF = 9
@@ -748,6 +799,7 @@ class EmulatorSession:
     STATE_SNAP_WORLD_HEIGHT_OFF = 186
     STATE_SNAP_CAMERA_PX_X_OFF = 187
     STATE_SNAP_CAMERA_PX_Y_OFF = 188
+    STATE_SNAP_DECK_COUNT_OFF = 189
 
     def state_snapshot(self):
         """Read g_state_snap_buf and return the canonical GameState as a dict."""
@@ -834,8 +886,13 @@ class EmulatorSession:
                 "progress": progress,
             })
 
-        weapon_id = buf[self.STATE_SNAP_EQUIPMENT_OFF]
-        equipment = {"weapon": ITEM_ID_TO_NAME.get(weapon_id, "NONE")}
+        deck = []
+        deck_count = buf[self.STATE_SNAP_DECK_COUNT_OFF]
+        for i in range(deck_count):
+            off = self.STATE_SNAP_DECK_COUNT_OFF + 1 + i
+            if off >= len(buf):
+                break
+            deck.append(buf[off])
 
         return {
             "flags": flags,
@@ -845,7 +902,7 @@ class EmulatorSession:
             "inventory": inventory,
             "world": world,
             "progression": progression,
-            "equipment": equipment,
+            "deck": deck,
             "scroll_x": buf[self.STATE_SNAP_SCROLL_X_OFF],
             "scroll_y": buf[self.STATE_SNAP_SCROLL_Y_OFF],
             "world_width": buf[self.STATE_SNAP_WORLD_WIDTH_OFF],
@@ -867,6 +924,12 @@ class EmulatorSession:
     DBG_ACT_SAVE = 8
     DBG_ACT_LOAD = 9
     DBG_ACT_SET_HAND_CARD = 10
+    DBG_ACT_SET_FILTER = 11
+    DBG_ACT_SET_SORT = 12
+    DBG_ACT_DECK_ADD = 13
+    DBG_ACT_SET_HAND_CARD_META = 14
+    DBG_ACT_START_BATTLE = 15
+    DBG_ACT_DECK_REMOVE = 16
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

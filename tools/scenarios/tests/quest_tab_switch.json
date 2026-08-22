@@ -1,7 +1,7 @@
 {
-  "name": "equip_tab_filter",
+  "name": "quest_tab_switch",
   "test": true,
-  "description": "The EQUIP tab shows only weapons (no potions) and equipping still works",
+  "description": "Quick-screen tab switching is symmetric: LEFT/RIGHT moves CARDS -> QUESTS and back again (QUEST list previously swallowed LEFT/RIGHT so the return trip was impossible)",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -14,15 +14,15 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
+      "button": "RIGHT"
     },
     {
       "type": "wait",
-      "frames": 3
+      "frames": 5
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "LEFT"
     },
     {
       "type": "wait",
@@ -36,22 +36,13 @@
     },
     {
       "type": "screen_row",
-      "row": 5,
-      "contains": "SWORD"
+      "row": 0,
+      "contains": "CARDS"
     },
     {
-      "type": "screen_row_not_contains",
-      "row": 5,
-      "contains": "POTION"
-    },
-    {
-      "type": "screen_row_not_contains",
+      "type": "screen_row",
       "row": 6,
-      "contains": "POTION"
-    },
-    {
-      "type": "attack",
-      "expected": 6
+      "contains": "SW3"
     }
   ],
   "initial_state": {
@@ -61,10 +52,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8604,
-    "inventory": {
-      "SWORD": 1,
-      "POTION": 1
-    }
+    "seed": 8410
   }
 }

@@ -19,17 +19,18 @@ from emulator import (EmulatorSession, STORY_FLAG_ID_MAP, DIALOGUE_ID_MAP,
                       ACTOR_STATE_NAME_MAP, CHARACTER_ID_MAP, SCENE_MAP,
                       CHARACTER_ID_TO_NAME, ITEM_ID_TO_NAME, ACTOR_ID_TO_NAME,
                       CURRENCY_ID_MAP, PROGRESSION_TARGET_MAP,
-                      CURRENCY_ID_TO_NAME, PROG_TYPE_HERO,
-                      ITEM_ATTACK_BONUS, HERO_BASE_ATTACK, CARD_TYPE_MAP)
+                       CURRENCY_ID_TO_NAME, PROG_TYPE_HERO, CARD_TYPE_MAP,
+                      FILTER_TYPE_MAP, SORT_MODE_MAP)
 
 VALID_ASSERTION_TYPES = {
     "game_state", "player_position", "player_facing", "player_hp", "music_track",
     "enemy_hp", "battle_turn", "battle_result", "battle_player_hp", "battle_enemy_hp",
+    "battle_energy", "battle_draw_remaining", "battle_discard_count",
     "game_over_choice", "story_flag", "screen", "scene",
-    "event_occurred", "event_not_occurred", "dialogue_active", "dialogue_line", "dialogue_id",
+    "event_occurred", "event_not_occurred", "event_count", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
-    "currency", "progression_level", "progression_progress", "attack",
+    "currency", "progression_level", "progression_progress",
     "camera", "scroll_x", "scroll_y", "world_width", "world_height",
     "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell"
 }
@@ -45,6 +46,19 @@ VALID_ACTOR_NAMES = set(ACTOR_ID_MAP)
 VALID_ACTOR_STATES = set(ACTOR_STATE_NAME_MAP)
 VALID_CURRENCY_NAMES = set(CURRENCY_ID_MAP)
 VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
+
+# New-game starter collection grants (game_new_game in src/game/content.c).
+# The roundtrip rebuild subtracts these from observed collection counts:
+# the descriptor's inventory section applies additively, so re-emitting
+# the full observed collection would double-add the starters on reload.
+#
+# Scope caveat: this subtraction assumes the snapshot came from a
+# NEW_GAME-initialized run (starters guaranteed present, so counts stay
+# >= 0).  Reusing build_initial_state_from_snapshot on snapshots from
+# scenarios that never ran NEW_GAME would under-report inventory by these
+# starter amounts.  If that use ever broadens, gate the delta on the
+# snapshot's actual origin instead.
+NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_TOME": 3}
 
 def validate_scenario(data, filepath):
     scen_id = data.get("scenario_id")
@@ -111,6 +125,9 @@ def validate_scenario(data, filepath):
         for iname, iqty in (init.get("inventory") or {}).items():
             if iname not in VALID_ITEM_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown item '{iname}' in initial_state. Valid items: {sorted(list(VALID_ITEM_NAMES))}")
+        for dname, dqty in (init.get("deck") or {}).items():
+            if dname not in VALID_ITEM_NAMES:
+                raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown card '{dname}' in initial_state deck. Valid cards: {sorted(list(VALID_ITEM_NAMES))}")
         for aname, aval in (init.get("world") or {}).items():
             if aname not in VALID_ACTOR_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown actor '{aname}' in initial_state. Valid actors: {sorted(list(VALID_ACTOR_NAMES))}")
@@ -122,9 +139,6 @@ def validate_scenario(data, filepath):
         for pname, pstats in (init.get("progression") or {}).items():
             if pname not in VALID_PROGRESSION_NAMES:
                 raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown progression target '{pname}'. Valid targets: {sorted(list(VALID_PROGRESSION_NAMES))}")
-        equip = init.get("equipment") or {}
-        if "weapon" in equip and equip["weapon"] not in VALID_ITEM_NAMES:
-            raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown equipment weapon '{equip.get('weapon')}'. Valid items: {sorted(list(VALID_ITEM_NAMES))}")
         scene = init.get("scene")
         if scene and scene not in set(SCENE_MAP.values()):
             raise ValueError(f"SCENARIO ERROR in {filepath}: Unknown scene '{scene}'. Valid scenes: {sorted(set(SCENE_MAP.values()))}")
@@ -178,17 +192,6 @@ def run_scenario(scenario):
                 # and facing the target (set via initial_state); press A.
                 session.press("A")
                 session.wait(act.get("frames", 5))
-            elif act_type == "use_item":
-                # Open the quick screen (START is the universal open key in
-                # both the overworld and battle) and use the cursor item (A).
-                # ITEM is the default tab; cursor starts at the first item.
-                session.press("START")
-                session.wait(4)
-                session.press("A")
-                session.wait(act.get("frames", 4))
-            elif act_type == "equip_item":
-                session.debug_action(session.DBG_ACT_EQUIP_ITEM,
-                                     ITEM_ID_MAP[act.get("item")], 0, 0)
             elif act_type == "add_item":
                 session.debug_action(session.DBG_ACT_ADD_ITEM,
                                      ITEM_ID_MAP[act.get("item")],
@@ -208,10 +211,6 @@ def run_scenario(scenario):
             elif act_type == "buy_item":
                 session.debug_action(session.DBG_ACT_BUY_ITEM,
                                      ITEM_ID_MAP[act.get("item")], 0, 0)
-            elif act_type == "use_item_direct":
-                session.debug_action(session.DBG_ACT_USE_ITEM,
-                                     ITEM_ID_MAP[act.get("item")],
-                                     0, act.get("member", 1))
             elif act_type == "save":
                 slot = act.get("slot", 1) - 1 if "slot" in act else 0
                 session.debug_action(session.DBG_ACT_SAVE, slot, 0, 0)
@@ -229,6 +228,37 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      CARD_TYPE_MAP[act.get("card_type", "SW")] & 0xFF,
                                      act.get("value", 1) & 0xFF)
+            elif act_type == "set_hand_card_meta":
+                # Companion to set_hand_card: pin the injected card's energy
+                # cost and remaining uses so energy/limited-use scenarios do
+                # not depend on the dealt deck contents.
+                session.debug_action(session.DBG_ACT_SET_HAND_CARD_META,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("cost", 1) & 0xFF,
+                                     act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "deck_add":
+                # Direct deck_add_card() call (real mechanic, all validations:
+                # ownership, SPECIAL exclusion, max_copies, 20-card size).
+                # Emits CARD_ADDED_TO_DECK on success only.
+                session.debug_action(session.DBG_ACT_DECK_ADD,
+                                     ITEM_ID_MAP[act.get("card")], 0, 0)
+            elif act_type == "deck_remove":
+                # Direct deck_remove_card() call (real mechanic: membership +
+                # DECK_MIN_CARDS floor).  Emits CARD_REMOVED_FROM_DECK on
+                # success only, so scenarios can assert rejection via counts.
+                session.debug_action(session.DBG_ACT_DECK_REMOVE,
+                                     ITEM_ID_MAP[act.get("card")], 0, 0)
+            elif act_type == "start_battle":
+                # Start a battle from the current world state (the same path
+                # an overworld encounter uses); used for multi-battle
+                # scenarios such as limited-use reset coverage.
+                session.debug_action(session.DBG_ACT_START_BATTLE, 0, 0, 0)
+            elif act_type == "set_filter":
+                session.debug_action(session.DBG_ACT_SET_FILTER,
+                                     FILTER_TYPE_MAP[act.get("filter", "ALL")] & 0xFF, 0, 0)
+            elif act_type == "set_sort":
+                session.debug_action(session.DBG_ACT_SET_SORT,
+                                     SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
 
         # Read final snapshot, canonical state buffer and telemetry
         snap = session.snapshot()
@@ -383,6 +413,18 @@ def run_scenario(scenario):
             actual = snap.get("battle_enemy_hp", 0)
             passed = (actual == int(expected))
 
+        elif a_type == "battle_energy":
+            actual = snap.get("battle_energy")
+            passed = (actual is not None and actual == int(expected))
+
+        elif a_type == "battle_draw_remaining":
+            actual = snap.get("battle_draw_remaining")
+            passed = (actual is not None and actual == int(expected))
+
+        elif a_type == "battle_discard_count":
+            actual = snap.get("battle_discard_count")
+            passed = (actual is not None and actual == int(expected))
+
         elif a_type == "game_over_choice":
             actual = snap.get("game_over_choice", 0)
             passed = (actual == int(expected))
@@ -442,6 +484,13 @@ def run_scenario(scenario):
 
             passed = len(matching_events) > 0
             actual = f"EMITTED ({len(matching_events)} time(s))" if passed else "NOT_EMITTED"
+
+        elif a_type == "event_count":
+            exp_event = a.get("event", expected)
+            expected = f"{exp_event} x{a.get('count', 0)}"
+            actual = sum(1 for ev in telemetry if ev.get("type") == exp_event)
+            passed = (actual == int(a.get("count", 0)))
+            actual = f"{exp_event} x{actual}"
 
         elif a_type == "event_not_occurred":
             exp_event = a.get("event", expected)
@@ -526,13 +575,6 @@ def run_scenario(scenario):
             entry = next((p for p in (state_snap or {}).get("progression", [])
                           if p.get("name") == exp_target), None)
             actual = entry.get("progress") if entry else None
-            passed = (actual == int(a.get("expected")))
-
-        elif a_type == "attack":
-            equipment = (state_snap or {}).get("equipment", {})
-            weapon = equipment.get("weapon", "NONE")
-            actual = HERO_BASE_ATTACK + ITEM_ATTACK_BONUS.get(weapon, 0)
-            expected = f"hero attack == {expected}"
             passed = (actual == int(a.get("expected")))
 
         status_str = "PASS" if passed else "FAIL"
@@ -621,10 +663,12 @@ def format_state(snap, state_snap):
             lines.append("  {}: level={} progress={}".format(
                 p.get("name"), p.get("level"), p.get("progress")))
 
-    equipment = (state_snap or {}).get("equipment", {})
-    weapon = equipment.get("weapon", "NONE")
-    lines.append(f"EQUIPMENT: {weapon}")
-    lines.append(f"ATTACK: {HERO_BASE_ATTACK + ITEM_ATTACK_BONUS.get(weapon, 0)}")
+    if snap.get("battle_turn") is not None and snap.get("game_state") == "BATTLE":
+        lines.append("BATTLE: turn={} player_hp={} enemy_hp={} energy={} draw={} discard={}".format(
+            snap.get("battle_turn"), snap.get("battle_player_hp"),
+            snap.get("battle_enemy_hp"), snap.get("battle_energy"),
+            snap.get("battle_draw_remaining"), snap.get("battle_discard_count")))
+
     return "\n".join(lines)
 
 
@@ -672,10 +716,28 @@ def build_initial_state_from_snapshot(snap, state_snap):
     inventory = {}
     for it in state_snap.get("inventory", []):
         iname = ITEM_ID_TO_NAME.get(it.get("item_id"))
-        if iname:
-            inventory[iname] = inventory.get(iname, 0) + it.get("quantity", 0)
+        if not iname:
+            continue
+        # Emit only the delta over the new-game starter grants
+        # (game_new_game in src/game/content.c adds IRON_SWORD x2,
+        # WOODEN_SHIELD x2, FIRE_TOME x1 to the collection): the loader
+        # applies inventory additively, so re-emitting the full observed
+        # collection would double-add the starters on reload.
+        qty = it.get("quantity", 0) - NEW_GAME_COLLECTION.get(iname, 0)
+        if qty > 0:
+            inventory[iname] = qty
     if inventory:
         initial["inventory"] = inventory
+
+    # Always emit the deck (even empty): the descriptor only replaces the
+    # starter deck when the key is present, so omitting it would silently
+    # turn an intentionally empty deck back into the starter five.
+    deck = {}
+    for cid in state_snap.get("deck", []):
+        dname = ITEM_ID_TO_NAME.get(cid)
+        if dname:
+            deck[dname] = deck.get(dname, 0) + 1
+    initial["deck"] = deck
 
     world = {}
     for w in state_snap.get("world", []):
@@ -696,11 +758,6 @@ def build_initial_state_from_snapshot(snap, state_snap):
     if progression:
         initial["progression"] = progression
 
-    equipment = state_snap.get("equipment", {})
-    weapon = equipment.get("weapon", "NONE")
-    if weapon != "NONE":
-        initial["equipment"] = {"weapon": weapon}
-
     return initial
 
 
@@ -717,11 +774,11 @@ def normalize_semantic_state(snap, state_snap):
                         for m in (state_snap or {}).get("party", [])),
         "inventory": sorted((it.get("item_id"), it.get("quantity"))
                             for it in (state_snap or {}).get("inventory", [])),
+        "deck": sorted((state_snap or {}).get("deck", [])),
         "world": sorted((w.get("actor_id"), w.get("state"))
                         for w in (state_snap or {}).get("world", [])),
         "progression": sorted((p.get("name"), p.get("level"), p.get("progress"))
-                              for p in (state_snap or {}).get("progression", [])),
-        "equipment": (state_snap or {}).get("equipment", {}),
+                               for p in (state_snap or {}).get("progression", [])),
     }
 
 

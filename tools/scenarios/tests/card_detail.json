@@ -1,7 +1,7 @@
 {
-  "name": "quick_equip_ui",
+  "name": "card_detail",
   "test": true,
-  "description": "Via the quick screen UI: START opens it, SELECT cycles to the EQUIP tab, A equips the SWORD -> attack 6",
+  "description": "SELECT on a card row opens the detail page showing type, power/cost, uses/max-copies, owned/decked counts and price",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -14,7 +14,7 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -22,7 +22,7 @@
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "SELECT"
     },
     {
       "type": "wait",
@@ -36,17 +36,28 @@
     },
     {
       "type": "screen_row",
-      "row": 0,
-      "contains": "EQUIP"
+      "row": 5,
+      "contains": "IRON SW"
     },
     {
       "type": "screen_row",
-      "row": 2,
-      "contains": "EQUIP"
+      "row": 9,
+      "contains": "PWR"
     },
     {
-      "type": "attack",
-      "expected": 6
+      "type": "screen_row",
+      "row": 9,
+      "contains": "COST"
+    },
+    {
+      "type": "screen_row",
+      "row": 11,
+      "contains": "USES"
+    },
+    {
+      "type": "screen_row",
+      "row": 13,
+      "contains": "OWN"
     }
   ],
   "initial_state": {
@@ -56,9 +67,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8409,
-    "inventory": {
-      "SWORD": 1
-    }
+    "seed": 8410
   }
 }

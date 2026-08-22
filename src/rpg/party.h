@@ -5,13 +5,7 @@
 #include <stdbool.h>
 #include "rpg/state.h"
 
-void party_init(PartyState *party);
-
 /* Look up a party member by character id, or NULL. */
 CharacterState *party_get_member(PartyState *party, CharacterId id);
-#define party_get_member_const(party, id) ((const CharacterState *)party_get_member((PartyState *)(party), (id)))
-
-void party_set_hp(PartyState *party, CharacterId id, uint8_t hp);
-uint8_t party_get_hp(const PartyState *party, CharacterId id);
 
 #endif /* RPG_PARTY_H */

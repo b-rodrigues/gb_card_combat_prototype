@@ -1,16 +1,44 @@
 {
   "name": "battle_sword_damage",
   "test": true,
-  "description": "With the SWORD equipped the hero one-shots the slime (attack 6 vs 5 HP)",
+  "description": "Selecting SW3+FI4 (values 3,4 = straight) deals 7 damage and one-shots the 5 HP slime",
   "scenario_id": "BATTLE_BOOT",
   "actions": [
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 0,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "set_hand_card",
+      "index": 2,
+      "card_type": "FI",
+      "value": 4
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 2,
+      "cost": 1,
+      "uses": 255
+    },
     {
       "type": "press",
       "button": "A"
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 6
     },
     {
       "type": "press",
@@ -18,7 +46,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 6
     },
     {
       "type": "press",
@@ -26,7 +54,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 6
     },
     {
       "type": "press",
@@ -34,7 +62,7 @@
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 12
     }
   ],
   "assertions": [
@@ -43,8 +71,9 @@
       "expected": "BATTLE"
     },
     {
-      "type": "battle_enemy_hp",
-      "expected": 5
+      "type": "event_count",
+      "event": "DAMAGE_DEALT",
+      "count": 1
     },
     {
       "type": "event_occurred",
@@ -59,9 +88,6 @@
       "facing": "DOWN"
     },
     "seed": 8408,
-    "equipment": {
-      "weapon": "SWORD"
-    },
     "start_battle": true
   }
 }

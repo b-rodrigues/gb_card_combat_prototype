@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 extern char g_ui_screen_buf[18][21];
+extern uint8_t ui_font_tile_base;
 
 void ui_init(void);
 void ui_clear_screen(void);
@@ -44,11 +45,20 @@ void ui_update_camera(const World *world);
  * stdio/console chain so _HOME stays under 0x8000. */
 void ui_format_int(int16_t value, char *out);
 
+/* Write "XYn" — two-letter battle code ("SW"/"SH"/"BO"/"FI"/"HE" per
+ * BattleCardType in src/battle/card.h) plus power digit — into out
+ * (at least 4 bytes); "??" when battle_type is out of range. */
+void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out);
+
+/* Banked no-arg body (ROM bank 2) dispatched by ui_format_int(). */
+void ui_format_int_banked(void);
+
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y);
 void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
                            uint8_t max_chars, uint8_t ox, uint8_t oy);
 void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
+void ui_update_battle_banked(void);
 void ui_draw_battle_timer(const Battle *battle);
 uint8_t ui_calc_timer_bar(uint16_t t);
 

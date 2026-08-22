@@ -1,7 +1,7 @@
 {
   "name": "battle_multi_enemy_cycle_kill",
   "test": true,
-  "description": "Target enemy 2, defeat enemy 2 with combo, verify auto-advance to live enemy 0 and that manual D-pad targeting skips dead enemy 2",
+  "description": "Target enemy idx2 via D-pad, defeat it with a 2-card combo (SW3+FI4=8), verify auto-advance wrapped to live enemy idx0, and that manual D-pad targeting skips the dead idx2. Timeline rides out the post-kill reshuffle cycle so the run ends in a fresh PLAYER_SELECT window.",
   "actions": [
     { "type": "press", "button": "RIGHT" },
     { "type": "wait", "frames": 10 },
@@ -21,14 +21,11 @@
     { "type": "wait", "frames": 5 },
     { "type": "press", "button": "SELECT" },
     { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
+    { "type": "wait", "frames": 1300 },
     { "type": "press", "button": "DOWN" },
     { "type": "wait", "frames": 5 },
     { "type": "press", "button": "DOWN" },
-    { "type": "wait", "frames": 5 }
+    { "type": "wait", "frames": 15 }
   ],
   "assertions": [
     {

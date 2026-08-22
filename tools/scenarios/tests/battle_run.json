@@ -1,7 +1,7 @@
 {
   "name": "battle_run",
   "test": true,
-  "description": "Running away flees without winning: the enemy stays on the map at its damaged HP, no gold/defeat/quest progress",
+  "description": "Running away flees without winning: the enemy stays on the map at its damaged HP (2/5 after one SW3 hit), no gold/defeat/quest progress. The defend phase must be executed (SELECT) before the next SELECT phase opens, where B with an empty combo flees. The slime is asserted ALIVE via its persistent lifecycle, not by position, because its patrol moves it within ~30 frames of returning to the overworld.",
   "scenario_id": "FIRST_ENCOUNTER",
   "actions": [
     {
@@ -14,11 +14,11 @@
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "SELECT"
     },
     {
       "type": "wait",
-      "frames": 5
+      "frames": 125
     },
     {
       "type": "press",
@@ -26,23 +26,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 5
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 35
+      "frames": 45
     },
     {
       "type": "press",
@@ -58,7 +42,7 @@
     },
     {
       "type": "wait",
-      "frames": 10
+      "frames": 20
     }
   ],
   "assertions": [
@@ -68,7 +52,7 @@
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 3
+      "expected": 2
     },
     {
       "type": "event_occurred",
@@ -79,10 +63,9 @@
       "event": "BATTLE_WON"
     },
     {
-      "type": "actor_at",
-      "entity": "SLIME",
-      "x": 14,
-      "y": 8
+      "type": "actor_state",
+      "actor": "SLIME_FIELD",
+      "expected_state": "ALIVE"
     },
     {
       "type": "variable",

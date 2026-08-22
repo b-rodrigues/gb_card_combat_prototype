@@ -34,8 +34,20 @@ typedef struct Game {
     DialogueState dialogue;
     uint32_t frame;
     uint8_t game_over_choice;  /* 0 = YES, 1 = NO on the continue prompt */
-    uint8_t item_menu_index;   /* cursor into the active tab's list */
-    uint8_t item_menu_tab;     /* 0 = ITEM, 1 = EQUIP, 2 = QUEST, 3 = STATUS */
+    uint8_t item_menu_index;   /* cursor into the active tab's list (0 =
+                                  FILTER/SORT row on the CARDS tab) */
+    uint8_t item_menu_tab;     /* 0 = CARDS, 1 = QUEST */
+    uint8_t item_menu_scroll;  /* first visible card position of the list */
+    uint8_t item_menu_filter;  /* 0xFF = ALL, else a CardType value */
+    uint8_t item_menu_sort;    /* 0 = none, 1 = type, 2 = power, 3 = cost,
+                                  4 = power desc, 5 = cost desc */
+    uint8_t item_menu_mode;      /* 0 = list, 1 = card detail, 2 = quest
+                                    detail, 3 = filter/sort picker */
+    uint8_t item_menu_message;   /* 0 = none, 1 = deck full, 2 = max copies */
+    uint8_t item_menu_msg_ttl;   /* frames until the message clears */
+    uint8_t item_menu_pick_row;  /* picker row: 0 = filter, 1 = sort */
+    uint8_t item_menu_prev_filter; /* picker cancel restore */
+    uint8_t item_menu_prev_sort;   /* picker cancel restore */
     uint8_t shop_message;      /* 0 = none, 1 = bought, 2 = not enough gold */
     uint8_t shop_id;           /* active shop (set when a shop actor is engaged) */
     uint8_t save_slot_index;   /* 0 = Slot 1, 1 = Slot 2, 2 = Slot 3 */

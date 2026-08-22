@@ -5,10 +5,10 @@
 #include <stdbool.h>
 #include "entity.h"
 #include "screen.h"
+#include "rpg/deck.h"
 
 /* Fixed-size capacity limits for the Game Boy.  No dynamic allocation. */
 #define MAX_PARTY_MEMBERS     4
-#define MAX_INVENTORY_ITEMS   16
 #define MAX_STATE_FLAGS       64
 #define MAX_STATE_VARIABLES   16
 #define MAX_PERSISTENT_ACTORS 16
@@ -22,13 +22,8 @@ typedef uint16_t VariableId;
 typedef uint16_t ActorId;
 typedef uint16_t CurrencyId;
 
-/* Item identity.  The foundation stores possession/count only; the engine
- * defines the NONE sentinel and the start of the per-game content range.
- * The game names its items in src/game/game_ids.h. */
-typedef uint8_t ItemId;
-
-#define ITEM_NONE       0
-#define ITEM_FIRST_GAME 0x80
+/* Item identity.  Retained for event-system compatibility; the card system
+ * (deck.h) provides the replacement persistent collection. */
 
 /* Party member identity. */
 typedef enum {
@@ -62,16 +57,6 @@ typedef struct {
     CharacterState members[MAX_PARTY_MEMBERS];
     uint8_t count;
 } PartyState;
-
-typedef struct {
-    ItemId item_id;
-    uint8_t quantity;
-} InventoryEntry;
-
-typedef struct {
-    InventoryEntry entries[MAX_INVENTORY_ITEMS];
-    uint8_t count;
-} InventoryState;
 
 /* Bit-packed flag storage; flag N lives in byte (N-1)/8, bit (N-1)%8. */
 typedef struct {
@@ -118,12 +103,6 @@ typedef struct {
     ProgressionEntry entries[MAX_PROGRESSION_TARGETS];
 } ProgressionStore;
 
-/* Equipped loadout.  For the single-hero slice this is one weapon slot;
- * the game layer derives stats from it (see game_hero_attack). */
-typedef struct {
-    ItemId weapon;   /* ITEM_NONE when nothing is equipped */
-} EquipmentState;
-
 /* Persistent world actor state: survives scene reloads.  Keyed by the
  * stable ActorId of a particular spawned instance, not its type. */
 typedef struct {
@@ -141,13 +120,12 @@ typedef struct {
 typedef struct {
     SceneState scene;
     PartyState party;
-    InventoryState inventory;
+    CardState cards;
     FlagState flags;
     VariableState variables;
     CurrencyState currency;
     WorldState world;
     ProgressionStore progression;
-    EquipmentState equipment;
 } GameState;
 
 void game_state_zero(GameState *state);

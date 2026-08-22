@@ -269,6 +269,7 @@ The basic layout should be approximately:
 │          [SLIME]             │
 │                              │
 │ HERO               HP 40/40  │
+│             DECK: 10         │
 │                              │
 │ COMBO: SW2 BO3 SW4           │
 │                              │
@@ -1069,11 +1070,14 @@ or a small weighted random table.
 
 The enemy does not need to use the card system yet, but will in the future.
 
-> **DONE:** Enemies currently use one fixed non-card attack. After the player's
-> attack resolves, the battle enters an enemy telegraph phase that sets the
-> incoming damage to the enemy's attack value (defaulting to 3), then hands the
-> player the defend phase (`src/battle/battle.c::battle_update`). No enemy AI/weighted
-> random table yet — that is future work.
+> **DONE (updated):** Enemies now draw from per-enemy card decks
+> (`src/battle/enemy_deck_content.c`, registered game content). After the
+> player's attack resolves, the battle enters an enemy telegraph phase that
+> plays the enemy deck's next card (`EVENT_ENEMY_CARD_PLAYED`) and sets the
+> incoming damage to that card's value, then hands the player the defend phase
+> (`src/battle/battle.c::battle_update`). When the draw index wraps the deck,
+> it cycles back to the top. A fallback flat attack (value 3) remains only for
+> enemies with no registered deck.
 
 ---
 
@@ -1429,11 +1433,16 @@ Once the system works, implement shuffling.
 
 The player should draw replacement cards after cards are played according to the eventual deck rules.
 
-> **DONE:** The deck system is implemented: a default packed starter deck
-> (`s_default_starter_deck_packed` in `src/battle/deck.c`), a Fisher-Yates shuffle
-> with uniform reject-and-retry, draw + discard, and draw-to-replace after each
-> resolved combo (`battle_resolve_hand_discard` draws one replacement per played
-> card). Cards are represented as compact type+value structs, not strings.
+> **DONE:** The deck system is implemented: a Fisher-Yates shuffle with uniform
+> reject-and-retry, draw + discard, and draw-to-replace after each resolved combo
+> (`battle_resolve_hand_discard` draws one replacement per played card). Cards are
+> represented as compact type+value structs, not strings. Battles always draw from
+> the player's persistent deck; the packed fallback table (`s_starter_deck_packed`
+> in `src/battle/deck_init.c`, unpacked through the WRAM banked-call trampoline)
+> mirrors the granted 10-card starter deck (4xSW3 / 3xSH2 / 3xFI4) and only serves
+> empty/legacy state. Removals are floored at `DECK_MIN_CARDS` (5, one full hand)
+> by an engine backstop in `deck_remove_card`. Deck composition and management
+> rules live in `docs/deck.md` and `docs/deck-management.md`.
 
 ---
 
@@ -1761,6 +1770,7 @@ The target experience should look roughly like this:
 │          [SLIME]             │
 │                              │
 │ HERO               HP 40/40  │
+│             DECK: 10         │
 │                              │
 │ COMBO: SW2 BO3 SW4           │
 │                              │

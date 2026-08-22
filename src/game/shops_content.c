@@ -5,6 +5,6 @@
 
 /* ── Shop stock lists (game content, banked ROM) ─────────────────── */
 const ShopDefinition g_shops[] = {
-    { 1, 1, { ITEM_POTION } },
-    { 2, 1, { ITEM_NUT } }
+    { 1, 1, { CARD_HEALING_HERB } },
+    { 2, 1, { CARD_IRON_SWORD } }
 };

@@ -1,9 +1,37 @@
 {
   "name": "card_shield_defend",
   "test": true,
-  "description": "In battle, a shield card blocks the NEXT enemy attack by its shield value: pick SH5 after the enemy telegraphs 3 damage, and the hero takes 0 damage.  Also proves the block is one-shot against the next attack, not applied for the whole turn.",
+  "description": "In defend phase a shield card blocks the next enemy attack by its value: SH2 vs the slime's telegraphed SWORD(2) means the hero takes 0 damage. The block is one-shot against the next attack.",
   "actions": [
     {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 0,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "set_hand_card",
+      "index": 1,
+      "card_type": "SH",
+      "value": 2
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 1,
+      "cost": 1,
+      "uses": 255
+    },
+    {
       "type": "press",
       "button": "A"
     },
@@ -21,7 +49,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 122
     },
     {
       "type": "press",
@@ -37,7 +65,7 @@
     },
     {
       "type": "wait",
-      "frames": 12
+      "frames": 40
     }
   ],
   "assertions": [
@@ -47,7 +75,7 @@
     },
     {
       "type": "battle_player_hp",
-      "expected": 8
+      "expected": 10
     },
     {
       "type": "event_occurred",

@@ -1,7 +1,7 @@
 {
   "name": "quest_list",
   "test": true,
-  "description": "The QUEST tab (reached by cycling with SELECT) lists the ongoing MONSTER HUNT quest with its progress",
+  "description": "The QUEST tab (RIGHT from CARDS) lists the ongoing MONSTER HUNT quest with its progress",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -14,15 +14,7 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
+      "button": "RIGHT"
     },
     {
       "type": "wait",
@@ -46,12 +38,12 @@
     },
     {
       "type": "screen_row",
-      "row": 7,
+      "row": 5,
       "contains": "MONSTER HUNT"
     },
     {
       "type": "screen_row",
-      "row": 8,
+      "row": 6,
       "contains": "monsters: 1/3"
     }
   ],

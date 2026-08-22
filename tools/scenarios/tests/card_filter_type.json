@@ -1,12 +1,20 @@
 {
-  "name": "item_equip_filter",
+  "name": "card_filter_type",
   "test": true,
-  "description": "The ITEM tab shows only consumables: a sword in the inventory is not listed",
+  "description": "Type filter ATTACK shows only attack cards in the CARDS tab: the merged collection's single SW3 entry",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
       "type": "press",
       "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_filter",
+      "filter": "ATTACK"
     },
     {
       "type": "wait",
@@ -20,18 +28,18 @@
     },
     {
       "type": "screen_row",
-      "row": 5,
-      "contains": "POTION"
-    },
-    {
-      "type": "screen_row_not_contains",
-      "row": 5,
-      "contains": "SWORD"
-    },
-    {
-      "type": "screen_row_not_contains",
       "row": 6,
-      "contains": "SWORD"
+      "contains": "SW3"
+    },
+    {
+      "type": "screen_row_not_contains",
+      "row": 8,
+      "contains": "SH2"
+    },
+    {
+      "type": "screen_row_not_contains",
+      "row": 8,
+      "contains": "HE5"
     }
   ],
   "initial_state": {
@@ -41,10 +49,6 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8603,
-    "inventory": {
-      "SWORD": 1,
-      "POTION": 1
-    }
+    "seed": 8410
   }
 }

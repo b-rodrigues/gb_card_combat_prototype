@@ -1,54 +1,208 @@
 {
   "name": "card_battle_victory",
   "test": true,
-  "description": "Defeat enemy with combo and return to overworld on victory",
+  "description": "Playing through the slime trio with the real starter deck (attack and defend phases, exercising draw and reshuffle) ends in BATTLE_WON and returns to the overworld",
   "actions": [
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 35 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 10 }
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 13
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
+    }
   ],
   "assertions": [
     {
-      "type": "screen",
+      "type": "game_state",
       "expected": "OVERWORLD"
     },
     {
@@ -63,10 +217,12 @@
       "y": 8,
       "facing": "DOWN"
     },
-    "equipment": {
-      "weapon": "SWORD"
-    },
     "seed": 5002,
-    "start_battle": true
+    "party": {
+      "HERO": {
+        "hp": 60,
+        "max_hp": 60
+      }
+    }
   }
 }

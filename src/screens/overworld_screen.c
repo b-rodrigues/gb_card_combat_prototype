@@ -21,12 +21,13 @@ void start_battle_from_world(Game *g)
                  act->display_name ? act->display_name : "ENEMY",
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
-                 game_hero_attack(&g->state),
-                 act->hp, act->max_hp);
+                 act->hp, act->max_hp,
+                 &g->state.cards.deck,
+                 act->battle_type);
 
     if (act->battle_type == BATTLE_SLIME_TRIO) {
-        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
-        battle_add_enemy(&g->battle, "SLIME", 5, 5, 2);
+        battle_add_enemy(&g->battle, "SLIME", 5, 5);
+        battle_add_enemy(&g->battle, "SLIME", 5, 5);
     }
 
     audio_play_music(MUSIC_BATTLE);
@@ -74,8 +75,7 @@ void overworld_screen_update(Game *g)
     }
 
     if (input_pressed(INPUT_START)) {
-        g->item_menu_index = 0;
-        g->item_menu_tab = 0;
+        item_screen_reset(g);
         screen_change(g, SCREEN_ITEM);
         return;
     }

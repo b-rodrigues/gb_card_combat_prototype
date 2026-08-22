@@ -14,15 +14,7 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 3
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
+      "button": "RIGHT"
     },
     {
       "type": "wait",
@@ -36,22 +28,22 @@
     },
     {
       "type": "screen_row",
-      "row": 7,
+      "row": 5,
       "contains": "MONSTER HUNT"
     },
     {
       "type": "screen_row",
-      "row": 8,
+      "row": 6,
       "contains": "not started"
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 7,
       "contains": "LOST AMULET"
     },
     {
       "type": "screen_row",
-      "row": 10,
+      "row": 8,
       "contains": "active"
     }
   ],
@@ -62,7 +54,10 @@
       "y": 4,
       "facing": "DOWN"
     },
-    "seed": 8411,
+    "seed": 8410,
+    "flags": {
+      "ARRIVED_TOWN": true
+    },
     "variables": {
       "MERCHANT_QUEST": 1
     }

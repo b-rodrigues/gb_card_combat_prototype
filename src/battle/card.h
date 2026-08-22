@@ -5,18 +5,23 @@
 #include <stdbool.h>
 
 typedef enum {
-    CARD_TYPE_SWORD = 0,  /* SW: Physical attack */
-    CARD_TYPE_SHIELD = 1, /* SH: Defense / block */
-    CARD_TYPE_BOW = 2,    /* BO: Ranged physical attack */
-    CARD_TYPE_FIRE = 3,   /* FI: Elemental fire attack */
-    CARD_TYPE_HEAL = 4    /* HE: Restore HP */
-} CardType;
+    BATTLE_CARD_TYPE_SWORD = 0,  /* SW: Physical attack */
+    BATTLE_CARD_TYPE_SHIELD = 1, /* SH: Defense / block */
+    BATTLE_CARD_TYPE_BOW = 2,    /* BO: Ranged physical attack */
+    BATTLE_CARD_TYPE_FIRE = 3,   /* FI: Elemental fire attack */
+    BATTLE_CARD_TYPE_HEAL = 4    /* HE: Restore HP */
+} BattleCardType;
 
-#define CARD_TYPE_COUNT 5
+/* Sentinel for an empty hand slot (played cards stay empty until the turn-
+ * start draw refills them).  Must not collide with any BattleCardType; kept
+ * as a #define because SDCC enums are signed 8-bit (0x80+ would wrap). */
+#define BATTLE_CARD_TYPE_EMPTY 0xFF
 
 typedef struct {
-    uint8_t type;   /* CardType */
-    uint8_t value;  /* Number 1 - 9 */
+    uint8_t type;           /* BattleCardType */
+    uint8_t value;          /* Number 1 - 9 */
+    uint8_t uses_remaining; /* 0 = depleted; 0xFF = unlimited */
+    uint8_t cost;           /* Energy cost to play (paid from Battle.energy) */
 } Card;
 
 /* Get one-line short description for card type */

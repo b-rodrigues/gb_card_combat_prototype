@@ -1,0 +1,54 @@
+{
+  "name": "card_sort_power",
+  "test": true,
+  "description": "Power-desc sort shows strongest cards first in the CARDS tab: FI4, SW3, SH2 for the granted starter collection",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_sort",
+      "mode": "POWER_DESC"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 6,
+      "contains": "FI4"
+    },
+    {
+      "type": "screen_row",
+      "row": 8,
+      "contains": "SW3"
+    },
+    {
+      "type": "screen_row",
+      "row": 10,
+      "contains": "SH2"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8410
+  }
+}

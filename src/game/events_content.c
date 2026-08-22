@@ -55,7 +55,7 @@ const EventDefinition g_events[] = {
         3,
         {
             { EVENT_ACTION_DIALOGUE, DIALOGUE_ID_QUEST_COMPLETE, 0, 0 },
-            { EVENT_ACTION_ADD_ITEM, ITEM_SWORD, 1, 0 },
+            { EVENT_ACTION_ADD_ITEM, CARD_IRON_SWORD, 1, 0 },
             { EVENT_ACTION_SET_VARIABLE, VARIABLE_ID_QUEST_MONSTER_HUNT, 2, 0 }
         }
     },
@@ -110,14 +110,14 @@ const EventDefinition g_events[] = {
         EVENT_ID_MERCHANT_DELIVER, EVENT_TRIGGER_INTERACT, ENTITY_ID_MERCHANT, EVENT_MAP_ANY,
         2,
         {
-            { EVENT_COND_ITEM_COUNT, ITEM_AMULET, 1, false, true },
+            { EVENT_COND_ITEM_COUNT, CARD_AMULET, 1, false, true },
             { EVENT_COND_VARIABLE, VARIABLE_ID_MERCHANT_QUEST, 1, false, false }
         },
         4,
         {
             { EVENT_ACTION_DIALOGUE, DIALOGUE_ID_MERCHANT_THANKS, 0, 0 },
             { EVENT_ACTION_ADD_CURRENCY, CURRENCY_ID_GOLD, 15, 0 },
-            { EVENT_ACTION_REMOVE_ITEM, ITEM_AMULET, 1, 0 },
+            { EVENT_ACTION_REMOVE_ITEM, CARD_AMULET, 1, 0 },
             { EVENT_ACTION_SET_VARIABLE, VARIABLE_ID_MERCHANT_QUEST, 2, 0 }
         }
     },
@@ -135,7 +135,7 @@ const EventDefinition g_events[] = {
         3,
         {
             { EVENT_ACTION_DIALOGUE, DIALOGUE_ID_AMULET_FOUND, 0, 0 },
-            { EVENT_ACTION_ADD_ITEM, ITEM_AMULET, 1, 0 },
+            { EVENT_ACTION_ADD_ITEM, CARD_AMULET, 1, 0 },
             { EVENT_ACTION_SET_VARIABLE, VARIABLE_ID_MERCHANT_QUEST, 1, 0 }
         }
     }

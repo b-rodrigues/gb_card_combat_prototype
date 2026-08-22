@@ -1,0 +1,78 @@
+{
+  "name": "deck_min_ui_message",
+  "test": true,
+  "description": "CARDS tab reaching the DECK_MIN_CARDS floor through real gameplay: on the fully-decked 10-card starter, A on the maxed Iron Sword clears all four copies (allowed: deck 10 -> 6), then A on the still-maxed Wooden Shield would drop 6 -> 3 and is rejected all-or-nothing with a transient DECK MIN 5 message and no further deck telemetry.",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "START"
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 50
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 10
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "ITEM"
+    },
+    {
+      "type": "screen_row",
+      "row": 16,
+      "contains": "DECK MIN 5"
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_REMOVED_FROM_DECK",
+      "count": 4
+    },
+    {
+      "type": "event_count",
+      "event": "CARD_ADDED_TO_DECK",
+      "count": 0
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 8411
+  }
+}
