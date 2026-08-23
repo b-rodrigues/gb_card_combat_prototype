@@ -91,6 +91,9 @@ testable, save/load works, and the memory budget is understood.
 
 ### LATER
 
+- Dialogue boxes: raise `MAX_DIALOGUE_LINES` beyond 8 for richer NPC /
+  signpost text — constraints and deferred checklist in
+  `docs/dialogue-boxes.md`.
 - Extract a reusable template repo from this codebase
 - Start the actual game repository on top of the foundation
 
