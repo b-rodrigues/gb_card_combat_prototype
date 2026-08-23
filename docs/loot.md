@@ -1621,3 +1621,68 @@ NEW CARD INSTANCE
 That loop gives the game a strong central identity:
 
 > **Fight with cards, win cards, build better decks, sell valuable cards for ECUs, and constantly hunt for the next strange, powerful, or valuable procedural drop.**
+
+
+---
+
+# 34. Increment 1 — Card Instance Model (implementation plan)
+
+**Branch**: `loot-instances`.  **Scope**: the §33 data model and storage
+only -- no procedural generation, no affixes, no selling, no battle
+wiring.  With no generator existing yet the loot collection is always
+empty in real play, so gameplay behavior is provably unchanged; all risk
+sits in storage and persistence, which the harness covers.
+
+## 34.1 Data model (`src/rpg/loot.h`)
+
+```c
+#define LOOT_MAX_INSTANCES 12
+
+typedef struct {
+    CardId   archetype;   /* catalog card this instance is based on */
+    uint8_t  rarity;      /* Rarity enum; COMMON only in increment 1 */
+    uint8_t  affixes;     /* packed prefix/suffix ids; 0 = none (§28) */
+    uint8_t  power;       /* 0 = archetype default (later-phase override) */
+    uint8_t  cost;        /* 0 = archetype default */
+    uint16_t sell_value;  /* reserved for the selling phase; ECUs */
+} LootCardInstance;       /* ~7 bytes */
+
+typedef struct {
+    LootCardInstance cards[LOOT_MAX_INSTANCES];
+    uint8_t count;
+} LootCollectionState;
+```
+
+12 instances x ~7 bytes = ~90 bytes of GameState.  `Rarity` is an open
+enum (COMMON only for now); affix packing is reserved space per §28.
+
+## 34.2 Storage decisions
+
+* `GameState.loot` added; **SAVE_VERSION 1 -> 2**.  Old saves are
+  rejected and start fresh -- no migration (design decision).
+* Hybrid architecture stands: fixed catalog cards remain count-based in
+  `DeckState` (the 252-byte SRAM slot cannot hold a fully instanced
+  collection); only generated loot lives in the instance layer.
+* The save/load roundtrip covers the new section automatically once it
+  is part of `GameState`.
+
+## 34.3 Deliberate deferrals
+
+* **Battle wiring deferred to Increment 2**: with an always-empty
+  collection there is nothing for `battle_init_from_deck_state` to
+  consume; wiring lands together with the generator that fills drops.
+* No snapshot wire-contract changes: observability is via telemetry now;
+  a proper loot snapshot section arrives with Increment 2's assertions
+  on generated stats.
+
+## 34.4 Observability & harness
+
+* New telemetry `EVENT_LOOT_CARD_ADDED` (d0 = archetype, d1 = count
+  after), emitted by `loot_collection_add()` on success only.
+* New debug action `DBG_ACT_LOOT_ADD` (archetype, rarity) mirrors the
+  established debug-action plumbing (scenarios.c + emulator.py +
+  test_runner.py).
+* Scenario `loot_instance_persistence.json`: add one instance ->
+  SRAM save -> load -> add another -> asserts the second add reports
+  count-after == 2, proving persistence through the roundtrip without
+  needing a snapshot field.
