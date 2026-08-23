@@ -71,6 +71,10 @@ testable, save/load works, and the memory budget is understood.
     (clones of the struck actor; the final boss stands alone), regular
     enemy HP doubled (slimes 10-16, bats 8), boss tuned to 50 HP with a
     SET_ENEMY_HP scenario hook pinning it to 20 for deterministic tests.
+  - COMBO row shows the pending hand tier LIVE while selecting (blanks on
+    resolution; executed results announce via the banner).  The Lost
+    Amulet now renders in the CARDS tab as a non-deckable QUEST ITEM, and
+    the Merchant sells a heavy BOW 10 (30g).
   - Poker hand tiers implemented (strict sizes; PAIR..FIVE KIND, FLUSH,
     STRAIGHT, FULL HOUSE, STRAIGHT FLUSH with tier multipliers + suited
     bonus), combo-scaled on-hit riders, and the DA1 POISON DAGGER starter

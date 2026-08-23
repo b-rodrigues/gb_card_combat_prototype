@@ -43,21 +43,21 @@ static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
 
 /* Classify n card values (order-independent).  vals are 1..9,
  * types are BattleCardType. */
-static uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
-                              uint8_t n)
+uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
+                       uint8_t n)
 {
-    uint8_t hist[9]; /* values are 1..9 */
+    uint8_t hist[10]; /* values are 1..10 */
     uint8_t i, distinct, min, max, pairs, trips;
     uint8_t quads = 0, fives = 0;
     uint8_t all_same_type = 1;
 
-    for (i = 0; i < 9; i++) hist[i] = 0;
+    for (i = 0; i < 10; i++) hist[i] = 0;
 
-    min = 9;
+    min = 10;
     max = 0;
     for (i = 0; i < n; i++) {
         uint8_t v = vals[i];
-        if (v < 1 || v > 9) return HAND_NONE;
+        if (v < 1 || v > 10) return HAND_NONE;
         hist[v - 1]++;
         if (v < min) min = v;
         if (v > max) max = v;
@@ -70,7 +70,7 @@ static uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
     /* Sequential with no duplicates: straight / straight flush (5 only). */
     if ((uint8_t)(max - min) == (uint8_t)(n - 1)) {
         distinct = 0;
-        for (i = 0; i < 9; i++) {
+        for (i = 0; i < 10; i++) {
             if (hist[i] != 0) distinct++;
         }
         if (distinct == n && n == 5) {
@@ -83,7 +83,7 @@ static uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
 
     pairs = 0;
     trips = 0;
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < 10; i++) {
         if (hist[i] >= 5) fives++;
         else if (hist[i] == 4) quads++;
         else if (hist[i] == 3) trips++;

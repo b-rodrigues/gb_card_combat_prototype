@@ -185,41 +185,34 @@ WorldMoveResult world_update_move(World *w, const GameState *state)
  * staged pointers, results through the shared byte below. */
 uint8_t g_px_result;
 
-static void px_dispatch(uint8_t variant, const void *p)
+static uint8_t px_dispatch(uint8_t variant, const void *p)
 {
     g_bk_call_bank = 2;
     g_bk_call_target = (uint16_t)&world_px_banked;
     g_bk_byte_a = variant;
     g_bk_ptr_a = (void *)p;
     banked_call_run();
+    return g_px_result;
 }
 
 uint8_t world_player_px(const World *w)
 {
-    if (!w) return 0;
-    px_dispatch(0, w);
-    return g_px_result;
+    return w ? px_dispatch(0, w) : 0;
 }
 
 uint8_t world_player_py(const World *w)
 {
-    if (!w) return 0;
-    px_dispatch(1, w);
-    return g_px_result;
+    return w ? px_dispatch(1, w) : 0;
 }
 
 uint8_t world_actor_px(const WorldActorRuntime *a)
 {
-    if (!a) return 0;
-    px_dispatch(2, a);
-    return g_px_result;
+    return a ? px_dispatch(2, a) : 0;
 }
 
 uint8_t world_actor_py(const WorldActorRuntime *a)
 {
-    if (!a) return 0;
-    px_dispatch(3, a);
-    return g_px_result;
+    return a ? px_dispatch(3, a) : 0;
 }
 
 void world_on_battle_end(Game *g, bool victory)

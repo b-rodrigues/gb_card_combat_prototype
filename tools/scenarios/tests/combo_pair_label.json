@@ -25,22 +25,18 @@
       "value": 3
     },
     {
-      "type": "set_hand_card_meta",
-      "index": 0,
-      "cost": 1,
-      "uses": 255
-    },
-    {
       "type": "set_hand_card",
       "index": 1,
       "card_type": "FI",
       "value": 3
     },
     {
-      "type": "set_hand_card_meta",
-      "index": 1,
-      "cost": 1,
-      "uses": 255
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 8
     },
     {
       "type": "press",
@@ -48,23 +44,7 @@
     },
     {
       "type": "wait",
-      "frames": 6
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 6
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 15
+      "frames": 200
     }
   ],
   "assertions": [
@@ -78,21 +58,8 @@
       "contains": "PAIR"
     },
     {
-      "type": "event_arg",
-      "event": "COMBO_RESOLVED",
-      "index": 0,
-      "value": 1
-    },
-    {
-      "type": "event_arg",
-      "event": "EFFECT_RESOLVED",
-      "index": 0,
-      "value": 7
-    },
-    {
-      "type": "event_count",
-      "event": "DAMAGE_DEALT",
-      "count": 1
+      "type": "event_not_occurred",
+      "event": "DAMAGE_DEALT"
     }
   ]
 }

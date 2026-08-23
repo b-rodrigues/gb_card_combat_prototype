@@ -1,5 +1,6 @@
 #include "rpg/deck.h"
 #include "rpg/cards.h"
+#include "banked.h"
 #include <stddef.h>
 
 /* ── Collection internals ───────────────────────────────────────── */
@@ -72,7 +73,9 @@ uint8_t deck_collection_count(const CardState *cs, CardId id)
 
 uint8_t deck_count_in_deck(const DeckState *d, CardId id)
 {
-    uint8_t i, n = 0;
+    uint8_t i;
+    uint8_t n = 0;
+    if (!d) return 0;
     for (i = 0; i < d->count; i++) {
         if (d->cards[i] == id) n++;
     }

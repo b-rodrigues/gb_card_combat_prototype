@@ -14,8 +14,8 @@
  * dialogue_start_def() while a dialogue is still active would overwrite the
  * staging; the screen model prevents this (only one dialogue is ever active,
  * started from the overworld screen and not restarted until it ends). */
-static const DialogueDefinition *g_dialogues = NULL;
-static uint8_t g_dialogue_count = 0;
+const DialogueDefinition *g_dialogue_table = NULL;
+uint8_t g_dialogue_table_count = 0;
 static uint8_t g_dialogue_bank = 2;
 
 /* Single-flight WRAM staging (not reentrant): a nested banked row/text
@@ -23,22 +23,22 @@ static uint8_t g_dialogue_bank = 2;
  * dialogue is ever active and scene_load() does not re-enter dialogue
  * resolution; keep that invariant. */
 static DialogueDefinition g_dialogue_scratch;
-static char g_dlg_speaker[12];
-static char g_dlg_lines[MAX_DIALOGUE_LINES][21];
+char g_dlg_speaker[12];
+char g_dlg_lines[MAX_DIALOGUE_LINES][21];
 
 /* banked_copy() takes a uint8_t byte count; a larger row cannot be staged. */
 typedef char dialogue_def_fits_banked_copy[sizeof(DialogueDefinition) <= 255 ? 1 : -1];
 
 void dialogue_register(const DialogueDefinition *table, uint8_t count, uint8_t bank)
 {
-    g_dialogues = table;
-    g_dialogue_count = count;
+    g_dialogue_table = table;
+    g_dialogue_table_count = count;
     g_dialogue_bank = bank;
 }
 
 static const DialogueDefinition *dialogue_get_row(uint8_t i)
 {
-    banked_copy(g_dialogue_bank, &g_dialogue_scratch, &g_dialogues[i], sizeof(DialogueDefinition));
+    banked_copy(g_dialogue_bank, &g_dialogue_scratch, &g_dialogue_table[i], sizeof(DialogueDefinition));
     return &g_dialogue_scratch;
 }
 
@@ -55,52 +55,19 @@ void dialogue_init(DialogueState *d)
 
 void dialogue_start_def(DialogueState *d, DialogueId id)
 {
-    uint8_t i;
-    const DialogueDefinition *def = NULL;
-
-    if (!d || !g_dialogues) return;
-
-    for (i = 0; i < g_dialogue_count; i++) {
-        const DialogueDefinition *row = dialogue_get_row(i);
-        if (row->id == id) {
-            def = row;
-            break;
-        }
+    /* Body runs banked (src/core/dialogue_banked.c) reading the registered
+     * table directly; the wrapper emits DIALOGUE_STARTED afterwards
+     * (banked code cannot call fixed-bank telemetry). */
+    if (!d) return;
+    d->active = false;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&dialogue_start_def_banked;
+    g_bk_ptr_a = (void *)d;
+    g_bk_byte_a = id;
+    banked_call_run();
+    if (d->active) {
+        telemetry_emit(EVENT_DIALOGUE_STARTED, (uint8_t)d->id, 0, 0, 0);
     }
-    if (!def) return;
-
-    d->active = true;
-    d->id = def->id;
-    d->current_line = 0;
-    d->line_count = (def->line_count > MAX_DIALOGUE_LINES) ? MAX_DIALOGUE_LINES : def->line_count;
-    d->completion_flag = def->completion_flag;
-
-    /* Stage speaker + line text into WRAM so d->speaker/.lines stay valid
-     * after the ROM bank is restored.  Fixed-size copies + forced NUL keep
-     * the strings terminated regardless of source length. */
-    if (def->speaker) {
-        banked_copy(g_dialogue_bank, g_dlg_speaker, def->speaker, 11);
-        g_dlg_speaker[11] = 0;
-        d->speaker = g_dlg_speaker;
-    } else {
-        d->speaker = "";
-    }
-
-    for (i = 0; i < d->line_count; i++) {
-        const char *line_ptr = def->lines[i];
-        if (line_ptr) {
-            banked_copy(g_dialogue_bank, g_dlg_lines[i], line_ptr, 20);
-            g_dlg_lines[i][20] = 0;
-            d->lines[i] = g_dlg_lines[i];
-        } else {
-            d->lines[i] = "";
-        }
-    }
-    for (; i < MAX_DIALOGUE_LINES; i++) {
-        d->lines[i] = "";
-    }
-
-    telemetry_emit(EVENT_DIALOGUE_STARTED, (uint8_t)d->id, 0, 0, 0);
 }
 
 bool dialogue_next(DialogueState *d)
