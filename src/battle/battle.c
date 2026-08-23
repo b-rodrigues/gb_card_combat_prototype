@@ -102,6 +102,14 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
     b->dirty = BATTLE_DIRTY_ALL;
 }
 
+/* Transient HUD message (row 12): id 1 = NO ENERGY, 2 = OUT OF USES. */
+static void battle_msg(Battle *b, uint8_t id)
+{
+    b->msg_id = id;
+    b->msg_ttl = 45;
+    b->dirty |= BATTLE_DIRTY_MSG;
+}
+
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
 {
     uint8_t i;
@@ -205,6 +213,8 @@ void battle_card_select(Battle *b)
     }
 
     if (!hand_card_playable(b, b->cursor_pos)) {
+        battle_msg(b,
+                   (b->hand[b->cursor_pos].uses_remaining == 0) ? 2 : 1);
         return;
     }
 
@@ -451,6 +461,10 @@ void battle_update(Battle *b)
     if (!b || b->battle_over) return;
 
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        if (b->msg_ttl > 0 && --b->msg_ttl == 0) {
+            b->msg_id = 0;
+            b->dirty |= BATTLE_DIRTY_MSG;
+        }
         if (b->timer_ticks > 0) {
             b->timer_ticks--;
             if (b->phase == BATTLE_PHASE_PLAYER_DEFEND && ((b->timer_ticks & 15) == 0 || (b->timer_ticks & 15) == 15)) {

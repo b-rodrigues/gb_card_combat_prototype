@@ -308,4 +308,9 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_COMBO) battle_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) battle_draw_battle_hand(battle);
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
+    if (d & BATTLE_DIRTY_MSG) {
+        battle_draw_text_line(0, 12,
+            (battle->msg_id == 1) ? "NO ENERGY!" :
+            (battle->msg_id == 2) ? "OUT OF USES!" : NULL, 12);
+    }
 }

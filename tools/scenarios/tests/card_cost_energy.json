@@ -1,7 +1,7 @@
 {
   "name": "card_cost_energy",
   "test": true,
-  "description": "Energy pool (5/phase) gates combo building: two cost-2 cards select, the third is rejected (2+2+2 > 5), exactly 2 cards resolve per phase, and the pool refreshes at the defend phase. Ends inside DEFENSE_RESOLVE with energy 5-4=1.",
+  "description": "Energy pool (6/phase) gates combo building: three cost-2 cards select (2+2+2 = 6 exactly), the fourth is rejected (8 > 6), the hand executes as suited THREE KIND for 6 damage, and the pool refreshes at the next decision phase.  Rejection feedback itself is covered by battle_reject_message.",
   "actions": [
     {
       "type": "wait",
@@ -93,94 +93,6 @@
     },
     {
       "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 15
-    },
-    {
-      "type": "wait",
-      "frames": 190
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SH",
-      "value": 1
-    },
-    {
-      "type": "set_hand_card_meta",
-      "index": 0,
-      "cost": 2,
-      "uses": 255
-    },
-    {
-      "type": "set_hand_card",
-      "index": 1,
-      "card_type": "SH",
-      "value": 1
-    },
-    {
-      "type": "set_hand_card_meta",
-      "index": 1,
-      "cost": 2,
-      "uses": 255
-    },
-    {
-      "type": "set_hand_card",
-      "index": 2,
-      "card_type": "SH",
-      "value": 1
-    },
-    {
-      "type": "set_hand_card_meta",
-      "index": 2,
-      "cost": 2,
-      "uses": 255
-    },
-    {
-      "type": "set_hand_card",
-      "index": 3,
-      "card_type": "SH",
-      "value": 1
-    },
-    {
-      "type": "set_hand_card_meta",
-      "index": 3,
-      "cost": 2,
-      "uses": 255
-    },
-    {
-      "type": "set_hand_card",
-      "index": 4,
-      "card_type": "SH",
-      "value": 1
-    },
-    {
-      "type": "set_hand_card_meta",
-      "index": 4,
-      "cost": 2,
-      "uses": 255
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 6
-    },
-    {
-      "type": "press",
-      "button": "A"
-    },
-    {
-      "type": "wait",
-      "frames": 6
-    },
-    {
-      "type": "press",
       "button": "A"
     },
     {
@@ -193,7 +105,15 @@
     },
     {
       "type": "wait",
-      "frames": 25
+      "frames": 60
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 60
     }
   ],
   "assertions": [
@@ -202,21 +122,23 @@
       "expected": "BATTLE"
     },
     {
-      "type": "event_count",
-      "event": "CARD_PLAYED",
-      "count": 4
-    },
-    {
       "type": "event_occurred",
       "event": "DAMAGE_DEALT"
     },
     {
-      "type": "event_occurred",
-      "event": "DAMAGE_RECEIVED"
+      "type": "event_count",
+      "event": "CARD_PLAYED",
+      "count": 3
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 0,
+      "value": 6
     },
     {
       "type": "battle_energy",
-      "expected": 1
+      "expected": 6
     }
   ],
   "initial_state": {
