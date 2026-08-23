@@ -33,11 +33,19 @@ void dialogue_start_def_banked(void)
     d->line_count = (def->line_count > MAX_DIALOGUE_LINES) ? MAX_DIALOGUE_LINES : def->line_count;
     d->completion_flag = def->completion_flag;
 
-    /* Speaker + lines copy byte-wise from bank-2 rodata into WRAM; forced
-     * NUL keeps strings terminated regardless of source length. */
-    for (i = 0; i < 11 && def->speaker[i]; i++) g_dlg_speaker[i] = def->speaker[i];
-    g_dlg_speaker[i] = 0;
-    d->speaker = g_dlg_speaker;
+    /* Speaker: NULL means "no named speaker" -- stage an empty WRAM string
+     * (never a bank-2 literal address; DialogueState is read later from the
+     * fixed bank).  Lines below keep their own NULL-tolerant check. */
+    if (def->speaker) {
+        for (i = 0; i < 11 && def->speaker[i]; i++) {
+            g_dlg_speaker[i] = def->speaker[i];
+        }
+        g_dlg_speaker[i] = 0;
+        d->speaker = g_dlg_speaker;
+    } else {
+        g_dlg_speaker[0] = 0;
+        d->speaker = g_dlg_speaker;
+    }
 
     for (i = 0; i < MAX_DIALOGUE_LINES; i++) {
         uint8_t j;
