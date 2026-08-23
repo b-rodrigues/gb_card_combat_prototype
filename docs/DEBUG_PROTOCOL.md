@@ -484,6 +484,13 @@ dialogue + sets `MET_MAYOR`), `MAYOR_GREETING` (already met),
 `GUARD_AFTER_MAYOR` / `GUARD_GREETING` (Guard reacts differently once
 `MET_MAYOR`).
 
+### Battle setup helpers
+
+`set_enemy_hp` (`DBG_ACT_SET_ENEMY_HP`) pins an enemy combatant's current HP
+in the active battle: `{"type": "set_enemy_hp", "index": 0, "hp": 20}`.
+Direct state write, no telemetry -- scenario setup semantics (deterministic
+fight lengths, e.g. the boss fight pins the Lord of Slimes to 20 HP).
+
 ### Items, money, progression & the shop
 
 * Item effects are generic primitives (`src/rpg/items.{h,c}`):

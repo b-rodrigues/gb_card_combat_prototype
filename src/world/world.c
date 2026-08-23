@@ -181,40 +181,45 @@ WorldMoveResult world_update_move(World *w, const GameState *state)
     return MOVE_RESULT_MOVED;
 }
 
-static uint8_t calc_interp(uint8_t base, uint8_t target, uint8_t progress)
+/* Pixel helpers run banked (src/world/px_banked.c) -- pure arithmetic,
+ * staged pointers, results through the shared byte below. */
+uint8_t g_px_result;
+
+static void px_dispatch(uint8_t variant, const void *p)
 {
-    uint8_t px = (uint8_t)(base << 3);
-    if (target > base) return (uint8_t)(px + progress);
-    if (target < base) return (uint8_t)(px - progress);
-    return px;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&world_px_banked;
+    g_bk_byte_a = variant;
+    g_bk_ptr_a = (void *)p;
+    banked_call_run();
 }
 
 uint8_t world_player_px(const World *w)
 {
     if (!w) return 0;
-    return (w->move_state == MOVE_STATE_MOVING) ?
-        calc_interp(w->player.position.x, w->move_target_x, w->move_progress) :
-        (uint8_t)(w->player.position.x << 3);
+    px_dispatch(0, w);
+    return g_px_result;
 }
 
 uint8_t world_player_py(const World *w)
 {
     if (!w) return 0;
-    return (w->move_state == MOVE_STATE_MOVING) ?
-        calc_interp(w->player.position.y, w->move_target_y, w->move_progress) :
-        (uint8_t)(w->player.position.y << 3);
+    px_dispatch(1, w);
+    return g_px_result;
 }
 
 uint8_t world_actor_px(const WorldActorRuntime *a)
 {
     if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->x, a->move_target_x, a->move_progress) : (uint8_t)(a->x << 3);
+    px_dispatch(2, a);
+    return g_px_result;
 }
 
 uint8_t world_actor_py(const WorldActorRuntime *a)
 {
     if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->y, a->move_target_y, a->move_progress) : (uint8_t)(a->y << 3);
+    px_dispatch(3, a);
+    return g_px_result;
 }
 
 void world_on_battle_end(Game *g, bool victory)

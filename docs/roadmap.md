@@ -67,6 +67,10 @@ testable, save/load works, and the memory budget is understood.
     RNG), per-round poison ticks with combat-death resolution, and
     `STATUS_APPLIED`/`STATUS_TICKED` telemetry.  Covered by
     `status_poison_apply` / `status_poison_resist`.
+  - Enemy encounters rebalanced: ALL hostile engagements spawn as trios
+    (clones of the struck actor; the final boss stands alone), regular
+    enemy HP doubled (slimes 10-16, bats 8), boss tuned to 50 HP with a
+    SET_ENEMY_HP scenario hook pinning it to 20 for deterministic tests.
   - Poker hand tiers implemented (strict sizes; PAIR..FIVE KIND, FLUSH,
     STRAIGHT, FULL HOUSE, STRAIGHT FLUSH with tier multipliers + suited
     bonus), combo-scaled on-hit riders, and the DA1 POISON DAGGER starter

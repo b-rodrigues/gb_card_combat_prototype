@@ -25,9 +25,18 @@ void start_battle_from_world(Game *g)
                  &g->state.cards.deck,
                  act->battle_type);
 
-    if (act->battle_type == BATTLE_SLIME_TRIO) {
-        battle_add_enemy(&g->battle, "SLIME", 5, 5);
-        battle_add_enemy(&g->battle, "SLIME", 5, 5);
+    /* Every hostile encounter engages as a trio: the struck actor plus
+     * two clones of its stats -- EXCEPT actors with no enemy deck
+     * (BATTLE_NONE): the Lord of Slimes stands alone as a proper final
+     * boss.  Enemy decks wrap their draw index, so per-type decks serve
+     * trios unchanged. */
+    if (act->battle_type != BATTLE_NONE) {
+        battle_add_enemy(&g->battle,
+                         act->display_name ? act->display_name : "ENEMY",
+                         act->hp, act->max_hp);
+        battle_add_enemy(&g->battle,
+                         act->display_name ? act->display_name : "ENEMY",
+                         act->hp, act->max_hp);
     }
 
     audio_play_music(MUSIC_BATTLE);
