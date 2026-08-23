@@ -44,63 +44,13 @@ void telemetry_set_frame_ptr(const uint32_t *frame_ptr)
 }
 
 #ifdef DEBUG_BUILD
-#include "game.h"
-extern Game g_game;
-
-/* Broad screen value for backward-compatible snapshot byte 0.
- * Dialogue is a sub-screen of overworld in the legacy game_state encoding. */
-static uint8_t screen_broad(ScreenId s)
-{
-    if (s == SCREEN_BATTLE) return 1;
-    if (s == SCREEN_GAME_OVER) return 2;
-    if (s == SCREEN_THANKS) return 3;
-    return 0;
-}
-
 void debug_snapshot(void)
 {
-    const Game *g = &g_game;
-    uint8_t first_hp = 0;
-    uint8_t first_active = 0;
-    uint8_t i;
-
-    for (i = 0; i < MAX_WORLD_ACTORS; i++) {
-        if (g->world.actors[i].active) {
-            first_hp = g->world.actors[i].hp;
-            first_active = 1;
-            break;
-        }
-    }
-
-    g_snap_buf[0] = screen_broad(g->screen);
-    g_snap_buf[1] = g->world.player.position.x;
-    g_snap_buf[2] = g->world.player.position.y;
-    g_snap_buf[3] = g->world.player.hp;
-    g_snap_buf[4] = first_hp;
-    g_snap_buf[5] = first_active;
-    g_snap_buf[6] = (uint8_t)audio_get_current_track();
-    g_snap_buf[7] = (uint8_t)g->battle.turn;
-    g_snap_buf[8] = (uint8_t)g->battle.result;
-    g_snap_buf[9] = g->battle.player.hp;
-    g_snap_buf[10] = g->battle.enemies[g->battle.target_idx].hp;
-    g_snap_buf[11] = (uint8_t)g->world.map_id;
-    g_snap_buf[12] = g->state.flags.bytes[0];
-    g_snap_buf[13] = g->dialogue.active ? 1 : 0;
-    g_snap_buf[14] = g->dialogue.current_line;
-    g_snap_buf[15] = (uint8_t)g->dialogue.id;
-    g_snap_buf[16] = (uint8_t)g->world.player.facing;
-    g_snap_buf[17] = g->game_over_choice;
-    g_snap_buf[18] = (uint8_t)g->screen;
-    g_snap_buf[19] = (uint8_t)g->state.scene.scene_id;
-
-    actor_write_snapshot(&g->world, &g_snap_buf[SNAPSHOT_BASE_SIZE], MAX_SNAPSHOT_ACTORS);
-
-    g_snap_buf[SNAPSHOT_BATTLE_ENERGY_OFF] = g->battle.energy;
-    g_snap_buf[SNAPSHOT_BATTLE_DRAW_OFF] =
-        (uint8_t)(g->battle.deck.count - g->battle.deck.draw_idx);
-    g_snap_buf[SNAPSHOT_BATTLE_DISCARD_OFF] = g->battle.deck.discard_count;
-
-    debug_state_snapshot();
+    /* Body runs banked (src/debug/snapshot_banked.c, ROM bank 2) through
+     * the WRAM trampoline; no staging args are needed. */
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&debug_snapshot_banked;
+    banked_call_run();
 }
 
 void debug_state_snapshot(void)

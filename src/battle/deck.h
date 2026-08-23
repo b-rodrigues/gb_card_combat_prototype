@@ -34,8 +34,10 @@ void deck_reshuffle(Deck *d);
 /* Banked no-arg body (ROM bank 2) dispatched by deck_reshuffle(). */
 void deck_reshuffle_banked(void);
 
-/* Add a card to the discard pile */
-void deck_discard(Deck *d, Card c);
+/* Add a card to the discard pile (card staged through a pointer so the
+ * banked body can read it; see deck_banked.c). */
+void deck_discard(Deck *d, const Card *c);
+void deck_discard_banked(void);
 
 /* Enemy compact deck: small fixed-size deck for enemy AI card draws. */
 typedef struct {

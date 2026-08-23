@@ -571,23 +571,28 @@ void ui_update_battle(const Battle *battle)
 }
 
 /* Indexed by BattleCardType (src/battle/card.h). */
-static const char *const s_card_bt_codes[5] = {
-    "SW", "SH", "BO", "FI", "HE"
-};
+static const char s_card_bt_codes[] = "SW\0SH\0BO\0FI\0HE\0DA";
 
 static const char *ui_card_code(uint8_t battle_type)
 {
-    return (battle_type <= BATTLE_CARD_TYPE_HEAL) ?
-        s_card_bt_codes[battle_type] : "??";
+    return (battle_type <= BATTLE_CARD_TYPE_DAGGER) ?
+        (s_card_bt_codes + (battle_type * 3)) : "??";
 }
 
 void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
 {
+    /* Two-digit powers (e.g. BOW 10) need 5 bytes incl. NUL. */
     const char *bt = ui_card_code(battle_type);
     out[0] = bt[0];
     out[1] = bt[1];
-    out[2] = (char)('0' + (power % 10));
-    out[3] = '\0';
+    if (power >= 10) {
+        out[2] = (char)('0' + (power / 10));
+        out[3] = (char)('0' + (power % 10));
+        out[4] = '\0';
+    } else {
+        out[2] = (char)('0' + (power % 10));
+        out[3] = '\0';
+    }
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

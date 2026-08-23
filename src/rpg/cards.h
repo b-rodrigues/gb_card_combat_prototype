@@ -45,6 +45,11 @@ typedef struct {
     uint8_t effect;     /* CardEffectType */
     uint8_t battle_type; /* BattleCardType for combat deck mapping; unused for SPECIAL */
     uint8_t price;      /* shop price in gold (0 = not sold) */
+    /* On-hit status rider (docs/combo-system.md §13): battle rolls the
+     * deterministic RNG and applies status_id when the roll passes.
+     * chance is in 1/255 units (e.g. 160 ~= 63%); 0 = no rider. */
+    uint8_t status_id;    /* StatusId (rpg/status.h); 0 = none */
+    uint8_t status_chance; /* roll threshold, 1/255 units */
     char name[9];       /* 4-8 char display name + NUL */
 } CardDefinition;
 
@@ -52,6 +57,15 @@ typedef struct {
  * mechanics below are generic over whatever catalog is registered. */
 void card_register_defs(const CardDefinition *defs, uint8_t count,
                         uint8_t bank);
+
+/* Registered catalog location (ROM banked!).  Fixed-bank code must NOT
+ * dereference g_card_defs -- read rows through card_get_def()'s WRAM
+ * scratch instead.  Bank-2 code may index the array directly while its
+ * bank is mapped (see battle_init_content.c); this contract is enforced
+ * at registration time by a compile-time check in the game layer
+ * (src/game/cards.c): the catalog bank must be 2. */
+extern const CardDefinition *g_card_defs;
+extern uint8_t g_card_defs_count;
 
 /* Look up a card definition by id.  Returns a pointer to a scratch copy
  * (valid until the next call).  Returns NULL for unknown ids. */

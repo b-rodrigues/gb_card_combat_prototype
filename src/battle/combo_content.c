@@ -1,90 +1,177 @@
 #pragma bank 2
 
 #include "combo.h"
+#include "rpg/effects.h"
 #include "banked.h"
 
-/* ── Banked combo evaluation ────────────────────────────────────────
+/* ── Banked combo evaluation + effect dispatch ──────────────────────
  * The fixed-bank wrapper (src/battle/combo.c) stages its arguments into
  * the _DATA globals (banked.c) and runs this no-arg body through the WRAM
- * banked-call trampoline (crt0.s / src/core/banked.c).  This file stays in
- * ROM bank 2 so combo_evaluate's logic does not consume the fixed-bank
- * budget.  It must be self-contained (no calls back into fixed-bank code);
- * it only reads the staged globals, its own banked const data, and writes
- * through the staged out_result pointer. */
+ * banked-call trampoline (crt0.s).  This file stays in ROM bank 2 so combo
+ * evaluation does not consume the fixed-bank budget.  Apart from the
+ * bank-local call into effects_content.c below (same ROM bank, direct
+ * call -- allowed), it is self-contained: no fixed-bank calls.
+ *
+ * Architectural rule (docs/combo-system.md §5): the combo evaluator answers
+ * "what hand did these cards form" -- tier, multiplier, base_power.
+ * It must never compute an effect magnitude; scaling base_power into
+ * damage/heal/block happens in effect_resolve_into() at the end of this
+ * dispatch, whose result battle reads via effect_last().
+ *
+ * Hand model: strict poker.  Pairs/kinds any count >= 2; STRAIGHT, FLUSH,
+ * STRAIGHT_FLUSH and FIVE_KIND need all five effective cards.  Values are
+ * classified order-independently (histogram + min/max), fixing the old
+ * selection-order quirk.  Suited bonus: +25 percent when every effective
+ * card shares one symbol and a tier was made.
+ *
+ * No multiplies/divides here or in effect_resolve_into(): SDCC lowers
+ * them to __mulint/__divuint, which link into the FIXED bank -- an
+ * illegal call while bank 2 is mapped (AGENTS.md 52.11.1). */
 
-static const uint8_t s_straight_mults[4] = { 120, 150, 175, 200 };
+static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
+    100, /* NONE */
+    120, /* PAIR */
+    150, /* TWO PAIR */
+    180, /* THREE KIND */
+    210, /* STRAIGHT */
+    240, /* FLUSH */
+    260, /* FULL HOUSE */
+    280, /* FOUR KIND */
+    350, /* STRAIGHT FLUSH */
+    400  /* FIVE KIND */
+};
 
-void combo_evaluate_banked(void)
+/* Classify n card values (order-independent).  vals are 1..9,
+ * types are BattleCardType. */
+uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
+                       uint8_t n)
+{
+    uint8_t hist[10]; /* values are 1..10 */
+    uint8_t i, distinct, min, max, pairs, trips;
+    uint8_t quads = 0, fives = 0;
+    uint8_t all_same_type = 1;
+
+    for (i = 0; i < 10; i++) hist[i] = 0;
+
+    min = 10;
+    max = 0;
+    for (i = 0; i < n; i++) {
+        uint8_t v = vals[i];
+        if (v < 1 || v > 10) return HAND_NONE;
+        hist[v - 1]++;
+        if (v < min) min = v;
+        if (v > max) max = v;
+        if (i > 0 && types[i] != types[0]) all_same_type = 0;
+    }
+
+    /* FIVE KIND: all five share one value (beats everything). */
+    if (n == 5 && hist[min - 1] == 5) return HAND_FIVE_KIND;
+
+    /* Sequential with no duplicates: straight / straight flush (5 only). */
+    if ((uint8_t)(max - min) == (uint8_t)(n - 1)) {
+        distinct = 0;
+        for (i = 0; i < 10; i++) {
+            if (hist[i] != 0) distinct++;
+        }
+        if (distinct == n && n == 5) {
+            return all_same_type ? HAND_STRAIGHT_FLUSH : HAND_STRAIGHT;
+        }
+    }
+
+    /* Flush: all five same symbol, not sequential (checked above). */
+    if (n == 5 && all_same_type) return HAND_FLUSH;
+
+    pairs = 0;
+    trips = 0;
+    for (i = 0; i < 10; i++) {
+        if (hist[i] >= 5) fives++;
+        else if (hist[i] == 4) quads++;
+        else if (hist[i] == 3) trips++;
+        else if (hist[i] == 2) pairs++;
+    }
+    if (fives != 0) return HAND_FIVE_KIND;
+    if (quads != 0) return HAND_FOUR_KIND;
+    if (trips != 0 && pairs != 0) return HAND_FULL_HOUSE;
+    if (trips != 0) return HAND_THREE_KIND;
+    if (pairs >= 2) return HAND_TWO_PAIR;
+    if (pairs == 1) return HAND_PAIR;
+    return HAND_NONE;
+}
+
+void combo_resolve_banked(void)
 {
     const Card *cards = (const Card *)g_bk_ptr_a;
     uint8_t count = g_bk_byte_a;
-    ComboPhase phase = (ComboPhase)g_bk_byte_b;
+    uint8_t phase = (uint8_t)(g_bk_byte_b & 0x01);
+    uint8_t effect = (uint8_t)(g_bk_byte_b >> 1);
     ComboResult *out_result = (ComboResult *)g_bk_ptr_b;
-    uint8_t i, eff_count = 0, prev_val = 0;
-    uint8_t sum = 0, power;
-    bool straight = true, same_type = true;
-    uint16_t mult = 100;
+    uint8_t i, eff_count = 0;
+    uint8_t sum = 0;
+    uint16_t mult;
 
     if (!out_result) return;
 
     if (!cards || count == 0) {
         out_result->count = 0;
-        out_result->is_straight = false;
-        out_result->all_same_type = false;
+        out_result->eff_count = 0;
+        out_result->tier = HAND_NONE;
+        out_result->suited = 0;
         out_result->multiplier = 100;
         out_result->base_power = 0;
-        out_result->final_power = 0;
+        g_effect_last.type = effect;
+        g_effect_last.amount = 0;
         return;
     }
 
     if (count > 5) count = 5;
     out_result->count = count;
 
-    for (i = 0; i < count; i++) {
-        uint8_t t = cards[i].type;
-        uint8_t v = cards[i].value;
+    /* Phase rules (unchanged): attack sums every non-SHIELD value;
+     * defend sums SHIELD values only.  The same filter decides which
+     * cards enter the hand for classification. */
+    {
+        uint8_t vals[5];
+        uint8_t types[5];
+        uint8_t w = 0;
 
-        if (phase == COMBO_PHASE_ATTACK) {
-            if (t != BATTLE_CARD_TYPE_SHIELD) sum += v;
-            if (i > 0) {
-                if (v != (uint8_t)(prev_val + 1)) straight = false;
-                if (t != cards[0].type) same_type = false;
+        for (i = 0; i < count; i++) {
+            uint8_t t = cards[i].type;
+            if (phase == COMBO_PHASE_ATTACK) {
+                if (t != BATTLE_CARD_TYPE_SHIELD) sum += cards[i].value;
+            } else {
+                if (t != BATTLE_CARD_TYPE_SHIELD) continue;
+                sum += cards[i].value;
             }
-            prev_val = v;
-            eff_count++;
-        } else if (t == BATTLE_CARD_TYPE_SHIELD) {
-            sum += v;
-            if (eff_count > 0 && v != (uint8_t)(prev_val + 1)) straight = false;
-            prev_val = v;
-            eff_count++;
+            vals[w] = cards[i].value;
+            types[w] = t;
+            w++;
+        }
+        eff_count = w;
+
+        out_result->base_power = sum;
+        out_result->eff_count = eff_count;
+
+        if (eff_count < 2) {
+            out_result->tier = HAND_NONE;
+            out_result->suited = 0;
+            out_result->multiplier = 100;
+        } else {
+            out_result->tier = combo_classify(vals, types, eff_count);
+            mult = s_tier_mult[out_result->tier];
+            if (out_result->tier == HAND_NONE) {
+                out_result->suited = 0;
+            } else {
+                uint8_t same = 1;
+                for (i = 1; i < eff_count; i++) {
+                    if (types[i] != types[0]) { same = 0; break; }
+                }
+                out_result->suited = same ? 1 : 0;
+                if (same) mult += 25;
+            }
+            out_result->multiplier = mult;
         }
     }
 
-    if (eff_count < 2) {
-        straight = false;
-        same_type = false;
-    }
-
-    if (straight) {
-        mult = (uint16_t)(s_straight_mults[eff_count - 2] + (same_type ? 25 : 0));
-    } else if (same_type) {
-        mult = 110;
-    }
-
-    out_result->is_straight = straight;
-    out_result->all_same_type = same_type;
-    out_result->multiplier = mult;
-    out_result->base_power = sum;
-
-    power = sum;
-    if (straight) {
-        uint8_t add = (eff_count == 5) ? sum :
-                      (eff_count == 4) ? (uint8_t)((sum >> 1) + (sum >> 2)) :
-                      (eff_count == 3) ? (uint8_t)(sum >> 1) :
-                      (uint8_t)(sum >> 2);
-        power = (uint8_t)(power + add + (same_type ? (uint8_t)(sum >> 2) : 0));
-    } else if (same_type) {
-        power = (uint8_t)(power + (uint8_t)(sum >> 3));
-    }
-    out_result->final_power = power;
+    /* Effect resolution consumes the evaluated hand (bank-local call). */
+    effect_resolve_into(effect, out_result, &g_effect_last);
 }

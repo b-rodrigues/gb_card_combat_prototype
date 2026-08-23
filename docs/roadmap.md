@@ -53,6 +53,35 @@ testable, save/load works, and the memory budget is understood.
   branch has landed the player OAM sprite + the `png2gb.py` PNG→tileset
   stage (`make gfx`), the tilemap/OAM/dedup and renderer rewiring remain
 - Battle system expansion (per-enemy stats/AI, command menu, variance, etc.)
+  - Card-combat architecture per `docs/combo-system.md`: Phase A + B DONE —
+    combo evaluation (banked) produces hand quality only; a separate effect
+    layer (`src/rpg/effects.{h,c}` + bank-2 body) scales it into
+    damage/block/heal; every battle card carries its `CardEffectType` as
+    data (`Card.effect` from `CardDefinition.effect`); `COMBO_RESOLVED` /
+    `EFFECT_RESOLVED` telemetry plus the harness `event_arg` payload
+    assertion pin the numbers.
+  - Statuses (Phase C core) DONE: `src/rpg/status.{h,c}` + bank-2 bodies —
+    StatusDefinition/Instance/application (STACK+refresh), battle-scoped
+    slots reset at battle start, on-hit riders as card data
+    (`status_id`/`status_chance`, 1/255 deterministic roll via the game
+    RNG), per-round poison ticks with combat-death resolution, and
+    `STATUS_APPLIED`/`STATUS_TICKED` telemetry.  Covered by
+    `status_poison_apply` / `status_poison_resist`.
+  - Enemy encounters rebalanced: ALL hostile engagements spawn as trios
+    (clones of the struck actor; the final boss stands alone), regular
+    enemy HP doubled (slimes 10-16, bats 8), boss tuned to 50 HP with a
+    SET_ENEMY_HP scenario hook pinning it to 20 for deterministic tests.
+  - Energy pool raised to 6/phase (three cost-2 cards now form a combo);
+    rejected selections flash NO ENERGY! / OUT OF USES! on the battle HUD.
+  - COMBO row shows the pending hand tier LIVE while selecting (blanks on
+    resolution; executed results announce via the banner).  The Lost
+    Amulet now renders in the CARDS tab as a non-deckable QUEST ITEM, and
+    the Merchant sells a heavy BOW 10 (30g).
+  - Poker hand tiers implemented (strict sizes; PAIR..FIVE KIND, FLUSH,
+    STRAIGHT, FULL HOUSE, STRAIGHT FLUSH with tier multipliers + suited
+    bonus), combo-scaled on-hit riders, and the DA1 POISON DAGGER starter
+    card with flat 1-HP poison ticks.  Open: more statuses, finer-grained
+    status telemetry.
 
 ### DONE
 
@@ -62,6 +91,9 @@ testable, save/load works, and the memory budget is understood.
 
 ### LATER
 
+- Dialogue boxes: raise `MAX_DIALOGUE_LINES` beyond 8 for richer NPC /
+  signpost text — constraints and deferred checklist in
+  `docs/dialogue-boxes.md`.
 - Extract a reusable template repo from this codebase
 - Start the actual game repository on top of the foundation
 

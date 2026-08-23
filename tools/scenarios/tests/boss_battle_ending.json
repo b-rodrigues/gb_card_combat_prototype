@@ -1,7 +1,7 @@
 {
   "name": "boss_battle_ending",
   "test": true,
-  "description": "Defeating the LORD OF SLIMES sets ENDING_SHOWN via the BOSS_DEFEATED script, bumps MONSTERS_DEFEATED to 4, and routes victory to the ENDING screen instead of the overworld. Each cycle re-pins slot 0 to SW3 before a two-SELECT select/execute pair so every attack-phase execution deals a deterministic 3 damage (defend-phase and reshuffle-turn cycles consume their pairs harmlessly); 14 pairs guarantee the 4 hits needed against the boss's 10 HP regardless of phase alignment.",
+  "description": "Defeating the LORD OF SLIMES sets ENDING_SHOWN via the BOSS_DEFEATED script and routes victory to the ENDING screen.  The castle bat is pre-defeated and SET_ENEMY_HP pins the boss to 20 HP (deterministic fight length: victory ~frame 1660).  Blind SELECT flushes auto-execute drawn cards each round; a single trailing A advances the result phase -- exactly one, because A on the ENDING screen restarts the game.",
   "scenario_id": "CASTLE_BOOT",
   "actions": [
     {
@@ -9,14 +9,9 @@
       "frames": 5
     },
     {
-      "type": "set_hand_card",
+      "type": "set_enemy_hp",
       "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "hp": 20
     },
     {
       "type": "press",
@@ -24,7 +19,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -32,17 +27,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -50,7 +35,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -58,17 +43,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -76,7 +51,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -84,17 +59,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -102,7 +67,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -110,17 +75,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -128,7 +83,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -136,17 +91,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -154,7 +99,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -162,17 +107,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -180,7 +115,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -188,17 +123,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -206,7 +131,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -214,17 +139,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -232,7 +147,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -240,17 +155,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -258,7 +163,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -266,17 +171,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -284,7 +179,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -292,17 +187,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -310,7 +195,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -318,17 +203,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -336,7 +211,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -344,17 +219,7 @@
     },
     {
       "type": "wait",
-      "frames": 130
-    },
-    {
-      "type": "set_hand_card",
-      "index": 0,
-      "card_type": "SW",
-      "value": 3
-    },
-    {
-      "type": "wait",
-      "frames": 2
+      "frames": 45
     },
     {
       "type": "press",
@@ -362,7 +227,7 @@
     },
     {
       "type": "wait",
-      "frames": 55
+      "frames": 45
     },
     {
       "type": "press",
@@ -370,11 +235,95 @@
     },
     {
       "type": "wait",
-      "frames": 130
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
     },
     {
       "type": "wait",
-      "frames": 20
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
     },
     {
       "type": "press",
@@ -382,7 +331,7 @@
     },
     {
       "type": "wait",
-      "frames": 60
+      "frames": 1200
     }
   ],
   "assertions": [
@@ -399,6 +348,10 @@
       "type": "variable",
       "variable": "MONSTERS_DEFEATED",
       "expected": 4
+    },
+    {
+      "type": "event_occurred",
+      "event": "BATTLE_WON"
     }
   ],
   "initial_state": {
@@ -418,10 +371,16 @@
     },
     "party": {
       "HERO": {
-        "hp": 90,
-        "max_hp": 90
+        "hp": 120,
+        "max_hp": 120
       }
     },
-    "start_battle": true
+    "start_battle": true,
+    "world": {
+      "BAT_CASTLE": "DEFEATED"
+    },
+    "deck": {
+      "FIRE_TOME": 20
+    }
   }
 }

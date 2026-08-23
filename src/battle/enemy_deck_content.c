@@ -54,6 +54,11 @@ void enemy_deck_setup_banked(void)
         ed->cards[i].value = src[i].value;
         ed->cards[i].uses_remaining = src[i].uses_remaining;
         ed->cards[i].cost = 0; /* enemies never pay energy */
+        ed->cards[i].effect = src[i].effect; /* NONE: enemies never resolve
+                                              * effects -- their card value
+                                              * IS the incoming damage. */
+        ed->cards[i].status_id = src[i].status_id;
+        ed->cards[i].status_chance = src[i].status_chance;
     }
     ed->count = count;
     ed->draw_idx = 0;

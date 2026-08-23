@@ -16,7 +16,7 @@
  * whose cost exceeds the remaining energy is rejected; the pool refreshes to
  * this value at battle start and at every transition into a decision phase
  * (deck.md Phase 10: check affordability at select, pay at resolve). */
-#define BATTLE_ENERGY_PER_TURN 5
+#define BATTLE_ENERGY_PER_TURN 6
 /* Timer cadence.  The bar is BATTLE_TIMER_BAR_LENGTH cells, each draining one
  * tile every BATTLE_TIMER_BAR_DIVISOR frames (= BATTLE_TIMER_SECONDS), so the
  * whole window is an exact integer number of cells.  The divisor is derived
@@ -35,6 +35,7 @@
 #define BATTLE_DIRTY_HAND    0x10
 #define BATTLE_DIRTY_DESC    0x20
 #define BATTLE_DIRTY_BLINK   0x40
+#define BATTLE_DIRTY_MSG     0x80
 #define BATTLE_DIRTY_ALL     0xFF
 
 typedef enum {
@@ -80,6 +81,8 @@ typedef struct {
     BattleTurn turn;                           /* Mirror for telemetry / snapshots */
     BattleResult result;
     uint8_t delay_timer;                       /* Animation / state advance delay */
+    uint8_t msg_id;                            /* Transient HUD message (0 = none) */
+    uint8_t msg_ttl;                           /* Frames until the message clears */
     bool battle_over;
     ComboResult last_combo;
     uint8_t enemy_incoming_dmg;                /* Enemy attack power telegraphed */
@@ -104,5 +107,9 @@ void battle_card_undo_banked(void);
 void battle_execute_combo(Battle *b);
 void battle_update(Battle *b);
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx);
+
+/* Banked no-arg deck-bridge body (src/battle/battle_init_content.c, ROM
+ * bank 2), dispatched by battle_start via the WRAM trampoline. */
+void battle_init_deck_banked(void);
 
 #endif /* BATTLE_H */

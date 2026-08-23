@@ -3,6 +3,8 @@
 #include "deck.h"
 #include "banked.h"
 #include "rng.h"
+#include "rpg/cards.h"
+#include "rpg/status.h"
 
 /* Banked body of deck_init_default() (see deck.c).  Lives in ROM bank 2 and
  * runs through the WRAM banked-call trampoline so the starter-deck unpacker
@@ -19,24 +21,41 @@
 static const uint8_t s_starter_deck_packed[MAX_DECK_SIZE] = {
     0x03, 0x03, 0x12, 0x12, 0x34,
     0x03, 0x12, 0x34, 0x34, 0x03,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    0x51, 0x51,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+
+/* Bank-local type→effect defaults (mirrors card_effect_for_type(); banked
+ * code must not call fixed-bank helpers, AGENTS.md 52.11.1). */
+static const uint8_t s_type_effects[6] = {
+    CARD_EFFECT_DAMAGE_TARGET,  /* SWORD */
+    CARD_EFFECT_BLOCK_DAMAGE,   /* SHIELD */
+    CARD_EFFECT_DAMAGE_TARGET,  /* BOW */
+    CARD_EFFECT_DAMAGE_TARGET,  /* FIRE */
+    CARD_EFFECT_HEAL_HP,        /* HEAL */
+    CARD_EFFECT_DAMAGE_TARGET   /* DAGGER */
 };
 
 void deck_init_default_banked(void)
 {
     Deck *d = (Deck *)g_bk_ptr_a;
-    uint8_t i, p;
+    uint8_t i, p, t;
 
     if (!d) return;
-    d->count = 10;
+    d->count = 12;
     d->draw_idx = 0;
     d->discard_count = 0;
     for (i = 0; i < d->count; i++) {
         p = s_starter_deck_packed[i];
-        d->cards[i].type = (uint8_t)(p >> 4);
+        t = (uint8_t)(p >> 4);
+        d->cards[i].type = t;
         d->cards[i].value = (uint8_t)(p & 0x0F);
         d->cards[i].uses_remaining = 0xFF; /* unlimited until overridden */
         d->cards[i].cost = 1;              /* basic starter cards are cheap */
+        d->cards[i].effect =
+            (t < 6) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
+        d->cards[i].status_id = STATUS_NONE; /* starter cards: no rider */
+        d->cards[i].status_chance = 0;
     }
     /* FI4 mirrors FIRE_TOME: 3 uses per battle, energy cost 2. */
     d->cards[4].uses_remaining = 3;
@@ -57,6 +76,9 @@ static void card_copy_banked(Card *dst, const Card *src)
     dst->value = src->value;
     dst->uses_remaining = src->uses_remaining;
     dst->cost = src->cost;
+    dst->effect = src->effect;
+    dst->status_id = src->status_id;
+    dst->status_chance = src->status_chance;
 }
 
 static void card_swap_banked(Card *a, Card *b)
@@ -66,14 +88,23 @@ static void card_swap_banked(Card *a, Card *b)
     t.value = a->value;
     t.uses_remaining = a->uses_remaining;
     t.cost = a->cost;
+    t.effect = a->effect;
+    t.status_id = a->status_id;
+    t.status_chance = a->status_chance;
     a->type = b->type;
     a->value = b->value;
     a->uses_remaining = b->uses_remaining;
     a->cost = b->cost;
+    a->effect = b->effect;
+    a->status_id = b->status_id;
+    a->status_chance = b->status_chance;
     b->type = t.type;
     b->value = t.value;
     b->uses_remaining = t.uses_remaining;
     b->cost = t.cost;
+    b->effect = t.effect;
+    b->status_id = t.status_id;
+    b->status_chance = t.status_chance;
 }
 
 /* Banked body of deck_reshuffle() (see deck.c).  Self-contained: reads only

@@ -484,6 +484,13 @@ dialogue + sets `MET_MAYOR`), `MAYOR_GREETING` (already met),
 `GUARD_AFTER_MAYOR` / `GUARD_GREETING` (Guard reacts differently once
 `MET_MAYOR`).
 
+### Battle setup helpers
+
+`set_enemy_hp` (`DBG_ACT_SET_ENEMY_HP`) pins an enemy combatant's current HP
+in the active battle: `{"type": "set_enemy_hp", "index": 0, "hp": 20}`.
+Direct state write, no telemetry -- scenario setup semantics (deterministic
+fight lengths, e.g. the boss fight pins the Lord of Slimes to 20 HP).
+
 ### Items, money, progression & the shop
 
 * Item effects are generic primitives (`src/rpg/items.{h,c}`):
@@ -1072,6 +1079,9 @@ DAMAGE_DEALT
 HEALING_APPLIED
 ENTITY_DEFEATED
 
+COMBO_RESOLVED
+EFFECT_RESOLVED
+
 TURN_STARTED
 TURN_ENDED
 
@@ -1286,6 +1296,68 @@ Example:
 ```
 
 The event should expose the final applied damage, not merely the pre-randomized damage value.
+
+---
+
+# 31.1 COMBO_RESOLVED / EFFECT_RESOLVED (card combat)
+
+Emitted by the battle system whenever a played hand is resolved
+(`docs/combo-system.md` §19).  `COMBO_RESOLVED` announces the QUALITY of the
+selection; `EFFECT_RESOLVED` announces the consequence computed from it.
+Both fire before the matching `DAMAGE_DEALT` / `HEALED` / `DAMAGE_RECEIVED`
+event.
+
+Hand tiers follow strict poker sizing (`docs/combo-system.md` hand table):
+pairs/kinds need >= 2 effective cards; STRAIGHT, FLUSH, STRAIGHT_FLUSH and
+FIVE KIND require all five.  The scored multiplier is the tier percent plus
+25 when every effective card shares one symbol:
+
+```text
+HIGH CARD 100   STRAIGHT 210      FOUR KIND 280      STRAIGHT FLUSH 350
+PAIR      120   FLUSH     240     FULL HOUSE 260     FIVE KIND      400
+TWO PAIR  150   THREE KIND 180
+```
+
+```text
+COMBO_RESOLVED
+  data[0] = HandTier id (0 NONE .. 9 FIVE KIND, combo.h)
+  data[1] = effective card count (attack: all cards; defend: shields only)
+  data[2] = suited flag (all effective cards share one symbol)
+  data[3] = phase (0 = attack, 1 = defend)
+
+EFFECT_RESOLVED
+  data[0] = amount (base_power x multiplier / 100)
+  data[1] = effect type (CardEffectType: 1 damage, 2 block, 3 heal)
+  data[2] = phase (0 = attack, 1 = defend)
+  data[3] = target slot (0 = player; otherwise enemy index)
+```
+
+On-hit status riders scale with the same multiplier:
+`effective_chance = min(255, base_chance x multiplier / 100)` (1/255 units).
+
+---
+
+# 31.2 STATUS_APPLIED / STATUS_TICKED (card combat statuses)
+
+Phase C statuses (`docs/combo-system.md` §12-§19).  `STATUS_APPLIED` fires
+when an on-hit rider lands (after the deterministic RNG roll passes);
+`STATUS_TICKED` fires once per round per afflicted combatant at the
+transition back into the player select phase.
+
+```text
+STATUS_APPLIED
+  data[0] = status id (1 = POISON)
+  data[1] = stacks after application (capped by the definition)
+  data[2] = duration in turns
+
+STATUS_TICKED
+  data[0] = flat tick damage (poison: 1 HP per round regardless of stacks;
+            extra applications refresh duration and deepen stacks for
+            telemetry only)
+  data[1] = actor slot (0 = player; otherwise enemy index)
+  data[2] = instances expired by this tick
+  data[3] = first expired status id (valid when data[2] != 0)
+```
 
 ---
 
@@ -1551,7 +1623,25 @@ contains
 exists
 event_occurred
 event_not_occurred
+event_arg
 ```
+
+`event_arg` asserts a telemetry payload byte: the scenario passes when at
+least one emitted event of the given type carries `data[index] == value`.
+
+Example:
+
+```json
+{
+  "type": "event_arg",
+  "event": "COMBO_RESOLVED",
+  "index": 0,
+  "value": 175
+}
+```
+
+Failure output lists the observed payloads of every matching event, e.g.
+`no payload match among 1 event(s): data=[100, 1, 0, 0]`.
 
 Example:
 

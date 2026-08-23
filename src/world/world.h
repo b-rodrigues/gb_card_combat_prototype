@@ -170,6 +170,10 @@ WorldMoveResult world_update_actors(World *w);
 
 /* Renderer pixel position (tile*8 plus the sub-tile walk progress) of the
  * player sprite.  Valid whenever the player is not animating a move. */
+/* Bank-2 pixel-interpolation body (src/world/px_banked.c); dispatched by
+ * the four world_*_px/py wrappers. */
+void world_px_banked(void);
+
 uint8_t world_player_px(const World *w);
 uint8_t world_player_py(const World *w);
 
@@ -182,5 +186,7 @@ void world_on_battle_end(Game *g, bool victory);
  * the hero ran (written back into the runtime actor); no reward, defeat or
  * quest progress is applied. */
 void world_on_battle_fled(Game *g);
+/* Bank-2 body (src/world/fled_banked.c) dispatched by the wrapper. */
+void world_on_battle_fled_banked(void);
 
 #endif /* WORLD_H */

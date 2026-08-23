@@ -20,6 +20,9 @@ bool save_game_slot(uint8_t slot, const GameState *state);
 bool load_game_slot(uint8_t slot, GameState *state);
 
 /* True when specified SRAM slot holds a valid save for this build. */
+/* Bank-2 body (src/rpg/save_banked.c) dispatched by all three wrappers. */
+void save_op_banked(void);
+
 bool save_present_slot(uint8_t slot);
 
 #endif /* RPG_SAVE_H */

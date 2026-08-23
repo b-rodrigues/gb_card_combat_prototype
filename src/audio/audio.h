@@ -14,6 +14,9 @@ void audio_init(void);
 void audio_play_music(MusicTrack track);
 void audio_update(void);
 
+/* Current track (WRAM): readable directly from bank-2 code, which cannot
+ * call this fixed-bank getter. */
+extern MusicTrack g_audio_current_track;
 MusicTrack audio_get_current_track(void);
 
 #ifdef DEBUG_BUILD

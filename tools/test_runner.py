@@ -27,7 +27,7 @@ VALID_ASSERTION_TYPES = {
     "enemy_hp", "battle_turn", "battle_result", "battle_player_hp", "battle_enemy_hp",
     "battle_energy", "battle_draw_remaining", "battle_discard_count",
     "game_over_choice", "story_flag", "screen", "scene",
-    "event_occurred", "event_not_occurred", "event_count", "dialogue_active", "dialogue_line", "dialogue_id",
+    "event_occurred", "event_not_occurred", "event_count", "event_arg", "dialogue_active", "dialogue_line", "dialogue_id",
     "screen_row", "screen_row_not_contains", "actor_at",
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
     "currency", "progression_level", "progression_progress",
@@ -236,6 +236,20 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      act.get("cost", 1) & 0xFF,
                                      act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "set_enemy_hp":
+                # Pin an enemy combatant's current HP in the active battle
+                # (scenario setup: deterministic fight lengths).
+                session.debug_action(session.DBG_ACT_SET_ENEMY_HP,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("hp", 1) & 0xFF, 0)
+            elif act_type == "set_hand_card_status":
+                # Companion to set_hand_card: pin the injected card's on-hit
+                # status rider (StatusId + roll chance in 1/255 units) so
+                # Phase C status scenarios do not depend on the dealt deck.
+                session.debug_action(session.DBG_ACT_SET_HAND_CARD_STATUS,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("status", 1) & 0xFF,
+                                     act.get("chance", 255) & 0xFF)
             elif act_type == "deck_add":
                 # Direct deck_add_card() call (real mechanic, all validations:
                 # ownership, SPECIAL exclusion, max_copies, 20-card size).
@@ -506,6 +520,25 @@ def run_scenario(scenario):
 
             passed = len(matching_events) == 0
             actual = "NOT_EMITTED" if passed else f"EMITTED ({len(matching_events)} time(s))"
+
+        elif a_type == "event_arg":
+            # Payload assertion: passes when at least one emitted event of
+            # the given type carries data[index] == value.
+            exp_event = a.get("event", expected)
+            idx = int(a.get("index", 0))
+            exp_val = int(a.get("value", 0))
+            expected = f"{exp_event} data[{idx}] == {exp_val}"
+            matches = [ev for ev in telemetry if ev.get("type") == exp_event]
+            hits = [ev.get("data") for ev in matches
+                    if len(ev.get("data") or []) > idx and ev["data"][idx] == exp_val]
+            passed = len(hits) > 0
+            if passed:
+                actual = f"{len(hits)} match(es); first data={hits[0]}"
+            elif matches:
+                shown = "; ".join(f"data={ev.get('data')}" for ev in matches[:5])
+                actual = f"no payload match among {len(matches)} event(s): {shown}"
+            else:
+                actual = f"{exp_event} NOT_EMITTED"
 
         elif a_type == "flag":
             exp_flag = a.get("flag")

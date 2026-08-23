@@ -26,6 +26,7 @@
 #define MSG_NONE       0
 #define MSG_DECK_FULL  1
 #define MSG_DECK_MIN   2
+#define MSG_QUEST_ITEM 3
 
 #define FILTER_ALL      0xFF
 #define SORT_NONE       0
@@ -40,6 +41,8 @@
 static uint8_t s_view_indices[MAX_CARD_COLLECTION];
 static uint8_t s_view_count;
 
+/* SPECIAL cards (quest items like the Lost Amulet) are LISTED but never
+ * deckable -- pressing A shows a transient QUEST ITEM message instead. */
 static bool card_deckable(const CardDefinition *def)
 {
     return def && def->type != CARD_TYPE_SPECIAL;
@@ -185,7 +188,7 @@ static void scroll_to_index(Game *g)
 static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 {
     const CardDefinition *def;
-    char code[4];
+    char code[6];
     CardId id;
     uint8_t in_deck;
 
@@ -196,7 +199,7 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
     ui_card_code_str(def->battle_type, def->power, code);
-    ui_draw_text_line(2, y, code, 3);
+    ui_draw_text_line(2, y, code, 4);
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
@@ -230,6 +233,8 @@ static void draw_cards_list(Game *g)
         ui_draw_text_line(0, 16, "DECK FULL", 9);
     else if (g->item_menu_message == MSG_DECK_MIN)
         ui_draw_text_line(0, 16, "DECK MIN 5", 10);
+    else if (g->item_menu_message == MSG_QUEST_ITEM)
+        ui_draw_text_line(0, 16, "QUEST ITEM", 10);
     else
         ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
 }
@@ -486,6 +491,11 @@ void item_screen_update(Game *g)
              * decked (add rejected for per-card reasons, not a full deck),
              * A clears every decked copy of it — but only if the remaining
              * deck would still hold DECK_MIN_CARDS cards (all-or-nothing). */
+            if (card_get_def(id)->type == CARD_TYPE_SPECIAL) {
+                g->item_menu_message = MSG_QUEST_ITEM;
+                g->item_menu_msg_ttl = 45;
+                return;
+            }
             if (deck_add_card(cs, id)) {
                 telemetry_emit(EVENT_CARD_ADDED_TO_DECK, id, 0, 0, 0);
             } else if (cs->deck.count >= MAX_DECK_CARDS) {

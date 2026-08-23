@@ -6,6 +6,7 @@
 #include "event.h"
 #include "rpg/currency.h"
 #include "ui.h"
+#include "banked.h"
 
 void world_load_map(World *w, MapId map_id, const GameState *state)
 {
@@ -180,40 +181,38 @@ WorldMoveResult world_update_move(World *w, const GameState *state)
     return MOVE_RESULT_MOVED;
 }
 
-static uint8_t calc_interp(uint8_t base, uint8_t target, uint8_t progress)
+/* Pixel helpers run banked (src/world/px_banked.c) -- pure arithmetic,
+ * staged pointers, results through the shared byte below. */
+uint8_t g_px_result;
+
+static uint8_t px_dispatch(uint8_t variant, const void *p)
 {
-    uint8_t px = (uint8_t)(base << 3);
-    if (target > base) return (uint8_t)(px + progress);
-    if (target < base) return (uint8_t)(px - progress);
-    return px;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&world_px_banked;
+    g_bk_byte_a = variant;
+    g_bk_ptr_a = (void *)p;
+    banked_call_run();
+    return g_px_result;
 }
 
 uint8_t world_player_px(const World *w)
 {
-    if (!w) return 0;
-    return (w->move_state == MOVE_STATE_MOVING) ?
-        calc_interp(w->player.position.x, w->move_target_x, w->move_progress) :
-        (uint8_t)(w->player.position.x << 3);
+    return w ? px_dispatch(0, w) : 0;
 }
 
 uint8_t world_player_py(const World *w)
 {
-    if (!w) return 0;
-    return (w->move_state == MOVE_STATE_MOVING) ?
-        calc_interp(w->player.position.y, w->move_target_y, w->move_progress) :
-        (uint8_t)(w->player.position.y << 3);
+    return w ? px_dispatch(1, w) : 0;
 }
 
 uint8_t world_actor_px(const WorldActorRuntime *a)
 {
-    if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->x, a->move_target_x, a->move_progress) : (uint8_t)(a->x << 3);
+    return a ? px_dispatch(2, a) : 0;
 }
 
 uint8_t world_actor_py(const WorldActorRuntime *a)
 {
-    if (!a) return 0;
-    return (a->move_state) ? calc_interp(a->y, a->move_target_y, a->move_progress) : (uint8_t)(a->y << 3);
+    return a ? px_dispatch(3, a) : 0;
 }
 
 void world_on_battle_end(Game *g, bool victory)
@@ -247,18 +246,13 @@ void world_on_battle_end(Game *g, bool victory)
 
 void world_on_battle_fled(Game *g)
 {
-    World *w;
-    uint8_t idx;
+    /* Body runs banked (src/world/fled_banked.c) through the WRAM
+     * trampoline -- pure WRAM reads/writes, no staging args needed. */
     if (!g) return;
-    w = &g->world;
-
-    idx = w->encounter_actor_index;
-    w->encounter_actor_index = NO_ACTOR_INDEX;
-    if (idx == NO_ACTOR_INDEX) return;
-
-    if (w->actors[idx].active) {
-        w->actors[idx].hp = g->battle.enemies[0].hp;
-    }
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&world_on_battle_fled_banked;
+    g_bk_ptr_a = (void *)g;
+    banked_call_run();
 }
 
 static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };
