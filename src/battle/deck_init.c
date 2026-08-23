@@ -21,17 +21,19 @@
 static const uint8_t s_starter_deck_packed[MAX_DECK_SIZE] = {
     0x03, 0x03, 0x12, 0x12, 0x34,
     0x03, 0x12, 0x34, 0x34, 0x03,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    0x51, 0x51,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
 /* Bank-local type→effect defaults (mirrors card_effect_for_type(); banked
  * code must not call fixed-bank helpers, AGENTS.md 52.11.1). */
-static const uint8_t s_type_effects[5] = {
+static const uint8_t s_type_effects[6] = {
     CARD_EFFECT_DAMAGE_TARGET,  /* SWORD */
     CARD_EFFECT_BLOCK_DAMAGE,   /* SHIELD */
     CARD_EFFECT_DAMAGE_TARGET,  /* BOW */
     CARD_EFFECT_DAMAGE_TARGET,  /* FIRE */
-    CARD_EFFECT_HEAL_HP         /* HEAL */
+    CARD_EFFECT_HEAL_HP,        /* HEAL */
+    CARD_EFFECT_DAMAGE_TARGET   /* DAGGER */
 };
 
 void deck_init_default_banked(void)
@@ -40,7 +42,7 @@ void deck_init_default_banked(void)
     uint8_t i, p, t;
 
     if (!d) return;
-    d->count = 10;
+    d->count = 12;
     d->draw_idx = 0;
     d->discard_count = 0;
     for (i = 0; i < d->count; i++) {
@@ -51,7 +53,7 @@ void deck_init_default_banked(void)
         d->cards[i].uses_remaining = 0xFF; /* unlimited until overridden */
         d->cards[i].cost = 1;              /* basic starter cards are cheap */
         d->cards[i].effect =
-            (t < 5) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
+            (t < 6) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
         d->cards[i].status_id = STATUS_NONE; /* starter cards: no rider */
         d->cards[i].status_chance = 0;
     }

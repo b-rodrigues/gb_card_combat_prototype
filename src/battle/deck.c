@@ -49,9 +49,14 @@ void deck_reshuffle(Deck *d)
     banked_call_run();
 }
 
-void deck_discard(Deck *d, Card c)
+void deck_discard(Deck *d, const Card *c)
 {
-    if (d && d->discard_count < MAX_DECK_SIZE) {
-        d->discard[d->discard_count++] = c;
-    }
+    /* Body runs banked (src/battle/deck_banked.c): pure WRAM writes,
+     * staged Deck/card pointers, keeps fixed-bank budget small. */
+    if (!d || !c) return;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&deck_discard_banked;
+    g_bk_ptr_a = (void *)d;
+    g_bk_ptr_b = (void *)c;
+    banked_call_run();
 }

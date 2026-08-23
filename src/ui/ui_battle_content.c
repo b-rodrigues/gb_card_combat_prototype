@@ -84,8 +84,8 @@ static void battle_draw_num2(uint8_t x, uint8_t y, uint8_t val)
 
 static const char *battle_card_type_code(uint8_t type)
 {
-    static const char codes[] = "SW\0SH\0BO\0FI\0HE\0??";
-    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
+    static const char codes[] = "SW\0SH\0BO\0FI\0HE\0DA\0??";
+    return (type < 6) ? (codes + (type * 3)) : (codes + 18);
 }
 
 static const char *battle_card_get_description(uint8_t type)
@@ -96,6 +96,7 @@ static const char *battle_card_get_description(uint8_t type)
         case BATTLE_CARD_TYPE_BOW:    return "Bow: ranged dmg";
         case BATTLE_CARD_TYPE_FIRE:   return "Fire: magic dmg";
         case BATTLE_CARD_TYPE_HEAL:   return "Heal: restore HP";
+        case BATTLE_CARD_TYPE_DAGGER: return "Dagger: poison";
         default: return "";
     }
 }
@@ -167,34 +168,28 @@ static void battle_draw_deck_line(const Battle *battle)
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
 }
 
-static const char *battle_combo_hand_name(const Battle *b)
+/* Tier display names (docs/combo-system.md hand table).  Rows live in
+ * bank-local literals; the classifier itself is the single source of
+ * truth in combo_content.c -- this only renders ComboResult.tier. */
+static const char *battle_combo_tier_name(uint8_t tier)
 {
-    uint8_t i, j, prev, t0, v, straight, same, n;
-
-    n = b->combo_count;
-    if (n < 2 || n > 5) return "";
-    prev = b->hand[b->selected_indices[0]].value;
-    t0 = b->hand[b->selected_indices[0]].type;
-    straight = same = 1;
-    for (i = 1; i < n; i++) {
-        v = b->hand[b->selected_indices[i]].value;
-        if (v != (uint8_t)(prev + 1)) straight = 0;
-        if (b->hand[b->selected_indices[i]].type != t0) same = 0;
-        prev = v;
+    switch (tier) {
+        case HAND_PAIR:           return "PAIR";
+        case HAND_TWO_PAIR:       return "TWO PAIR";
+        case HAND_THREE_KIND:     return "THREE KIND";
+        case HAND_STRAIGHT:       return "STRAIGHT";
+        case HAND_FLUSH:          return "FLUSH";
+        case HAND_FULL_HOUSE:     return "FULL HOUSE";
+        case HAND_FOUR_KIND:      return "FOUR KIND";
+        case HAND_STRAIGHT_FLUSH: return "STR FLUSH";
+        case HAND_FIVE_KIND:      return "FIVE KIND";
+        default:                  return "";
     }
-    if (straight) return "STRAIGHT";
-    if (same) return "FLUSH";
-    for (i = 0; i < n; i++) {
-        for (j = (uint8_t)(i + 1); j < n; j++) {
-            if (b->hand[b->selected_indices[i]].value == b->hand[b->selected_indices[j]].value) return "PAIR";
-        }
-    }
-    return "";
 }
 
 static void battle_draw_battle_combo(const Battle *battle)
 {
-    const char *name = battle_combo_hand_name(battle);
+    const char *name = battle_combo_tier_name(battle->last_combo.tier);
 
     battle_draw_text_line(0, 13, "COMBO:", 6);
     if (name[0] != '\0') {
@@ -262,7 +257,10 @@ void ui_update_battle_banked(void)
                 turn_banner = "PLAYER TURN";
                 desc_msg = battle_card_get_description(battle->hand[battle->cursor_pos].type);
             } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
-                turn_banner = battle->last_combo.is_straight ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
+                turn_banner =
+                    (battle->last_combo.tier == HAND_STRAIGHT ||
+                     battle->last_combo.tier == HAND_STRAIGHT_FLUSH)
+                        ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
             } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
                 turn_banner = "ENEMY ATTACK!";
             } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {

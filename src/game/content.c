@@ -47,6 +47,7 @@ void game_new_game(GameState *state)
     deck_collection_add(&state->cards, CARD_IRON_SWORD, 4);
     deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 3);
     deck_collection_add(&state->cards, CARD_FIRE_TOME, 3);
+    deck_collection_add(&state->cards, CARD_POISON_DAGGER, 2);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
@@ -56,6 +57,8 @@ void game_new_game(GameState *state)
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
     deck_add_card(&state->cards, CARD_FIRE_TOME);
     deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_POISON_DAGGER);
+    deck_add_card(&state->cards, CARD_POISON_DAGGER);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
 }
 

@@ -26,9 +26,31 @@ player-select boundary, with deaths resolving like combat deaths.
 Telemetry: `STATUS_APPLIED` / `STATUS_TICKED` (payloads in
 DEBUG_PROTOCOL.md §31.2).  Scenarios: `status_poison_apply` (apply + 3
 ticks + expiry, payload-locked) and `status_poison_resist` (roll fails).
-Still open from Phase C: per-effect combo scaling (§10 EffectScaling,
-§11 quality), additional statuses, resist/expired-as-separate-events
-telemetry refinement.
+Still open from Phase C: additional statuses; resist/expired as
+separate telemetry events.
+
+# 0.1 Hand table (implemented)
+
+Strict poker sizing: pairs and kinds need >= 2 effective cards;
+STRAIGHT, FLUSH, STRAIGHT_FLUSH and FIVE KIND require all five
+effective cards (attack phase: every selected card; defend: SHIELDs
+only).  Values classify order-independently.  Suited bonus: +25
+percent when every effective card shares one symbol and a tier was
+made.  Effective multiplier scales base_power into the effect amount,
+and scales on-hit status rider chances (capped ~100%):
+
+| Tier            | Mult | Tier           | Mult |
+|-----------------|------|----------------|------|
+| HIGH CARD       | 100  | FLUSH          | 240  |
+| PAIR            | 120  | FULL HOUSE     | 260  |
+| TWO PAIR        | 150  | FOUR KIND      | 280  |
+| THREE KIND      | 180  | STRAIGHT FLUSH | 350  |
+| STRAIGHT        | 210  | FIVE KIND      | 400  |
+
+The POISON DAGGER (DA1) is a starter card: its own symbol, 1 physical
+damage, base poison chance 50% scaled by the hand multiplier.  Poison
+ticks a flat 1 HP per round after the afflicted actor's turn resolves;
+re-applications refresh duration (stacks deepen for telemetry only).
 
 Deviations from the plan's sketches, all
 verified behavior-neutral by the harness (`combo_*`, `card_battle_*`,

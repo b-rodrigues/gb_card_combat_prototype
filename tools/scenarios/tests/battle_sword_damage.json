@@ -1,7 +1,7 @@
 {
   "name": "battle_sword_damage",
   "test": true,
-  "description": "Selecting SW3+FI4 (values 3,4 = straight) deals 7 damage and one-shots the 5 HP slime",
+  "description": "Selecting SW3+FI4 deals 7 damage (HIGH CARD x100 under strict-poker sizing) and one-shots the 5 HP slime",
   "scenario_id": "BATTLE_BOOT",
   "actions": [
     {
@@ -87,7 +87,7 @@
       "type": "event_arg",
       "event": "COMBO_RESOLVED",
       "index": 0,
-      "value": 120
+      "value": 0
     },
     {
       "type": "event_arg",
@@ -99,7 +99,7 @@
       "type": "event_arg",
       "event": "COMBO_RESOLVED",
       "index": 2,
-      "value": 1
+      "value": 0
     },
     {
       "type": "event_occurred",

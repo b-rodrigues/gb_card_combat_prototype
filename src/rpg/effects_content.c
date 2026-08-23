@@ -3,38 +3,54 @@
 #include "effects.h"
 #include "banked.h"
 
-/* ── Banked effect resolution (docs/combo-system.md Phase B) ─────────
+/* ── Banked effect resolution (docs/combo-system.md Phase B/C) ───────
  * Runs inside the combo_resolve() dispatch (ROM bank 2): the combo body
  * calls effect_resolve_into() bank-locally after evaluating hand shape.
  * Self-contained: pure function of its arguments; writes the shared
  * g_effect_last slot (WRAM) and/or the caller's out pointer; never calls
  * fixed-bank code.
  *
- * The combo→power scaling below is the former final_power block of
- * combo_evaluate, ported verbatim so battle numbers stay bit-identical.
- * Every effect currently scales the same way; when per-effect scaling
- * arrives (plan §10 EffectScaling), each case here grows its own
+ * Scaling: amount = base_power x multiplier / 100, where multiplier is
+ * the tier percent (+25 suited) from the evaluator.  The multiply and
+ * divide are hand-rolled shift-add / subtract-loops because SDCC lowers
+ * the operators to __mulint/__divuint -- library code that links into
+ * the FIXED bank and cannot be called while bank 2 is mapped
+ * (AGENTS.md 52.11.1).
+ *
+ * Every resolved effect currently scales the same way; when per-effect
+ * scaling arrives (plan §10 EffectScaling), each case here grows its own
  * response to combo quality. */
 
-/* Scale a hand's base_power by its hand-shape bonuses.
- * straight: +tiered bonus by effective card count (+25% of sum if suited)
- * same-type (unsuited): +12.5% of sum */
+/* u16 = u16 x u16 via shift-add (no lib call).  Inputs are small
+ * (base_power <= 45, multiplier <= 425), so intermediates fit u16. */
+static uint16_t effect_mul_u16(uint16_t a, uint16_t b)
+{
+    uint16_t r = 0;
+    while (b != 0) {
+        if (b & 1) r += a;
+        a <<= 1;
+        b >>= 1;
+    }
+    return r;
+}
+
+/* q = x / 100 via subtraction loop; x <= 45*425 = 19125 so at most ~191
+ * iterations of a one-shot battle-resolution path. */
+static uint8_t effect_div100(uint16_t x)
+{
+    uint8_t q = 0;
+    while (x >= 100) {
+        x -= 100;
+        q++;
+    }
+    return q;
+}
+
+/* Scale a hand's base_power by its effective multiplier. */
 static uint8_t effect_scale_power(const ComboResult *combo)
 {
-    uint8_t sum = (uint8_t)combo->base_power;
-    uint8_t amount = sum;
-
-    if (combo->is_straight) {
-        uint8_t add = (combo->eff_count == 5) ? sum :
-                      (combo->eff_count == 4) ? (uint8_t)((sum >> 1) + (sum >> 2)) :
-                      (combo->eff_count == 3) ? (uint8_t)(sum >> 1) :
-                      (uint8_t)(sum >> 2);
-        amount = (uint8_t)(amount + add +
-                           (combo->all_same_type ? (uint8_t)(sum >> 2) : 0));
-    } else if (combo->all_same_type) {
-        amount = (uint8_t)(amount + (uint8_t)(sum >> 3));
-    }
-    return amount;
+    return effect_div100(effect_mul_u16(combo->base_power,
+                                        combo->multiplier));
 }
 
 void effect_resolve_into(uint8_t effect_type, const ComboResult *combo,

@@ -1,96 +1,44 @@
 #include "save.h"
-#include <gb/gb.h>
+#include "banked.h"
 
-/* Battery-backed SRAM save, flat layout with no large stack frame.
- *
- *   SRAM 0xA000: magic (uint16 SAVE_MAGIC)
- *         0xA002: version (uint8 SAVE_VERSION)
- *         0xA003: checksum (uint8, sum over the state bytes)
- *         0xA004: GameState
- *
- * IMPORTANT: the state is copied directly from GameState to SRAM (and back)
- * without staging it in a big local.  The debug harness skips CRT0, so the
- * stack pointer stays at the boot value (0xFFFE) instead of CRT0's 0xE000;
- * a large local (e.g. a ~200 byte SaveSlot) overflows the stack into the
- * I/O region and crashes the ROM. */
+/* Fixed-bank dispatchers for the bank-2 SRAM bodies
+ * (src/rpg/save_banked.c), keeping the checksum/copy loops out of the
+ * fixed-bank budget.  Results report through g_save_ok (shared WRAM
+ * byte, written by the banked body).  See banked.h for the ABI. */
 
-#define SAVE_SRAM_MAGIC_OFF     0x0000
-#define SAVE_SRAM_VERSION_OFF   0x0002
-#define SAVE_SRAM_CHECKSUM_OFF  0x0003
-#define SAVE_SRAM_STATE_OFF     0x0004
-#define SAVE_SRAM_BASE          0xA000
-#define SAVE_SLOT_STRIDE        0x0100
-
-typedef char check_save_slot_size[(sizeof(GameState) <= (SAVE_SLOT_STRIDE - SAVE_SRAM_STATE_OFF)) ? 1 : -1];
-
-static uint16_t save_slot_base(uint8_t slot)
-{
-    return (uint16_t)(SAVE_SRAM_BASE + ((uint16_t)slot << 8));
-}
-
-static uint8_t save_checksum(const GameState *state)
-{
-    uint8_t sum = 0;
-    uint8_t n = (uint8_t)sizeof(GameState);
-    const uint8_t *b = (const uint8_t *)state;
-    while (n--) sum = (uint8_t)(sum + *b++);
-    return sum;
-}
-
-static bool save_valid_at_slot(const uint8_t *sram)
-{
-    if (sram[0] != (uint8_t)(SAVE_MAGIC & 0xFF) ||
-        sram[1] != (uint8_t)(SAVE_MAGIC >> 8) ||
-        sram[2] != SAVE_VERSION) {
-        return false;
-    }
-    return sram[3] == save_checksum((const GameState *)(sram + 4));
-}
+extern uint8_t g_save_ok;
 
 bool save_present_slot(uint8_t slot)
 {
-    bool valid;
-    if (slot >= SAVE_SLOT_COUNT) return false;
-    ENABLE_RAM;
-    valid = save_valid_at_slot((const uint8_t *)save_slot_base(slot));
-    DISABLE_RAM;
-    return valid;
-}
-
-static void sram_copy(uint8_t *dst, const uint8_t *src, uint8_t count)
-{
-    while (count--) *dst++ = *src++;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&save_op_banked;
+    g_bk_ptr_a = (void *)0;
+    g_bk_byte_a = slot;
+    g_bk_byte_b = 0; /* present */
+    banked_call_run();
+    return g_save_ok != 0;
 }
 
 bool save_game_slot(uint8_t slot, const GameState *state)
 {
-    uint8_t *sram;
-    if (!state || slot >= SAVE_SLOT_COUNT) return false;
-    sram = (uint8_t *)save_slot_base(slot);
-
-    ENABLE_RAM;
-    sram[0] = (uint8_t)(SAVE_MAGIC & 0xFF);
-    sram[1] = (uint8_t)(SAVE_MAGIC >> 8);
-    sram[2] = SAVE_VERSION;
-    sram[3] = save_checksum(state);
-    sram_copy(sram + 4, (const uint8_t *)state, (uint8_t)sizeof(GameState));
-    DISABLE_RAM;
-    return true;
+    if (!state) return false;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&save_op_banked;
+    g_bk_ptr_a = (void *)state;
+    g_bk_byte_a = slot;
+    g_bk_byte_b = 1; /* save */
+    banked_call_run();
+    return g_save_ok != 0;
 }
 
 bool load_game_slot(uint8_t slot, GameState *state)
 {
-    uint8_t *sram;
-    bool valid;
-
-    if (!state || slot >= SAVE_SLOT_COUNT) return false;
-    sram = (uint8_t *)save_slot_base(slot);
-
-    ENABLE_RAM;
-    valid = save_valid_at_slot(sram);
-    if (valid) {
-        sram_copy((uint8_t *)state, sram + 4, (uint8_t)sizeof(GameState));
-    }
-    DISABLE_RAM;
-    return valid;
+    if (!state) return false;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&save_op_banked;
+    g_bk_ptr_a = (void *)state;
+    g_bk_byte_a = slot;
+    g_bk_byte_b = 2; /* load */
+    banked_call_run();
+    return g_save_ok != 0;
 }

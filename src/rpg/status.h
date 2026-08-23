@@ -43,7 +43,8 @@ typedef struct {
 
 typedef struct {
     uint8_t id;              /* StatusId */
-    uint8_t tick_per_stack;  /* damage per stack per turn tick */
+    uint8_t tick;            /* FLAT damage per round (Phase C decision);
+                              * stacks only refresh duration/telemetry */
     uint8_t max_stacks;      /* stacking cap (plan §16 STACK rule) */
     uint8_t duration;        /* default duration when applying */
 } StatusDefinition;

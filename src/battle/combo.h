@@ -10,23 +10,44 @@ typedef enum {
     COMBO_PHASE_DEFEND = 1
 } ComboPhase;
 
+/* Poker hand tiers (docs/combo-system.md hand table).  Strict sizes:
+ * STRAIGHT / FLUSH / STRAIGHT_FLUSH / FIVE_KIND require all five
+ * selected cards; pairs and kinds work at any count >= 2.  Order here
+ * mirrors ranking; the scored multiplier table lives in
+ * combo_content.c (bank 2). */
+typedef enum {
+    HAND_NONE = 0,           /* high card / fewer than 2 effective cards */
+    HAND_PAIR = 1,           /* 120% */
+    HAND_TWO_PAIR = 2,       /* 150% */
+    HAND_THREE_KIND = 3,     /* 180% */
+    HAND_STRAIGHT = 4,       /* 210% (all 5, sequential values) */
+    HAND_FLUSH = 5,          /* 240% (all 5, same symbol, not sequential) */
+    HAND_FULL_HOUSE = 6,     /* 260% (trips + pair) */
+    HAND_FOUR_KIND = 7,      /* 280% */
+    HAND_STRAIGHT_FLUSH = 8, /* 350% (all 5, sequential + same symbol) */
+    HAND_FIVE_KIND = 9       /* 400% (all 5, same value) */
+} HandTier;
+
+#define HAND_TIER_COUNT 10
+
 typedef struct {
     Card cards[5];
     uint8_t count;
-    uint8_t eff_count;  /* Cards that actually entered the hand (attack: every
-                         * card; defend: SHIELD cards only).  The straight/
-                         * suited bonus tiers key off this, not count. */
-    bool is_straight;
-    bool all_same_type;
-    uint16_t multiplier; /* Percentage, e.g. 100, 150, 175, 200 */
+    uint8_t eff_count;   /* cards that entered the hand (attack: every
+                          * card; defend: SHIELD cards only) */
+    uint8_t tier;        /* HandTier */
+    uint8_t suited;      /* all selected share one symbol (telemetry) */
+    uint16_t multiplier; /* EFFECTIVE percent incl. suited bonus:
+                          * tier % + 25 when suited -- the exact scalar
+                          * effect resolution applies to base_power */
     uint16_t base_power;
 } ComboResult;
 
 /* Evaluate a sequence of up to 5 cards for the specified phase AND resolve
  * the requested effect against the evaluated hand in one banked dispatch.
  *
- * The evaluator produces ONLY the quality of the selection (hand shape +
- * multiplier + base_power) into out_result -- never an effect magnitude.
+ * The evaluator produces ONLY the quality of the selection (tier,
+ * multiplier, base_power) into out_result -- never an effect magnitude.
  * The resolver (src/rpg/effects_content.c, same bank) then scales that
  * quality into g_effect_last per effect_type; battle reads it via
  * effect_last() and applies it (docs/combo-system.md §5/§7).

@@ -1,7 +1,7 @@
 {
   "name": "status_poison_reshuffle",
   "test": true,
-  "description": "Status riders survive deck reshuffle (regression for card_copy_banked/card_swap_banked dropping status_id/status_chance). A 5-card dagger deck deals out fully (pile starts dry), so round 1's draw triggers the SHUFFLE TURN folding played cards back through the Fisher-Yates path. All five hand slots are re-injected as guaranteed-POISON carriers (SW1 strike + SH fodder that still applies on play); every reshuffled draw that is later auto-played must reapply, so the tick damage (= active stacks) must climb past 1.",
+  "description": "Status riders survive deck reshuffle (regression for card_copy_banked/card_swap_banked dropping status_id/status_chance). A 5-card dagger deck deals out fully so the first draw triggers the SHUFFLE TURN; every hand slot carries a guaranteed rider, so each reshuffled draw that gets auto-played reapplies -- visible as STATUS_APPLIED stack count climbing past 1 (poison damage itself is flat 1 HP).",
   "scenario_id": "BATTLE_BOOT",
   "initial_state": {
     "scene": "FIELD",
@@ -323,14 +323,14 @@
     },
     {
       "type": "event_arg",
-      "event": "STATUS_TICKED",
+      "event": "STATUS_APPLIED",
       "index": 0,
-      "value": 2
+      "value": 1
     },
     {
       "type": "event_arg",
-      "event": "STATUS_TICKED",
-      "index": 0,
+      "event": "STATUS_APPLIED",
+      "index": 1,
       "value": 3
     }
   ]

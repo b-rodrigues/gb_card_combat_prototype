@@ -48,8 +48,12 @@
     {
       "type": "screen_row",
       "row": 13,
+      "contains": "Dagger: poison"
+    },
+    {
+      "type": "screen_row",
+      "row": 15,
       "contains": "Heal: restore HP"
     }
   ]
 }
-

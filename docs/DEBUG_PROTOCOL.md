@@ -1300,19 +1300,33 @@ selection; `EFFECT_RESOLVED` announces the consequence computed from it.
 Both fire before the matching `DAMAGE_DEALT` / `HEALED` / `DAMAGE_RECEIVED`
 event.
 
+Hand tiers follow strict poker sizing (`docs/combo-system.md` hand table):
+pairs/kinds need >= 2 effective cards; STRAIGHT, FLUSH, STRAIGHT_FLUSH and
+FIVE KIND require all five.  The scored multiplier is the tier percent plus
+25 when every effective card shares one symbol:
+
+```text
+HIGH CARD 100   STRAIGHT 210      FOUR KIND 280      STRAIGHT FLUSH 350
+PAIR      120   FLUSH     240     FULL HOUSE 260     FIVE KIND      400
+TWO PAIR  150   THREE KIND 180
+```
+
 ```text
 COMBO_RESOLVED
-  data[0] = multiplier (percent, 100-225)
+  data[0] = HandTier id (0 NONE .. 9 FIVE KIND, combo.h)
   data[1] = effective card count (attack: all cards; defend: shields only)
-  data[2] = shape flags (bit0 straight, bit1 same-type/suited)
+  data[2] = suited flag (all effective cards share one symbol)
   data[3] = phase (0 = attack, 1 = defend)
 
 EFFECT_RESOLVED
-  data[0] = amount (damage / block / heal points after combo scaling)
+  data[0] = amount (base_power x multiplier / 100)
   data[1] = effect type (CardEffectType: 1 damage, 2 block, 3 heal)
   data[2] = phase (0 = attack, 1 = defend)
   data[3] = target slot (0 = player; otherwise enemy index)
 ```
+
+On-hit status riders scale with the same multiplier:
+`effective_chance = min(255, base_chance x multiplier / 100)` (1/255 units).
 
 ---
 
@@ -1330,7 +1344,9 @@ STATUS_APPLIED
   data[2] = duration in turns
 
 STATUS_TICKED
-  data[0] = tick damage taken this round (stacks x tick/stack)
+  data[0] = flat tick damage (poison: 1 HP per round regardless of stacks;
+            extra applications refresh duration and deepen stacks for
+            telemetry only)
   data[1] = actor slot (0 = player; otherwise enemy index)
   data[2] = instances expired by this tick
   data[3] = first expired status id (valid when data[2] != 0)

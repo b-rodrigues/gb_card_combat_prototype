@@ -13,9 +13,9 @@
  * duration.  Balance values are deliberately provisional (§26). */
 
 static const StatusDefinition s_status_defs[STATUS_DEF_COUNT] = {
-    /* id                      tick/stack  max  dur */
-    { STATUS_NONE,                  0,      0,   0 },
-    { STATUS_POISON,                1,      5,   3 }
+    /* id            tick  max  dur */
+    { STATUS_NONE,     0,   0,   0 },
+    { STATUS_POISON,   1,   5,   3 }
 };
 
 static const StatusDefinition *status_def(uint8_t id)
@@ -86,15 +86,12 @@ void status_tick_banked(void)
     for (i = 0; i < slots->count; ) {
         StatusInstance *inst = &slots->slot[i];
         const StatusDefinition *def = status_def(inst->id);
-        if (def != (const StatusDefinition *)0 && def->tick_per_stack != 0) {
-            /* Add-loop, not multiply: a '*' here promotes through
-             * __mulint, which links into the FIXED bank -- an illegal
-             * call while bank 2 is mapped (AGENTS.md 52.11.1) -- and the
-             * library costs more than this loop ever will. */
-            uint8_t s;
-            for (s = 0; s < inst->stacks; s++) {
-                damage += def->tick_per_stack;
-            }
+        if (def != (const StatusDefinition *)0) {
+            /* FLAT tick (docs/combo-system.md Phase C decision): poison
+             * deals def->tick HP per round regardless of stacks; extra
+             * applications only refresh duration and deepen stacks for
+             * telemetry. */
+            damage += def->tick;
         }
         inst->duration--;
         if (inst->duration == 0) {

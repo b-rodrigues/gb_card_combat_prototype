@@ -66,8 +66,12 @@ testable, save/load works, and the memory budget is understood.
     (`status_id`/`status_chance`, 1/255 deterministic roll via the game
     RNG), per-round poison ticks with combat-death resolution, and
     `STATUS_APPLIED`/`STATUS_TICKED` telemetry.  Covered by
-    `status_poison_apply` / `status_poison_resist`.  Open: per-effect
-    combo scaling, more statuses, finer-grained status telemetry.
+    `status_poison_apply` / `status_poison_resist`.
+  - Poker hand tiers implemented (strict sizes; PAIR..FIVE KIND, FLUSH,
+    STRAIGHT, FULL HOUSE, STRAIGHT FLUSH with tier multipliers + suited
+    bonus), combo-scaled on-hit riders, and the DA1 POISON DAGGER starter
+    card with flat 1-HP poison ticks.  Open: more statuses, finer-grained
+    status telemetry.
 
 ### DONE
 

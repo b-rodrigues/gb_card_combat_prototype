@@ -571,13 +571,13 @@ void ui_update_battle(const Battle *battle)
 }
 
 /* Indexed by BattleCardType (src/battle/card.h). */
-static const char *const s_card_bt_codes[5] = {
-    "SW", "SH", "BO", "FI", "HE"
+static const char *const s_card_bt_codes[6] = {
+    "SW", "SH", "BO", "FI", "HE", "DA"
 };
 
 static const char *ui_card_code(uint8_t battle_type)
 {
-    return (battle_type <= BATTLE_CARD_TYPE_HEAL) ?
+    return (battle_type <= BATTLE_CARD_TYPE_DAGGER) ?
         s_card_bt_codes[battle_type] : "??";
 }
 

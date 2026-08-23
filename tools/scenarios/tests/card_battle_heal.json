@@ -58,7 +58,7 @@
       "type": "event_arg",
       "event": "COMBO_RESOLVED",
       "index": 0,
-      "value": 100
+      "value": 0
     },
     {
       "type": "event_occurred",

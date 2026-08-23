@@ -1,0 +1,98 @@
+{
+  "name": "combo_pair_label",
+  "test": true,
+  "description": "Two same-value cards read PAIR on the COMBO row regardless of symbol match (SW3+FI3 unsuited: tier PAIR, x120, damage 6*120/100=7). Regression for the old label order that showed FLUSH for suited pairs.",
+  "scenario_id": "BATTLE_BOOT",
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 3000,
+    "start_battle": true
+  },
+  "actions": [
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 3
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 0,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "set_hand_card",
+      "index": 1,
+      "card_type": "FI",
+      "value": 3
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 1,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 15
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 13,
+      "contains": "PAIR"
+    },
+    {
+      "type": "event_arg",
+      "event": "COMBO_RESOLVED",
+      "index": 0,
+      "value": 1
+    },
+    {
+      "type": "event_arg",
+      "event": "EFFECT_RESOLVED",
+      "index": 0,
+      "value": 7
+    },
+    {
+      "type": "event_count",
+      "event": "DAMAGE_DEALT",
+      "count": 1
+    }
+  ]
+}

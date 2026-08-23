@@ -264,7 +264,7 @@ static void battle_resolve_hand_discard(Battle *b)
             b->hand[idx].uses_remaining--;
         }
         telemetry_emit(EVENT_CARD_PLAYED, idx, b->hand[idx].type, b->hand[idx].value, b->hand[idx].uses_remaining);
-        deck_discard(&b->deck, b->hand[idx]);
+        deck_discard(&b->deck, &b->hand[idx]);
         /* Played cards leave an empty slot; the turn-start draw refills the
          * hand (deck.md: no mid-turn instant redraw). */
         b->hand[idx].type = BATTLE_CARD_TYPE_EMPTY;
@@ -319,10 +319,9 @@ static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
     combo_resolve(b->last_combo.cards, b->combo_count, phase, fx,
                   &b->last_combo);
     telemetry_emit(EVENT_COMBO_RESOLVED,
-                   (uint8_t)b->last_combo.multiplier,
+                   b->last_combo.tier,
                    b->last_combo.eff_count,
-                   (uint8_t)((b->last_combo.is_straight ? 1 : 0) |
-                             (b->last_combo.all_same_type ? 2 : 0)),
+                   b->last_combo.suited,
                    (uint8_t)phase);
     out->type = g_effect_last.type;
     out->amount = g_effect_last.amount;
@@ -371,10 +370,18 @@ void battle_execute_combo(Battle *b)
              * decides; the deterministic RNG roll decides landing
              * (docs/combo-system.md §13/§17). */
             if (b->enemies[b->target_idx].hp != 0 &&
-                b->last_combo.cards[0].status_id != STATUS_NONE &&
-                (uint8_t)rng_next() < b->last_combo.cards[0].status_chance) {
-                status_apply(status_slots((uint8_t)(b->target_idx + 1)),
-                             b->last_combo.cards[0].status_id, 1, 0);
+                b->last_combo.cards[0].status_id != STATUS_NONE) {
+                /* Combo-scaled rider (docs/combo-system.md §10): the
+                 * hand's effective multiplier scales the card's base
+                 * chance; capped at ~100%.  Fixed bank: '/' is fine
+                 * here (__divuint already linked). */
+                uint16_t eff = (uint16_t)((uint16_t)b->last_combo.cards[0].status_chance *
+                                          b->last_combo.multiplier / 100);
+                if (eff > 255) eff = 255;
+                if ((uint8_t)rng_next() < (uint8_t)eff) {
+                    status_apply(status_slots((uint8_t)(b->target_idx + 1)),
+                                 b->last_combo.cards[0].status_id, 1, 0);
+                }
             }
         }
         battle_resolve_hand_discard(b);

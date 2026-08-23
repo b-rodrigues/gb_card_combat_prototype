@@ -70,6 +70,14 @@
     },
     {
       "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 3
+    },
+    {
+      "type": "press",
       "button": "A"
     },
     {
@@ -102,12 +110,12 @@
     },
     {
       "type": "screen_row",
-      "row": 12,
+      "row": 14,
       "contains": "HE5"
     },
     {
       "type": "screen_row",
-      "row": 12,
+      "row": 14,
       "contains": "1"
     }
   ],

@@ -113,6 +113,8 @@ def main():
         "_battle_init_deck_banked": "battle deck bridge (bank 2)",
         "_status_apply_banked": "status apply body (bank 2)",
         "_status_tick_banked": "status tick body (bank 2)",
+        "_save_op_banked": "SRAM save/load body (bank 2)",
+        "_deck_discard_banked": "discard push (bank 2)",
         "_world_on_battle_fled_banked": "battle-fled world update (bank 2)",
         "_debug_snapshot_banked": "core snapshot builder (bank 2)",
         "_deck_init_default_banked": "starter deck unpacker (bank 2)",

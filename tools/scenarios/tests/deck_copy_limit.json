@@ -1,7 +1,7 @@
 {
   "name": "deck_copy_limit",
   "test": true,
-  "description": "deck_add_card enforces CardDefinition.max_copies: 3 HEALING_HERB copies deck successfully, the 4th is rejected; POISON_DAGGER (cap 1) decks its only owned copy and further copies are rejected by add_item's cap. FIRE_TOME is already saturated at cap 3 by the starter grant, so both add_item and deck_add reject it. Exactly 4 CARD_ADDED_TO_DECK events fire.",
+  "description": "deck_add_card enforces CardDefinition.max_copies: 3 HEALING_HERB copies deck successfully, the 4th is rejected; POISON_DAGGER (cap 3, 2 granted at new game) decks its third copy and further copies are rejected by add_item's cap. FIRE_TOME is already saturated at cap 3 by the starter grant, so both add_item and deck_add reject it. Exactly 4 CARD_ADDED_TO_DECK events fire.",
   "actions": [
     {
       "type": "wait",
@@ -118,7 +118,7 @@
     {
       "type": "inventory",
       "item": "POISON_DAGGER",
-      "expected": 1
+      "expected": 3
     },
     {
       "type": "inventory",

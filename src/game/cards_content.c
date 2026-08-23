@@ -11,8 +11,9 @@ const CardDefinition g_cards[] = {
     { CARD_WOODEN_SHIELD, CARD_TYPE_DEFENSE, 2, 1,  0, 3, CARD_EFFECT_BLOCK_DAMAGE,  BATTLE_CARD_TYPE_SHIELD,    0, STATUS_NONE,       0,   "WD SHLD" },
     { CARD_HEALING_HERB,  CARD_TYPE_HEAL,    5, 1,  3, 3, CARD_EFFECT_HEAL_HP,       BATTLE_CARD_TYPE_HEAL,     20, STATUS_NONE,       0,   "HERB"    },
     { CARD_FIRE_TOME,     CARD_TYPE_ATTACK,  4, 2,  3, 3, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_FIRE,      0, STATUS_NONE,       0,   "FIRE TM" },
-    /* Poison Dagger: 2 dmg, ~63% chance to apply POISON (docs/combo-system.md §13/§22). */
-    { CARD_POISON_DAGGER, CARD_TYPE_ATTACK,  2, 1,  0, 1, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_SWORD,     0, STATUS_POISON,   160,  "PST DAG" },
+    /* Poison Dagger (DA1): 1 physical damage; base 50% poison chance
+     * scaled by the played hand's multiplier (docs/combo-system.md §13). */
+    { CARD_POISON_DAGGER, CARD_TYPE_ATTACK,  1, 1,  0, 3, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_DAGGER,    0, STATUS_POISON,   128,  "POIS DAG" },
     { CARD_AMULET,        CARD_TYPE_SPECIAL, 0, 0,  0, 1, CARD_EFFECT_NONE,          BATTLE_CARD_TYPE_SWORD,     0, STATUS_NONE,       0,   "AMULET"  }
 };
 

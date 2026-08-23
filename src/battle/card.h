@@ -9,7 +9,8 @@ typedef enum {
     BATTLE_CARD_TYPE_SHIELD = 1, /* SH: Defense / block */
     BATTLE_CARD_TYPE_BOW = 2,    /* BO: Ranged physical attack */
     BATTLE_CARD_TYPE_FIRE = 3,   /* FI: Elemental fire attack */
-    BATTLE_CARD_TYPE_HEAL = 4    /* HE: Restore HP */
+    BATTLE_CARD_TYPE_HEAL = 4,   /* HE: Restore HP */
+    BATTLE_CARD_TYPE_DAGGER = 5  /* DA: 1 dmg, poison rider (POISON DAGGER) */
 } BattleCardType;
 
 /* Sentinel for an empty hand slot (played cards stay empty until the turn-
@@ -39,6 +40,6 @@ const char *card_get_description(uint8_t type);
 /* Packed description table geometry shared by card.c (fixed wrapper) and
  * card_content.c (bank-2 blob).  Stride = longest text + NUL, padded. */
 #define CARD_DESC_STRIDE 18
-#define CARD_DESC_TYPES  5
+#define CARD_DESC_TYPES  6
 
 #endif /* CARD_H */
