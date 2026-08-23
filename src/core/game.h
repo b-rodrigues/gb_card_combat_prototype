@@ -63,5 +63,6 @@ void game_restart(Game *g);
 void game_update(Game *g);
 void game_render(Game *g);
 void game_render_reset(Game *g);
+void game_render_reset_banked(void);
 
 #endif /* GAME_H */

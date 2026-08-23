@@ -8,37 +8,28 @@
 
 extern uint8_t g_save_ok;
 
-bool save_present_slot(uint8_t slot)
+static bool save_dispatch(uint8_t op, uint8_t slot, const GameState *state)
 {
     g_bk_call_bank = 2;
     g_bk_call_target = (uint16_t)&save_op_banked;
-    g_bk_ptr_a = (void *)0;
+    g_bk_ptr_a = (void *)state;
     g_bk_byte_a = slot;
-    g_bk_byte_b = 0; /* present */
+    g_bk_byte_b = op;
     banked_call_run();
     return g_save_ok != 0;
+}
+
+bool save_present_slot(uint8_t slot)
+{
+    return save_dispatch(0, slot, (const GameState *)0);
 }
 
 bool save_game_slot(uint8_t slot, const GameState *state)
 {
-    if (!state) return false;
-    g_bk_call_bank = 2;
-    g_bk_call_target = (uint16_t)&save_op_banked;
-    g_bk_ptr_a = (void *)state;
-    g_bk_byte_a = slot;
-    g_bk_byte_b = 1; /* save */
-    banked_call_run();
-    return g_save_ok != 0;
+    return state ? save_dispatch(1, slot, state) : false;
 }
 
 bool load_game_slot(uint8_t slot, GameState *state)
 {
-    if (!state) return false;
-    g_bk_call_bank = 2;
-    g_bk_call_target = (uint16_t)&save_op_banked;
-    g_bk_ptr_a = (void *)state;
-    g_bk_byte_a = slot;
-    g_bk_byte_b = 2; /* load */
-    banked_call_run();
-    return g_save_ok != 0;
+    return state ? save_dispatch(2, slot, state) : false;
 }

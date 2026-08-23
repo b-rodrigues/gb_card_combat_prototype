@@ -66,4 +66,5 @@ bool deck_remove_card(CardState *cs, CardId id);
 /* How many copies of a specific card are in the deck. */
 uint8_t deck_count_in_deck(const DeckState *d, CardId id);
 
+
 #endif /* RPG_DECK_H */

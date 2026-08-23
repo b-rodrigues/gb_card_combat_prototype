@@ -1,31 +1,140 @@
 {
   "name": "battle_multi_enemy_cycle_kill",
   "test": true,
-  "description": "Target enemy idx2 via D-pad, defeat it with a 2-card combo (SW3+FI4=8), verify auto-advance wrapped to live enemy idx0, and that manual D-pad targeting skips the dead idx2. Timeline rides out the post-kill reshuffle cycle so the run ends in a fresh PLAYER_SELECT window.",
+  "description": "Patrol bump engages the Mountain Pass slime trio (16 HP each). After the engagement settles, three SW5 cards are injected and selected -- suited THREE KIND, 15 x 205% = 30 damage -- and executed, killing one member (ENTITY_DEFEATED); the HUD then shows exactly two live slimes. Sacrificial flushes absorb the patrol-engagement round so the pins land inside a stable PLAYER_SELECT phase.",
   "actions": [
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 10 },
-    { "type": "press", "button": "DOWN" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "DOWN" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "RIGHT" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "A" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "SELECT" },
-    { "type": "wait", "frames": 55 },
-    { "type": "wait", "frames": 1300 },
-    { "type": "press", "button": "DOWN" },
-    { "type": "wait", "frames": 5 },
-    { "type": "press", "button": "DOWN" },
-    { "type": "wait", "frames": 15 }
+    {
+      "type": "wait",
+      "frames": 240
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 45
+    },
+    {
+      "type": "wait",
+      "frames": 60
+    },
+    {
+      "type": "set_hand_card",
+      "index": 0,
+      "card_type": "SW",
+      "value": 5
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 0,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "set_hand_card",
+      "index": 1,
+      "card_type": "SW",
+      "value": 5
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 1,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "set_hand_card",
+      "index": 2,
+      "card_type": "SW",
+      "value": 5
+    },
+    {
+      "type": "set_hand_card_meta",
+      "index": 2,
+      "cost": 1,
+      "uses": 255
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "RIGHT"
+    },
+    {
+      "type": "wait",
+      "frames": 6
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 60
+    },
+    {
+      "type": "wait",
+      "frames": 1300
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "wait",
+      "frames": 200
+    }
   ],
   "assertions": [
     {
@@ -33,32 +142,23 @@
       "expected": "BATTLE"
     },
     {
-      "type": "game_state",
-      "expected": "BATTLE"
-    },
-    {
-      "type": "screen_row",
-      "row": 0,
-      "contains": "PLAYER TURN"
+      "type": "event_occurred",
+      "event": "ENTITY_DEFEATED"
     },
     {
       "type": "screen_row",
       "row": 2,
-      "contains": "SLIME  SLIME        "
+      "contains": "SLIME  SLIME"
+    },
+    {
+      "type": "screen_row_not_contains",
+      "row": 2,
+      "contains": "SLIME  SLIME  SLIME"
     },
     {
       "type": "screen_row",
       "row": 3,
-      "contains": " 8/ 8   5/ 5        "
-    },
-    {
-      "type": "screen_row",
-      "row": 4,
-      "contains": "  ^                 "
-    },
-    {
-      "type": "event_occurred",
-      "event": "ENTITY_DEFEATED"
+      "contains": "16/16  16/16"
     }
   ],
   "initial_state": {

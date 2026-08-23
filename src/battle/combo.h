@@ -67,4 +67,9 @@ void combo_resolve(const Card *cards, uint8_t count, ComboPhase phase,
  * self-contained apart from the bank-local call into effects_content.c. */
 void combo_resolve_banked(void);
 
+/* Order-independent hand classifier (bank-local utility): evaluates vals
+ * 1..10 with phase-filtered entries.  Bank-2 callers (e.g. the battle HUD's
+ * live COMBO row) invoke this DIRECTLY -- same bank, no trampoline. */
+uint8_t combo_classify(const uint8_t *vals, const uint8_t *types, uint8_t n);
+
 #endif /* COMBO_H */

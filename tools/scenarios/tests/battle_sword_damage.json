@@ -1,7 +1,7 @@
 {
   "name": "battle_sword_damage",
   "test": true,
-  "description": "Selecting SW3+FI4 deals 7 damage (HIGH CARD x100 under strict-poker sizing) and one-shots the 5 HP slime",
+  "description": "Selecting SW6+FI6 forms an unsuited PAIR (12 x 120% = 14 damage) that one-shots the field slime (10 HP)",
   "scenario_id": "BATTLE_BOOT",
   "actions": [
     {
@@ -12,7 +12,7 @@
       "type": "set_hand_card",
       "index": 0,
       "card_type": "SW",
-      "value": 3
+      "value": 6
     },
     {
       "type": "set_hand_card_meta",
@@ -24,7 +24,7 @@
       "type": "set_hand_card",
       "index": 2,
       "card_type": "FI",
-      "value": 4
+      "value": 6
     },
     {
       "type": "set_hand_card_meta",
@@ -87,7 +87,7 @@
       "type": "event_arg",
       "event": "COMBO_RESOLVED",
       "index": 0,
-      "value": 0
+      "value": 1
     },
     {
       "type": "event_arg",

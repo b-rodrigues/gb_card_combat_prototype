@@ -44,7 +44,8 @@ enum {
     DBG_ACT_SET_HAND_CARD_META = 14,
     DBG_ACT_START_BATTLE = 15,
     DBG_ACT_DECK_REMOVE = 16,
-    DBG_ACT_SET_HAND_CARD_STATUS = 17
+    DBG_ACT_SET_HAND_CARD_STATUS = 17,
+    DBG_ACT_SET_ENEMY_HP = 18
 };
 
 static void scenario_begin(uint16_t seed)
@@ -291,6 +292,14 @@ static void debug_run_action(void)
             if (a0 < BATTLE_HAND_SIZE) {
                 g_game.battle.hand[a0].status_id = a1;
                 g_game.battle.hand[a0].status_chance = a2;
+            }
+            break;
+        case DBG_ACT_SET_ENEMY_HP:
+            /* Pin an enemy combatant's current HP (battle must be active).
+             * Direct state write, no telemetry: scenario setup semantics
+             * (AGENTS.md §53.3). */
+            if (g_game.battle.enemy_count > a0) {
+                g_game.battle.enemies[a0].hp = a1;
             }
             break;
         case DBG_ACT_DECK_ADD:

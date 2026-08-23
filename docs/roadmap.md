@@ -67,6 +67,16 @@ testable, save/load works, and the memory budget is understood.
     RNG), per-round poison ticks with combat-death resolution, and
     `STATUS_APPLIED`/`STATUS_TICKED` telemetry.  Covered by
     `status_poison_apply` / `status_poison_resist`.
+  - Enemy encounters rebalanced: ALL hostile engagements spawn as trios
+    (clones of the struck actor; the final boss stands alone), regular
+    enemy HP doubled (slimes 10-16, bats 8), boss tuned to 50 HP with a
+    SET_ENEMY_HP scenario hook pinning it to 20 for deterministic tests.
+  - Energy pool raised to 6/phase (three cost-2 cards now form a combo);
+    rejected selections flash NO ENERGY! / OUT OF USES! on the battle HUD.
+  - COMBO row shows the pending hand tier LIVE while selecting (blanks on
+    resolution; executed results announce via the banner).  The Lost
+    Amulet now renders in the CARDS tab as a non-deckable QUEST ITEM, and
+    the Merchant sells a heavy BOW 10 (30g).
   - Poker hand tiers implemented (strict sizes; PAIR..FIVE KIND, FLUSH,
     STRAIGHT, FULL HOUSE, STRAIGHT FLUSH with tier multipliers + suited
     bonus), combo-scaled on-hit riders, and the DA1 POISON DAGGER starter
@@ -81,6 +91,9 @@ testable, save/load works, and the memory budget is understood.
 
 ### LATER
 
+- Dialogue boxes: raise `MAX_DIALOGUE_LINES` beyond 8 for richer NPC /
+  signpost text — constraints and deferred checklist in
+  `docs/dialogue-boxes.md`.
 - Extract a reusable template repo from this codebase
 - Start the actual game repository on top of the foundation
 

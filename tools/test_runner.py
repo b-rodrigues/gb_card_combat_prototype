@@ -236,6 +236,12 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      act.get("cost", 1) & 0xFF,
                                      act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "set_enemy_hp":
+                # Pin an enemy combatant's current HP in the active battle
+                # (scenario setup: deterministic fight lengths).
+                session.debug_action(session.DBG_ACT_SET_ENEMY_HP,
+                                     act.get("index", 0) & 0xFF,
+                                     act.get("hp", 1) & 0xFF, 0)
             elif act_type == "set_hand_card_status":
                 # Companion to set_hand_card: pin the injected card's on-hit
                 # status rider (StatusId + roll chance in 1/255 units) so

@@ -23,3 +23,4 @@ void deck_discard_banked(void)
     slot->status_id = c->status_id;
     slot->status_chance = c->status_chance;
 }
+

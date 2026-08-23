@@ -14,7 +14,9 @@ const CardDefinition g_cards[] = {
     /* Poison Dagger (DA1): 1 physical damage; base 50% poison chance
      * scaled by the played hand's multiplier (docs/combo-system.md §13). */
     { CARD_POISON_DAGGER, CARD_TYPE_ATTACK,  1, 1,  0, 3, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_DAGGER,    0, STATUS_POISON,   128,  "POIS DAG" },
-    { CARD_AMULET,        CARD_TYPE_SPECIAL, 0, 0,  0, 1, CARD_EFFECT_NONE,          BATTLE_CARD_TYPE_SWORD,     0, STATUS_NONE,       0,   "AMULET"  }
+    { CARD_AMULET,        CARD_TYPE_SPECIAL, 0, 0,  0, 1, CARD_EFFECT_NONE,          BATTLE_CARD_TYPE_SWORD,     0, STATUS_NONE,       0,   "AMULET"  },
+    /* Bow 10: heavy hitter sold by the Merchant (shop 2). */
+    { CARD_BOW_10,        CARD_TYPE_ATTACK, 10, 2,  0, 1, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_BOW,      30, STATUS_NONE,       0,   "BOW 10"  }
 };
 
 /* Keep the register-time count in game_ids.h in sync with this table. */

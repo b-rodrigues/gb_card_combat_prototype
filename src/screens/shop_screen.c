@@ -40,13 +40,13 @@ static void shop_draw(Game *g)
 
     for (i = 0; i < def->count; i++) {
         const CardDefinition *card = card_get_def(def->items[i]);
-        char code[4];
+        char code[6];
         y = (uint8_t)(5 + i);
         ui_draw_text_line(0, y, (g->item_menu_index == i) ? ">" : " ", 1);
         if (card) {
             /* Label derives from the card definition, never a string. */
             ui_card_code_str(card->battle_type, card->power, code);
-            ui_draw_text_line(1, y, code, 3);
+            ui_draw_text_line(1, y, code, 4);
         } else {
             ui_draw_text_line(1, y, "???", 3);
         }

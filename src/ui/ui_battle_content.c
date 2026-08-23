@@ -187,9 +187,34 @@ static const char *battle_combo_tier_name(uint8_t tier)
     }
 }
 
+/* Live COMBO-row classification buffers: file-static so the HUD never
+ * grows stack under the harness (SP=0xFFFE, AGENTS.md 52.14). */
+static uint8_t s_pv_vals[5];
+static uint8_t s_pv_types[5];
+
+static const char *battle_combo_pending_name(const Battle *battle)
+{
+    uint8_t i, w = 0;
+    uint8_t defend = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND);
+
+    if (battle->combo_count == 0) return "";
+    for (i = 0; i < battle->combo_count; i++) {
+        const Card *c = &battle->hand[battle->selected_indices[i]];
+        if (defend && c->type != BATTLE_CARD_TYPE_SHIELD) continue;
+        s_pv_vals[w] = c->value;
+        s_pv_types[w] = c->type;
+        w++;
+    }
+    return battle_combo_tier_name(
+        combo_classify(s_pv_vals, s_pv_types, w));
+}
+
 static void battle_draw_battle_combo(const Battle *battle)
 {
-    const char *name = battle_combo_tier_name(battle->last_combo.tier);
+    /* Real-time preview: the row tracks the PENDING selection as cards
+     * are added/removed and blanks once the hand resolves -- executed
+     * results announce via the banner instead of sticking around. */
+    const char *name = battle_combo_pending_name(battle);
 
     battle_draw_text_line(0, 13, "COMBO:", 6);
     if (name[0] != '\0') {
@@ -283,4 +308,9 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_COMBO) battle_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) battle_draw_battle_hand(battle);
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
+    if (d & BATTLE_DIRTY_MSG) {
+        battle_draw_text_line(0, 12,
+            (battle->msg_id == 1) ? "NO ENERGY!" :
+            (battle->msg_id == 2) ? "OUT OF USES!" : NULL, 12);
+    }
 }

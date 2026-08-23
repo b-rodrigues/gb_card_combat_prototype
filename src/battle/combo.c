@@ -22,3 +22,4 @@ void combo_resolve(const Card *cards, uint8_t count, ComboPhase phase,
     g_bk_byte_b = (uint8_t)((uint8_t)phase | (uint8_t)(effect_type << 1));
     banked_call_run();
 }
+

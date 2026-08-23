@@ -28,7 +28,7 @@
     },
     {
       "type": "battle_enemy_hp",
-      "expected": 4
+      "expected": 8
     },
     {
       "type": "screen_row",
