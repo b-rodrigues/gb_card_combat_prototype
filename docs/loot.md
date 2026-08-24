@@ -1682,12 +1682,14 @@ the generator only rolls legal (weapon, effect) pairs from the table.
 * Rings have NO attack or block of their own -- they are the best healing
   vector (ring heal > healing-shield heal at every material).
 * Attack phase: a selected ring is a JOKER for the offense hand -- it
-  substitutes as whatever card produces the best poker tier -- and heals
-  its power when the combo resolves.
-* Defense phase: a selected ring is a wild-card SHIELD for the defense
-  hand (value = its heal power), enabling shield kinds/straights/flushes,
-  and heals its power.
+  substitutes as whatever value produces the best poker tier, deals 0
+  attack damage (excluded from the attack sum), and heals its power when
+  the combo resolves.  IMPLEMENTED.
+* Defense phase: a selected ring is a wild-card SHIELD (value = its heal
+  power), counting into the block sum and the hand classification --
+  enabling shield kinds/straights/flushes.  IMPLEMENTED.
 * MAX ONE RING PER SELECTION; a second attempt flashes "ONE RING!".
+  IMPLEMENTED (selection gate, battle msg id 3).
 * Future: HEAL ALL on high-tier rings.
 
 ## 34.4 Combat resolution rules
@@ -1741,7 +1743,8 @@ Wood gear needs no purchase: the hero starts with an all-wood deck
 ## 34.7 Implementation status
 
 * DONE: identity tables + derived-id synthesis; joker rings (both phases,
-  one-ring gate); net-damage defense; generation roll + profiles; wood
+  one-ring gate -- battle Cards carry a `ring` flag set at deck init from
+  the derived id); net-damage defense; generation roll + profiles; wood
   starter; merchant buy stock; sell via CARDS-tab detail page (§34.6).
-* FOLLOW-UP increments: affix catalogue growth; fire/ice statuses;
-  HEAL ALL; reveal moment polish.
+* FOLLOW-UP increments: affix catalogue growth; fire/ice statuses
+  (DONE, see §34.1); HEAL ALL; reveal moment polish.

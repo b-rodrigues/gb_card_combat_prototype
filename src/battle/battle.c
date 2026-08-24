@@ -102,7 +102,8 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
     b->dirty = BATTLE_DIRTY_ALL;
 }
 
-/* Transient HUD message (row 12): id 1 = NO ENERGY, 2 = OUT OF USES. */
+/* Transient HUD message (row 12): id 1 = NO ENERGY, 2 = OUT OF USES,
+ * 3 = ONE RING (docs/loot.md §34.3). */
 static void battle_msg(Battle *b, uint8_t id)
 {
     b->msg_id = id;
@@ -216,6 +217,17 @@ void battle_card_select(Battle *b)
         battle_msg(b,
                    (b->hand[b->cursor_pos].uses_remaining == 0) ? 2 : 1);
         return;
+    }
+
+    /* MAX ONE RING per selection (docs/loot.md §34.3). */
+    if (b->hand[b->cursor_pos].ring) {
+        uint8_t s;
+        for (s = 0; s < b->combo_count; s++) {
+            if (b->hand[b->selected_indices[s]].ring) {
+                battle_msg(b, 3);
+                return;
+            }
+        }
     }
 
     if (b->combo_count < BATTLE_HAND_SIZE) {
@@ -383,6 +395,23 @@ void battle_execute_combo(Battle *b)
             b->combo_count = 1;
         }
         battle_play_hand(b, true, &res);
+        /* Rings heal their power as the combo resolves, whatever the
+         * hand's leading effect (docs/loot.md §34.3/§34.4). */
+        {
+            uint8_t ri;
+            uint8_t ring_heal = 0;
+            for (ri = 0; ri < b->combo_count; ri++) {
+                if (b->last_combo.cards[ri].ring) {
+                    ring_heal += b->last_combo.cards[ri].value;
+                }
+            }
+            if (ring_heal != 0) {
+                uint16_t nh = (uint16_t)b->player.hp + ring_heal;
+                b->player.hp = (nh > b->player.max_hp) ? b->player.max_hp
+                                                       : (uint8_t)nh;
+                telemetry_emit(EVENT_HEALED, ring_heal, 1, 0, 0);
+            }
+        }
         if (res.type == CARD_EFFECT_HEAL_HP) {
             uint16_t new_hp = (uint16_t)b->player.hp + res.amount;
             b->player.hp = (new_hp > b->player.max_hp) ? b->player.max_hp : (uint8_t)new_hp;

@@ -30,11 +30,14 @@ ticks + expiry, payload-locked) and `status_poison_resist` (roll fails).
 **Phase D (implemented)**: BURN (tick 2/round, max 3 stacks, duration 2)
 and FREEZE (no tick, no stacking, duration 1 -- a frozen combatant skips
 its next attack; battle consumes the frozen bitmask that apply + the
-tick body maintain, emitting `TURN_SKIPPED`).  Loot wiring: fire swords
-roll BURN riders and ice swords FREEZE riders (docs/loot.md §34.1/§34.2).
-Scenarios: `status_burn_apply`, `status_freeze_skip`.
-Still open from Phase C/D: resist/expired as separate telemetry events;
-player-side freeze resolution; HEAL ALL.
+tick body maintain, emitting `TURN_SKIPPED`; player-side freeze skips
+the whole offense).  Loot wiring: fire swords roll BURN riders and ice
+swords FREEZE riders (docs/loot.md §34.1/§34.2).  Telemetry completed:
+`STATUS_EXPIRED` fires per expiring tick and `STATUS_RESISTED` when a
+rider roll fails (§19 fully implemented).  Scenarios: `status_burn_apply`,
+`status_freeze_skip`, `status_freeze_player`.  Debug action
+`DBG_ACT_APPLY_STATUS` applies any status to any combatant slot.
+Still open from Phase C/D: HEAL ALL; per-effect scaling refinements.
 
 # 0.1 Hand table (implemented)
 

@@ -273,6 +273,12 @@ def run_scenario(scenario):
             elif act_type == "set_sort":
                 session.debug_action(session.DBG_ACT_SET_SORT,
                                      SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
+            elif act_type == "set_hand_card_ring":
+                # Mark an injected hand card as a loot RING (docs/loot.md
+                # 34.3): joker classification, defense shield value,
+                # one-ring selection gate.
+                session.debug_action(session.DBG_ACT_SET_HAND_RING,
+                                     int(act.get("index", 0)) & 0xFF, 0, 0)
             elif act_type == "apply_status":
                 # Apply a status through the real mechanic (status_apply,
                 # STATUS_APPLIED telemetry included): reaches targets no

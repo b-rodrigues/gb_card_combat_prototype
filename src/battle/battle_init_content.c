@@ -2,6 +2,7 @@
 
 #include "battle.h"
 #include "rpg/cards.h"
+#include "rpg/loot.h"
 #include "rpg/status.h"
 #include "banked.h"
 
@@ -39,6 +40,11 @@ void battle_init_deck_banked(void)
             b->deck.cards[i].effect = def->effect;
             b->deck.cards[i].status_id = def->status_id;
             b->deck.cards[i].status_chance = def->status_chance;
+            /* Loot RING marker (docs/loot.md §34.3): macros only, no
+             * fixed-bank calls. */
+            b->deck.cards[i].ring =
+                (loot_is_loot_id(def->id) &&
+                 loot_id_weapon(def->id) == WPN_RING) ? 1 : 0;
         } else {
             /* Unknown id: safety-net sword, mirroring the phantom draw. */
             b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;
@@ -48,6 +54,7 @@ void battle_init_deck_banked(void)
             b->deck.cards[i].effect = CARD_EFFECT_DAMAGE_TARGET;
             b->deck.cards[i].status_id = STATUS_NONE;
             b->deck.cards[i].status_chance = 0;
+            b->deck.cards[i].ring = 0;
         }
     }
 }

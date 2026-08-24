@@ -126,9 +126,11 @@ void combo_resolve_banked(void)
     if (count > 5) count = 5;
     out_result->count = count;
 
-    /* Phase rules (unchanged): attack sums every non-SHIELD value;
-     * defend sums SHIELD values only.  The same filter decides which
-     * cards enter the hand for classification. */
+    /* Phase rules (docs/loot.md §34.3/§34.4): attack sums every
+     * non-SHIELD, non-RING value (rings deal 0 attack -- they heal
+     * instead); defend sums SHIELD values AND rings (a ring is a
+     * wild-card shield worth its power).  All selected cards enter the
+     * hand for classification either way. */
     {
         uint8_t vals[5];
         uint8_t types[5];
@@ -137,9 +139,10 @@ void combo_resolve_banked(void)
         for (i = 0; i < count; i++) {
             uint8_t t = cards[i].type;
             if (phase == COMBO_PHASE_ATTACK) {
-                if (t != BATTLE_CARD_TYPE_SHIELD) sum += cards[i].value;
+                if (t != BATTLE_CARD_TYPE_SHIELD && !cards[i].ring)
+                    sum += cards[i].value;
             } else {
-                if (t != BATTLE_CARD_TYPE_SHIELD) continue;
+                if (t != BATTLE_CARD_TYPE_SHIELD && !cards[i].ring) continue;
                 sum += cards[i].value;
             }
             vals[w] = cards[i].value;
@@ -156,7 +159,28 @@ void combo_resolve_banked(void)
             out_result->suited = 0;
             out_result->multiplier = 100;
         } else {
-            out_result->tier = combo_classify(vals, types, eff_count);
+            /* Ring JOKER (§34.3): a ring's value substitutes freely --
+             * try every value 1..9 and keep the best tier (types are
+             * untouched, so the suited bonus is unaffected). */
+            uint8_t has_ring = 0;
+            for (i = 0; i < eff_count; i++) {
+                if (cards[i].ring) has_ring = 1;
+            }
+            if (has_ring) {
+                uint8_t trial[5];
+                uint8_t best = combo_classify(vals, types, eff_count);
+                uint8_t v, k2, t2;
+                for (v = 1; v <= 9; v++) {
+                    for (k2 = 0; k2 < eff_count; k2++) {
+                        trial[k2] = cards[k2].ring ? v : vals[k2];
+                    }
+                    t2 = combo_classify(trial, types, eff_count);
+                    if (t2 > best) best = t2;
+                }
+                out_result->tier = best;
+            } else {
+                out_result->tier = combo_classify(vals, types, eff_count);
+            }
             mult = s_tier_mult[out_result->tier];
             if (out_result->tier == HAND_NONE) {
                 out_result->suited = 0;

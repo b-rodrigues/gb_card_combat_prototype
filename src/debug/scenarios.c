@@ -46,7 +46,8 @@ enum {
     DBG_ACT_DECK_REMOVE = 16,
     DBG_ACT_SET_HAND_CARD_STATUS = 17,
     DBG_ACT_SET_ENEMY_HP = 18,
-    DBG_ACT_APPLY_STATUS = 19
+    DBG_ACT_APPLY_STATUS = 19,
+    DBG_ACT_SET_HAND_RING = 20
 };
 
 static void scenario_begin(uint16_t seed)
@@ -284,6 +285,7 @@ static void debug_run_action(void)
                  * that was played earlier in the same battle. */
                 g_game.battle.hand[a0].status_id = STATUS_NONE;
                 g_game.battle.hand[a0].status_chance = 0;
+                g_game.battle.hand[a0].ring = 0;
             }
             break;
 
@@ -312,6 +314,15 @@ static void debug_run_action(void)
              * (e.g. freezing the PLAYER). */
             if (a0 < STATUS_ROUND_SLOTS && a1 != STATUS_NONE) {
                 (void)status_apply(status_slots(a0), a0, a1, 1, a2);
+            }
+            break;
+
+        case DBG_ACT_SET_HAND_RING:
+            /* Mark an injected hand card as a loot RING (docs/loot.md
+             * §34.3) so joker/gate scenarios don't depend on the dealt
+             * deck contents. */
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].ring = 1;
             }
             break;
 

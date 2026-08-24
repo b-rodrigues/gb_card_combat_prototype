@@ -32,6 +32,12 @@ typedef struct {
      * status_chance in 1/255 units; 0/0 = no rider. */
     uint8_t status_id;
     uint8_t status_chance;
+    /* Loot RING marker (docs/loot.md §34.3): joker for both hand
+     * phases -- offense skips its value in the damage sum (the ring
+     * heals its power instead), defense counts it as shield value;
+     * classification substitutes its value freely for the best tier.
+     * MAX ONE per selection (battle-side gate). */
+    uint8_t ring;
 } Card;
 
 /* Get one-line short description for card type */
