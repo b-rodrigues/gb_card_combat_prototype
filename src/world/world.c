@@ -5,7 +5,6 @@
 #include "scene.h"
 #include "event.h"
 #include "rpg/currency.h"
-#include "rpg/loot.h"
 #include "rng.h"
 #include "content.h"
 #include "ui.h"
@@ -244,10 +243,6 @@ void world_on_battle_end(Game *g, bool victory)
             game_world_set_actor_state(&g->state, actor_id, ACTOR_STATE_DEFEATED);
         }
         event_resolve_actor_defeated(g, actor_id, act->id);
-
-        /* Loot drop: deferred -- long-battle hang under investigation.
-         * The hook code is complete but causes a guest spin when invoked
-         * from the battle-end context; root cause TBD. */
     }
 }
 

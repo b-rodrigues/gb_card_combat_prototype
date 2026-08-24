@@ -69,7 +69,6 @@ extern uint8_t g_card_defs_count;
 
 /* Look up a card definition by id.  Returns a pointer to a scratch copy
  * (valid until the next call).  Returns NULL for unknown ids. */
-extern CardDefinition g_card_scratch;   /* shared lookup scratch */
 const CardDefinition *card_get_def(CardId id);
 
 #endif /* RPG_CARDS_H */

@@ -12,23 +12,6 @@
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
 
-/* ── Enemy loot profiles (docs/loot.md §17) ─────────────────────────
- * Dispatcher for the bank-2 pool body (loot_pool_banked.c).  The pool
- * count reports through the shared WRAM byte. */
-extern void game_loot_pool_banked(void);
-uint8_t g_loot_pool_len;
-
-void game_loot_pool_for_battle(uint8_t battle_type, CardId *out_buf,
-                               uint8_t *len)
-{
-    g_bk_call_bank = 2;
-    g_bk_call_target = (uint16_t)&game_loot_pool_banked;
-    g_bk_byte_a = battle_type;
-    g_bk_ptr_a = (void *)out_buf;
-    banked_call_run();
-    *len = g_loot_pool_len;
-}
-
 void game_content_init(void)
 {
     story_init(STORY_FLAG_ID_COUNT);

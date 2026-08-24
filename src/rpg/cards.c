@@ -1,5 +1,4 @@
 #include "rpg/cards.h"
-#include "rpg/loot.h"
 #include "banked.h"
 #include <stddef.h>
 
@@ -22,16 +21,6 @@ const CardDefinition *card_get_def(CardId id)
 {
     uint8_t i;
     if (!g_card_defs) return NULL;
-
-    /* Loot-range ids synthesize from the material/effect/weapon tables
-     * (docs/loot.md §34): bank-2 body fills the shared scratch. */
-    if (loot_is_loot_id(id)) {
-        g_bk_call_bank = 2;
-        g_bk_call_target = (uint16_t)&loot_synth_banked;
-        g_bk_byte_a = id;
-        banked_call_run();
-        return &g_card_scratch;
-    }
 
     for (i = 0; i < g_card_defs_count; i++) {
         banked_copy(g_card_bank, &g_card_scratch, &g_card_defs[i],

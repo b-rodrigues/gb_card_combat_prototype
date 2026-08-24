@@ -29,9 +29,6 @@ ScreenId game_screen_after_victory(const Game *g);
 
 /* Loot profile for a defeated enemy family (docs/loot.md §17): copies
  * the family's WEAPON pool into out_buf (loot.c rolls material+effect). */
-extern uint8_t g_loot_pool_len;
-void game_loot_pool_for_battle(uint8_t battle_type, CardId *out_buf,
-                               uint8_t *len);
 
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
