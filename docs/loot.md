@@ -1646,8 +1646,10 @@ mythril +3                  ice   (reserved)       shield SH
 
 * Weapon base powers: sword 3, shield 2, bow 2, ring 2 (heals), dagger 1.
 * Material bonus stacks on top: mythril sword = 6.
-* Fire/ice rows are reserved-inert until burn/freeze statuses exist;
-  adding them later = filling in their table rows.
+* Fire/ice rows are LIVE (Phase D): fire swords carry a BURN rider
+  (2 dmg/round, 2 rounds) and ice swords a FREEZE rider (the target
+  skips its next attack); chances tuned like DA1 in 1/255 units.
+  Adding future effects later = filling in their table rows.
 * Every combination maps to a **derived CardId** in the loot id range
   (`LOOT_ID_BASE`..0xFF): `id = BASE + (material*Neff + effect)*Nwpn + wpn`.
   `card_get_def()` synthesizes definitions for these ids from the tables --

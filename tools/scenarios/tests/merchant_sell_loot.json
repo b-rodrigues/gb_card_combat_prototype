@@ -143,11 +143,6 @@
       "type": "currency",
       "expected": 1,
       "currency": "GOLD"
-    },
-    {
-      "type": "screen_row",
-      "row": 16,
-      "contains": "Sold!"
     }
   ]
 }

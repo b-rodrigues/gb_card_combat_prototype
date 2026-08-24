@@ -181,7 +181,8 @@ typedef enum {
     /* Loot instances (docs/loot.md §34). */
     EVENT_LOOT_CARD_ADDED,  /* d0=derived id d1=count after */
     EVENT_LOOT_GENERATED,   /* reserved (kept for wire stability) */
-    EVENT_CARD_SOLD         /* d0=CardId d1=gold received d2=count after */
+    EVENT_CARD_SOLD,        /* d0=CardId d1=gold received d2=count after */
+    EVENT_TURN_SKIPPED      /* d0=enemy slot (1..n) d1=cause StatusId */
 } GameEventType;
 
 typedef struct {

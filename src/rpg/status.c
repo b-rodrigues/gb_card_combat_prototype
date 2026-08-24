@@ -17,6 +17,9 @@ StatusInstance g_status_applied;
 /* Written by status_tick_banked(); declared in status.h. */
 StatusTickResult g_status_tick;
 
+/* Frozen-combatant bitmask (status.h); cleared at battle start. */
+uint8_t g_status_frozen_mask;
+
 /* Battle-scoped storage (see status.h).  Zeroed at battle start. */
 static StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
 
@@ -26,6 +29,7 @@ void status_reset_battle(void)
     for (i = 0; i < STATUS_ROUND_SLOTS; i++) {
         s_battle_status[i].count = 0;
     }
+    g_status_frozen_mask = 0;
 }
 
 StatusSlots *status_slots(uint8_t actor_slot)
@@ -34,12 +38,9 @@ StatusSlots *status_slots(uint8_t actor_slot)
     return &s_battle_status[actor_slot];
 }
 
-bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
-                  uint8_t duration)
+bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
+                  uint8_t stacks, uint8_t duration)
 {
-    if (stacks > 15) stacks = 15;
-    if (duration > 15) duration = 15;
-
     g_status_applied.id = STATUS_NONE;
 
     g_bk_call_bank = 2;
@@ -48,6 +49,13 @@ bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
     g_bk_byte_a = id;
     g_bk_byte_b = (uint8_t)((stacks << 4) | duration);
     banked_call_run();
+
+    /* FREEZE takes effect immediately: the next attack by this
+     * combatant is skipped; the tick body re-arms the bit while an
+     * instance remains alive. */
+    if (id == STATUS_FREEZE && actor_slot < STATUS_ROUND_SLOTS) {
+        g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
+    }
 
     if (g_status_applied.id == STATUS_NONE) {
         return false;

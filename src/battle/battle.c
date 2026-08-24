@@ -403,6 +403,7 @@ void battle_execute_combo(Battle *b)
                     if (k > 255) k = 255;
                     if ((uint8_t)rng_next() < (uint8_t)k) {
                         status_apply(status_slots((uint8_t)(b->target_idx + 1)),
+                                     (uint8_t)(b->target_idx + 1),
                                      b->last_combo.cards[0].status_id, 1, 0);
                     }
                 }
@@ -495,7 +496,31 @@ void battle_update(Battle *b)
             uint8_t count = 0;
             b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             b->turn = BATTLE_TURN_ENEMY;
-            if (b->enemy_deck.count > 0) {
+            while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
+                /* Wrap instead of % -- keeps the SDCC int-mod library
+                 * out of the tight fixed bank. */
+                b->attacking_enemy_idx++;
+                if (b->attacking_enemy_idx >= b->enemy_count) {
+                    b->attacking_enemy_idx = 0;
+                }
+                count++;
+            }
+            /* STATUS_FREEZE (docs/combo-system.md §12): the frozen-mask
+             * bit is maintained by the status system (apply + banked
+             * tick body); battle only tests + consumes it.  Mask bits
+             * follow status SLOTS (player = 0, enemies = 1..n).  A
+             * frozen attacker skips its swing: no enemy card, nothing
+             * incoming this cycle. */
+            if ((g_status_frozen_mask &
+                 (uint8_t)(1u << (b->attacking_enemy_idx + 1))) != 0 &&
+                b->enemies[b->attacking_enemy_idx].hp != 0) {
+                g_status_frozen_mask &=
+                    (uint8_t)~(1u << (b->attacking_enemy_idx + 1));
+                b->enemy_incoming_dmg = 0;
+                telemetry_emit(EVENT_TURN_SKIPPED,
+                               (uint8_t)(b->attacking_enemy_idx + 1),
+                               STATUS_FREEZE, 0, 0);
+            } else if (b->enemy_deck.count > 0) {
                 b->enemy_played_card = b->enemy_deck.cards[b->enemy_deck.draw_idx];
                 b->enemy_incoming_dmg = b->enemy_played_card.value;
                 telemetry_emit(EVENT_ENEMY_CARD_PLAYED,
@@ -510,15 +535,6 @@ void battle_update(Battle *b)
                 b->enemy_incoming_dmg = 3;
             }
             b->delay_timer = 20;
-            while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
-                /* Wrap instead of % -- keeps the SDCC int-mod library
-                 * out of the tight fixed bank. */
-                b->attacking_enemy_idx++;
-                if (b->attacking_enemy_idx >= b->enemy_count) {
-                    b->attacking_enemy_idx = 0;
-                }
-                count++;
-            }
         } else {
             b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
             b->turn = BATTLE_TURN_PLAYER;

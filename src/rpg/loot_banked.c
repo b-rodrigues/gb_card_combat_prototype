@@ -1,6 +1,7 @@
 #pragma bank 2
 
 #include "rpg/loot.h"
+#include "rpg/status.h"
 #include "banked.h"
 #include "battle/card.h"
 #include "rpg/cards.h"
@@ -21,17 +22,18 @@ static const struct {
     { 0, "WD"  }, { 1, "BRN" }, { 2, "IRN" }, { 3, "MYT" }
 };
 
-/* Effect rows: status rider applied by battle on-hit.  fire/ice are
- * reserved-inert (STATUS_NONE) until their statuses exist -- they roll
- * like plain but keep their namespace and display name. */
+/* Effect rows: on-hit status rider applied by battle (docs/combo-system.md
+ * §13 pipeline; legality per weapon in docs/loot.md §34.2).  chance is in
+ * 1/255 units, tuned like the catalog's DA1 (128 ~= 50%). */
 static const struct {
     uint8_t status_id;
-    uint8_t chance;        /* on-hit percent */
+    uint8_t chance;        /* on-hit threshold, 1/255 units */
+    char code[4];          /* abbreviated name infix (§34.1) */
 } s_effects[LOOT_NEFFECTS] = {
-    { STATUS_NONE,   0 },       /* plain   */
-    { STATUS_POISON, 50 },      /* poison  */
-    { STATUS_NONE,   0 },       /* fire reserved */
-    { STATUS_NONE,   0 }        /* ice reserved */
+    { STATUS_NONE,     0,   ""    },   /* plain   */
+    { STATUS_POISON,   128, "PSN" },   /* daggers */
+    { STATUS_BURN,     128, "FR"  },   /* swords  */
+    { STATUS_FREEZE,   96,  "IC"  }    /* swords  */
 };
 
 static const struct {
@@ -60,10 +62,9 @@ static void synth_name(uint8_t material, uint8_t effect, uint8_t weapon)
 
     while (*m) *n++ = *m++;
     *n++ = ' ';
-    if (effect == EFF_POISON && weapon == WPN_DAGGER) {
-        *n++ = 'P';
-        *n++ = 'S';
-        *n++ = 'N';
+    if (s_effects[effect].status_id != STATUS_NONE) {
+        const char *e = s_effects[effect].code;
+        while (*e) *n++ = *e++;
         *n++ = ' ';
     }
     while (*w) *n++ = *w++;
@@ -121,10 +122,11 @@ void loot_synth_banked(void)
             break;
     }
 
-    /* Effect rider: poison on daggers (fire/ice inherit their riders once
-     * those statuses exist).  Written into the def so the existing
-     * battle on-hit path consumes it unchanged. */
-    if (effect == EFF_POISON && weapon == WPN_DAGGER) {
+    /* Effect rider: attached whenever the effect row carries a status;
+     * the generator only rolls legal (weapon, effect) pairs (§34.2), so
+     * no extra legality check here.  Written into the def so the
+     * existing battle on-hit path consumes it unchanged. */
+    if (s_effects[effect].status_id != STATUS_NONE) {
         g_card_scratch.status_id = s_effects[effect].status_id;
         g_card_scratch.status_chance = s_effects[effect].chance;
     }

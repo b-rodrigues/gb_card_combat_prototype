@@ -3,7 +3,7 @@
 ## Current State
 
 Branch: `loot-instances`
-All gates green: 134/134 scenarios, lint clean, memmap +441 B fixed headroom,
+All gates green: 139/139 scenarios, lint clean, memmap +72 B fixed headroom,
 verify-oam OK.
 
 The poker combat system is fully operational: material × effect × weapon
@@ -49,10 +49,18 @@ decked cards are unsellable (ownership must stay backed).  Regression:
 by removing all `%`/`/` from harness-exercised paths so the SDCC divmod
 library no longer links (`ui_ones_digit`, battle wrap-arounds).
 
-## Priority 4 — Fire/ice status effects (Phase 4)
+## Priority 4 — ~~Fire/ice status effects (Phase 4)~~ DONE
 
-Burn and freeze/slow as new StatusId values with battle resolution rules.
-Only worth doing after drops are flowing.
+STATUS_BURN (2 dmg/round, max 3 stacks, duration 2) and STATUS_FREEZE
+(no tick, duration 1 -- afflicted combatant skips its next attack) added
+to the generic status system; freeze is exposed to battle as a flat WRAM
+bitmask (`g_status_frozen_mask`) maintained by apply + the banked tick
+body, so the fixed-bank cost is one load/and in the telegraph path plus
+the TURN_SKIPPED event emit.  Loot wiring: fire swords roll BURN riders,
+ice swords FREEZE riders, daggers POISON -- all plain-heavy (25% rider
+chance), legality per §34.2; synthesized names carry the effect infix
+("WD PSN DA", "IRN FR SW").  Scenarios: `status_burn_apply`,
+`status_freeze_skip` (both payload-locked, negative-tested).
 
 ## Completed This Session
 
@@ -66,10 +74,13 @@ Only worth doing after drops are flowing.
 - Loot card identity names ("WD SW", "MYT PSN DA") in CARDS tab + detail
 - Merchant sell flow (CARDS-tab detail `[A]SELL`, CARD_SOLD telemetry,
   `merchant_sell_loot` scenario)
+- Fire/ice statuses (Phase D): BURN + FREEZE with battle resolution
+  (frozen bitmask + TURN_SKIPPED), loot rider wiring, scenarios
+  `status_burn_apply` / `status_freeze_skip`
 - Fixed-bank diet: SDCC divmod library unlinked (`ui_ones_digit`,
-  battle wrap-arounds, add/sub rider scaling) — memmap +69 B headroom
-- All gates green: 137/137 harness, release ROM, lint, memmap,
-  verify-oam, screenshots byte-stable
+  battle wrap-arounds, add/sub rider scaling)
+- All gates green: 139/139 harness, release ROM, lint, memmap (+72 B
+  fixed headroom), verify-oam
 
 ## Completed Previous Session
 

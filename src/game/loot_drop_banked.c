@@ -49,8 +49,9 @@ void game_loot_drop_banked(void)
         }
     }
 
-    /* Roll material + legal effect for the weapon (weighted wood-heavy,
-     * plain-heavy; poison only on daggers -- §34.2). */
+    /* Roll material + legal effect for the weapon (weighted wood-heavy;
+     * legal non-plain effects per §34.2: daggers poison, swords burn or
+     * chill, everything else stays plain). */
     g_loot_rng_state ^= g_loot_rng_state << 7;
     g_loot_rng_state ^= g_loot_rng_state >> 9;
     g_loot_rng_state ^= g_loot_rng_state << 8;
@@ -60,8 +61,16 @@ void game_loot_drop_banked(void)
         uint8_t material = (mat_roll < 128) ? MAT_WOOD :
                            (mat_roll < 192) ? MAT_BRONZE :
                            (mat_roll < 224) ? MAT_IRON : MAT_MYTHRIL;
-        uint8_t effect = (eff_roll < 128 ||
-                          weapon != WPN_DAGGER) ? EFF_PLAIN : EFF_POISON;
+        uint8_t effect = EFF_PLAIN;
+
+        /* Plain-heavy (§34.5): only 25% of rolls carry a rider. */
+        if (eff_roll < 64) {
+            if (weapon == WPN_DAGGER) {
+                effect = EFF_POISON;
+            } else if (weapon == WPN_SWORD) {
+                effect = (eff_roll < 32) ? EFF_FIRE : EFF_ICE;
+            }
+        }
 
         /* Derived id: BASE + mat*32 + eff*8 + wpn (shifts only). */
         g_loot_id = (uint8_t)(LOOT_ID_BASE +

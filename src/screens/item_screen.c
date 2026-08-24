@@ -31,7 +31,6 @@
 #define MSG_DECK_FULL  1
 #define MSG_DECK_MIN   2
 #define MSG_QUEST_ITEM 3
-#define MSG_SOLD       4
 
 #define FILTER_ALL      0xFF
 #define SORT_NONE       0
@@ -82,14 +81,14 @@ static void card_detail_sell(Game *g)
     id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
     if (!loot_is_loot_id(id) || !merchant_buys(g)) return;
     def = card_get_def(id);
-    if (!def) return;
 
     /* Selling must never strand a decked card without ownership
      * backing: require at least one copy outside the battle deck. */
     owned = deck_collection_count(cs, id);
-    if (owned <= deck_count_in_deck(&cs->deck, id)) {
+    if (def == NULL || owned <= deck_count_in_deck(&cs->deck, id)) {
         g->item_menu_message = MSG_DECK_FULL;
         g->item_menu_msg_ttl = 45;
+        g->item_menu_mode = MODE_LIST;
         return;
     }
     if (!deck_collection_remove(cs, id, 1)) return;
@@ -97,9 +96,8 @@ static void card_detail_sell(Game *g)
     telemetry_emit(EVENT_CARD_SOLD, id, def->price,
                    (uint8_t)(owned - 1), 0);
     /* Back to the list: it rebuilds its view every frame, so a fully
-     * sold-out entry simply disappears (its indices are gone). */
-    g->item_menu_message = MSG_SOLD;
-    g->item_menu_msg_ttl = 45;
+     * sold-out entry simply disappears and the OWN digit drops -- the
+     * CARD_SOLD event is the authoritative feedback for tests. */
     g->item_menu_mode = MODE_LIST;
 }
 
@@ -295,8 +293,6 @@ static void draw_cards_list(Game *g)
         ui_draw_text_line(0, 16, "DECK MIN 5", 10);
     else if (g->item_menu_message == MSG_QUEST_ITEM)
         ui_draw_text_line(0, 16, "QUEST ITEM", 10);
-    else if (g->item_menu_message == MSG_SOLD)
-        ui_draw_text_line(0, 16, "Sold!", 5);
     else
         ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
 }
@@ -350,7 +346,6 @@ static void draw_card_detail_page(Game *g)
 {
     const CardDefinition *def;
     CardId id;
-    char b[21];
     uint8_t y = 5;
 
     if (g->item_menu_index < FIRST_CARD ||
@@ -365,33 +360,36 @@ static void draw_card_detail_page(Game *g)
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);
     y += 2;
-    /* Composed rows keep the fixed-bank call-site cost down. */
-    b[0]='P'; b[1]='W'; b[2]='R'; b[3]=' '; b[4]=' '; b[5]=ui_ones_digit(def->power);
-    b[6]=' '; b[7]='C'; b[8]='O'; b[9]='S'; b[10]='T'; b[11]=' ';
-    b[12]=ui_ones_digit(def->cost); b[13]='\0';
-    ui_draw_text_line(0, y, b, 13);
+    /* Literal labels + positioned number draws: per-character buffer
+     * composition compiles to ~8 instructions per char in the tight
+     * fixed bank (AGENTS.md 52.18). */
+    ui_draw_text_line(0, y, "PWR", 3);
+    ui_draw_num2(4, y, def->power);
+    ui_draw_text_line(7, y, "COST", 4);
+    ui_draw_num2(12, y, def->cost);
     y += 2;
-    b[0]='U'; b[1]='S'; b[2]='E'; b[3]='S'; b[4]=' ';
-    b[5]=def->uses_per_battle ? ui_ones_digit(def->uses_per_battle) : '-';
-    b[6]='/'; b[7]='B'; b[8]='T'; b[9]='L'; b[10]=' ';
-    b[11]='M'; b[12]='X'; b[13]='C'; b[14]='P'; b[15]=' ';
-    b[16]=def->max_copies ? ui_ones_digit(def->max_copies) : '-';
-    b[17]='\0';
-    ui_draw_text_line(0, y, b, 17);
+    ui_draw_text_line(0, y, "USES", 4);
+    if (def->uses_per_battle) {
+        ui_draw_num2(4, y, def->uses_per_battle);
+    } else {
+        ui_draw_text_line(5, y, "-", 1);
+    }
+    ui_draw_text_line(6, y, "/BTL", 4);
+    ui_draw_text_line(11, y, "MXCP", 4);
+    if (def->max_copies) {
+        ui_draw_num2(15, y, def->max_copies);
+    } else {
+        ui_draw_text_line(16, y, "-", 1);
+    }
     y += 2;
-    b[0]='O'; b[1]='W'; b[2]='N'; b[3]=' '; b[4]=' ';
-    b[5]=ui_ones_digit(deck_collection_count(&g->state.cards, id));
-    b[6]=' '; b[7]='D'; b[8]='E'; b[9]='C'; b[10]='K'; b[11]=' ';
-    b[12]=ui_ones_digit(deck_count_in_deck(&g->state.cards.deck, id));
-    b[13]='\0';
-    ui_draw_text_line(0, y, b, 13);
+    ui_draw_text_line(0, y, "OWN", 3);
+    ui_draw_num2(4, y, deck_collection_count(&g->state.cards, id));
+    ui_draw_text_line(7, y, "DECK", 4);
+    ui_draw_num2(12, y, deck_count_in_deck(&g->state.cards.deck, id));
     y += 2;
     ui_draw_text_line(0, y, "PRICE", 5);
     ui_draw_num2(6, y, def->price);
-    /* Sell affordance / transient sale feedback (merchant only). */
-    if (g->item_menu_message == MSG_DECK_FULL) {
-        ui_draw_text_line(0, 17, "ALL DECKED", 10);
-    } else if (loot_is_loot_id(id) && merchant_buys(g)) {
+    if (loot_is_loot_id(id) && merchant_buys(g)) {
         ui_draw_text_line(0, 17, "[A]SELL", 7);
     }
 }

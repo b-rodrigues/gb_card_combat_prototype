@@ -28,7 +28,7 @@ enum {
 };
 
 enum {
-    EFF_PLAIN = 0, EFF_POISON, EFF_FIRE_RESV, EFF_ICE_RESV
+    EFF_PLAIN = 0, EFF_POISON, EFF_FIRE, EFF_ICE
 };
 
 enum {
