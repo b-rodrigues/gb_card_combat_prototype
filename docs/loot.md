@@ -1704,7 +1704,18 @@ material         <- weighted roll (wood-heavy)
 effect           <- legal-for-weapon weighted roll (plain/poison-heavy)
 ```
 
-Deterministic per seed (§26).  Telemetry: LOOT_GENERATED + LOOT_CARD_ADDED.
+Deterministic per seed (§26).  Telemetry: LOOT_CARD_ADDED
+(d0=derived id, d1=count after) -- the id itself identifies the
+material/effect/weapon roll via the §34.1 macros.
+
+Implementation: the whole decision (gate + profile pick + roll + encode)
+is ONE bank-2 body (`src/game/loot_drop_banked.c`) behind the thin
+`game_loot_drop()` wrapper; it steps the ISOLATED loot stream
+(`g_loot_rng_state`, seeded from the main seed by `rng_set_seed`) so drops
+never shift shared-RNG scenario outcomes.  The drop path must stay nearly
+fixed-bank-free — overflowing `_CODE`/`_HOME` past 0x8000 corrupts bank 2
+and hangs the guest (AGENTS.md §52.18).  Regression:
+`tools/scenarios/tests/loot_drop_victory.json`.
 
 ## 34.6 Economy (Merchant = Card Merchant)
 
@@ -1712,8 +1723,11 @@ The Lost Amulet merchant opens shop 2 as the CARD MERCHANT:
 
 * BUY: curated bronze/iron/mythril loot stock at formula prices
   (material tier x weapon base, centralized in loot.c §16).
-* TRADE/SELL (follow-up increment): pick an owned loot card -> receive
-  its sell value -> the copy leaves the collection.
+* TRADE/SELL (implemented): pick an owned loot card in the CARDS tab ->
+  its detail page shows `[A]SELL` while the player has engaged a buying
+  shop (`ShopDefinition.buys`, cleared on scene change) -> A sells one
+  copy for its synthesized `price` (§16 formula) and emits CARD_SOLD.
+  A fully decked card cannot be sold (ownership must stay backed).
 
 Wood gear needs no purchase: the hero starts with an all-wood deck
 (sword/shield/dagger/bow/ring).
@@ -1722,6 +1736,6 @@ Wood gear needs no purchase: the hero starts with an all-wood deck
 
 * DONE: identity tables + derived-id synthesis; joker rings (both phases,
   one-ring gate); net-damage defense; generation roll + profiles; wood
-  starter; merchant buy stock.
-* FOLLOW-UP increments: sell/trade UI; affix catalogue growth; fire/ice
-  statuses; HEAL ALL; reveal moment polish.
+  starter; merchant buy stock; sell via CARDS-tab detail page (§34.6).
+* FOLLOW-UP increments: affix catalogue growth; fire/ice statuses;
+  HEAL ALL; reveal moment polish.

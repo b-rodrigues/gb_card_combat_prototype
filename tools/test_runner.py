@@ -273,6 +273,14 @@ def run_scenario(scenario):
             elif act_type == "set_sort":
                 session.debug_action(session.DBG_ACT_SET_SORT,
                                      SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
+            elif act_type == "collection_add":
+                # Grant a card to the collection by RAW id (real mechanic:
+                # deck_collection_add).  Raw ids let scenarios reach derived
+                # loot-range CardIds (docs/loot.md §34) that have no name
+                # in the host maps.
+                session.debug_action(session.DBG_ACT_ADD_ITEM,
+                                     int(act.get("card_id", 0)) & 0xFF,
+                                     0, int(act.get("quantity", 1)) & 0xFF)
 
         # Read final snapshot, canonical state buffer and telemetry
         snap = session.snapshot()

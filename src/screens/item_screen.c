@@ -4,10 +4,13 @@
 #include "rpg/cards.h"
 #include "rpg/loot.h"
 #include "rpg/deck.h"
+#include "rpg/currency.h"
 #include "quest.h"
 #include "ui.h"
 #include "menu.h"
 #include "card.h"
+#include "shops.h"
+#include "game_ids.h"
 
 #define TAB_CARDS 0
 #define TAB_QUEST 1
@@ -28,6 +31,7 @@
 #define MSG_DECK_FULL  1
 #define MSG_DECK_MIN   2
 #define MSG_QUEST_ITEM 3
+#define MSG_SOLD       4
 
 #define FILTER_ALL      0xFF
 #define SORT_NONE       0
@@ -52,6 +56,51 @@ static bool card_deckable(const CardDefinition *def)
 static CardId view_card_id(Game *g, uint8_t pos)
 {
     return g->state.cards.collection.entries[s_view_indices[pos]].id;
+}
+
+/* ── Sell at the card merchant (docs/loot.md §24/§34.6) ─────────────
+ * A loot card's detail page offers SELL while the player has engaged a
+ * buying shop (g->shop_id set by the shop actor, cleared on scene
+ * change).  Value = the def's price field -- for loot ids that is the
+ * centralized sell value synthesized by loot_synth_banked. */
+static bool merchant_buys(const Game *g)
+{
+    const ShopDefinition *shop;
+    shop = game_shop_for_id(g->shop_id);
+    return shop && shop->buys;
+}
+
+static void card_detail_sell(Game *g)
+{
+    CardState *cs = &g->state.cards;
+    CardId id;
+    const CardDefinition *def;
+    uint8_t owned;
+
+    if ((uint8_t)(g->item_menu_index - FIRST_CARD) >= s_view_count)
+        return;
+    id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
+    if (!loot_is_loot_id(id) || !merchant_buys(g)) return;
+    def = card_get_def(id);
+    if (!def) return;
+
+    /* Selling must never strand a decked card without ownership
+     * backing: require at least one copy outside the battle deck. */
+    owned = deck_collection_count(cs, id);
+    if (owned <= deck_count_in_deck(&cs->deck, id)) {
+        g->item_menu_message = MSG_DECK_FULL;
+        g->item_menu_msg_ttl = 45;
+        return;
+    }
+    if (!deck_collection_remove(cs, id, 1)) return;
+    currency_add(&g->state, CURRENCY_ID_GOLD, (int16_t)def->price);
+    telemetry_emit(EVENT_CARD_SOLD, id, def->price,
+                   (uint8_t)(owned - 1), 0);
+    /* Back to the list: it rebuilds its view every frame, so a fully
+     * sold-out entry simply disappears (its indices are gone). */
+    g->item_menu_message = MSG_SOLD;
+    g->item_menu_msg_ttl = 45;
+    g->item_menu_mode = MODE_LIST;
 }
 
 static bool filter_matches(Game *g, CardId id)
@@ -214,7 +263,7 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
-    code[0] = (char)('0' + (in_deck % 10));
+    code[0] = ui_ones_digit(in_deck);
     code[1] = '\0';
     ui_draw_text_line(19, y, code, 1);
     ui_draw_text_line(2, (uint8_t)(y + 1),
@@ -246,6 +295,8 @@ static void draw_cards_list(Game *g)
         ui_draw_text_line(0, 16, "DECK MIN 5", 10);
     else if (g->item_menu_message == MSG_QUEST_ITEM)
         ui_draw_text_line(0, 16, "QUEST ITEM", 10);
+    else if (g->item_menu_message == MSG_SOLD)
+        ui_draw_text_line(0, 16, "Sold!", 5);
     else
         ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
 }
@@ -315,28 +366,34 @@ static void draw_card_detail_page(Game *g)
     ui_draw_text_line(6, y, card_type_name(def->type), 3);
     y += 2;
     /* Composed rows keep the fixed-bank call-site cost down. */
-    b[0]='P'; b[1]='W'; b[2]='R'; b[3]=' '; b[4]=' '; b[5]=(char)('0'+(def->power%10));
+    b[0]='P'; b[1]='W'; b[2]='R'; b[3]=' '; b[4]=' '; b[5]=ui_ones_digit(def->power);
     b[6]=' '; b[7]='C'; b[8]='O'; b[9]='S'; b[10]='T'; b[11]=' ';
-    b[12]=(char)('0'+(def->cost%10)); b[13]='\0';
+    b[12]=ui_ones_digit(def->cost); b[13]='\0';
     ui_draw_text_line(0, y, b, 13);
     y += 2;
     b[0]='U'; b[1]='S'; b[2]='E'; b[3]='S'; b[4]=' ';
-    b[5]=def->uses_per_battle ? (char)('0'+(def->uses_per_battle%10)) : '-';
+    b[5]=def->uses_per_battle ? ui_ones_digit(def->uses_per_battle) : '-';
     b[6]='/'; b[7]='B'; b[8]='T'; b[9]='L'; b[10]=' ';
     b[11]='M'; b[12]='X'; b[13]='C'; b[14]='P'; b[15]=' ';
-    b[16]=def->max_copies ? (char)('0'+(def->max_copies%10)) : '-';
+    b[16]=def->max_copies ? ui_ones_digit(def->max_copies) : '-';
     b[17]='\0';
     ui_draw_text_line(0, y, b, 17);
     y += 2;
     b[0]='O'; b[1]='W'; b[2]='N'; b[3]=' '; b[4]=' ';
-    b[5]=(char)('0'+(deck_collection_count(&g->state.cards, id)%10));
+    b[5]=ui_ones_digit(deck_collection_count(&g->state.cards, id));
     b[6]=' '; b[7]='D'; b[8]='E'; b[9]='C'; b[10]='K'; b[11]=' ';
-    b[12]=(char)('0'+(deck_count_in_deck(&g->state.cards.deck, id)%10));
+    b[12]=ui_ones_digit(deck_count_in_deck(&g->state.cards.deck, id));
     b[13]='\0';
     ui_draw_text_line(0, y, b, 13);
     y += 2;
     ui_draw_text_line(0, y, "PRICE", 5);
     ui_draw_num2(6, y, def->price);
+    /* Sell affordance / transient sale feedback (merchant only). */
+    if (g->item_menu_message == MSG_DECK_FULL) {
+        ui_draw_text_line(0, 17, "ALL DECKED", 10);
+    } else if (loot_is_loot_id(id) && merchant_buys(g)) {
+        ui_draw_text_line(0, 17, "[A]SELL", 7);
+    }
 }
 
 static void draw_picker(Game *g)
@@ -447,6 +504,9 @@ void item_screen_update(Game *g)
         case MODE_CARD_DETAIL:
             if (input_pressed(INPUT_SELECT)) {
                 g->item_menu_mode = MODE_LIST;
+                g->render_cache.valid = false;
+            } else if (input_pressed(INPUT_A)) {
+                card_detail_sell(g);
                 g->render_cache.valid = false;
             }
             return;

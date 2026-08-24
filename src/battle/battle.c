@@ -383,14 +383,28 @@ void battle_execute_combo(Battle *b)
                 b->last_combo.cards[0].status_id != STATUS_NONE) {
                 /* Combo-scaled rider (docs/combo-system.md §10): the
                  * hand's effective multiplier scales the card's base
-                 * chance; capped at ~100%.  Fixed bank: '/' is fine
-                 * here (__divuint already linked). */
-                uint16_t eff = (uint16_t)((uint16_t)b->last_combo.cards[0].status_chance *
-                                          b->last_combo.multiplier / 100);
-                if (eff > 255) eff = 255;
-                if ((uint8_t)rng_next() < (uint8_t)eff) {
-                    status_apply(status_slots((uint8_t)(b->target_idx + 1)),
-                                 b->last_combo.cards[0].status_id, 1, 0);
+                 * chance; capped at ~100%.  Add/subtract loops give the
+                 * exact same floor(chance*mult/100) as the original
+                 * expression while keeping the SDCC 16-bit mul/div
+                 * library out of the tight fixed bank (SM83 has no
+                 * hardware multiply). */
+                {
+                    uint16_t eff = 0;
+                    uint16_t k = (uint8_t)b->last_combo.multiplier;
+                    while (k--) {
+                        eff = (uint16_t)(eff +
+                             b->last_combo.cards[0].status_chance);
+                    }
+                    k = 0;
+                    while (eff >= 100) {
+                        eff = (uint16_t)(eff - 100);
+                        k++;
+                    }
+                    if (k > 255) k = 255;
+                    if ((uint8_t)rng_next() < (uint8_t)k) {
+                        status_apply(status_slots((uint8_t)(b->target_idx + 1)),
+                                     b->last_combo.cards[0].status_id, 1, 0);
+                    }
                 }
             }
         }
@@ -497,7 +511,12 @@ void battle_update(Battle *b)
             }
             b->delay_timer = 20;
             while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
-                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+                /* Wrap instead of % -- keeps the SDCC int-mod library
+                 * out of the tight fixed bank. */
+                b->attacking_enemy_idx++;
+                if (b->attacking_enemy_idx >= b->enemy_count) {
+                    b->attacking_enemy_idx = 0;
+                }
                 count++;
             }
         } else {
@@ -507,7 +526,11 @@ void battle_update(Battle *b)
             b->energy = BATTLE_ENERGY_PER_TURN;
             b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
             if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
-                b->attacking_enemy_idx = (uint8_t)((b->attacking_enemy_idx + 1) % b->enemy_count);
+                /* Wrap instead of % (see note above). */
+                b->attacking_enemy_idx++;
+                if (b->attacking_enemy_idx >= b->enemy_count) {
+                    b->attacking_enemy_idx = 0;
+                }
             }
             if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
                 battle_tick_statuses(b);

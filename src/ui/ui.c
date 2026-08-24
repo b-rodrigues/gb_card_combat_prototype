@@ -579,18 +579,31 @@ static const char *ui_card_code(uint8_t battle_type)
         (s_card_bt_codes + (battle_type * 3)) : "??";
 }
 
+char ui_ones_digit(uint8_t v)
+{
+    while (v >= 10) v -= 10;
+    return (char)('0' + v);
+}
+
 void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
 {
-    /* Two-digit powers (e.g. BOW 10) need 5 bytes incl. NUL. */
+    /* Two-digit powers (e.g. BOW 10) need 5 bytes incl. NUL.
+     * Subtraction-based digits -- see ui_ones_digit(). */
     const char *bt = ui_card_code(battle_type);
+    uint8_t tens = 0;
+    uint8_t ones = power;
+    while (ones >= 10) {
+        ones -= 10;
+        tens++;
+    }
     out[0] = bt[0];
     out[1] = bt[1];
     if (power >= 10) {
-        out[2] = (char)('0' + (power / 10));
-        out[3] = (char)('0' + (power % 10));
+        out[2] = (char)('0' + tens);
+        out[3] = (char)('0' + ones);
         out[4] = '\0';
     } else {
-        out[2] = (char)('0' + (power % 10));
+        out[2] = (char)('0' + ones);
         out[3] = '\0';
     }
 }

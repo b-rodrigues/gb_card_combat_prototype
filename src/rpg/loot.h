@@ -48,6 +48,11 @@ enum {
 extern uint8_t g_loot_id;
 extern uint16_t g_loot_rng_state;
 
+/* Sell value: synthesized loot defs carry it in CardDefinition.price
+ * (set by loot_synth_banked -- the centralized formula,
+ * docs/loot.md §16/§34.6); read via card_get_def() like any price.
+ * Catalog (non-loot) prices come from the game's card table. */
+
 /* Bank-2 bodies:
  * game_loot_drop_banked   -- victory gate + profile pick + roll
  *                            (src/game/loot_drop_banked.c), dispatched

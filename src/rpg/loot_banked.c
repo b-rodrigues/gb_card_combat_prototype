@@ -89,6 +89,14 @@ void loot_synth_banked(void)
     g_card_scratch.type = CARD_TYPE_ATTACK;
     g_card_scratch.power = s_weapons[weapon].base_power + bonus;
     g_card_scratch.cost = s_weapons[weapon].cost;
+    /* Centralized sell value (docs/loot.md §16/§34.6): weapon base +
+     * material tier*2 (+2 poison rider).  Stored in the def's price
+     * field so every consumer (shop SELL mode) reads it like any other
+     * card price -- no separate formula anywhere else in the game. */
+    g_card_scratch.price = (uint8_t)(s_weapons[weapon].base_power +
+                                     ((uint8_t)material << 1) +
+                                     ((effect == EFF_POISON &&
+                                       weapon == WPN_DAGGER) ? 2 : 0));
     g_card_scratch.uses_per_battle = 0;          /* unlimited */
     g_card_scratch.max_copies = 0;               /* unlimited duplicates */
 

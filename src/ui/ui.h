@@ -50,6 +50,11 @@ void ui_format_int(int16_t value, char *out);
  * (at least 4 bytes); "??" when battle_type is out of range. */
 void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out);
 
+/* Ones digit of `v` as a character, computed by subtraction: SM83 has
+ * no hardware divide and the SDCC divmod library would land in the
+ * tight fixed bank (AGENTS.md 52.18).  Use instead of `% 10`. */
+char ui_ones_digit(uint8_t v);
+
 /* Banked no-arg body (ROM bank 2) dispatched by ui_format_int(). */
 void ui_format_int_banked(void);
 

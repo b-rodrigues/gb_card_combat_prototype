@@ -10,43 +10,44 @@ The poker combat system is fully operational: material × effect × weapon
 identity tables, derived CardId synthesis, live COMBO row preview,
 energy 6/phase with rejection feedback, and enemy trios with doubled HP.
 
-## Priority 1 — Fix the victory drop hook hang
+## Priority 1 — ~~Fix the victory drop hook hang~~ RESOLVED
 
-The victory loot drop hook is fully coded but **deferred**: invoking it
-from `world_on_battle_end` causes the guest to spin (mGBA ~300% CPU,
-debugger pipe dead, game_render breakpoint never re-hit).
+**Root cause (found 2026-08-24): fixed-bank overflow, not the trampolines.**
+Wiring the drop hook grew `_CODE`/`_HOME` ~30 B past `0x8000`; rgblink
+silently overwrote the start of bank 2 (`Warning: Possible overflow ... bank
+1 -> 2`) and any execution reaching the corrupted region spun the guest.
+Whether it hung flipped with unrelated code-size changes — hence the
+"identical scripts flip between passing and failing" behavior.
 
-### What we know
-- The hook calls two banked dispatches sequentially:
-  `game_loot_pool_for_battle()` then `loot_roll_drop()`
-- Disabling the entire hook makes all scenarios pass
-- Disabling just the collection add still hangs → the issue is in the
-  pool trampoline or the rng consumption shifting subsequent outcomes
-- The nix-pinned GBDK was rebuilt from source during this session
-  (`building '...gbdk-4.3.0.drv'`), which may have changed codegen
-- Identical scripts flip between passing and failing across sessions
+Fix: restructured the drop path so it costs almost no fixed code — the whole
+decision (50% gate on the isolated loot RNG, weapon pick from the enemy
+profile, material+effect roll, derived-id encode) is ONE bank-2 body
+(`src/game/loot_drop_banked.c`) behind a thin wrapper (`game_loot_drop()`,
+`src/game/content.c`); `world_on_battle_end` only records the result
+(telemetry + collection add).  Regression scenarios: `loot_drop_victory`
+(deterministic wood plain dagger from seed 5002 + telemetry payload asserts)
+and `loot_drop_slime`.  See AGENTS.md §52.18 for the general rule.
 
-### Debugging approach
-1. Run with `videoSync=true audioSync=true` (throttled) to see if the
-   spin is an unthrottled-run-only artifact
-2. Bisect: test pool trampoline alone vs roll trampoline alone
-3. If nested-trampoline depth is the issue, restructure as a single
-   banked entry that does pool-copy + roll internally
-4. Check whether the freshly rebuilt GBDK produces different codegen
-   than the previously cached build
+## Priority 2 — ~~Card naming + display (Phase 3 lite)~~ DONE
 
-## Priority 2 — Card naming + display (Phase 3 lite)
+Loot cards now synthesize their identity name ("WD SW", "MYT PSN DA") in
+`loot_synth_banked` (`CardDefinition.name` widened to 12); the CARDS tab
+shows the name instead of the generic type/power code for loot-range ids,
+and the detail page renders the full 11-char name.  Covered end-to-end by
+`loot_drop_victory` (telemetry payload + `screen_row contains "WD DA"`).
 
-Generated cards currently show only their archetype's catalog name.
-Adding a material prefix ("WD SW", "BRN SW", "MYT SW") in the CARDS tab
-and detail view makes drops feel distinct.
+## Priority 3 — ~~Sell/trade UI at the Merchant~~ DONE
 
-Small scope, high player-visible impact.
-
-## Priority 3 — Sell/trade UI at the Merchant
-
-A "SELL" mode in shop_screen that lists owned loot instances and converts
-them to gold via the centralized sell-value formula (§16).  Medium scope.
+Selling lives in the CARDS-tab detail page (the §24 canonical flow:
+collection -> select card -> sell), not a separate shop mode: engaging a
+buying shop (`ShopDefinition.buys`) sets `g->shop_id` (cleared on scene
+change), and loot-range cards then show `[A]SELL` on their detail page.
+A sells one copy for its synthesized `price` (= the centralized §16
+formula, computed in `loot_synth_banked`) and emits CARD_SOLD.  Fully
+decked cards are unsellable (ownership must stay backed).  Regression:
+`merchant_sell_loot`.  Note: this cost ~370 fixed-bank bytes; paid for
+by removing all `%`/`/` from harness-exercised paths so the SDCC divmod
+library no longer links (`ui_ones_digit`, battle wrap-arounds).
 
 ## Priority 4 — Fire/ice status effects (Phase 4)
 
@@ -54,6 +55,23 @@ Burn and freeze/slow as new StatusId values with battle resolution rules.
 Only worth doing after drops are flowing.
 
 ## Completed This Session
+
+- Victory drop hook un-hung and enabled (root cause: fixed-bank overflow
+  corrupting bank 2 — see AGENTS.md §52.18; drop decision now one bank-2
+  body behind `game_loot_drop()`)
+- Isolated loot RNG (`g_loot_rng_state`) seeded from the main seed via
+  `rng_set_seed`; drops never shift shared-RNG outcomes
+- `loot_drop_victory` regression scenario (drop telemetry payloads +
+  CARDS-tab name render) + restored `loot_drop_slime`
+- Loot card identity names ("WD SW", "MYT PSN DA") in CARDS tab + detail
+- Merchant sell flow (CARDS-tab detail `[A]SELL`, CARD_SOLD telemetry,
+  `merchant_sell_loot` scenario)
+- Fixed-bank diet: SDCC divmod library unlinked (`ui_ones_digit`,
+  battle wrap-arounds, add/sub rider scaling) — memmap +69 B headroom
+- All gates green: 137/137 harness, release ROM, lint, memmap,
+  verify-oam, screenshots byte-stable
+
+## Completed Previous Session
 
 - Poker hand tiers (PAIR..FIVE KIND) with strict sizing + suited bonus
 - Derived-id card_get_def synthesis (loot-range CardIds)
