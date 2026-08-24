@@ -79,6 +79,14 @@ typedef struct {
 
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank);
 
+/* Registry location (points into banked ROM; the bank-2 loader body
+ * reads it directly while its bank is mapped). */
+extern const WorldActorTable *g_actor_registry;
+extern uint8_t g_actor_registry_count;
+
+/* Bank-2 body dispatched by actor_load_scene(). */
+void actor_load_scene_banked(void);
+
 /* Result of engaging an actor. */
 typedef enum {
     ENGAGE_NONE = 0,

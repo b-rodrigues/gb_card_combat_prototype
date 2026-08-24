@@ -192,7 +192,7 @@ uint8_t g_px_result;
 
 static uint8_t px_dispatch(uint8_t variant, const void *p)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&world_px_banked;
     g_bk_byte_a = variant;
     g_bk_ptr_a = (void *)p;
@@ -270,7 +270,7 @@ void world_on_battle_fled(Game *g)
     /* Body runs banked (src/world/fled_banked.c) through the WRAM
      * trampoline -- pure WRAM reads/writes, no staging args needed. */
     if (!g) return;
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&world_on_battle_fled_banked;
     g_bk_ptr_a = (void *)g;
     banked_call_run();

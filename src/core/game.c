@@ -12,7 +12,7 @@
 
 void game_render_reset(Game *g)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&game_render_reset_banked;
     g_bk_ptr_a = (void *)g;
     banked_call_run();

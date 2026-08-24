@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 3
 
 #include "rpg/loot.h"
 #include "rpg/status.h"

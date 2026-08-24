@@ -20,7 +20,7 @@
  * no drop this victory. */
 uint8_t game_loot_drop(uint8_t battle_type)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&game_loot_drop_banked;
     g_bk_byte_a = battle_type;
     banked_call_run();

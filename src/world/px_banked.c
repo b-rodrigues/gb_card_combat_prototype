@@ -1,9 +1,9 @@
-#pragma bank 2
+#pragma bank 3
 
 #include "world.h"
 #include "banked.h"
 
-/* Bank-2 body of the world pixel-interpolation helpers (see world.c).
+/* Bank-3 body of the world pixel-interpolation helpers (see world.c).
  * Pure arithmetic over WRAM structs: reads only the staged pointer and
  * writes the shared g_px_result byte (world.c).  Self-contained. */
 

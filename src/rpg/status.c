@@ -43,7 +43,7 @@ bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
 {
     g_status_applied.id = STATUS_NONE;
 
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&status_apply_banked;
     g_bk_ptr_a = (void *)slots;
     g_bk_byte_a = id;
@@ -67,7 +67,7 @@ bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
 
 uint8_t status_tick(StatusSlots *slots, uint8_t actor_slot)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&status_tick_banked;
     g_bk_ptr_a = (void *)slots;
     g_bk_byte_a = actor_slot;

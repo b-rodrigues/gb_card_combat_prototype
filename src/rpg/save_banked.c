@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 3
 
 #include "save.h"
 #include <gb/gb.h>
