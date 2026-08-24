@@ -63,8 +63,8 @@ void game_loot_drop_banked(void)
         uint8_t effect = (eff_roll < 128 ||
                           weapon != WPN_DAGGER) ? EFF_PLAIN : EFF_POISON;
 
-        /* Derived id: BASE + mat*64 + eff*8 + wpn (shifts only). */
+        /* Derived id: BASE + mat*32 + eff*8 + wpn (shifts only). */
         g_loot_id = (uint8_t)(LOOT_ID_BASE +
-                              (((material << 3) + effect) << 3) + weapon);
+                              (((material << 2) + effect) << 3) + weapon);
     }
 }

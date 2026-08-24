@@ -368,8 +368,8 @@ void battle_execute_combo(Battle *b)
         }
         battle_play_hand(b, true, &res);
         if (res.type == CARD_EFFECT_HEAL_HP) {
-            b->player.hp += res.amount;
-            if (b->player.hp > b->player.max_hp) b->player.hp = b->player.max_hp;
+            uint16_t new_hp = (uint16_t)b->player.hp + res.amount;
+            b->player.hp = (new_hp > b->player.max_hp) ? b->player.max_hp : (uint8_t)new_hp;
             telemetry_emit(EVENT_HEALED, res.amount, 0, 0, 0);
         } else {
             /* Damage hand: shield-led fodder deals the non-shield sum,

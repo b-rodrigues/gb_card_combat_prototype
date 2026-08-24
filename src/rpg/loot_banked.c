@@ -31,11 +31,7 @@ static const struct {
     { STATUS_NONE,   0 },       /* plain   */
     { STATUS_POISON, 50 },      /* poison  */
     { STATUS_NONE,   0 },       /* fire reserved */
-    { STATUS_NONE,   0 },       /* ice reserved */
-    { STATUS_NONE,   0 },       /* healing */
-    { STATUS_NONE,   0 },       /* reserved */
-    { STATUS_NONE,   0 },       /* reserved */
-    { STATUS_NONE,   0 }        /* reserved */
+    { STATUS_NONE,   0 }        /* ice reserved */
 };
 
 static const struct {
@@ -106,6 +102,7 @@ void loot_synth_banked(void)
             g_card_scratch.effect = CARD_EFFECT_DAMAGE_TARGET;
             break;
         case WPN_SHIELD:
+            g_card_scratch.type = CARD_TYPE_DEFENSE;
             g_card_scratch.battle_type = BATTLE_CARD_TYPE_SHIELD;
             g_card_scratch.effect = CARD_EFFECT_BLOCK_DAMAGE;
             break;
@@ -118,6 +115,7 @@ void loot_synth_banked(void)
             g_card_scratch.effect = CARD_EFFECT_DAMAGE_TARGET;
             break;
         default:  /* ring: heals instead of dealing damage */
+            g_card_scratch.type = CARD_TYPE_HEAL;
             g_card_scratch.battle_type = BATTLE_CARD_TYPE_HEAL;
             g_card_scratch.effect = CARD_EFFECT_HEAL_HP;
             break;

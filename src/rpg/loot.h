@@ -13,11 +13,14 @@
 
 #define LOOT_ID_BASE 0x80          /* above CARD_FIRST_GAME content ids */
 
-/* Axis counts are POWERS OF TWO: id-decode uses shifts/masks because
- * banked code cannot call the SDCC div/mod library (AGENTS.md 52.11.1).
- * Spare rows are reserved namespace for future growth. */
+/* Axis counts — id-decode uses shifts/masks because banked code
+ * cannot call the SDCC div/mod library (AGENTS.md 52.11.1).
+ * Bit layout (7 bits, 128 IDs fitting 0x80..0xFF):
+ *   bits 5-6: material (4 values)
+ *   bits 3-4: effect   (4 values)
+ *   bits 0-2: weapon   (8 values)  */
 #define LOOT_NMATERIALS 4          /* WOOD BRONZE IRON MYTHRIL */
-#define LOOT_NEFFECTS   8          /* PLAIN POISON FIRE ICE HEALING + rsv */
+#define LOOT_NEFFECTS   4          /* PLAIN POISON FIRE ICE (+ reserved) */
 #define LOOT_NWEAPONS   8          /* SWORD SHIELD BOW DAGGER RING + rsv */
 
 enum {
@@ -25,7 +28,7 @@ enum {
 };
 
 enum {
-    EFF_PLAIN = 0, EFF_POISON, EFF_FIRE_RESV, EFF_ICE_RESV, EFF_HEALING
+    EFF_PLAIN = 0, EFF_POISON, EFF_FIRE_RESV, EFF_ICE_RESV
 };
 
 enum {
@@ -34,8 +37,8 @@ enum {
 
 /* Derived-id helpers: pure arithmetic, safe as macros (no code emitted). */
 #define loot_is_loot_id(id)          ((id) >= LOOT_ID_BASE)
-#define loot_id_material(id)         ((uint8_t)(((id) - LOOT_ID_BASE) >> 6))
-#define loot_id_effect(id)           (((id) >> 3) & 7)
+#define loot_id_material(id)         ((uint8_t)(((id) - LOOT_ID_BASE) >> 5))
+#define loot_id_effect(id)           (((id) >> 3) & 3)
 #define loot_id_weapon(id)           ((id) & 7)
 
 /* Shared WRAM results (defined in src/rpg/loot.c):

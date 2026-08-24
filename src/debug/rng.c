@@ -18,4 +18,5 @@ void rng_set_seed(uint16_t seed)
      * deterministic per scenario while never consuming the shared
      * stream (docs/loot.md §34.5). */
     g_loot_rng_state = (uint16_t)(g_rng_state ^ 0x1B3C);
+    if (!g_loot_rng_state) g_loot_rng_state = 1;
 }
