@@ -3,8 +3,8 @@
 ## Current State
 
 Branch: `loot-instances`
-All gates green: 139/139 scenarios, lint clean, memmap +72 B fixed headroom,
-verify-oam OK.
+All gates green: 142/142 scenarios, lint clean, memmap +312 B fixed
+headroom (bank 2 at 15.0/16 KB, bank 3 opened), verify-oam OK.
 
 The poker combat system is fully operational: material × effect × weapon
 identity tables, derived CardId synthesis, live COMBO row preview,
@@ -75,12 +75,29 @@ chance), legality per §34.2; synthesized names carry the effect infix
 - Merchant sell flow (CARDS-tab detail `[A]SELL`, CARD_SOLD telemetry,
   `merchant_sell_loot` scenario)
 - Fire/ice statuses (Phase D): BURN + FREEZE with battle resolution
-  (frozen bitmask + TURN_SKIPPED), loot rider wiring, scenarios
-  `status_burn_apply` / `status_freeze_skip`
+  (frozen bitmask + TURN_SKIPPED, both sides), loot rider wiring,
+  scenarios `status_burn_apply` / `status_freeze_skip` /
+  `status_freeze_player`; DBG_ACT_APPLY_STATUS debug action
+- Ring jokers + one-ring gate implemented for real (§34.3): joker
+  classification both phases, offense ring-heal, ONE RING! selection
+  gate; Card.ring flag; scenarios `ring_one_ring_gate` /
+  `ring_joker_heal`
+- Telemetry plan (combo-system.md §19) complete: STATUS_EXPIRED +
+  STATUS_RESISTED as distinct events
+- Bank-2 migrations: actor_load_scene reads its bank-local tables
+  directly (no staging copies); self-contained bodies (save/status/
+  px/render-reset/fled/loot) moved to NEW BANK 3 — fixed headroom
+  +19 B -> +738 B -> +312 B after the ring feature
 - Fixed-bank diet: SDCC divmod library unlinked (`ui_ones_digit`,
   battle wrap-arounds, add/sub rider scaling)
-- All gates green: 139/139 harness, release ROM, lint, memmap (+72 B
-  fixed headroom), verify-oam
+- All gates green: 142/142 harness, release ROM, lint, memmap,
+  verify-oam
+
+## Remaining open items
+
+- HEAL ALL on high-tier rings (docs/loot.md §34.3)
+- Affix catalogue growth; reveal-moment polish (§34.7)
+- Resist/expired UI presentation (telemetry exists; no HUD flash yet)
 
 ## Completed Previous Session
 
