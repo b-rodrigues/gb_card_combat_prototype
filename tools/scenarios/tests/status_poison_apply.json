@@ -206,6 +206,22 @@
       "event": "STATUS_TICKED",
       "index": 2,
       "value": 1
+    },
+    {
+      "type": "event_occurred",
+      "event": "STATUS_EXPIRED"
+    },
+    {
+      "type": "event_arg",
+      "event": "STATUS_EXPIRED",
+      "index": 0,
+      "value": 1
+    },
+    {
+      "type": "event_arg",
+      "event": "STATUS_EXPIRED",
+      "index": 1,
+      "value": 1
     }
   ],
   "initial_state": {

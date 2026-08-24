@@ -74,12 +74,18 @@ uint8_t status_tick(StatusSlots *slots, uint8_t actor_slot)
     banked_call_run();
 
     /* One combined event: damage taken + expiry summary (d2=count,
-     * d3=first expired id).  Only one instance can expire per tick while
-     * the definition table has a single ticking status. */
+     * d3=first expired id), plus one dedicated STATUS_EXPIRED per tick
+     * reporting the first removed instance (docs/combo-system.md §19;
+     * MAX_STATUSES_PER_COMBATANT bounds simultaneity, and multi-expiry
+     * rounds remain fully described by TICKED's d2 count). */
     if (g_status_tick.damage != 0 || g_status_tick.expired_count != 0) {
         telemetry_emit(EVENT_STATUS_TICKED, g_status_tick.damage,
                        actor_slot, g_status_tick.expired_count,
                        g_status_tick.expired_ids[0]);
+        if (g_status_tick.expired_count != 0) {
+            telemetry_emit(EVENT_STATUS_EXPIRED,
+                           g_status_tick.expired_ids[0], actor_slot, 0, 0);
+        }
     }
     return g_status_tick.damage;
 }

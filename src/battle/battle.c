@@ -391,6 +391,7 @@ void battle_execute_combo(Battle *b)
                 {
                     uint16_t eff = 0;
                     uint16_t k = (uint8_t)b->last_combo.multiplier;
+                    uint8_t tslot = (uint8_t)(b->target_idx + 1);
                     while (k--) {
                         eff = (uint16_t)(eff +
                              b->last_combo.cards[0].status_chance);
@@ -402,9 +403,13 @@ void battle_execute_combo(Battle *b)
                     }
                     if (k > 255) k = 255;
                     if ((uint8_t)rng_next() < (uint8_t)k) {
-                        status_apply(status_slots((uint8_t)(b->target_idx + 1)),
-                                     (uint8_t)(b->target_idx + 1),
+                        status_apply(status_slots(tslot), tslot,
                                      b->last_combo.cards[0].status_id, 1, 0);
+                    } else {
+                        /* Roll failed: resisted (docs/combo-system.md §19). */
+                        telemetry_emit(EVENT_STATUS_RESISTED,
+                                       b->last_combo.cards[0].status_id,
+                                       tslot, 0, 0);
                     }
                 }
             }
