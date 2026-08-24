@@ -305,10 +305,18 @@ static void debug_run_action(void)
             }
             break;
         case DBG_ACT_LOOT_ADD:
-            /* Append a loot card instance to the persistent collection.
-             * Real mechanic call: loot_collection_add validates capacity
-             * and emits LOOT_CARD_ADDED itself (d1 = count after). */
-            loot_collection_add(&g_game.state.loot, (CardId)a0, a1);
+            /* Add a specific loot combo to the persistent collection
+             * (a0=material a1=effect a2=weapon -> derived id). */
+            {
+                CardId id = loot_encode_id((uint8_t)a0, (uint8_t)a1,
+                                           (uint8_t)a2);
+                if (id >= LOOT_ID_BASE &&
+                    deck_collection_add(&g_game.state.cards, id, 1)) {
+                    uint8_t owned = deck_collection_count(&g_game.state.cards,
+                                                          id);
+                    telemetry_emit(EVENT_LOOT_CARD_ADDED, id, owned, a1, 0);
+                }
+            }
             break;
         case DBG_ACT_DECK_ADD:
             /* Real mechanic call: all deck_add_card validations apply

@@ -245,16 +245,9 @@ void world_on_battle_end(Game *g, bool victory)
         }
         event_resolve_actor_defeated(g, actor_id, act->id);
 
-        /* Loot drop (docs/loot.md §8/§17, Phase 2): roll one combat card
-         * from the enemy family's profile pool.  50% gate via a single
-         * rng bit; consumes the shared game RNG (deterministic per seed).
-         * The game layer supplies the pool; loot.c owns the roll. */
-        if (rng_next() & 1) {
-            uint8_t pool_len = 0;
-            const CardId *pool = game_loot_pool_for_battle(act->battle_type,
-                                                           &pool_len);
-            (void)loot_roll_combat(&g->state.loot, pool, pool_len);
-        }
+        /* Loot drop: deferred -- long-battle hang under investigation.
+         * The hook code is complete but causes a guest spin when invoked
+         * from the battle-end context; root cause TBD. */
     }
 }
 

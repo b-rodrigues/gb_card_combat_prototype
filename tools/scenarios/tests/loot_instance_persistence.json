@@ -1,7 +1,7 @@
 {
   "name": "loot_instance_persistence",
   "test": true,
-  "description": "Loot card instances persist through SRAM save/load (docs/loot.md \u00a734): add one instance, save to Slot 1, load, then add a second.  The second LOOT_CARD_ADDED must report count-after == 2 (d1) -- proving the first instance survived the roundtrip.  If persistence broke, the second add would land on an empty collection and report 1 instead, failing the event_arg pin.",
+  "description": "Loot combos persist through SRAM save/load (docs/loot.md \u00a734): add one wood-plain-sword loot combo, save to Slot 1, load, then add the same combo again -- the second LOOT_CARD_ADDED must report copies-after == 2, proving the first survived the roundtrip.",
   "scenario_id": "NEW_GAME",
   "initial_state": {
     "scene": "FIELD",
@@ -19,8 +19,9 @@
     },
     {
       "type": "loot_add",
-      "card": "FIRE_TOME",
-      "rarity": 0
+      "material": 0,
+      "effect": 0,
+      "weapon": 0
     },
     {
       "type": "wait",
@@ -44,8 +45,9 @@
     },
     {
       "type": "loot_add",
-      "card": "FIRE_TOME",
-      "rarity": 0
+      "material": 0,
+      "effect": 0,
+      "weapon": 0
     },
     {
       "type": "wait",

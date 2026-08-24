@@ -1,53 +1,25 @@
 #include "rpg/loot.h"
-#include "telemetry.h"
-#include "rng.h"
+#include "banked.h"
 
-void loot_state_init(LootCollectionState *lc)
+/* Fixed-bank shim for the bank-2 loot module (src/rpg/loot_banked.c):
+ * tables, rolls, and definition synthesis live behind the trampoline;
+ * only the derived-id byte and this tiny dispatcher stay in the fixed
+ * bank. */
+
+uint8_t g_loot_id;
+
+void loot_roll_drop(uint8_t weapon)
 {
-    if (!lc) return;
-    lc->count = 0;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&loot_roll_drop_banked;
+    g_bk_byte_a = weapon;
+    banked_call_run();
 }
 
-bool loot_collection_add(LootCollectionState *lc, CardId archetype,
-                         uint8_t rarity)
+CardId loot_encode_id(uint8_t material, uint8_t effect, uint8_t weapon)
 {
-    LootCardInstance *slot;
-    if (!lc || lc->count >= LOOT_MAX_INSTANCES) return false;
-    slot = &lc->cards[lc->count++];
-    slot->archetype = archetype;
-    slot->rarity = rarity;
-    slot->affixes = 0;   /* affixes arrive in Phase 3 */
-    slot->power = 0;     /* 0 = archetype default */
-    slot->cost = 0;
-    slot->sell_value = 0;/* selling phase */
-    telemetry_emit(EVENT_LOOT_CARD_ADDED, archetype, lc->count, rarity, 0);
-    return true;
-}
-
-/* ── Combat drop roll (docs/loot.md §8/§18, Phase 2) ────────────────
- * Picks an archetype from the caller-supplied pool, rolls a rarity tier
- * from the placeholder weights (50/30/15/5), and appends the instance.
- * Deterministic: consumes the shared game RNG (docs/loot.md §26).
- *
- * Emits LOOT_GENERATED (d0=archetype d1=rarity d2=tier power bonus) and,
- * on success, loot_collection_add's LOOT_CARD_ADDED.  Returns false when
- * the pool is empty or the collection is full (no rng consumed). */
-bool loot_roll_combat(LootCollectionState *lc, const CardId *pool, uint8_t len)
-{
-    uint8_t roll, tier, pick;
-
-    if (!lc || !pool || len == 0) return false;
-    if (lc->count >= LOOT_MAX_INSTANCES) return false;
-
-    pick = pool[rng_next() % len];
-    roll = rng_next() % 100;
-    if      (roll < 50) tier = RARITY_COMMON;
-    else if (roll < 80) tier = RARITY_UNCOMMON;
-    else if (roll < 95) tier = RARITY_RARE;
-    else                tier = RARITY_EPIC;
-
-    /* d2 is the tier power bonus: it equals the rarity tier until
-     * per-effect power generation lands in a later phase. */
-    telemetry_emit(EVENT_LOOT_GENERATED, pick, tier, tier, 0);
-    return loot_collection_add(lc, pick, tier);
+    /* Matches loot_banked.c's encode: BASE + mat*64 + eff*8 + wpn.
+     * Shifts/masks only -- no library calls (52.11.1). */
+    return (CardId)(LOOT_ID_BASE +
+                    (((material << 3) + effect) << 3) + weapon);
 }

@@ -7,26 +7,26 @@
 #include "rpg/party.h"
 #include "rpg/deck.h"
 #include "core/game.h"
+#include "banked.h"
 
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
 
 /* ── Enemy loot profiles (docs/loot.md §17) ─────────────────────────
- * Placeholder pools keyed by BattleId: which archetypes each enemy
- * family can drop.  Contents/weights tune later (§32). */
-static const CardId s_loot_slime[] = {
-    CARD_IRON_SWORD, CARD_WOODEN_SHIELD, CARD_HEALING_HERB, CARD_POISON_DAGGER
-};
-static const CardId s_loot_bat[] = { CARD_FIRE_TOME };
+ * Dispatcher for the bank-2 pool body (loot_pool_banked.c).  The pool
+ * count reports through the shared WRAM byte. */
+extern void game_loot_pool_banked(void);
+uint8_t g_loot_pool_len;
 
-const CardId *game_loot_pool_for_battle(uint8_t battle_type, uint8_t *len)
+void game_loot_pool_for_battle(uint8_t battle_type, CardId *out_buf,
+                               uint8_t *len)
 {
-    if (battle_type == BATTLE_BAT) {
-        *len = 1;
-        return s_loot_bat;
-    }
-    *len = 4;
-    return s_loot_slime;
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&game_loot_pool_banked;
+    g_bk_byte_a = battle_type;
+    g_bk_ptr_a = (void *)out_buf;
+    banked_call_run();
+    *len = g_loot_pool_len;
 }
 
 void game_content_init(void)

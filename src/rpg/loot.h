@@ -5,48 +5,53 @@
 #include <stdbool.h>
 #include "rpg/cards.h"
 
-/* ── Procedural loot: card instances (docs/loot.md §20, §34) ────────
- * The player owns card INSTANCES; the deck will reference instances.
- * Increment 1 is storage-only: no generator exists yet, the collection
- * stays empty in real play, and nothing here touches battle code. */
+/* ── Procedural loot: material x effect x weapon (docs/loot.md §34) ──
+ * Every loot combination maps to a derived CardId; card_get_def()
+ * synthesizes its definition from the tables in loot_banked.c.  The
+ * existing count-based collection/deck hold derived ids like any other
+ * card. */
 
-#define LOOT_MAX_INSTANCES 12
+#define LOOT_ID_BASE 0x80          /* above CARD_FIRST_GAME content ids */
 
-/* Rarity tiers (docs/loot.md §6).  LEGENDARY is reserved for a later
- * phase -- it carries special rules, not bigger numbers. */
+/* Axis counts are POWERS OF TWO: id-decode uses shifts/masks because
+ * banked code cannot call the SDCC divide library (AGENTS.md 52.11.1).
+ * Spare rows are reserved namespace for future growth. */
+#define LOOT_NMATERIALS 4          /* WOOD BRONZE IRON MYTHRIL */
+#define LOOT_NEFFECTS   8          /* PLAIN POISON FIRE ICE HEALING + rsv */
+#define LOOT_NWEAPONS   8          /* SWORD SHIELD BOW DAGGER RING + rsv */
+
 enum {
-    RARITY_COMMON = 0,
-    RARITY_UNCOMMON,
-    RARITY_RARE,
-    RARITY_EPIC,
-    RARITY_LEGENDARY
+    MAT_WOOD = 0, MAT_BRONZE, MAT_IRON, MAT_MYTHRIL
 };
 
-typedef struct {
-    CardId   archetype;   /* catalog card this instance is based on */
-    uint8_t  rarity;      /* Rarity enum; COMMON only in increment 1 */
-    uint8_t  affixes;     /* packed prefix/suffix ids; 0 = none (§28) */
-    uint8_t  power;       /* 0 = archetype default (later-phase override) */
-    uint8_t  cost;        /* 0 = archetype default */
-    uint16_t sell_value;  /* reserved for the selling phase; ECUs */
-} LootCardInstance;
+enum {
+    EFF_PLAIN = 0, EFF_POISON, EFF_FIRE_RESV, EFF_ICE_RESV, EFF_HEALING
+};
 
-typedef struct {
-    LootCardInstance cards[LOOT_MAX_INSTANCES];
-    uint8_t count;
-} LootCollectionState;
+enum {
+    WPN_SWORD = 0, WPN_SHIELD, WPN_BOW, WPN_DAGGER, WPN_RING
+};
 
-void loot_state_init(LootCollectionState *lc);
+/* Derived-id helpers: pure arithmetic, safe as macros (no code emitted). */
+#define loot_is_loot_id(id)          ((id) >= LOOT_ID_BASE)
+#define loot_id_material(id)         ((uint8_t)(((id) - LOOT_ID_BASE) >> 6))
+#define loot_id_effect(id)           (((id) >> 3) & 7)
+#define loot_id_weapon(id)           ((id) & 7)
 
-/* Append an instance.  Returns false (and changes nothing) when full.
- * Emits EVENT_LOOT_CARD_ADDED on success (d0 = archetype,
- * d1 = count after). */
-bool loot_collection_add(LootCollectionState *lc, CardId archetype,
-                         uint8_t rarity);
+/* Encode a combo into its derived CardId (fixed bank; arithmetic only). */
+CardId loot_encode_id(uint8_t material, uint8_t effect, uint8_t weapon);
 
-/* Phase 2 drop roll: archetype picked from pool, rarity from placeholder
- * weights; appends to the collection.  Consumes the shared game RNG. */
-bool loot_roll_combat(LootCollectionState *lc, const CardId *pool,
-                      uint8_t len);
+/* Roll material + legal effect for the weapon; the DERIVED id lands in
+ * the shared WRAM byte g_loot_id.  Consumes the shared game RNG.
+ * Fixed-bank wrapper around the bank-2 body. */
+extern uint8_t g_loot_id;
+
+/* Isolated loot RNG: independent xorshift stream seeded from the main
+ * seed at game start.  Does NOT consume the shared game RNG -- victory
+ * drops must not shift scenario-deterministic outcomes (§26). */
+uint8_t loot_rng_next(void);
+void loot_roll_drop(uint8_t weapon);
+void loot_roll_drop_banked(void);
+void loot_synth_banked(void);
 
 #endif /* RPG_LOOT_H */

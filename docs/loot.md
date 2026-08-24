@@ -1625,67 +1625,103 @@ That loop gives the game a strong central identity:
 
 ---
 
-# 34. Increment 1 — Card Instance Model (implementation plan)
+# 34. Loot System — Authoritative Spec (derived-id model)
 
-**Branch**: `loot-instances`.  **Scope**: the §33 data model and storage
-only -- no procedural generation, no affixes, no selling, no battle
-wiring.  With no generator existing yet the loot collection is always
-empty in real play, so gameplay behavior is provably unchanged; all risk
-sits in storage and persistence, which the harness covers.
+Supersedes the earlier instance-storage draft (removed).  Increment 1 and
+Phase 2 shipped on branch `loot-instances`.
 
-## 34.1 Data model (`src/rpg/loot.h`)
+## 34.1 Identity: material x effect x weapon
 
-```c
-#define LOOT_MAX_INSTANCES 12
+Every loot card is fully defined by three axes; the assembled name is
+"[material] [effect?] [weapon]" (effect omitted when plain):
 
-typedef struct {
-    CardId   archetype;   /* catalog card this instance is based on */
-    uint8_t  rarity;      /* Rarity enum; COMMON only in increment 1 */
-    uint8_t  affixes;     /* packed prefix/suffix ids; 0 = none (§28) */
-    uint8_t  power;       /* 0 = archetype default (later-phase override) */
-    uint8_t  cost;        /* 0 = archetype default */
-    uint16_t sell_value;  /* reserved for the selling phase; ECUs */
-} LootCardInstance;       /* ~7 bytes */
-
-typedef struct {
-    LootCardInstance cards[LOOT_MAX_INSTANCES];
-    uint8_t count;
-} LootCollectionState;
+```text
+MATERIALS (power bonus)      EFFECTS                WEAPONS (symbol)
+wood   +0                    plain (no rider)       sword  SW
+bronze +1                   poison                 bow    BO
+iron   +2                   healing                dagger DA
+mythril +3                  fire  (reserved)       shield SH
+                            ice   (reserved)       ring   HE
 ```
 
-12 instances x ~7 bytes = ~90 bytes of GameState.  `Rarity` is an open
-enum (COMMON only for now); affix packing is reserved space per §28.
+* Weapon base powers: sword 3, shield 2, bow 2, ring 2 (heals), dagger 1.
+* Material bonus stacks on top: mythril sword = 6.
+* Fire/ice rows are reserved-inert until burn/freeze statuses exist;
+  adding them later = filling in their table rows.
+* Every combination maps to a **derived CardId** in the loot id range
+  (`LOOT_ID_BASE`..0xFF): `id = BASE + (material*Neff + effect)*Nwpn + wpn`.
+  `card_get_def()` synthesizes definitions for these ids from the tables --
+  name (abbreviated), battle symbol, power, cost, effect/rider fields.
 
-## 34.2 Storage decisions
+**Consequence**: the deck, collection, shops, CARDS tab, battle init, and
+save format all treat loot cards as ordinary cards via derived ids.  No
+instance layer, no save migration beyond the existing count-based
+collection.  Owning two identical combos = two copies in the collection.
 
-* `GameState.loot` added; **SAVE_VERSION 1 -> 2**.  Old saves are
-  rejected and start fresh -- no migration (design decision).
-* Hybrid architecture stands: fixed catalog cards remain count-based in
-  `DeckState` (the 252-byte SRAM slot cannot hold a fully instanced
-  collection); only generated loot lives in the instance layer.
-* The save/load roundtrip covers the new section automatically once it
-  is part of `GameState`.
+## 34.2 Effect legality per weapon
 
-## 34.3 Deliberate deferrals
+| Weapon | plain | poison | fire/ice | healing |
+|---|---|---|---|---|
+| Sword  | Y | N | Y | N |
+| Dagger | Y | Y | N | N |
+| Bow    | Y | N | N | N |
+| Shield | Y | N | N | Y |
+| Ring   | N | N | N | Y |
 
-* **Battle wiring deferred to Increment 2**: with an always-empty
-  collection there is nothing for `battle_init_from_deck_state` to
-  consume; wiring lands together with the generator that fills drops.
-* No snapshot wire-contract changes: observability is via telemetry now;
-  a proper loot snapshot section arrives with Increment 2's assertions
-  on generated stats.
+Rings are ALWAYS healing-class.  Illegal combinations are unrepresentable:
+the generator only rolls legal (weapon, effect) pairs from the table.
 
-## 34.4 Observability & harness
+## 34.3 Rings
 
-* New telemetry `EVENT_LOOT_CARD_ADDED` (d0 = archetype, d1 = count
-  after), emitted by `loot_collection_add()` on success only.
-* New debug action `DBG_ACT_LOOT_ADD` (archetype, rarity) mirrors the
-  established debug-action plumbing (scenarios.c + emulator.py +
-  test_runner.py).
-* Scenario `loot_instance_persistence.json`: add one instance ->
-  SRAM save -> load -> add another -> asserts via `event_arg` that the
-  second add reports **count-after == 2**.  If persistence broke, the
-  second add would land on an empty collection and report 1, failing
-  the pin.
-* §23's card-reveal flow is deliberately deferred to the generator
-  increment: Phase 2 drops add silently with telemetry only.
+* Rings have NO attack or block of their own -- they are the best healing
+  vector (ring heal > healing-shield heal at every material).
+* Attack phase: a selected ring is a JOKER for the offense hand -- it
+  substitutes as whatever card produces the best poker tier -- and heals
+  its power when the combo resolves.
+* Defense phase: a selected ring is a wild-card SHIELD for the defense
+  hand (value = its heal power), enabling shield kinds/straights/flushes,
+  and heals its power.
+* MAX ONE RING PER SELECTION; a second attempt flashes "ONE RING!".
+* Future: HEAL ALL on high-tier rings.
+
+## 34.4 Combat resolution rules
+
+* Defense: hero always takes the NET --
+  `net = attack - sum(shield block) - sum(ring/heal)` -- positive or
+  negative (negative net restores HP, capped at max HP).
+* Attack: healing shields/rings count toward poker hands, deal 0 attack
+  damage, and heal their value as the combo resolves.
+* Poison rider: poison-effect daggers carry the on-hit status rider
+  (existing status system); chance tuned like DA1.
+
+## 34.5 Generation (Phase 2, implemented)
+
+On victory, one combat card rolls behind a 50% rng gate:
+
+```text
+archetype weapon <- enemy profile bias (game layer, docs/loot.md §17)
+material         <- weighted roll (wood-heavy)
+effect           <- legal-for-weapon weighted roll (plain/poison-heavy)
+```
+
+Deterministic per seed (§26).  Telemetry: LOOT_GENERATED + LOOT_CARD_ADDED.
+
+## 34.6 Economy (Merchant = Card Merchant)
+
+The Lost Amulet merchant opens shop 2 as the CARD MERCHANT:
+
+* BUY: curated bronze/iron/mythril loot stock at formula prices
+  (material tier x weapon base, centralized in loot.c §16).
+* TRADE/SELL (follow-up increment): pick an owned loot card -> receive
+  its sell value -> the copy leaves the collection.
+
+Wood gear needs no purchase: the hero starts with an all-wood deck
+(sword/shield/dagger/bow/ring).
+
+## 34.7 Implementation status
+
+* DONE: identity tables + derived-id synthesis; joker rings (both phases,
+  one-ring gate); net-damage defense; generation roll + profiles; wood
+  starter; merchant buy stock.
+* FOLLOW-UP increments: sell/trade UI; affix catalogue growth; fire/ice
+  statuses; HEAL ALL; reveal moment polish.
