@@ -345,6 +345,22 @@ void battle_execute_combo(Battle *b)
     EffectResult res;
     if (!b || b->battle_over) return;
 
+    /* STATUS_FREEZE on the player (docs/combo-system.md §12): the whole
+     * offense is skipped -- no hand play this cycle, the enemy attack
+     * follows via the ANIM phase.  FREEZE never stacks: exactly one
+     * turn is lost per application (bit 0 of the frozen mask, set by
+     * status_apply and consumed here). */
+    if ((g_status_frozen_mask & 1u) != 0 &&
+        b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        g_status_frozen_mask &= (uint8_t)~1u;
+        telemetry_emit(EVENT_TURN_SKIPPED, 0, STATUS_FREEZE, 0, 0);
+        b->combo_count = 0;
+        b->phase = BATTLE_PHASE_PLAYER_ANIM;
+        b->delay_timer = 30;
+        b->dirty = BATTLE_DIRTY_ALL;
+        return;
+    }
+
     if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
         if (b->combo_count == 0) {
             if (!hand_card_playable(b, b->cursor_pos)) {

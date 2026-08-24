@@ -45,7 +45,8 @@ enum {
     DBG_ACT_START_BATTLE = 15,
     DBG_ACT_DECK_REMOVE = 16,
     DBG_ACT_SET_HAND_CARD_STATUS = 17,
-    DBG_ACT_SET_ENEMY_HP = 18
+    DBG_ACT_SET_ENEMY_HP = 18,
+    DBG_ACT_APPLY_STATUS = 19
 };
 
 static void scenario_begin(uint16_t seed)
@@ -300,6 +301,17 @@ static void debug_run_action(void)
              * (AGENTS.md §53.3). */
             if (g_game.battle.enemy_count > a0) {
                 g_game.battle.enemies[a0].hp = a1;
+            }
+            break;
+
+        case DBG_ACT_APPLY_STATUS:
+            /* Apply a status through the real mechanic (status_apply,
+             * STATUS_APPLIED telemetry included): a0 = combatant slot
+             * (0 = player, 1..n = enemy), a1 = StatusId, a2 = duration
+             * (stacks 1).  Reaches targets no card rider can hit today
+             * (e.g. freezing the PLAYER). */
+            if (a0 < STATUS_ROUND_SLOTS && a1 != STATUS_NONE) {
+                (void)status_apply(status_slots(a0), a0, a1, 1, a2);
             }
             break;
 

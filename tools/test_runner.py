@@ -273,6 +273,14 @@ def run_scenario(scenario):
             elif act_type == "set_sort":
                 session.debug_action(session.DBG_ACT_SET_SORT,
                                      SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
+            elif act_type == "apply_status":
+                # Apply a status through the real mechanic (status_apply,
+                # STATUS_APPLIED telemetry included): reaches targets no
+                # card rider can hit today (e.g. freezing the PLAYER).
+                session.debug_action(session.DBG_ACT_APPLY_STATUS,
+                                     int(act.get("slot", 0)) & 0xFF,
+                                     int(act.get("status", 1)) & 0xFF,
+                                     int(act.get("duration", 1)) & 0xFF)
             elif act_type == "collection_add":
                 # Grant a card to the collection by RAW id (real mechanic:
                 # deck_collection_add).  Raw ids let scenarios reach derived
