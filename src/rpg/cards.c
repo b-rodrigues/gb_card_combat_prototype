@@ -7,7 +7,7 @@
 const CardDefinition *g_card_defs = NULL;
 uint8_t g_card_defs_count = 0;
 static uint8_t g_card_bank = 2;
-CardDefinition g_card_scratch;
+static CardDefinition g_card_scratch;
 
 void card_register_defs(const CardDefinition *defs, uint8_t count,
                         uint8_t bank)

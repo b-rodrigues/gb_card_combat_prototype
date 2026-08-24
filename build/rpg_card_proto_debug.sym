@@ -406,8 +406,6 @@
 00:DCAA _g_card_d
 00:DCA8 _g_card_defs
 00:DCAA _g_card_defs_count
-00:D5E3 _g_card_s
-00:D5E3 _g_card_scratch
 00:25666 _g_cards
 00:DC9B _g_debug_
 00:D243 _g_debug_action
@@ -884,8 +882,6 @@
 00:DCAA g_card_d
 00:DCA8 g_card_defs
 00:DCAA g_card_defs_count
-00:D5E3 g_card_s
-00:D5E3 g_card_scratch
 00:25666 g_cards
 00:DC9B g_debug_
 00:D243 g_debug_action

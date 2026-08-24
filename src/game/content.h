@@ -27,9 +27,6 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
  * battle screen. */
 ScreenId game_screen_after_victory(const Game *g);
 
-/* Loot profile for a defeated enemy family (docs/loot.md §17): copies
- * the family's WEAPON pool into out_buf (loot.c rolls material+effect). */
-
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
 void game_dialogue_register(void);

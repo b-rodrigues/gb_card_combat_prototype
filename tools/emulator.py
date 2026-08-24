@@ -935,7 +935,6 @@ class EmulatorSession:
     DBG_ACT_DECK_REMOVE = 16
     DBG_ACT_SET_HAND_CARD_STATUS = 17
     DBG_ACT_SET_ENEMY_HP = 18
-    DBG_ACT_LOOT_ADD = 19
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""
