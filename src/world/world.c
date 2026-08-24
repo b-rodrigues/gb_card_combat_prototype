@@ -5,6 +5,9 @@
 #include "scene.h"
 #include "event.h"
 #include "rpg/currency.h"
+#include "rpg/cards.h"
+#include "rpg/loot.h"
+#include "rpg/deck.h"
 #include "rng.h"
 #include "content.h"
 #include "ui.h"
@@ -222,6 +225,7 @@ void world_on_battle_end(Game *g, bool victory)
     World *w;
     uint8_t idx;
     uint16_t actor_id;
+    CardId drop_id;
     if (!g) return;
     w = &g->world;
 
@@ -243,6 +247,21 @@ void world_on_battle_end(Game *g, bool victory)
             game_world_set_actor_state(&g->state, actor_id, ACTOR_STATE_DEFEATED);
         }
         event_resolve_actor_defeated(g, actor_id, act->id);
+
+        /* Loot drop (docs/loot.md §8/§17/§34.5): one combat card behind
+         * a 50% gate on the ISOLATED loot RNG -- drops must not shift
+         * shared-RNG scenario outcomes.  The game layer owns the whole
+         * decision; world.c only records the result.  One event: the
+         * derived id already identifies material/effect/weapon (§34.1),
+         * so a second roll-detail event would be redundant bytes in the
+         * tight fixed bank. */
+        drop_id = game_loot_drop(act->battle_type);
+        if (drop_id != CARD_NONE &&
+            deck_collection_add(&g->state.cards, drop_id, 1)) {
+            telemetry_emit(EVENT_LOOT_CARD_ADDED, drop_id,
+                           deck_collection_count(&g->state.cards,
+                                                 drop_id), 0, 0);
+        }
     }
 }
 

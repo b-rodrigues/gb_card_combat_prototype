@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "telemetry.h"
 #include "rpg/cards.h"
+#include "rpg/loot.h"
 #include "rpg/deck.h"
 #include "quest.h"
 #include "ui.h"
@@ -133,7 +134,10 @@ static void cycle_filter(Game *g)
 
 static void cycle_sort(Game *g)
 {
-    g->item_menu_sort = (uint8_t)((g->item_menu_sort + 1) % (SORT_COST_DESC + 1));
+    /* Wrap instead of % -- SM83 has no hardware divide and the SDCC
+     * int-mod library would land in the tight fixed bank. */
+    g->item_menu_sort = (g->item_menu_sort >= SORT_COST_DESC) ?
+        SORT_NONE : (uint8_t)(g->item_menu_sort + 1);
 }
 
 /* Shared label tables (fixed bank, same file — safe per AGENTS.md §54.6). */
@@ -198,8 +202,15 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
-    ui_card_code_str(def->battle_type, def->power, code);
-    ui_draw_text_line(2, y, code, 4);
+    if (loot_is_loot_id(id)) {
+        /* Loot cards show their synthesized identity name ("WD SW",
+         * "MYT PSN DA") instead of the generic type/power code so drops
+         * feel distinct (docs/loot.md §34.1). */
+        ui_draw_text_line(2, y, def->name, 10);
+    } else {
+        ui_card_code_str(def->battle_type, def->power, code);
+        ui_draw_text_line(2, y, code, 4);
+    }
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
@@ -298,7 +309,7 @@ static void draw_card_detail_page(Game *g)
     def = card_get_def(id);
     if (!def) return;
 
-    ui_draw_text_line(0, y, def->name, 9);
+    ui_draw_text_line(0, y, def->name, 11);
     y += 2;
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);

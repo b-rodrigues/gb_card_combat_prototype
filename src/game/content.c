@@ -6,11 +6,26 @@
 #include "actor.h"
 #include "rpg/party.h"
 #include "rpg/deck.h"
+#include "rpg/loot.h"
 #include "core/game.h"
 #include "banked.h"
 
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
+
+/* ── Victory loot drop (docs/loot.md §17/§34.5) ─────────────────────
+ * Thin fixed-bank wrapper: the whole decision (gate, profile pick,
+ * roll, encode) runs as ONE bank-2 body (loot_drop_banked.c); only
+ * this staging call stays fixed.  Returns the derived CardId, or 0 =
+ * no drop this victory. */
+uint8_t game_loot_drop(uint8_t battle_type)
+{
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&game_loot_drop_banked;
+    g_bk_byte_a = battle_type;
+    banked_call_run();
+    return g_loot_id;
+}
 
 void game_content_init(void)
 {
