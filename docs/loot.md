@@ -1683,6 +1683,9 @@ enum (COMMON only for now); affix packing is reserved space per §28.
   established debug-action plumbing (scenarios.c + emulator.py +
   test_runner.py).
 * Scenario `loot_instance_persistence.json`: add one instance ->
-  SRAM save -> load -> add another -> asserts the second add reports
-  count-after == 2, proving persistence through the roundtrip without
-  needing a snapshot field.
+  SRAM save -> load -> add another -> asserts via `event_arg` that the
+  second add reports **count-after == 2**.  If persistence broke, the
+  second add would land on an empty collection and report 1, failing
+  the pin.
+* §23's card-reveal flow is deliberately deferred to the generator
+  increment: Phase 2 drops add silently with telemetry only.

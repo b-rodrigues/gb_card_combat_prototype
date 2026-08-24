@@ -31,14 +31,14 @@ static uint8_t *save_slot_base(uint8_t slot)
     return (uint8_t *)(SAVE_SRAM_BASE + ((uint16_t)slot << 10));
 }
 
-static uint16_t save_checksum(const GameState *state)
+static uint8_t save_checksum(const GameState *state)
 {
-    uint16_t sum = 0;
+    uint8_t sum = 0;
     uint16_t n = (uint16_t)sizeof(GameState);   /* u16: state grew past 255
                                                  * with the loot collection */
     const uint8_t *b = (const uint8_t *)state;
-    while (n--) sum = (uint8_t)(sum + *b++);
-    return sum & 0xFF;                          /* stored checksum stays u8 */
+    while (n--) sum += *b++;
+    return sum;                                 /* stored checksum stays u8 */
 }
 
 static bool save_valid_at_slot(const uint8_t *sram)
@@ -66,15 +66,11 @@ void save_op_banked(void)
 
     g_save_ok = 0;
     if (slot >= SAVE_SLOT_COUNT) return;
-    /* Runtime slot-capacity guard: the compile-time typedef assert is NOT
-     * enforced by SDCC -- without this, an oversized GameState silently
-     * overflows into the next slot (observed: 806-byte state in a
-     * historically 252-byte slot layout). */
     /* Runtime slot-capacity guard: refuses SRAM access when the state
-     * outgrew its 1020-byte lane (prevents silent cross-slot corruption).
-     * g_save_state_capacity comes from WRAM -- do NOT replace with a
-     * compile-time constant: SDCC would fold the branch into unreachable
-     * code (lint), and older sibling guards silently never fired. */
+     * outgrew its 1020-byte lane (prevents silent cross-slot corruption;
+     * observed live: an 806-byte state in the historical 252-byte layout).
+     * The capacity arrives via cross-TU extern const -- SDCC cannot fold
+     * that into an unreachable-branch elimination, unlike a literal. */
     if (g_save_state_capacity <
         (uint16_t)sizeof(GameState)) {
         return;

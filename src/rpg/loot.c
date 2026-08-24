@@ -41,11 +41,13 @@ bool loot_roll_combat(LootCollectionState *lc, const CardId *pool, uint8_t len)
 
     pick = pool[rng_next() % len];
     roll = rng_next() % 100;
-    if      (roll < 50) tier = 0;   /* COMMON */
-    else if (roll < 80) tier = 1;   /* UNCOMMON */
-    else if (roll < 95) tier = 2;   /* RARE */
-    else                tier = 3;   /* EPIC */
+    if      (roll < 50) tier = RARITY_COMMON;
+    else if (roll < 80) tier = RARITY_UNCOMMON;
+    else if (roll < 95) tier = RARITY_RARE;
+    else                tier = RARITY_EPIC;
 
+    /* d2 is the tier power bonus: it equals the rarity tier until
+     * per-effect power generation lands in a later phase. */
     telemetry_emit(EVENT_LOOT_GENERATED, pick, tier, tier, 0);
     return loot_collection_add(lc, pick, tier);
 }

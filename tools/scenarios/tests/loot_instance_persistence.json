@@ -1,26 +1,72 @@
 {
   "name": "loot_instance_persistence",
   "test": true,
-  "description": "Loot card instances persist through SRAM save/load (docs/loot.md §34): add one instance, save to Slot 1, load, then add a second -- the second LOOT_CARD_ADDED reports count-after == 2, proving the first instance survived the roundtrip.",
+  "description": "Loot card instances persist through SRAM save/load (docs/loot.md \u00a734): add one instance, save to Slot 1, load, then add a second.  The second LOOT_CARD_ADDED must report count-after == 2 (d1) -- proving the first instance survived the roundtrip.  If persistence broke, the second add would land on an empty collection and report 1 instead, failing the event_arg pin.",
   "scenario_id": "NEW_GAME",
   "initial_state": {
     "scene": "FIELD",
-    "player": {"x": 4, "y": 4, "facing": "DOWN"},
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
     "seed": 8410
   },
   "actions": [
-    {"type": "wait", "frames": 5},
-    {"type": "loot_add", "card": "FIRE_TOME", "rarity": 0},
-    {"type": "wait", "frames": 2},
-    {"type": "save", "slot": 1},
-    {"type": "wait", "frames": 5},
-    {"type": "load", "slot": 1},
-    {"type": "wait", "frames": 5},
-    {"type": "loot_add", "card": "FIRE_TOME", "rarity": 0},
-    {"type": "wait", "frames": 5}
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "loot_add",
+      "card": "FIRE_TOME",
+      "rarity": 0
+    },
+    {
+      "type": "wait",
+      "frames": 2
+    },
+    {
+      "type": "save",
+      "slot": 1
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "load",
+      "slot": 1
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    },
+    {
+      "type": "loot_add",
+      "card": "FIRE_TOME",
+      "rarity": 0
+    },
+    {
+      "type": "wait",
+      "frames": 5
+    }
   ],
   "assertions": [
-    {"type": "screen", "expected": "OVERWORLD"},
-    {"type": "event_count", "event": "LOOT_CARD_ADDED", "count": 2}
+    {
+      "type": "screen",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "event_count",
+      "event": "LOOT_CARD_ADDED",
+      "count": 2
+    },
+    {
+      "type": "event_arg",
+      "event": "LOOT_CARD_ADDED",
+      "index": 1,
+      "value": 2
+    }
   ]
 }

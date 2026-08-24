@@ -27,6 +27,7 @@ bool load_game_slot(uint8_t slot, GameState *state);
 
 /* True when specified SRAM slot holds a valid save for this build. */
 /* Bank-2 body (src/rpg/save_banked.c) dispatched by all three wrappers. */
+/* Lives in ROM (const, other TU) precisely so SDCC cannot fold it. */
 extern const uint16_t g_save_state_capacity;
 void save_op_banked(void);
 

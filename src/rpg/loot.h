@@ -12,10 +12,14 @@
 
 #define LOOT_MAX_INSTANCES 12
 
-/* Open enum: COMMON is the only tier increment 1 can produce; later
- * phases extend it (docs/loot.md §6). */
+/* Rarity tiers (docs/loot.md §6).  LEGENDARY is reserved for a later
+ * phase -- it carries special rules, not bigger numbers. */
 enum {
-    RARITY_COMMON = 0
+    RARITY_COMMON = 0,
+    RARITY_UNCOMMON,
+    RARITY_RARE,
+    RARITY_EPIC,
+    RARITY_LEGENDARY
 };
 
 typedef struct {
