@@ -1639,9 +1639,9 @@ Every loot card is fully defined by three axes; the assembled name is
 MATERIALS (power bonus)      EFFECTS                WEAPONS (symbol)
 wood   +0                    plain (no rider)       sword  SW
 bronze +1                   poison                 bow    BO
-iron   +2                   healing                dagger DA
-mythril +3                  fire  (reserved)       shield SH
-                            ice   (reserved)       ring   HE
+iron   +2                   fire  (reserved)       dagger DA
+mythril +3                  ice   (reserved)       shield SH
+                                                   ring   HE
 ```
 
 * Weapon base powers: sword 3, shield 2, bow 2, ring 2 (heals), dagger 1.
@@ -1660,7 +1660,11 @@ collection.  Owning two identical combos = two copies in the collection.
 
 ## 34.2 Effect legality per weapon
 
-| Weapon | plain | poison | fire/ice | healing |
+Rollable EFFECTS are the §34.1 axis rows (plain / poison / fire-resv /
+ice-resv).  "Healing" below is NOT an effect axis: it is the weapon
+ROLE (rings, and future healing shields) whose combat resolution heals.
+
+| Weapon | plain | poison | fire/ice | healing role |
 |---|---|---|---|---|
 | Sword  | Y | N | Y | N |
 | Dagger | Y | Y | N | N |
