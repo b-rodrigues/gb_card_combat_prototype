@@ -389,9 +389,6 @@ static void draw_card_detail_page(Game *g)
     y += 2;
     ui_draw_text_line(0, y, "PRICE", 5);
     ui_draw_num2(6, y, def->price);
-    if (loot_is_loot_id(id) && merchant_buys(g)) {
-        ui_draw_text_line(0, 17, "[A]SELL", 7);
-    }
 }
 
 static void draw_picker(Game *g)
