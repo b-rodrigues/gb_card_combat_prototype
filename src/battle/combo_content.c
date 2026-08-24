@@ -41,7 +41,7 @@ static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
     400  /* FIVE KIND */
 };
 
-/* Classify n card values (order-independent).  vals are 1..9,
+/* Classify n card values (order-independent).  vals are 1..10,
  * types are BattleCardType. */
 uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
                        uint8_t n)
@@ -160,7 +160,7 @@ void combo_resolve_banked(void)
             out_result->multiplier = 100;
         } else {
             /* Ring JOKER (§34.3): a ring's value substitutes freely --
-             * try every value 1..9 and keep the best tier (types are
+             * try every legal value (1..10) and keep the best tier (types are
              * untouched, so the suited bonus is unaffected). */
             uint8_t has_ring = 0;
             for (i = 0; i < eff_count; i++) {
@@ -170,7 +170,9 @@ void combo_resolve_banked(void)
                 uint8_t trial[5];
                 uint8_t best = combo_classify(vals, types, eff_count);
                 uint8_t v, k2, t2;
-                for (v = 1; v <= 9; v++) {
+                /* Card values are 1..10 (BOW 10): the joker tries the
+                 * full legal range. */
+                for (v = 1; v <= 10; v++) {
                     for (k2 = 0; k2 < eff_count; k2++) {
                         trial[k2] = cards[k2].ring ? v : vals[k2];
                     }
