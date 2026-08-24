@@ -40,4 +40,9 @@ void loot_state_init(LootCollectionState *lc);
 bool loot_collection_add(LootCollectionState *lc, CardId archetype,
                          uint8_t rarity);
 
+/* Phase 2 drop roll: archetype picked from pool, rarity from placeholder
+ * weights; appends to the collection.  Consumes the shared game RNG. */
+bool loot_roll_combat(LootCollectionState *lc, const CardId *pool,
+                      uint8_t len);
+
 #endif /* RPG_LOOT_H */

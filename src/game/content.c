@@ -11,6 +11,24 @@
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
 
+/* ── Enemy loot profiles (docs/loot.md §17) ─────────────────────────
+ * Placeholder pools keyed by BattleId: which archetypes each enemy
+ * family can drop.  Contents/weights tune later (§32). */
+static const CardId s_loot_slime[] = {
+    CARD_IRON_SWORD, CARD_WOODEN_SHIELD, CARD_HEALING_HERB, CARD_POISON_DAGGER
+};
+static const CardId s_loot_bat[] = { CARD_FIRE_TOME };
+
+const CardId *game_loot_pool_for_battle(uint8_t battle_type, uint8_t *len)
+{
+    if (battle_type == BATTLE_BAT) {
+        *len = 1;
+        return s_loot_bat;
+    }
+    *len = 4;
+    return s_loot_slime;
+}
+
 void game_content_init(void)
 {
     story_init(STORY_FLAG_ID_COUNT);

@@ -27,6 +27,10 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
  * battle screen. */
 ScreenId game_screen_after_victory(const Game *g);
 
+/* Loot profile for a defeated enemy family (docs/loot.md §17): returns
+ * the archetype pool the enemy rolls drops from. */
+const CardId *game_loot_pool_for_battle(uint8_t battle_type, uint8_t *len);
+
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
 void game_dialogue_register(void);
