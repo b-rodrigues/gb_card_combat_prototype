@@ -177,7 +177,9 @@ typedef enum {
     /* Phase C statuses (docs/combo-system.md §12-§19). */
     EVENT_STATUS_APPLIED,   /* d0=status id d1=stacks d2=duration */
     EVENT_STATUS_TICKED,    /* d0=tick damage d1=actor slot (0=player) */
-    EVENT_STATUS_EXPIRED    /* d0=status id d1=actor slot (0=player) */
+    EVENT_STATUS_EXPIRED,   /* d0=status id d1=actor slot (0=player) */
+    /* Loot instances (docs/loot.md §34). */
+    EVENT_LOOT_CARD_ADDED   /* d0=archetype CardId d1=count after d2=rarity */
 } GameEventType;
 
 typedef struct {

@@ -14,6 +14,7 @@
 #include "rpg/currency.h"
 #include "rpg/progression.h"
 #include "rpg/save.h"
+#include "rpg/loot.h"
 #include "content.h"
 #include "game_ids.h"
 #include "ui.h"
@@ -45,7 +46,8 @@ enum {
     DBG_ACT_START_BATTLE = 15,
     DBG_ACT_DECK_REMOVE = 16,
     DBG_ACT_SET_HAND_CARD_STATUS = 17,
-    DBG_ACT_SET_ENEMY_HP = 18
+    DBG_ACT_SET_ENEMY_HP = 18,
+    DBG_ACT_LOOT_ADD = 19
 };
 
 static void scenario_begin(uint16_t seed)
@@ -301,6 +303,12 @@ static void debug_run_action(void)
             if (g_game.battle.enemy_count > a0) {
                 g_game.battle.enemies[a0].hp = a1;
             }
+            break;
+        case DBG_ACT_LOOT_ADD:
+            /* Append a loot card instance to the persistent collection.
+             * Real mechanic call: loot_collection_add validates capacity
+             * and emits LOOT_CARD_ADDED itself (d1 = count after). */
+            loot_collection_add(&g_game.state.loot, (CardId)a0, a1);
             break;
         case DBG_ACT_DECK_ADD:
             /* Real mechanic call: all deck_add_card validations apply

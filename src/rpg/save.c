@@ -1,6 +1,11 @@
 #include "save.h"
 #include "banked.h"
 
+/* Slot capacity mirror (WRAM): the bank-2 guard reads this instead of a
+ * compile-time constant, which SDCC would constant-fold away. */
+const uint16_t g_save_state_capacity =
+    (uint16_t)(SAVE_SLOT_STRIDE - SAVE_SRAM_STATE_OFF);
+
 /* Fixed-bank dispatchers for the bank-2 SRAM bodies
  * (src/rpg/save_banked.c), keeping the checksum/copy loops out of the
  * fixed-bank budget.  Results report through g_save_ok (shared WRAM

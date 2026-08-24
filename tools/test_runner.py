@@ -236,6 +236,12 @@ def run_scenario(scenario):
                                      act.get("index", 0) & 0xFF,
                                      act.get("cost", 1) & 0xFF,
                                      act.get("uses", 0xFF) & 0xFF)
+            elif act_type == "loot_add":
+                # Append a loot card instance to the persistent collection
+                # (docs/loot.md §34).  Emits LOOT_CARD_ADDED on success.
+                session.debug_action(session.DBG_ACT_LOOT_ADD,
+                                     ITEM_ID_MAP[act.get("card")],
+                                     act.get("rarity", 0) & 0xFF, 0)
             elif act_type == "set_enemy_hp":
                 # Pin an enemy combatant's current HP in the active battle
                 # (scenario setup: deterministic fight lengths).

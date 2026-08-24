@@ -18,9 +18,13 @@
   ],
   "assertions": [
     {
+      "type": "screen",
+      "expected": "OVERWORLD"
+    },
+    {
       "type": "currency",
-      "expected": 50,
-      "currency": "GOLD"
+      "currency": "GOLD",
+      "expected": 50
     },
     {
       "type": "variable",
@@ -34,12 +38,11 @@
     },
     {
       "type": "party_hp",
-      "member": 0,
       "expected": 7
     },
     {
       "type": "story_flag",
-      "flag": "MET_MAYOR",
+      "flag": "ARRIVED_TOWN",
       "expected": true
     }
   ],

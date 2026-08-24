@@ -17,27 +17,28 @@
 
 uint8_t g_save_ok;
 
-#define SAVE_SRAM_MAGIC_OFF     0x0000
-#define SAVE_SRAM_VERSION_OFF   0x0002
-#define SAVE_SRAM_CHECKSUM_OFF  0x0003
-#define SAVE_SRAM_STATE_OFF     0x0004
-#define SAVE_SRAM_BASE          0xA000
-#define SAVE_SLOT_STRIDE        0x0100
 
-typedef char check_save_slot_size[(sizeof(GameState) <= (SAVE_SLOT_STRIDE - SAVE_SRAM_STATE_OFF)) ? 1 : -1];
+/* NOTE: SDCC does not ERROR on the negative-array-size assert idiom, so a
+ * compile-time slot guard cannot be trusted.  save_op_banked() therefore
+ * enforces the bound at RUNTIME and refuses to touch SRAM when the state
+ * outgrew the slot (preventing silent cross-slot corruption). */
 
 static uint8_t *save_slot_base(uint8_t slot)
 {
-    return (uint8_t *)(SAVE_SRAM_BASE + ((uint16_t)slot << 8));
+    /* Stride via explicit shift-10 (= x1024), NOT a multiply: banked code
+     * must not pull the SDCC multiply library (fixed bank, AGENTS.md
+     * 52.11.1).  Keep in sync with SAVE_SLOT_STRIDE (0x400 = 1<<10). */
+    return (uint8_t *)(SAVE_SRAM_BASE + ((uint16_t)slot << 10));
 }
 
-static uint8_t save_checksum(const GameState *state)
+static uint16_t save_checksum(const GameState *state)
 {
-    uint8_t sum = 0;
-    uint8_t n = (uint8_t)sizeof(GameState);
+    uint16_t sum = 0;
+    uint16_t n = (uint16_t)sizeof(GameState);   /* u16: state grew past 255
+                                                 * with the loot collection */
     const uint8_t *b = (const uint8_t *)state;
     while (n--) sum = (uint8_t)(sum + *b++);
-    return sum;
+    return sum & 0xFF;                          /* stored checksum stays u8 */
 }
 
 static bool save_valid_at_slot(const uint8_t *sram)
@@ -50,7 +51,7 @@ static bool save_valid_at_slot(const uint8_t *sram)
     return sram[3] == save_checksum((const GameState *)(sram + 4));
 }
 
-static void sram_copy(uint8_t *dst, const uint8_t *src, uint8_t count)
+static void sram_copy(uint8_t *dst, const uint8_t *src, uint16_t count)
 {
     while (count--) *dst++ = *src++;
 }
@@ -65,6 +66,19 @@ void save_op_banked(void)
 
     g_save_ok = 0;
     if (slot >= SAVE_SLOT_COUNT) return;
+    /* Runtime slot-capacity guard: the compile-time typedef assert is NOT
+     * enforced by SDCC -- without this, an oversized GameState silently
+     * overflows into the next slot (observed: 806-byte state in a
+     * historically 252-byte slot layout). */
+    /* Runtime slot-capacity guard: refuses SRAM access when the state
+     * outgrew its 1020-byte lane (prevents silent cross-slot corruption).
+     * g_save_state_capacity comes from WRAM -- do NOT replace with a
+     * compile-time constant: SDCC would fold the branch into unreachable
+     * code (lint), and older sibling guards silently never fired. */
+    if (g_save_state_capacity <
+        (uint16_t)sizeof(GameState)) {
+        return;
+    }
     sram = save_slot_base(slot);
 
     switch (op) {
@@ -82,7 +96,7 @@ void save_op_banked(void)
             sram[2] = SAVE_VERSION;
             sram[3] = save_checksum(state);
             sram_copy(sram + 4, (const uint8_t *)state,
-                      (uint8_t)sizeof(GameState));
+                      (uint16_t)sizeof(GameState));
             DISABLE_RAM;
             g_save_ok = 1;
             return;
@@ -92,7 +106,7 @@ void save_op_banked(void)
             valid = save_valid_at_slot(sram);
             if (valid) {
                 sram_copy((uint8_t *)state, sram + 4,
-                          (uint8_t)sizeof(GameState));
+                          (uint16_t)sizeof(GameState));
             }
             DISABLE_RAM;
             g_save_ok = valid ? 1 : 0;

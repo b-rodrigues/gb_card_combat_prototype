@@ -6,6 +6,7 @@
 #include "entity.h"
 #include "screen.h"
 #include "rpg/deck.h"
+#include "rpg/loot.h"
 
 /* Fixed-size capacity limits for the Game Boy.  No dynamic allocation. */
 #define MAX_PARTY_MEMBERS     4
@@ -126,6 +127,7 @@ typedef struct {
     CurrencyState currency;
     WorldState world;
     ProgressionStore progression;
+    LootCollectionState loot;
 } GameState;
 
 void game_state_zero(GameState *state);
