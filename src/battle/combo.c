@@ -2,7 +2,7 @@
 #include "banked.h"
 
 /* combo_resolve() is a fixed-bank wrapper around the banked body in
- * src/battle/combo_content.c (ROM bank 2), which evaluates the hand and
+ * src/battle/combo_content.c (ROM bank 3), which evaluates the hand and
  * resolves its effect in one dispatch -- keeping both out of the
  * fixed-bank budget.  The wrapper stages its arguments into the _DATA
  * globals (banked.c) and runs the banked no-arg function through the WRAM

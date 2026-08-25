@@ -271,9 +271,6 @@ void world_on_battle_fled(Game *g)
     banked_call_run();
 }
 
-static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };
-static const uint8_t s_patrol_line[8] = { 0x01, 0x15, 0x19, 0x05, 0x24, 0x35, 0x36, 0x25 };
-
 uint8_t g_patrol_outcome = 0;
 uint8_t g_patrol_evt[4];
 World *g_patrol_world;

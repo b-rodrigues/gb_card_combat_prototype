@@ -13,7 +13,7 @@
 #define SAVE_VERSION 2
 #define SAVE_SLOT_COUNT 3
 
-/* SRAM save geometry shared by save.c and the bank-2 body.  Slots are
+/* SRAM save geometry shared by save.c and the bank-3 body.  Slots are
  * 1 KB apart: GameState reached ~806 bytes with the loot collection. */
 #define SAVE_SRAM_BASE          0xA000
 #define SAVE_SRAM_STATE_OFF     0x0004
@@ -26,7 +26,7 @@ bool save_game_slot(uint8_t slot, const GameState *state);
 bool load_game_slot(uint8_t slot, GameState *state);
 
 /* True when specified SRAM slot holds a valid save for this build. */
-/* Bank-2 body (src/rpg/save_banked.c) dispatched by all three wrappers. */
+/* Bank-3 body (src/rpg/save_banked.c) dispatched by all three wrappers. */
 /* Lives in ROM (const, other TU) precisely so SDCC cannot fold it. */
 extern const uint16_t g_save_state_capacity;
 void save_op_banked(void);

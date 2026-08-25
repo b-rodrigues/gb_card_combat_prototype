@@ -11,6 +11,8 @@ extern uint8_t g_patrol_slot;
 static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };
 static const uint8_t s_patrol_line[8]   = { 0x01, 0x15, 0x19, 0x05, 0x24, 0x35, 0x36, 0x25 };
 
+#define ACTOR_OFFSET(field) ((uint8_t)&(((WorldActorRuntime *)0)->field))
+
 void world_patrol_slot_banked(void)
 {
     uint8_t *bp;
@@ -29,34 +31,34 @@ void world_patrol_slot_banked(void)
     if (slot >= MAX_WORLD_ACTORS) return;
 
     bp = (uint8_t *)&g_patrol_world->actors[slot];
-    active_v = bp[3];
+    active_v = bp[ACTOR_OFFSET(active)];
     if (!active_v) return;
-    ai_type_v = bp[17];
-    if (ai_type_v == 0) return;
+    ai_type_v = bp[ACTOR_OFFSET(ai_type)];
+    if (ai_type_v == AI_NONE) return;
 
-    /* Read ALL fields through byte pointer arithmetic -- no struct
-     * pointer, no SDCC pointer caching at all. */
-    ai_step_v       = bp[18];
-    ai_timer_v      = bp[19];
-    move_state_v    = bp[20];
-    move_tx_v       = bp[21];
-    move_ty_v       = bp[22];
-    move_progress_v = bp[23];
-    spawn_x_v       = bp[15];
-    spawn_y_v       = bp[16];
-    x_v             = bp[4];
-    y_v             = bp[5];
-    facing_v        = bp[6];
-    id_v            = bp[2];
+    /* Read ALL fields through byte pointer arithmetic (via ACTOR_OFFSET)
+     * -- no struct pointer, no SDCC pointer caching across branch joins. */
+    ai_step_v       = bp[ACTOR_OFFSET(ai_step)];
+    ai_timer_v      = bp[ACTOR_OFFSET(ai_timer)];
+    move_state_v    = bp[ACTOR_OFFSET(move_state)];
+    move_tx_v       = bp[ACTOR_OFFSET(move_target_x)];
+    move_ty_v       = bp[ACTOR_OFFSET(move_target_y)];
+    move_progress_v = bp[ACTOR_OFFSET(move_progress)];
+    spawn_x_v       = bp[ACTOR_OFFSET(spawn_x)];
+    spawn_y_v       = bp[ACTOR_OFFSET(spawn_y)];
+    x_v             = bp[ACTOR_OFFSET(x)];
+    y_v             = bp[ACTOR_OFFSET(y)];
+    facing_v        = bp[ACTOR_OFFSET(facing)];
+    id_v            = bp[ACTOR_OFFSET(id)];
 
     if (move_state_v) {
         move_progress_v++;
-        if (move_progress_v >= 8) {
+        if (move_progress_v >= MOVE_FRAMES) {
             x_v = move_tx_v;
             y_v = move_ty_v;
-            move_state_v = 0;
+            move_state_v = MOVE_STATE_IDLE;
             move_progress_v = 0;
-            ai_timer_v = 32;
+            ai_timer_v = PATROL_STEP_INTERVAL;
             g_patrol_evt[0] = id_v;
             g_patrol_evt[1] = x_v;
             g_patrol_evt[2] = y_v;
@@ -64,21 +66,21 @@ void world_patrol_slot_banked(void)
             g_patrol_outcome = 1;
         }
         /* Write back through byte pointer -- no struct pointer at all. */
-        bp[23] = move_progress_v;
-        bp[20] = move_state_v;
-        bp[19] = ai_timer_v;
-        bp[4]  = x_v;
-        bp[5]  = y_v;
+        bp[ACTOR_OFFSET(move_progress)] = move_progress_v;
+        bp[ACTOR_OFFSET(move_state)]    = move_state_v;
+        bp[ACTOR_OFFSET(ai_timer)]      = ai_timer_v;
+        bp[ACTOR_OFFSET(x)]             = x_v;
+        bp[ACTOR_OFFSET(y)]             = y_v;
         return;
     }
 
     if (ai_timer_v > 0) {
         ai_timer_v--;
-        bp[19] = ai_timer_v;
+        bp[ACTOR_OFFSET(ai_timer)] = ai_timer_v;
         return;
     }
 
-    entry = (ai_type_v == 1) ?
+    entry = (ai_type_v == AI_PATROL_CIRCLE) ?
         s_patrol_circle[ai_step_v & 3] :
         s_patrol_line[ai_step_v & 7];
     facing_v  = (uint8_t)(entry >> 4);
@@ -86,9 +88,9 @@ void world_patrol_slot_banked(void)
     target_y = (uint8_t)(spawn_y_v + ((entry >> 2) & 3) - 1);
 
     if (target_x == x_v && target_y == y_v) {
-        bp[6]  = facing_v;
-        bp[18] = (uint8_t)(ai_step_v + 1);
-        bp[19] = 32;
+        bp[ACTOR_OFFSET(facing)]   = facing_v;
+        bp[ACTOR_OFFSET(ai_step)]  = (uint8_t)(ai_step_v + 1);
+        bp[ACTOR_OFFSET(ai_timer)] = PATROL_STEP_INTERVAL;
         return;
     }
 
@@ -125,7 +127,7 @@ void world_patrol_slot_banked(void)
     }
 
     if (blocked) {
-        bp[19] = 32;
+        bp[ACTOR_OFFSET(ai_timer)] = PATROL_STEP_INTERVAL;
         return;
     }
 
@@ -140,10 +142,10 @@ void world_patrol_slot_banked(void)
         return;
     }
 
-    bp[18] = (uint8_t)(ai_step_v + 1);
-    bp[20] = 1;
-    bp[21] = target_x;
-    bp[22] = target_y;
-    bp[23] = 0;
-    bp[6]  = facing_v;
+    bp[ACTOR_OFFSET(ai_step)]       = (uint8_t)(ai_step_v + 1);
+    bp[ACTOR_OFFSET(move_state)]    = MOVE_STATE_MOVING;
+    bp[ACTOR_OFFSET(move_target_x)] = target_x;
+    bp[ACTOR_OFFSET(move_target_y)] = target_y;
+    bp[ACTOR_OFFSET(move_progress)] = 0;
+    bp[ACTOR_OFFSET(facing)]        = facing_v;
 }

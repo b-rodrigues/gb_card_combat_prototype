@@ -4,7 +4,7 @@
 #include "banked.h"
 
 /* ── Status definitions + banked bodies (Phase C) ───────────────────
- * Runs from ROM bank 2 via the WRAM banked-call trampoline; reads only
+ * Runs from ROM bank 3 via the WRAM banked-call trampoline; reads only
  * its own bank-local definition table and the staged pointers/bytes, and
  * writes through staged pointers / shared WRAM result structs
  * (g_status_applied in status.c).  Never calls fixed-bank code.
@@ -114,7 +114,7 @@ void status_tick_banked(void)
             }
             /* Remove by shifting the tail down, field-wise: struct
              * assignment lowers to __memcpy, which lives in the fixed
-             * bank and is unreachable while bank 2 is mapped. */
+             * bank and is unreachable while bank 3 is mapped. */
             slots->slot[i].id = slots->slot[slots->count - 1].id;
             slots->slot[i].stacks = slots->slot[slots->count - 1].stacks;
             slots->slot[i].duration = slots->slot[slots->count - 1].duration;

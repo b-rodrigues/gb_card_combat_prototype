@@ -7,7 +7,7 @@
 /* ── Banked combo evaluation + effect dispatch ──────────────────────
  * The fixed-bank wrapper (src/battle/combo.c) stages its arguments into
  * the _DATA globals (banked.c) and runs this no-arg body through the WRAM
- * banked-call trampoline (crt0.s).  This file stays in ROM bank 2 so combo
+ * banked-call trampoline (crt0.s).  This file stays in ROM bank 3 so combo
  * evaluation does not consume the fixed-bank budget.  Apart from the
  * bank-local call into effects_content.c below (same ROM bank, direct
  * call -- allowed), it is self-contained: no fixed-bank calls.
@@ -26,7 +26,7 @@
  *
  * No multiplies/divides here or in effect_resolve_into(): SDCC lowers
  * them to __mulint/__divuint, which link into the FIXED bank -- an
- * illegal call while bank 2 is mapped (AGENTS.md 52.11.1). */
+ * illegal call while bank 3 is mapped (AGENTS.md 52.11.1). */
 
 static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
     100, /* NONE */

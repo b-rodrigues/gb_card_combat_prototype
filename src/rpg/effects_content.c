@@ -4,7 +4,7 @@
 #include "banked.h"
 
 /* ── Banked effect resolution (docs/combo-system.md Phase B/C) ───────
- * Runs inside the combo_resolve() dispatch (ROM bank 2): the combo body
+ * Runs inside the combo_resolve() dispatch (ROM bank 3): the combo body
  * calls effect_resolve_into() bank-locally after evaluating hand shape.
  * Self-contained: pure function of its arguments; writes the shared
  * g_effect_last slot (WRAM) and/or the caller's out pointer; never calls
@@ -14,7 +14,7 @@
  * the tier percent (+25 suited) from the evaluator.  The multiply and
  * divide are hand-rolled shift-add / subtract-loops because SDCC lowers
  * the operators to __mulint/__divuint -- library code that links into
- * the FIXED bank and cannot be called while bank 2 is mapped
+ * the FIXED bank and cannot be called while bank 3 is mapped
  * (AGENTS.md 52.11.1).
  *
  * Every resolved effect currently scales the same way; when per-effect

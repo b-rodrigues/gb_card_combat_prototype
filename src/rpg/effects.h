@@ -16,9 +16,9 @@
  * plan's EFFECT_DAMAGE / EFFECT_BLOCK / EFFECT_HEAL.  New effect kinds
  * (status, draw, ...) extend that enum without touching the combo side.
  *
- * Dispatch note: the scaling body lives in ROM bank 2 next to the combo
+ * Dispatch note: the scaling body lives in ROM bank 3 next to the combo
  * evaluator, and combo_resolve() runs BOTH in one banked dispatch --
- * the bank-2 combo body calls effect_resolve_into() bank-locally (same
+ * the bank-3 combo body calls effect_resolve_into() bank-locally (same
  * bank, no trampoline).  This keeps the fixed-bank cost of the seam to
  * one wrapper (the fixed bank is completely full; see make memmap).
  * A standalone fixed-entry effect_resolve() can be added when a second
@@ -40,9 +40,9 @@ typedef struct {
 extern EffectResult g_effect_last;
 const EffectResult *effect_last(void);
 
-/* Bank-2 scaling body, called bank-locally by combo_resolve_banked().
+/* Bank-3 scaling body, called bank-locally by combo_resolve_banked().
  * Self-contained: pure function of (effect, combo).  Not for fixed-bank
- * callers (bank 2 is not mapped there). */
+ * callers (bank 3 is not mapped there). */
 void effect_resolve_into(uint8_t effect_type, const ComboResult *combo,
                          EffectResult *out);
 

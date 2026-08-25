@@ -4,12 +4,12 @@
 #include "banked.h"
 #include "actor.h"
 
-/* ── Victory loot drop, bank-2 body (docs/loot.md §8/§17/§34.5) ─────
+/* ── Victory loot drop, bank-3 body (docs/loot.md §8/§17/§34.5) ─────
  * SINGLE banked entry for the whole drop decision: 50% gate on the
  * isolated loot RNG, archetype weapon pick from the enemy family's
  * profile, material + legal-effect roll, derived-id encode.
  *
- * Runs from ROM bank 2 via the WRAM trampoline.  Self-contained: reads
+ * Runs from ROM bank 3 via the WRAM trampoline.  Self-contained: reads
  * the battle id from g_bk_byte_a, steps g_loot_rng_state inline (never
  * a fixed-bank call), and reports through g_loot_id (0 = no drop).
  *

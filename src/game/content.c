@@ -15,7 +15,7 @@
 
 /* ── Victory loot drop (docs/loot.md §17/§34.5) ─────────────────────
  * Thin fixed-bank wrapper: the whole decision (gate, profile pick,
- * roll, encode) runs as ONE bank-2 body (loot_drop_banked.c); only
+ * roll, encode) runs as ONE bank-3 body (loot_drop_banked.c); only
  * this staging call stays fixed.  Returns the derived CardId, or 0 =
  * no drop this victory. */
 uint8_t game_loot_drop(uint8_t battle_type)

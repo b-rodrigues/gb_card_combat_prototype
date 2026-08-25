@@ -558,7 +558,7 @@ void ui_draw_battle_full(const Battle *battle)
 }
 
 /* ui_update_battle() is a fixed-bank wrapper that dispatches the full battle
- * rendering logic through the banked-call trampoline into ROM bank 2
+ * rendering logic through the banked-call trampoline into ROM bank 3
  * (ui_battle_content.c).  The banked body contains all the per-dirty-bit
  * helpers (enemy columns, hero row, hand, combo, banner, card description). */
 void ui_update_battle(const Battle *battle)

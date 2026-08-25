@@ -7,7 +7,7 @@
 #include "rpg/cards.h"
 
 /* ── Loot identity tables + banked bodies (docs/loot.md §34) ────────
- * Runs from ROM bank 2 via the trampoline.  Entry point:
+ * Runs from ROM bank 3 via the trampoline.  Entry point:
  *   loot_synth_banked       id(byte_a) -> CardDefinition in g_card_scratch
  * Consumes/writes only WRAM and its own bank-local tables.
  * Extensible: append rows to grow materials/effects/weapons. */

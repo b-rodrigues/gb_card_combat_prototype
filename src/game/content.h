@@ -27,7 +27,7 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
  * battle screen. */
 ScreenId game_screen_after_victory(const Game *g);
 
-/* Victory loot drop (docs/loot.md §17/§34.5): runs the bank-2 gate +
+/* Victory loot drop (docs/loot.md §17/§34.5): runs the bank-3 gate +
  * profile + roll body and returns the derived CardId (0 = no drop).
  * Uses the isolated loot RNG only -- never consumes the shared stream. */
 uint8_t game_loot_drop(uint8_t battle_type);

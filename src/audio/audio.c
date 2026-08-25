@@ -43,7 +43,7 @@ static const uint8_t summer_notes[32] = {
     5, 6, 7, 8,  11, 10, 9, 0
 };
 
-/* Victory: 6-note rising fanfare (D4 G4 A4 D5 | A4 D5) + closing rest,
+/* Victory: 4-note rising fanfare (D4 G4 A4 D5) + closing rest,
  * one-shot -- plays once then falls silent until the next track
  * request. */
 #define VICTORY_NOTE_COUNT 5   /* 4 notes + closing rest */
@@ -88,9 +88,13 @@ void audio_init(void)
 void audio_play_music(MusicTrack track)
 {
     if (g_audio_current_track == track) return;
-    g_audio_current_track = track;
+    /* Suppress the ISR while switching: set MUSIC_NONE first so the
+     * timer interrupt never sees the new track with a stale note_index
+     * (which could immediately kill a one-shot like MUSIC_VICTORY). */
+    g_audio_current_track = MUSIC_NONE;
     step_counter = 0;
     note_index = 0;
+    g_audio_current_track = track;
     if (track == MUSIC_NONE) {
         play_note(0);
     }
@@ -134,13 +138,14 @@ void audio_update(void)
         if (note_index < len) {
             play_note(s_note_freqs[notes[note_index]]);
             note_index++;
-        } else if (g_audio_current_track == MUSIC_VICTORY) {
-            /* One-shot jingle: silence until the next track request.
-             * Looping tracks wrap instead. */
-            g_audio_current_track = MUSIC_NONE;
-            note_index = 0;
-        } else {
-            note_index = 0;   /* looping tracks: & 31 == restart */
+            if (note_index >= len) {
+                if (g_audio_current_track == MUSIC_VICTORY) {
+                    /* One-shot jingle: silence until the next track
+                     * request. */
+                    g_audio_current_track = MUSIC_NONE;
+                }
+                note_index = 0;
+            }
         }
     }
 }

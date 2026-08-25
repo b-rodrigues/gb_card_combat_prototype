@@ -2,7 +2,7 @@
 #include "banked.h"
 #include "telemetry.h"
 
-/* Fixed-bank wrappers around the bank-2 bodies (src/rpg/status_content.c),
+/* Fixed-bank wrappers around the bank-3 bodies (src/rpg/status_content.c),
  * keeping the stacking/ticking logic out of the fixed-bank budget.  The
  * trampoline exposes two pointers + two bytes; the apply call packs
  * stacks/duration into byte_b (both <= 15).  Telemetry is emitted HERE,

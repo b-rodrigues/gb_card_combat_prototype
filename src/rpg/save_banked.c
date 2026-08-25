@@ -5,7 +5,7 @@
 #include "banked.h"
 
 /* ── Banked SRAM save/load bodies (src/rpg/save.c dispatchers) ──────
- * Runs from ROM bank 2 via the WRAM banked-call trampoline so the
+ * Runs from ROM bank 3 via the WRAM banked-call trampoline so the
  * checksum/copy loops do not consume the fixed-bank budget.  Pure
  * WRAM/SRAM byte access: ENABLE_RAM/DISABLE_RAM expand to plain rRAMG
  * register stores (no calls), so this is self-contained per the banked

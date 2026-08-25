@@ -42,10 +42,10 @@ enum {
 #define loot_id_weapon(id)           ((id) & 7)
 
 /* Shared WRAM results (defined in src/rpg/loot.c):
- * g_loot_id       -- derived-id result byte written by the bank-2
+ * g_loot_id       -- derived-id result byte written by the bank-3
  *                    drop/synth bodies, read by fixed-bank wrappers.
  * g_loot_rng_state -- isolated xorshift stream (seeded from the main
- *                    seed by rng_set_seed); bank-2 bodies step it
+ *                    seed by rng_set_seed); bank-3 bodies step it
  *                    inline -- a banked body must never call a
  *                    fixed-bank function (AGENTS.md 52.11.1). */
 extern uint8_t g_loot_id;
@@ -56,7 +56,7 @@ extern uint16_t g_loot_rng_state;
  * docs/loot.md §16/§34.6); read via card_get_def() like any price.
  * Catalog (non-loot) prices come from the game's card table. */
 
-/* Bank-2 bodies:
+/* Bank-3 bodies:
  * game_loot_drop_banked   -- victory gate + profile pick + roll
  *                            (src/game/loot_drop_banked.c), dispatched
  *                            by game_loot_drop() in src/game/content.c.

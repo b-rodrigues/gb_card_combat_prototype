@@ -76,7 +76,7 @@ extern uint8_t g_card_defs_count;
 const CardDefinition *card_get_def(CardId id);
 
 /* Shared definition scratch (WRAM): card_get_def's return target.  The
- * bank-2 synth body (loot_synth_banked) writes it directly, so it must
+ * bank-3 synth body (loot_synth_banked) writes it directly, so it must
  * be visible project-wide rather than file-static. */
 extern CardDefinition g_card_scratch;
 

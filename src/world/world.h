@@ -170,7 +170,7 @@ WorldMoveResult world_update_actors(World *w);
 
 /* Renderer pixel position (tile*8 plus the sub-tile walk progress) of the
  * player sprite.  Valid whenever the player is not animating a move. */
-/* Bank-2 pixel-interpolation body (src/world/px_banked.c); dispatched by
+/* Bank-3 pixel-interpolation body (src/world/px_banked.c); dispatched by
  * the four world_*_px/py wrappers. */
 void world_px_banked(void);
 
