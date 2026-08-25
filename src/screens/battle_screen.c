@@ -5,6 +5,8 @@
 #include "audio.h"
 #include "content.h"
 #include "ui.h"
+#include "rpg/cards.h"
+#include "rpg/loot.h"
 
 void battle_screen_update(Game *g)
 {
@@ -13,6 +15,23 @@ void battle_screen_update(Game *g)
     b = &g->battle;
 
     if (b->battle_over) {
+        /* Grant combat loot exactly once, when the VICTORY screen first
+         * appears (docs/loot.md §34.5) -- the drop was ROLLED at battle
+         * start and waits in g_loot_id.  world_on_battle_end no-ops on
+         * repeat calls (encounter index cleared); the exit path calls it
+         * again harmlessly.  card_get_def re-populates g_card_scratch so
+         * the bank-2 HUD can render the identity name.  No drop ->
+         * silence. */
+        if (b->result == BATTLE_RESULT_VICTORY &&
+            g->world.encounter_actor_index != NO_ACTOR_INDEX) {
+            world_on_battle_end(g, true);
+            if (g_loot_id != CARD_NONE) {
+                (void)card_get_def(g_loot_id);
+                b->msg_id = 4;      /* never expires during RESULT */
+                b->msg_ttl = 0;
+                b->dirty |= BATTLE_DIRTY_MSG;
+            }
+        }
         if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
             if (b->result == BATTLE_RESULT_VICTORY || b->result == BATTLE_RESULT_FLED) {
                 g->world.player.hp = b->player.hp;

@@ -225,7 +225,6 @@ void world_on_battle_end(Game *g, bool victory)
     World *w;
     uint8_t idx;
     uint16_t actor_id;
-    CardId drop_id;
     if (!g) return;
     w = &g->world;
 
@@ -248,19 +247,15 @@ void world_on_battle_end(Game *g, bool victory)
         }
         event_resolve_actor_defeated(g, actor_id, act->id);
 
-        /* Loot drop (docs/loot.md §8/§17/§34.5): one combat card behind
-         * a 50% gate on the ISOLATED loot RNG -- drops must not shift
-         * shared-RNG scenario outcomes.  The game layer owns the whole
-         * decision; world.c only records the result.  One event: the
-         * derived id already identifies material/effect/weapon (§34.1),
-         * so a second roll-detail event would be redundant bytes in the
-         * tight fixed bank. */
-        drop_id = game_loot_drop(act->battle_type);
-        if (drop_id != CARD_NONE &&
-            deck_collection_add(&g->state.cards, drop_id, 1)) {
-            telemetry_emit(EVENT_LOOT_CARD_ADDED, drop_id,
+        /* Loot grant (docs/loot.md §8/§17/§34.5): the drop was ROLLED at
+         * battle start (game_loot_drop, isolated RNG) and its derived id
+         * waits in g_loot_id -- victory grants it to the collection.
+         * CARD_NONE = gate missed or collection previously full. */
+        if (g_loot_id != CARD_NONE &&
+            deck_collection_add(&g->state.cards, g_loot_id, 1)) {
+            telemetry_emit(EVENT_LOOT_CARD_ADDED, g_loot_id,
                            deck_collection_count(&g->state.cards,
-                                                 drop_id), 0, 0);
+                                                 g_loot_id), 0, 0);
         }
     }
 }
@@ -279,74 +274,36 @@ void world_on_battle_fled(Game *g)
 static const uint8_t s_patrol_circle[4] = { 0x36, 0x1A, 0x29, 0x05 };
 static const uint8_t s_patrol_line[8] = { 0x01, 0x15, 0x19, 0x05, 0x24, 0x35, 0x36, 0x25 };
 
+uint8_t g_patrol_outcome = 0;
+uint8_t g_patrol_evt[4];
+World *g_patrol_world;
+uint8_t g_patrol_slot;
+
 WorldMoveResult world_update_actors(World *w)
 {
     uint8_t slot;
-    WorldActorRuntime *a;
-    uint8_t target_x, target_y, facing;
-    uint8_t entry;
 
     if (!w) return MOVE_RESULT_NONE;
 
     for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
-        a = &w->actors[slot];
-        if (!a->active || a->ai_type == AI_NONE) {
-            continue;
-        }
+        g_patrol_outcome = 0;
+        g_patrol_evt[0] = g_patrol_evt[1] = g_patrol_evt[2] = g_patrol_evt[3] = 0;
+        g_patrol_world = w;
+        g_patrol_slot = slot;
+        g_bk_call_bank = 3;
+        g_bk_call_target = (uint16_t)&world_patrol_slot_banked;
+        banked_call_run();
 
-        if (a->move_state) {
-            a->move_progress++;
-            if (a->move_progress >= 8) {
-                a->x = a->move_target_x;
-                a->y = a->move_target_y;
-                a->move_state = 0;
-                a->move_progress = 0;
-                a->ai_timer = PATROL_STEP_INTERVAL;
-                telemetry_emit(EVENT_ACTOR_STATE_CHANGE, (uint8_t)a->id, a->x, a->y, a->facing);
-            }
-            continue;
-        }
-
-        if (a->ai_timer > 0) {
-            a->ai_timer--;
-            continue;
-        }
-
-        entry = (a->ai_type == AI_PATROL_CIRCLE) ?
-            s_patrol_circle[a->ai_step & 3] :
-            s_patrol_line[a->ai_step & 7];
-        facing = (uint8_t)(entry >> 4);
-        target_x = (uint8_t)(a->spawn_x + (entry & 3) - 1);
-        target_y = (uint8_t)(a->spawn_y + ((entry >> 2) & 3) - 1);
-
-        if (target_x == a->x && target_y == a->y) {
-            a->facing = facing;
-            a->ai_step++;
-            a->ai_timer = PATROL_STEP_INTERVAL;
-            continue;
-        }
-
-        if (!world_is_walkable(w, target_x, target_y) ||
-            w->map[target_y][target_x] == TILE_EXIT ||
-            actor_find_at(w, target_x, target_y) != NULL ||
-            actor_find_hostile_slot(w, target_x, target_y) != NO_ACTOR_INDEX) {
-            a->ai_timer = PATROL_STEP_INTERVAL;
-            continue;
-        }
-
-        if (target_x == w->player.position.x && target_y == w->player.position.y) {
-            w->encounter_actor_index = slot;
-            telemetry_emit(EVENT_ACTOR_COLLISION, target_x, target_y, (uint8_t)a->id, 0);
-            telemetry_emit(EVENT_ENCOUNTER_STARTED, (uint8_t)a->id, 0, 0, 0);
+        if (g_patrol_outcome == 1) {
+            telemetry_emit(EVENT_ACTOR_STATE_CHANGE, g_patrol_evt[0],
+                           g_patrol_evt[1], g_patrol_evt[2], g_patrol_evt[3]);
+        } else if (g_patrol_outcome == 2) {
+            telemetry_emit(EVENT_ACTOR_COLLISION, g_patrol_evt[0],
+                           g_patrol_evt[1], g_patrol_evt[2], 0);
+            telemetry_emit(EVENT_ENCOUNTER_STARTED, g_patrol_evt[2],
+                           0, 0, 0);
             return MOVE_RESULT_ENCOUNTER;
         }
-
-        a->ai_step++;
-        a->move_state = 1;
-        a->move_target_x = target_x;
-        a->move_target_y = target_y;
-        a->move_progress = 0;
-        a->facing = facing;
     }
 
     return MOVE_RESULT_NONE;

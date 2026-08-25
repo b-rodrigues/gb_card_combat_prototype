@@ -7,7 +7,8 @@
 typedef enum {
     MUSIC_NONE,
     MUSIC_OVERWORLD,
-    MUSIC_BATTLE
+    MUSIC_BATTLE,
+    MUSIC_VICTORY    /* one-shot 6-note fanfare; ends in silence */
 } MusicTrack;
 
 void audio_init(void);

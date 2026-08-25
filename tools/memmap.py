@@ -108,8 +108,8 @@ def main():
     # silent jump into garbage.  Catch this at build time instead of
     # under the harness at runtime.
     banked_targets = {
-        "_combo_resolve_banked": "combo eval + effect dispatch (bank 2)",
-        "_effect_resolve_into": "effect scaling body (bank 2)",
+        "_combo_resolve_banked": "combo eval + effect dispatch (bank 3)",
+        "_effect_resolve_into": "effect scaling body (bank 3)",
         "_battle_init_deck_banked": "battle deck bridge (bank 2)",
         "_status_apply_banked": "status apply body (bank 3)",
         "_status_tick_banked": "status tick body (bank 3)",
@@ -127,7 +127,7 @@ def main():
         "_scene_load_tiles_banked": "scene tile loader (bank 2)",
         "_enemy_deck_setup_banked": "enemy deck setup (bank 2)",
         "_battle_card_undo_banked": "battle card undo (bank 2)",
-        "_ui_update_battle_banked": "battle render (bank 2)",
+        "_ui_update_battle_banked": "battle render (bank 3)",
         "_actor_load_scene_banked": "scene actor loader (bank 2)",
         "_loot_synth_banked": "loot def synthesis (bank 3)",
         "_game_loot_drop_banked": "victory drop roll (bank 3)",

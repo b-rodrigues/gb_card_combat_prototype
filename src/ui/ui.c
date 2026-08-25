@@ -564,7 +564,7 @@ void ui_draw_battle_full(const Battle *battle)
 void ui_update_battle(const Battle *battle)
 {
     if (!battle) return;
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&ui_update_battle_banked;
     g_bk_ptr_a = (void *)battle;
     banked_call_run();

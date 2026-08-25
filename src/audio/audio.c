@@ -43,6 +43,15 @@ static const uint8_t summer_notes[32] = {
     5, 6, 7, 8,  11, 10, 9, 0
 };
 
+/* Victory: 6-note rising fanfare (D4 G4 A4 D5 | A4 D5) + closing rest,
+ * one-shot -- plays once then falls silent until the next track
+ * request. */
+#define VICTORY_NOTE_COUNT 5   /* 4 notes + closing rest */
+#define VICTORY_TICKS_PER_NOTE 20
+static const uint8_t victory_notes[VICTORY_NOTE_COUNT] = {
+    1, 5, 6, 8, 0           /* D4 G4 A4 D5 rest */
+};
+
 static void play_note(uint16_t freq)
 {
     if (freq == 0) {
@@ -92,24 +101,46 @@ MusicTrack audio_get_current_track(void)
     return g_audio_current_track;
 }
 
+/* Per-track playback parameters (indexed by MusicTrack).  Tables live
+ * here in the fixed bank because the timer ISR calls audio_update()
+ * directly.  len is the note count; loops wrap via mask/compare,
+ * VICTORY (one_shot) falls silent after its last note. */
+static const uint8_t *const s_track_notes[MUSIC_VICTORY + 1] = {
+    0, lacrimosa_notes, summer_notes, victory_notes
+};
+static const uint8_t s_track_len[MUSIC_VICTORY + 1] = {
+    0, 32, 32, VICTORY_NOTE_COUNT
+};
+static const uint8_t s_track_ticks[MUSIC_VICTORY + 1] = {
+    0, 43, 17, VICTORY_TICKS_PER_NOTE
+};
+
 void audio_update(void)
 {
+    const uint8_t *notes;
+    uint8_t len;
+
 #ifdef DEBUG_BUILD
     g_audio_ticks++;
 #endif
     if (g_audio_current_track == MUSIC_NONE) return;
 
-    if (g_audio_current_track == MUSIC_OVERWORLD) {
-        if (++step_counter >= 43) {
-            step_counter = 0;
-            play_note(s_note_freqs[lacrimosa_notes[note_index]]);
-            note_index = (uint8_t)((note_index + 1) & 31);
-        }
-    } else if (g_audio_current_track == MUSIC_BATTLE) {
-        if (++step_counter >= 17) {
-            step_counter = 0;
-            play_note(s_note_freqs[summer_notes[note_index]]);
-            note_index = (uint8_t)((note_index + 1) & 31);
+    notes = s_track_notes[g_audio_current_track];
+    if (!notes) return;
+    len = s_track_len[g_audio_current_track];
+
+    if (++step_counter >= s_track_ticks[g_audio_current_track]) {
+        step_counter = 0;
+        if (note_index < len) {
+            play_note(s_note_freqs[notes[note_index]]);
+            note_index++;
+        } else if (g_audio_current_track == MUSIC_VICTORY) {
+            /* One-shot jingle: silence until the next track request.
+             * Looping tracks wrap instead. */
+            g_audio_current_track = MUSIC_NONE;
+            note_index = 0;
+        } else {
+            note_index = 0;   /* looping tracks: & 31 == restart */
         }
     }
 }

@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 3
 #pragma disable_warning 110
 
 #include "ui.h"
@@ -11,6 +11,12 @@
  * never calls fixed-bank functions — see banked.h ABI constraint). ─────── */
 
 extern uint8_t ui_font_tile_base;
+
+/* Loot reveal (docs/loot.md §34.5): the dropped card's synthesized
+ * definition sits in the shared WRAM scratch (rpg/cards.c) -- the
+ * fixed side re-populates it via card_get_def() when the VICTORY
+ * screen appears; readable here from any bank. */
+extern CardDefinition g_card_scratch;
 
 static void battle_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
@@ -309,9 +315,16 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_HAND) battle_draw_battle_hand(battle);
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
     if (d & BATTLE_DIRTY_MSG) {
-        battle_draw_text_line(0, 12,
-            (battle->msg_id == 1) ? "NO ENERGY!" :
-            (battle->msg_id == 2) ? "OUT OF USES!" :
-            (battle->msg_id == 3) ? "ONE RING!" : NULL, 12);
+        if (battle->msg_id == 4) {
+            /* Loot reveal: "LOOT:" + the drop's synthesized identity
+             * name (docs/loot.md §34.5). */
+            battle_draw_text_line(0, 12, "LOOT:", 5);
+            battle_draw_text_line(5, 12, g_card_scratch.name, 11);
+        } else {
+            battle_draw_text_line(0, 12,
+                (battle->msg_id == 1) ? "NO ENERGY!" :
+                (battle->msg_id == 2) ? "OUT OF USES!" :
+                (battle->msg_id == 3) ? "ONE RING!" : NULL, 12);
+        }
     }
 }

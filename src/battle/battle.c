@@ -1,12 +1,15 @@
 #include "battle.h"
 #include "telemetry.h"
+#include "audio.h"
 #include "banked.h"
 #include "rpg/cards.h"
 #include "rpg/deck.h"
 #include "rpg/effects.h"
 #include "rpg/status.h"
 #include "rng.h"
+#include "rpg/loot.h"
 #include "game/game_ids.h"
+#include "content.h"
 #include <string.h>
 
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
@@ -63,6 +66,13 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->enemies[0].max_hp = enemy_max_hp;
     b->enemy_count = 1;
     b->enemy_battle_id = battle_id;
+
+    /* Combat loot roll happens HERE, at battle start (docs/loot.md
+     * §34.5): the isolated loot RNG is consumed deterministically once
+     * per battle, and the synthesized identity sits ready in
+     * g_card_scratch for the VICTORY reveal message.  Grant happens at
+     * world_on_battle_end() (victory only). */
+    g_loot_id = game_loot_drop(battle_id);
 
     if (ds && ds->count > 0) {
         battle_init_from_deck_state(b, ds);
@@ -257,6 +267,12 @@ void battle_set_result(Battle *b, uint8_t res)
     b->battle_over = true;
     b->dirty = BATTLE_DIRTY_ALL;
     telemetry_emit(ev, 0, 0, 0, 0);
+    if (res == BATTLE_RESULT_VICTORY) {
+        /* One-shot victory fanfare; the exit path switches back to the
+         * overworld track. */
+        audio_play_music(MUSIC_VICTORY);
+        telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_VICTORY, 0, 0, 0);
+    }
 }
 
 void battle_card_undo(Battle *b)
@@ -265,7 +281,7 @@ void battle_card_undo(Battle *b)
     if (!b) return;
 
     prev_result = b->result;
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&battle_card_undo_banked;
     g_bk_ptr_a = (void *)b;
     banked_call_run();

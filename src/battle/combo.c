@@ -14,7 +14,7 @@
 void combo_resolve(const Card *cards, uint8_t count, ComboPhase phase,
                    uint8_t effect_type, ComboResult *out_result)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&combo_resolve_banked;
     g_bk_ptr_a = (void *)cards;
     g_bk_ptr_b = (void *)out_result;
