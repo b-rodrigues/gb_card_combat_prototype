@@ -480,7 +480,9 @@ void battle_execute_combo(Battle *b)
             combatant_take_damage(&b->player, (uint8_t)net);
             telemetry_emit(EVENT_DAMAGE_RECEIVED, (uint8_t)net, 0, 0, 0);
         } else {
-            uint16_t nh = (uint16_t)b->player.hp - net; /* net <= 0 heals */
+            /* net <= 0: the unsigned trick is safe -- subtracting a
+             * negative `net` ADDS its magnitude; capped at max_hp. */
+            uint16_t nh = (uint16_t)b->player.hp - net;
             b->player.hp = (nh > b->player.max_hp) ? b->player.max_hp
                                                    : (uint8_t)nh;
             telemetry_emit(EVENT_DAMAGE_RECEIVED, 0, 0, 0, 0);

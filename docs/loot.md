@@ -1694,8 +1694,6 @@ the generator only rolls legal (weapon, effect) pairs from the table.
 
 ## 34.4 Combat resolution rules
 
-## 34.4 Combat resolution rules
-
 * Defense: hero always takes the NET --
   `net = attack - sum(shield block) - sum(ring/heal)` -- positive or
   negative (negative net restores HP, capped at max HP).  IMPLEMENTED.
