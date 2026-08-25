@@ -353,7 +353,7 @@ static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
 
 void battle_execute_combo(Battle *b)
 {
-    uint8_t power;
+    int16_t net;
     EffectResult res;
     if (!b || b->battle_over) return;
 
@@ -472,10 +472,22 @@ void battle_execute_combo(Battle *b)
         }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         battle_play_hand(b, false, &res);
-        power = (b->enemy_incoming_dmg > res.amount)
-                    ? (uint8_t)(b->enemy_incoming_dmg - res.amount) : 0;
-        combatant_take_damage(&b->player, power);
-        telemetry_emit(EVENT_DAMAGE_RECEIVED, power, 0, 0, 0);
+        /* Net-damage defense (docs/loot.md §34.4): the hero takes the
+         * NET -- positive net damages, negative net RESTORES HP
+         * (capped at max). */
+        net = (int16_t)b->enemy_incoming_dmg - (int16_t)res.amount;
+        if (net > 0) {
+            combatant_take_damage(&b->player, (uint8_t)net);
+            telemetry_emit(EVENT_DAMAGE_RECEIVED, (uint8_t)net, 0, 0, 0);
+        } else {
+            uint16_t nh = (uint16_t)b->player.hp - net; /* net <= 0 heals */
+            b->player.hp = (nh > b->player.max_hp) ? b->player.max_hp
+                                                   : (uint8_t)nh;
+            telemetry_emit(EVENT_DAMAGE_RECEIVED, 0, 0, 0, 0);
+            if (net < 0) {
+                telemetry_emit(EVENT_HEALED, (uint8_t)-net, 2, 0, 0);
+            }
+        }
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
         b->delay_timer = 30;

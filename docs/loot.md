@@ -1694,13 +1694,15 @@ the generator only rolls legal (weapon, effect) pairs from the table.
 
 ## 34.4 Combat resolution rules
 
+## 34.4 Combat resolution rules
+
 * Defense: hero always takes the NET --
   `net = attack - sum(shield block) - sum(ring/heal)` -- positive or
-  negative (negative net restores HP, capped at max HP).
+  negative (negative net restores HP, capped at max HP).  IMPLEMENTED.
 * Attack: healing shields/rings count toward poker hands, deal 0 attack
-  damage, and heal their value as the combo resolves.
+  damage, and heal their value as the combo resolves.  IMPLEMENTED.
 * Poison rider: poison-effect daggers carry the on-hit status rider
-  (existing status system); chance tuned like DA1.
+  (existing status system); chance tuned like DA1.  IMPLEMENTED.
 
 ## 34.5 Generation (Phase 2, implemented)
 
