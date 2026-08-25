@@ -41,10 +41,15 @@ void battle_init_deck_banked(void)
             b->deck.cards[i].status_id = def->status_id;
             b->deck.cards[i].status_chance = def->status_chance;
             /* Loot RING marker (docs/loot.md §34.3): macros only, no
-             * fixed-bank calls. */
+             * fixed-bank calls.  Every HEAL-type card IS a ring by
+             * design -- rings are THE healing vector (§34.6), so the
+             * curated shop ring gets the full ring package (joker,
+             * defense shield value, offense self-heal, one-ring gate)
+             * exactly like loot-derived rings. */
             b->deck.cards[i].ring =
-                (loot_is_loot_id(def->id) &&
-                 loot_id_weapon(def->id) == WPN_RING) ? 1 : 0;
+                (def->battle_type == BATTLE_CARD_TYPE_HEAL ||
+                 (loot_is_loot_id(def->id) &&
+                  loot_id_weapon(def->id) == WPN_RING)) ? 1 : 0;
         } else {
             /* Unknown id: safety-net sword, mirroring the phantom draw. */
             b->deck.cards[i].type = BATTLE_CARD_TYPE_SWORD;

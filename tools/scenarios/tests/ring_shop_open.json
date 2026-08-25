@@ -1,5 +1,5 @@
 {
-  "name": "herb_shop_open",
+  "name": "ring_shop_open",
   "test": true,
   "description": "The Shopkeeper's stock row renders the battle code derived from the card definition (HE5 for WOOD_RING, price 20) \u2014 the shop layer duplicates no display strings",
   "scenario_id": "TOWN_BOOT",

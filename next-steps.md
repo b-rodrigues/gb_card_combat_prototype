@@ -3,7 +3,7 @@
 ## Current State
 
 Branch: `loot-instances`
-All gates green: 142/142 scenarios, lint clean, memmap +312 B fixed
+All gates green: 146/146 scenarios, lint clean, memmap +78 B fixed
 headroom (bank 2 at 15.0/16 KB, bank 3 opened), verify-oam OK.
 
 The poker combat system is fully operational: material × effect × weapon
@@ -90,11 +90,18 @@ chance), legality per §34.2; synthesized names carry the effect infix
   +19 B -> +738 B -> +312 B after the ring feature
 - Fixed-bank diet: SDCC divmod library unlinked (`ui_ones_digit`,
   battle wrap-arounds, add/sub rider scaling)
-- All gates green: 142/142 harness, release ROM, lint, memmap,
+- HEALING_HERB retired: catalog id 0x42 repurposed into the curated
+  WOOD RING (HE5, 20g, Shopkeeper stock) — rings are THE healing
+  vector (§34.6); ring-flag rule generalized to every HEAL-type card;
+  12 scenarios migrated to the WOOD_RING grant key; old saves convert
+  seamlessly.  Ring poison-curing DEFERRED (see open items).
+- All gates green: 146/146 harness, release ROM, lint, memmap,
   verify-oam
 
 ## Remaining open items
 
+- Rings cure POISON (deferred by design — needs a resolution-time
+  cleanse rule, e.g. ring selected in a defense hand)
 - HEAL ALL on high-tier rings (docs/loot.md §34.3)
 - Affix catalogue growth; reveal-moment polish (§34.7)
 - Resist/expired UI presentation (telemetry exists; no HUD flash yet)

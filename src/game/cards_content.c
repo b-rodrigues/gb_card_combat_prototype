@@ -9,7 +9,7 @@
 const CardDefinition g_cards[] = {
     { CARD_IRON_SWORD,    CARD_TYPE_ATTACK,  3, 1,  0, 4, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_SWORD,    10, STATUS_NONE,       0,   "IRON SW" },
     { CARD_WOODEN_SHIELD, CARD_TYPE_DEFENSE, 2, 1,  0, 3, CARD_EFFECT_BLOCK_DAMAGE,  BATTLE_CARD_TYPE_SHIELD,    0, STATUS_NONE,       0,   "WD SHLD" },
-    { CARD_HEALING_HERB,  CARD_TYPE_HEAL,    5, 1,  3, 3, CARD_EFFECT_HEAL_HP,       BATTLE_CARD_TYPE_HEAL,     20, STATUS_NONE,       0,   "HERB"    },
+    { CARD_WOOD_RING,      CARD_TYPE_HEAL,    5, 1,  3, 3, CARD_EFFECT_HEAL_HP,       BATTLE_CARD_TYPE_HEAL,     20, STATUS_NONE,       0,   "WD RING" },
     { CARD_FIRE_TOME,     CARD_TYPE_ATTACK,  4, 2,  3, 3, CARD_EFFECT_DAMAGE_TARGET, BATTLE_CARD_TYPE_FIRE,      0, STATUS_NONE,       0,   "FIRE TM" },
     /* Poison Dagger (DA1): 1 physical damage; base 50% poison chance
      * scaled by the played hand's multiplier (docs/combo-system.md §13). */

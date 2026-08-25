@@ -6,7 +6,7 @@
   "actions": [
     {
       "type": "buy_item",
-      "item": "HEALING_HERB"
+      "item": "WOOD_RING"
     }
   ],
   "assertions": [
@@ -17,7 +17,7 @@
     },
     {
       "type": "inventory",
-      "item": "HEALING_HERB",
+      "item": "WOOD_RING",
       "expected": 0
     },
     {

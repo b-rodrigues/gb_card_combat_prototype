@@ -1268,7 +1268,7 @@ divergences, driven by Game Boy memory limits and the engine/game layer split
   (a 5-card combo of cost-1 starters still fits).
 - **Deck-size ceiling unreachable**: the 20-card deck limit cannot be hit by
   current content — total deckable copies across the catalog are 14
-  (IRON_SWORD ×4 + WOODEN_SHIELD ×3 + HEALING_HERB ×3 + FIRE_TOME ×3 +
+  (IRON_SWORD ×4 + WOODEN_SHIELD ×3 + WOOD_RING ×3 + FIRE_TOME ×3 +
   POISON_DAGGER ×1; AMULET is SPECIAL and not deckable). Recorded as a known
   gap; no synthetic content was added just to test it.
 - **Starter deck granted at new game**: a new game grants the collection

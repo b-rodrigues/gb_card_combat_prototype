@@ -31,7 +31,7 @@ Consequences:
   state and mirrors this same 10-card set (first five entries in the same
   order).
 - Healing is **not** free at the start. The only heal source is the shop's
-  HEALING_HERB card — **HE5** (power 5, `uses_per_battle` 3, price 20g).
+  WOOD RING card — **HE5** (power 5, `uses_per_battle` 3, price 20g).
   Buy it, then add it to the deck from the CARDS menu.
 - Shop rows render the battle code derived from the card definition
   (`ui_card_code_str`: type code + power digit, e.g. `HE5`, `SW3`) plus its
@@ -125,7 +125,7 @@ SELECT on a highlighted entry opens a full-property view; B returns.
 CARDS:
 
 ```text
-NAME   HERB
+NAME   WD RING
 TYPE   HEAL
 PWR    5        COST   1
 USES   3/battle (- = unlimited)

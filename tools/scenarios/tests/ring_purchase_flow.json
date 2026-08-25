@@ -1,5 +1,5 @@
 {
-  "name": "herb_purchase_flow",
+  "name": "ring_purchase_flow",
   "test": true,
   "description": "The Shopkeeper sells WOOD_RING as the HE5 card (20 gold): purchase adds it to the collection (CURRENCY_SPENT + CARD_PURCHASED), it appears in CARDS as an undecked row, and A decks it",
   "scenario_id": "TOWN_BOOT",

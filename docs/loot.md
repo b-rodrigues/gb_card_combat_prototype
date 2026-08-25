@@ -1690,7 +1690,10 @@ the generator only rolls legal (weapon, effect) pairs from the table.
   enabling shield kinds/straights/flushes.  IMPLEMENTED.
 * MAX ONE RING PER SELECTION; a second attempt flashes "ONE RING!".
   IMPLEMENTED (selection gate, battle msg id 3).
-* Future: HEAL ALL on high-tier rings.
+* Rings are THE healing vector of the game: every HEAL-type card is a
+  ring by construction, and the Shopkeeper sells a curated WOOD RING
+  (HE5, 20g) as the early-game heal source.  IMPLEMENTED.
+* Future: HEAL ALL on high-tier rings; rings cure POISON (deferred).
 
 ## 34.4 Combat resolution rules
 
@@ -1729,8 +1732,11 @@ and hangs the guest (AGENTS.md §52.18).  Regression:
 
 The Lost Amulet merchant opens shop 2 as the CARD MERCHANT:
 
-* BUY: curated bronze/iron/mythril loot stock at formula prices
-  (material tier x weapon base, centralized in loot.c §16).
+* BUY: the Shopkeeper (shop 1) sells a curated WOOD RING (HE5, 20g) --
+  rings are THE healing vector, so healing is purchasable but never
+  free.  The Lost Amulet merchant (shop 2) stocks curated
+  bronze/iron/mythril loot at formula prices (material tier x weapon
+  base, centralized in loot.c §16).
 * TRADE/SELL (implemented): pick an owned loot card in the CARDS tab ->
   its detail page shows `[A]SELL` while the player has engaged a buying
   shop (`ShopDefinition.buys`, cleared on scene change) -> A sells one
