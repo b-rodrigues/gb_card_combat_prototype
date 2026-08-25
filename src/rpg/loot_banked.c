@@ -53,8 +53,10 @@ static const struct {
 
 /* Build the abbreviated name "[material] [effect ]weapon" into the
  * scratch def (§34.1): e.g. "WD SW", "MYT PSN DA".  Max 10 chars +
- * NUL -- fits CardDefinition.name[12]. */
-static void synth_name(uint8_t material, uint8_t effect, uint8_t weapon)
+ * NUL -- fits CardDefinition.name[12].  `has_rider` false suppresses
+ * the effect infix (illegal pairs carry no rider to name). */
+static void synth_name(uint8_t material, uint8_t effect, uint8_t weapon,
+                       uint8_t has_rider)
 {
     char *n = g_card_scratch.name;
     const char *m = s_materials[material].code;
@@ -62,13 +64,24 @@ static void synth_name(uint8_t material, uint8_t effect, uint8_t weapon)
 
     while (*m) *n++ = *m++;
     *n++ = ' ';
-    if (s_effects[effect].status_id != STATUS_NONE) {
+    if (has_rider) {
         const char *e = s_effects[effect].code;
         while (*e) *n++ = *e++;
         *n++ = ' ';
     }
     while (*w) *n++ = *w++;
     *n = '\0';
+}
+
+/* §34.2 effect legality per weapon: poison is dagger-only, fire/ice
+ * are sword-only.  The generator only rolls legal pairs, but synth is
+ * the last line of defense -- direct encoders (debug tooling) can
+ * construct illegal ids, and an illegal pair must carry NO rider. */
+static uint8_t rider_legal(uint8_t effect, uint8_t weapon)
+{
+    if (effect == EFF_POISON) return weapon == WPN_DAGGER;
+    if (effect == EFF_FIRE || effect == EFF_ICE) return weapon == WPN_SWORD;
+    return 0;
 }
 void loot_synth_banked(void)
 {
@@ -78,7 +91,10 @@ void loot_synth_banked(void)
     uint8_t weapon = loot_id_weapon(id);
     uint8_t *dst = (uint8_t *)&g_card_scratch;
     uint8_t n = sizeof(CardDefinition);
-    uint8_t bonus = s_materials[material].power_bonus;
+    uint8_t bonus;
+    uint8_t has_rider;
+
+    bonus = s_materials[material].power_bonus;
 
     while (n--) *dst++ = 0;   /* zero-fill, then set fields */
 
@@ -122,14 +138,18 @@ void loot_synth_banked(void)
             break;
     }
 
-    /* Effect rider: attached whenever the effect row carries a status;
-     * the generator only rolls legal (weapon, effect) pairs (§34.2), so
-     * no extra legality check here.  Written into the def so the
-     * existing battle on-hit path consumes it unchanged. */
-    if (s_effects[effect].status_id != STATUS_NONE) {
+    /* Effect rider: attached only for LEGAL (effect, weapon) pairs per
+     * §34.2.  The generator rolls legal pairs only, but synth is the
+     * last line of defense -- direct encoders (debug tooling) can
+     * construct e.g. SWORD+POISON, which must carry no rider and no
+     * effect infix.  Written into the def so the existing battle
+     * on-hit path consumes it unchanged. */
+    has_rider = (s_effects[effect].status_id != STATUS_NONE &&
+                 rider_legal(effect, weapon));
+    if (has_rider) {
         g_card_scratch.status_id = s_effects[effect].status_id;
         g_card_scratch.status_chance = s_effects[effect].chance;
     }
 
-    synth_name(material, effect, weapon);
+    synth_name(material, effect, weapon, has_rider);
 }

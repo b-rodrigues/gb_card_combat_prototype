@@ -50,6 +50,13 @@ bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
     g_bk_byte_b = (uint8_t)((stacks << 4) | duration);
     banked_call_run();
 
+    if (g_status_applied.id == STATUS_NONE) {
+        /* Rejected (e.g. slots full): nothing landed, so the frozen
+         * mask must stay untouched -- a rejected FREEZE must not skip
+         * anyone's turn. */
+        return false;
+    }
+
     /* FREEZE takes effect immediately: the next attack by this
      * combatant is skipped; the tick body re-arms the bit while an
      * instance remains alive. */
@@ -57,9 +64,6 @@ bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
         g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
     }
 
-    if (g_status_applied.id == STATUS_NONE) {
-        return false;
-    }
     telemetry_emit(EVENT_STATUS_APPLIED, g_status_applied.id,
                    g_status_applied.stacks, g_status_applied.duration, 0);
     return true;
