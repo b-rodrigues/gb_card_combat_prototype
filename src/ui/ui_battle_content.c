@@ -18,13 +18,33 @@ extern uint8_t ui_font_tile_base;
  * screen appears; readable here from any bank. */
 extern CardDefinition g_card_scratch;
 
+/* VRAM is accessible in PPU Modes 0-2 and writes are IGNORED in Mode 3
+ * (Pan Docs, Accessing_VRAM_and_OAM).  Wait while Mode is 2 or 3, so the
+ * store lands in Mode 0 (HBlank) or 1 (VBlank); a store issued at the very
+ * end of Mode 0 rolls into Mode 2, which is still accessible, so the store
+ * cannot be eclipsed by the PPU.  The previous double-wait (wait UNTIL
+ * Mode 2 starts, then UNTIL it ends) placed every store at the START of
+ * Mode 3 on LCD-on frames -- writes silently dropped while
+ * g_ui_screen_buf was still updated, and the put_char skip-guard then
+ * never re-wrote the cell (battle hand cards stuck at "SW0" on real
+ * boot; the SameBoy harness runs with the LCD off/vsync skipped and could
+ * not see it).  di/ei keeps the 256 Hz timer ISR (AGENTS.md 35) from
+ * eclipsing the wait->store window (the Pan Docs interrupt caveat); IE is
+ * clear under the harness, so ei() is a no-op there. */
 static void battle_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
-        while (!(STAT_REG & 0x02));
+        __asm
+            di
+        __endasm;
         while (STAT_REG & 0x02);
+        *dst = tile;
+        __asm
+            ei
+        __endasm;
+    } else {
+        *dst = tile;
     }
-    *dst = tile;
 }
 
 static void battle_put_char(uint8_t x, uint8_t y, char ch)

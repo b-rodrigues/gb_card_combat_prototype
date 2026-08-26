@@ -222,24 +222,36 @@ static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
     }
 }
 
-/* Write one tile to the BG tilemap (0x9800) such that the store always lands
- * at the start of a fresh HBlank/VBlank window.  STAT bit 1 is set during PPU
- * modes 2/3 (OAM search / data transfer), when VRAM is inaccessible and a
- * write is silently dropped.  A bare `while (STAT_REG & 0x02);` can exit near
- * the end of HBlank and roll the store into the next mode 2/3, dropping the
- * write while g_ui_screen_buf is still updated -- the caller's skip-optimization
- * then never re-writes, leaving stale tiles (e.g. ghost battle cursors).
- * Waiting for a full render cycle first places the store at the start of a
- * ~200-cycle HBlank (or VBlank), which cannot be eclipsed.  When the LCD is
- * off, VRAM is fully accessible and the waits are skipped (they would spin
- * forever, as STAT stays idle). */
+/* Write one tile to the BG tilemap (0x9800) such that the store lands in a
+ * VRAM-accessible PPU window.  Per Pan Docs (Accessing_VRAM_and_OAM), VRAM
+ * is accessible in Modes 0-2 and writes are IGNORED in Mode 3; the safe
+ * wait is `while (STAT_REG & 0x02)` -- exit on Mode 0 (HBlank) or 1
+ * (VBlank).  A store issued at the very end of Mode 0 rolls into Mode 2,
+ * which is still accessible, so it cannot be eclipsed by the PPU.  (An
+ * earlier double-wait -- wait UNTIL Mode 2 starts, then UNTIL it ends --
+ * placed every store at the START of Mode 3 on LCD-on frames, silently
+ * dropping writes while g_ui_screen_buf was updated; the caller's
+ * skip-optimization then never re-wrote, leaving stale tiles.  That
+ * pattern's "start of a fresh HBlank" rationale had the scanline order
+ * backwards: the line sequence is Mode 2 -> 3 -> 0.)  di/ei keeps the
+ * 256 Hz timer ISR (AGENTS.md 35) from eclipsing the wait->store window
+ * (the Pan Docs interrupt caveat); IE is clear under the harness, so ei()
+ * is a no-op there.  When the LCD is off, VRAM is fully accessible and the
+ * wait is skipped (it would spin forever, as STAT stays idle). */
 static void ui_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
-        while (!(STAT_REG & 0x02));
+        __asm
+            di
+        __endasm;
         while (STAT_REG & 0x02);
+        *dst = tile;
+        __asm
+            ei
+        __endasm;
+    } else {
+        *dst = tile;
     }
-    *dst = tile;
 }
 
 void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
