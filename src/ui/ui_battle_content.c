@@ -257,18 +257,28 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
 static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i;
+    /* Snapshot ALL volatile struct fields into locals before the loops.
+     * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); the
+     * battle_draw_card_at call + timer ISR (di/wait/ei on real hardware)
+     * can clobber those cached slots.  Reading into locals first makes
+     * every subsequent use register-resident. */
+    uint8_t cc   = battle->combo_count;
+    uint8_t si0  = (cc > 0) ? battle->selected_indices[0] : 0xFF;
+    uint8_t si1  = (cc > 1) ? battle->selected_indices[1] : 0xFF;
+    uint8_t si2  = (cc > 2) ? battle->selected_indices[2] : 0xFF;
+    uint8_t si3  = (cc > 3) ? battle->selected_indices[3] : 0xFF;
+    uint8_t si4  = (cc > 4) ? battle->selected_indices[4] : 0xFF;
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
         uint8_t k;
         s_sel_marker = ' ';
-        /* Snapshot volatile-derived values before the inner loop and
-         * battle_draw_card_at call, which can clobber SDCC-cached stack
-         * slots holding precomputed struct pointers (§52.19). */
         uint8_t ctype  = battle->hand[i].type;
         uint8_t cvalue = battle->hand[i].value;
         uint8_t cur    = battle->cursor_pos;
-        for (k = 0; k < battle->combo_count; k++) {
-            if (battle->selected_indices[k] == i) {
+        for (k = 0; k < cc; k++) {
+            uint8_t si = (k == 0) ? si0 : (k == 1) ? si1 :
+                         (k == 2) ? si2 : (k == 3) ? si3 : si4;
+            if (si == i) {
                 s_sel_marker = (char)('0' + (k + 1));
                 break;
             }
