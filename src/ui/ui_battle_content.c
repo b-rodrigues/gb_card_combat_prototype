@@ -217,6 +217,9 @@ static const char *battle_combo_tier_name(uint8_t tier)
  * grows stack under the harness (SP=0xFFFE, AGENTS.md 52.14). */
 static uint8_t s_pv_vals[5];
 static uint8_t s_pv_types[5];
+/* Selection-marker scratch: file-static to survive timer ISR re-entrancy
+ * on real hardware (the ISR runs on the main stack). */
+static char s_sel_marker;
 
 static const char *battle_combo_pending_name(const volatile Battle *battle)
 {
@@ -257,7 +260,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
         uint8_t k;
-        char marker = ' ';
+        s_sel_marker = ' ';
         /* Snapshot volatile-derived values before the inner loop and
          * battle_draw_card_at call, which can clobber SDCC-cached stack
          * slots holding precomputed struct pointers (§52.19). */
@@ -266,7 +269,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         uint8_t cur    = battle->cursor_pos;
         for (k = 0; k < battle->combo_count; k++) {
             if (battle->selected_indices[k] == i) {
-                marker = (char)('0' + (k + 1));
+                s_sel_marker = (char)('0' + (k + 1));
                 break;
             }
         }
@@ -274,7 +277,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
         } else {
-            battle_put_char((uint8_t)(col + 1), 15, marker);
+            battle_put_char((uint8_t)(col + 1), 15, s_sel_marker);
         }
     }
 }
