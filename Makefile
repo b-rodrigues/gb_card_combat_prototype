@@ -81,22 +81,45 @@ gfx:
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# --max-allocs-per-node: SDCC 4.4.1 (sm83) miscompiles aggressive pointer
-# caching across branch joins -- cached &struct.field stack slots are reused
-# on paths that never initialize them, producing wild stores/calls (observed:
-# b->turn store zeroing battle.player.hp; a wild call into lcd_off during the
-# battle HUD redraw).  Lowering the alloc budget keeps those cached pointers
-# from forming; the patrol_banked/battle_update volatile workarounds stay as
-# belt-and-braces.  Budget verified by make memmap after the change.
-SDCC_OPT = -Wf--max-allocs-per-node12000
+# NOTE: deliberately NO global --max-allocs-per-node override.  SDCC 4.4.1
+# (sm83) has a pointer-cache miscompile family across branch joins; the
+# per-function volatile guards (battle_update vb, battle_screen vg,
+# const-volatile Battle* render params, patrol_banked byte-pointer reads)
+# are the fix -- verified by clean-tree A/B (commit history Aug 2026).
+# Empirically, BOTH a lowered budget (12000) AND making the g_bk_* banked
+# staging globals volatile change codegen in ways that break patrol stepping
+# under otherwise-identical sources; default flags with the local guards is
+# the only validated configuration.  If you touch optimization flags, run
+# patrol_slime_cross / patrol_enemy_bumps_player / battle_multi_enemy_cycle_kill
+# plus the full harness before trusting the build.
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -c $(SDCC_OPT) $(INCLUDES) -o $@ $<
+	$(CC) -c $(INCLUDES) -o $@ $<
+
+# Per-file alloc caps (see docs/roadmap.md post-mortem): the bank-3 patrol
+# path needs a hard-capped budget in these units to keep its commit-path
+# stores intact under SDCC 4.4.1; battle/UI keep their volatile guards with
+# default flags (caps there re-expose the transition-render HP corruption).
+build/debug/world/world.o: src/world/world.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/debug/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/world/world.o: src/world/world.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
 
 $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -c $(SDCC_OPT) -DDEBUG_BUILD $(INCLUDES) -o $@ $<
+	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
 $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)

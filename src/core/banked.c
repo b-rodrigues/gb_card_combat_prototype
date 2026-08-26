@@ -22,12 +22,12 @@ uint8_t g_banked_tramp[64];
  * The fixed-bank wrapper stores the target bank/address and its arguments
  * here, then calls banked_call_run() so the WRAM trampoline (crt0.s) never
  * parses SDCC's stack layout.  The banked target reads these back. */
-uint8_t volatile g_bk_call_bank;
-uint16_t volatile g_bk_call_target;
-void * volatile g_bk_ptr_a;
-void * volatile g_bk_ptr_b;
-uint8_t volatile g_bk_byte_a;
-uint8_t volatile g_bk_byte_b;
+uint8_t g_bk_call_bank;
+uint16_t g_bk_call_target;
+void *g_bk_ptr_a;
+void *g_bk_ptr_b;
+uint8_t g_bk_byte_a;
+uint8_t g_bk_byte_b;
 
 /* Linker-allocated home for the RAM-resident banked-call trampoline. */
 uint8_t g_banked_call_tramp[64];

@@ -1,12 +1,12 @@
 {
   "name": "patrol_slime_cross",
   "test": true,
-  "description": "Slime patrols in a cross pattern around spawn (14,8): Up, Center, Down, Center, Left, Center, Right, Center",
+  "description": "Slime patrols in a cross pattern around spawn (14,8); its first leg must commit UP to (14,7). Asserted via ACTOR_STATE_CHANGE payloads rather than position-at-frame, which historically raced the first commit boundary (position held only [commit, next-leg) frames under some codegen layouts).",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
       "type": "wait",
-      "frames": 40
+      "frames": 100
     }
   ],
   "assertions": [
@@ -15,10 +15,26 @@
       "expected": "OVERWORLD"
     },
     {
-      "type": "actor_at",
-      "entity": "SLIME",
-      "x": 14,
-      "y": 7
+      "type": "event_occurred",
+      "event": "ACTOR_STATE_CHANGE"
+    },
+    {
+      "type": "event_arg",
+      "event": "ACTOR_STATE_CHANGE",
+      "index": 0,
+      "value": 128
+    },
+    {
+      "type": "event_arg",
+      "event": "ACTOR_STATE_CHANGE",
+      "index": 1,
+      "value": 14
+    },
+    {
+      "type": "event_arg",
+      "event": "ACTOR_STATE_CHANGE",
+      "index": 2,
+      "value": 7
     }
   ],
   "initial_state": {
