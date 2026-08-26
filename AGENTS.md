@@ -2221,6 +2221,65 @@ Rules:
 * `%`/`/` in new fixed-bank code pulls in the SDCC div/mod library; use
   masks for power-of-two bounds.
 
+## 52.19 SDCC miscompile instances are LAYOUT-SENSITIVE (Aug 2026)
+
+The pointer-cache miscompile family (§52.11.1, `patrol_banked.c`,
+`battle_update`) is not a fixed set of bugs — WHICH instance fires depends
+on where the linker places neighboring banked bodies.  Changing any of the
+following can flip a latent instance on or off somewhere else entirely:
+
+* global optimization flags (`-Wf--max-allocs-per-node...`);
+* `volatile` qualifiers on shared staging globals (`g_bk_*`) or function
+  parameters (`volatile Battle *`, `const volatile ...`);
+* the size/placement of ANY object in the same output bank.
+
+Documented flip-flop (full post-mortem: `docs/roadmap.md`, Aug 2026):
+global volatiles + alloc cap killed patrol stepping; function-local
+volatiles alone fixed the battle HP corruption but `ui_battle_content.c`'s
+volatile-parameter codegen shifted bank-3 layout and broke patrol step-
+interval persistence (mGBA watchpoint: `ai_timer` zeroed every frame from
+inside the patrol body's own window); capping allocs in the UI unit re-
+exposed the HP bug.  Final validated config: function-local volatiles,
+plain `g_bk_*` globals, default flags globally, per-file caps below.
+
+Rules:
+
+* NEVER diagnose from a dirty working tree — mixed stale objects produce
+  plausible-but-wrong symptoms (this cost two wrong root causes in one
+  day).  Bisect with clean worktrees: `git worktree add /tmp/x <commit>`,
+  build there, run the three sentinel scenarios.
+* After ANY change to optimization flags, volatile qualifiers on shared
+  globals/params, or banked-body placement, run the sentinels BEFORE
+  trusting the build: `patrol_slime_cross`, `patrol_enemy_bumps_player`,
+  `battle_multi_enemy_cycle_kill`, plus the full harness.
+* mGBA watchpoints (`watch <addr>`; delete connect()'s breakpoints 1/2
+  first, then arm) catch wild writers red-handed — state probes cannot
+  distinguish "bad data" from "good data rendered wrong".
+
+## 52.20 Per-file alloc-cap escape hatch (Makefile)
+
+When one unit needs different SDCC codegen than the global default,
+add an explicit target rule AFTER the generic pattern rules (explicit
+rules win; keep debug AND release variants in sync):
+
+```make
+build/debug/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+```
+
+Current users: `src/world/world.c` + `src/world/patrol_banked.c`
+(both builds).  Removing these rules re-breaks patrol cadence; see §52.19.
+
+## 52.21 Harness CLI exit codes
+
+`python3 tools/dev.py scenario|state|roundtrip <name>`:
+0 = PASS, 1 = assertion FAIL, **2 = scenario NOT FOUND** (with
+close-name hints).  `make test-scenario` flattens everything to rc=2 —
+never use make's exit code to decide whether a scenario name exists;
+that ambiguity once produced a triage listing nonexistent scenarios as
+"failing".
+
 ---
 
 # 53. State Ownership
