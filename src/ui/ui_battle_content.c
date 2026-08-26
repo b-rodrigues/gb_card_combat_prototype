@@ -268,13 +268,13 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     uint8_t si2  = (cc > 2) ? battle->selected_indices[2] : 0xFF;
     uint8_t si3  = (cc > 3) ? battle->selected_indices[3] : 0xFF;
     uint8_t si4  = (cc > 4) ? battle->selected_indices[4] : 0xFF;
+    uint8_t cur  = battle->cursor_pos;
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
         uint8_t k;
         s_sel_marker = ' ';
         uint8_t ctype  = battle->hand[i].type;
         uint8_t cvalue = battle->hand[i].value;
-        uint8_t cur    = battle->cursor_pos;
         for (k = 0; k < cc; k++) {
             uint8_t si = (k == 0) ? si0 : (k == 1) ? si1 :
                          (k == 2) ? si2 : (k == 3) ? si3 : si4;
