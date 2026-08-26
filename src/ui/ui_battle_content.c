@@ -129,17 +129,17 @@ static const char *battle_card_get_description(uint8_t type)
 
 /* ── Battle rendering helpers ─────────────────────────────────────────── */
 
-static void battle_draw_card_at(uint8_t x, uint8_t y, Card card)
+static void battle_draw_card_at(uint8_t x, uint8_t y, const volatile Card *card)
 {
     const char *code;
-    if (card.type == BATTLE_CARD_TYPE_EMPTY) {
+    if (card->type == BATTLE_CARD_TYPE_EMPTY) {
         battle_draw_text_line(x, y, NULL, 3);
         return;
     }
-    code = battle_card_type_code(card.type);
+    code = battle_card_type_code(card->type);
     battle_put_char(x, y, code[0]);
     battle_put_char((uint8_t)(x + 1), y, code[1]);
-    battle_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
+    battle_put_char((uint8_t)(x + 2), y, (char)('0' + card->value));
 }
 
 static void battle_draw_enemy_columns(const volatile Battle *battle)
@@ -264,7 +264,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
                 break;
             }
         }
-        battle_draw_card_at(col, 14, battle->hand[i]);
+        battle_draw_card_at(col, 14, &battle->hand[i]);
         if (i == battle->cursor_pos) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
         } else {
