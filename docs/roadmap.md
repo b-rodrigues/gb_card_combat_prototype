@@ -83,6 +83,24 @@ testable, save/load works, and the memory budget is understood.
     card with flat 1-HP poison ticks.  Open: more statuses, finer-grained
     status telemetry.
 
+### KNOWN FAILING HARNESS SCENARIOS
+
+Three scenarios fail under the parallel harness runner; they are tracked
+here so "still N failing, still pre-existing" claims can be checked
+against history instead of taken on faith:
+
+* `battle_multi_enemy_cycle_kill` — after engaging the Mountain Pass
+  slime trio and injecting a suited THREE KIND hand, the screen shows
+  SAVE_LOAD instead of BATTLE (input desync mid-scenario around a
+  screen transition); ENTITY_DEFEATED never fires.
+* `patrol_enemy_bumps_player` — hostile actor patrolling into the
+  player's tile stays OVERWORLD: no encounter, no ENCOUNTER_STARTED.
+* `patrol_slime_cross` — slime never leaves its spawn tile (14,8), so
+  the cross-pattern position assertions miss.
+
+Suspected common root: patrol movement/engagement timing drifted when
+the patrol AI moved to banked execution; none are miscompilation-related.
+
 ### DONE
 
 - Card battle prototype (hand/deck/discard, draw, play, resolve; per-card

@@ -647,12 +647,15 @@ void battle_update(Battle *b)
             if (!battle_turn_draw(b)) {
                 /* Deck and hand are dry: reshuffling consumes the player's
                  * action for this cycle — re-deal, announce, then the enemy
-                 * still attacks (deck.md Phase 10). */
-                deck_reshuffle(&b->deck);
+                 * still attacks (deck.md Phase 10).  All field accesses go
+                 * through vb (same SDCC pointer-cache workaround as above);
+                 * the cast only drops volatility for deck_reshuffle's own
+                 * internal accesses. */
+                deck_reshuffle((Deck *)&vb->deck);
                 battle_turn_draw(b);
                 telemetry_emit(EVENT_DECK_RESHUFFLED,
-                               (uint8_t)(b->deck.count - b->deck.draw_idx),
-                               b->deck.discard_count, 0, 0);
+                               (uint8_t)(vb->deck.count - vb->deck.draw_idx),
+                               vb->deck.discard_count, 0, 0);
                 vb->phase = BATTLE_PHASE_SHUFFLE;
                 vb->turn = BATTLE_TURN_ENEMY;
                 vb->delay_timer = 45;
