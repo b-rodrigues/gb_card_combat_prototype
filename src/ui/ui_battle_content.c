@@ -129,17 +129,17 @@ static const char *battle_card_get_description(uint8_t type)
 
 /* ── Battle rendering helpers ─────────────────────────────────────────── */
 
-static void battle_draw_card_at(uint8_t x, uint8_t y, const volatile Card *card)
+static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value)
 {
     const char *code;
-    if (card->type == BATTLE_CARD_TYPE_EMPTY) {
+    if (type == BATTLE_CARD_TYPE_EMPTY) {
         battle_draw_text_line(x, y, NULL, 3);
         return;
     }
-    code = battle_card_type_code(card->type);
+    code = battle_card_type_code(type);
     battle_put_char(x, y, code[0]);
     battle_put_char((uint8_t)(x + 1), y, code[1]);
-    battle_put_char((uint8_t)(x + 2), y, (char)('0' + card->value));
+    battle_put_char((uint8_t)(x + 2), y, (char)('0' + value));
 }
 
 static void battle_draw_enemy_columns(const volatile Battle *battle)
@@ -258,14 +258,20 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         uint8_t col = (uint8_t)(i << 2);
         uint8_t k;
         char marker = ' ';
+        /* Snapshot volatile-derived values before the inner loop and
+         * battle_draw_card_at call, which can clobber SDCC-cached stack
+         * slots holding precomputed struct pointers (§52.19). */
+        uint8_t ctype  = battle->hand[i].type;
+        uint8_t cvalue = battle->hand[i].value;
+        uint8_t cur    = battle->cursor_pos;
         for (k = 0; k < battle->combo_count; k++) {
             if (battle->selected_indices[k] == i) {
                 marker = (char)('0' + (k + 1));
                 break;
             }
         }
-        battle_draw_card_at(col, 14, &battle->hand[i]);
-        if (i == battle->cursor_pos) {
+        battle_draw_card_at(col, 14, ctype, cvalue);
+        if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
         } else {
             battle_put_char((uint8_t)(col + 1), 15, marker);
