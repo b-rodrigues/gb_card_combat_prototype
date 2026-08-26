@@ -257,40 +257,24 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
 static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i;
-    uint8_t cc, cur;
-    uint8_t si0, si1, si2, si3, si4;
-    uint8_t t0, t1, t2, t3, t4;
-    uint8_t v0, v1, v2, v3, v4;
-
-    /* Snapshot ALL volatile struct fields into locals at function entry.
-     * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); when the
-     * draw loop reads battle->hand[i] and battle->cursor_pos, the
-     * cached pointer aliases si3/si4 stack slots — corrupting the args
-     * to battle_draw_card_at when cc == 4 (Instance 7).  Fix: read
-     * EVERYTHING here so the inner loop has zero battle-struct accesses. */
-    cc   = battle->combo_count;
-    cur  = battle->cursor_pos;
-    t0 = battle->hand[0].type;  t1 = battle->hand[1].type;
-    t2 = battle->hand[2].type;  t3 = battle->hand[3].type;
-    t4 = battle->hand[4].type;
-    v0 = battle->hand[0].value; v1 = battle->hand[1].value;
-    v2 = battle->hand[2].value; v3 = battle->hand[3].value;
-    v4 = battle->hand[4].value;
-    si0 = (cc > 0) ? battle->selected_indices[0] : 0xFF;
-    si1 = (cc > 1) ? battle->selected_indices[1] : 0xFF;
-    si2 = (cc > 2) ? battle->selected_indices[2] : 0xFF;
-    si3 = (cc > 3) ? battle->selected_indices[3] : 0xFF;
-    si4 = (cc > 4) ? battle->selected_indices[4] : 0xFF;
-
+    /* Snapshot ALL volatile struct fields into locals before the loops.
+     * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); the
+     * battle_draw_card_at call + timer ISR (di/wait/ei on real hardware)
+     * can clobber those cached slots.  Reading into locals first makes
+     * every subsequent use register-resident. */
+    uint8_t cc   = battle->combo_count;
+    uint8_t si0  = (cc > 0) ? battle->selected_indices[0] : 0xFF;
+    uint8_t si1  = (cc > 1) ? battle->selected_indices[1] : 0xFF;
+    uint8_t si2  = (cc > 2) ? battle->selected_indices[2] : 0xFF;
+    uint8_t si3  = (cc > 3) ? battle->selected_indices[3] : 0xFF;
+    uint8_t si4  = (cc > 4) ? battle->selected_indices[4] : 0xFF;
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         uint8_t col = (uint8_t)(i << 2);
         uint8_t k;
-        uint8_t ctype, cvalue;
         s_sel_marker = ' ';
-        ctype  = (i == 0) ? t0 : (i == 1) ? t1 :
-                 (i == 2) ? t2 : (i == 3) ? t3 : t4;
-        cvalue = (i == 0) ? v0 : (i == 1) ? v1 :
-                 (i == 2) ? v2 : (i == 3) ? v3 : v4;
+        uint8_t ctype  = battle->hand[i].type;
+        uint8_t cvalue = battle->hand[i].value;
+        uint8_t cur    = battle->cursor_pos;
         for (k = 0; k < cc; k++) {
             uint8_t si = (k == 0) ? si0 : (k == 1) ? si1 :
                          (k == 2) ? si2 : (k == 3) ? si3 : si4;
