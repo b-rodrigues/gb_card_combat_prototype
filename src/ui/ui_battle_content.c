@@ -122,7 +122,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, Card card)
     battle_put_char((uint8_t)(x + 2), y, (char)('0' + card.value));
 }
 
-static void battle_draw_enemy_columns(const Battle *battle)
+static void battle_draw_enemy_columns(const volatile Battle *battle)
 {
     uint8_t k, x = 0;
     const Combatant *e;
@@ -154,7 +154,7 @@ static void battle_draw_enemy_columns(const Battle *battle)
     }
 }
 
-static void battle_draw_hero_row(const Battle *battle)
+static void battle_draw_hero_row(const volatile Battle *battle)
 {
     battle_draw_text_line(0, 6, "HERO        HP:", 15);
     battle_draw_num2(15, 6, battle->player.hp);
@@ -167,7 +167,7 @@ static void battle_draw_hero_row(const Battle *battle)
  * harness's battle_draw_remaining semantic.  The pile only changes at deal,
  * turn-start draws and reshuffles -- all sites set BATTLE_DIRTY_ALL, so
  * firing on BATTLE_DIRTY_HERO can never leave this line stale. */
-static void battle_draw_deck_line(const Battle *battle)
+static void battle_draw_deck_line(const volatile Battle *battle)
 {
     battle_draw_text_line(13, 7, "DECK:", 5);
     battle_draw_num2(18, 7,
@@ -198,7 +198,7 @@ static const char *battle_combo_tier_name(uint8_t tier)
 static uint8_t s_pv_vals[5];
 static uint8_t s_pv_types[5];
 
-static const char *battle_combo_pending_name(const Battle *battle)
+static const char *battle_combo_pending_name(const volatile Battle *battle)
 {
     uint8_t i, w = 0;
     uint8_t defend = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND);
@@ -215,7 +215,7 @@ static const char *battle_combo_pending_name(const Battle *battle)
         combo_classify(s_pv_vals, s_pv_types, w));
 }
 
-static void battle_draw_battle_combo(const Battle *battle)
+static void battle_draw_battle_combo(const volatile Battle *battle)
 {
     /* Real-time preview: the row tracks the PENDING selection as cards
      * are added/removed and blanks once the hand resolves -- executed
@@ -231,7 +231,7 @@ static void battle_draw_battle_combo(const Battle *battle)
     }
 }
 
-static void battle_draw_battle_hand(const Battle *battle)
+static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i;
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
@@ -268,7 +268,7 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 
 void ui_update_battle_banked(void)
 {
-    const Battle *battle = (const Battle *)g_bk_ptr_a;
+    const volatile Battle *battle = (const Battle *)g_bk_ptr_a;
     uint8_t d;
     const char *turn_banner = "";
     const char *desc_msg = "";

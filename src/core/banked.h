@@ -59,12 +59,12 @@ void banked_copy_init(void);
  * trampoline maps it to runtime 0x4000 | (target & 0x3FFF).  The
  * fixed-bank wrapper takes the address of the banked symbol, whose low 14
  * bits are the bank-relative offset by construction of the linker layout. */
-extern uint8_t g_bk_call_bank;
-extern uint16_t g_bk_call_target;
-extern void *g_bk_ptr_a;
-extern void *g_bk_ptr_b;
-extern uint8_t g_bk_byte_a;
-extern uint8_t g_bk_byte_b;
+extern uint8_t volatile g_bk_call_bank;
+extern uint16_t volatile g_bk_call_target;
+extern void * volatile g_bk_ptr_a;
+extern void * volatile g_bk_ptr_b;
+extern uint8_t volatile g_bk_byte_a;
+extern uint8_t volatile g_bk_byte_b;
 
 /* Linker-allocated home for the banked-call trampoline (WRAM), copied by
  * banked_call_init() at boot (game_init calls it, like banked_copy_init). */

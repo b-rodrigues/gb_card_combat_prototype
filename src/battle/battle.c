@@ -553,35 +553,44 @@ static void battle_tick_statuses(Battle *b)
 
 void battle_update(Battle *b)
 {
-    if (!b || b->battle_over) return;
+    /* SDCC workaround (same miscompile family as patrol_banked.c): the
+     * optimizer caches &b->turn in a stack slot on the ANIM->TELEGRAPH
+     * path and reuses that UNINITIALIZED slot for the turn write on the
+     * TELEGRAPH->player transition below.  The stale slot then aliases
+     * whatever the previous frame left there -- observed writing 0 over
+     * player.hp in release builds.  Forcing volatile access makes SDCC
+     * recompute every field address, which is correct by construction. */
+    volatile Battle *vb = b;
 
-    if (b->phase == BATTLE_PHASE_PLAYER_SELECT || b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-        if (b->msg_ttl > 0 && --b->msg_ttl == 0) {
-            b->msg_id = 0;
-            b->dirty |= BATTLE_DIRTY_MSG;
+    if (!b || vb->battle_over) return;
+
+    if (vb->phase == BATTLE_PHASE_PLAYER_SELECT || vb->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        if (vb->msg_ttl > 0 && --vb->msg_ttl == 0) {
+            vb->msg_id = 0;
+            vb->dirty |= BATTLE_DIRTY_MSG;
         }
-        if (b->timer_ticks > 0) {
-            b->timer_ticks--;
-            if (b->phase == BATTLE_PHASE_PLAYER_DEFEND && ((b->timer_ticks & 15) == 0 || (b->timer_ticks & 15) == 15)) {
-                b->dirty |= BATTLE_DIRTY_BLINK;
+        if (vb->timer_ticks > 0) {
+            vb->timer_ticks--;
+            if (vb->phase == BATTLE_PHASE_PLAYER_DEFEND && ((vb->timer_ticks & 15) == 0 || (vb->timer_ticks & 15) == 15)) {
+                vb->dirty |= BATTLE_DIRTY_BLINK;
             }
         } else {
             battle_execute_combo(b);
         }
-    } else if (b->delay_timer > 0) {
-        b->delay_timer--;
+    } else if (vb->delay_timer > 0) {
+        vb->delay_timer--;
     } else {
-        if (b->phase == BATTLE_PHASE_PLAYER_ANIM ||
-            b->phase == BATTLE_PHASE_SHUFFLE) {
+        if (vb->phase == BATTLE_PHASE_PLAYER_ANIM ||
+            vb->phase == BATTLE_PHASE_SHUFFLE) {
             uint8_t count = 0;
-            b->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
-            b->turn = BATTLE_TURN_ENEMY;
-            while (count < b->enemy_count && b->enemies[b->attacking_enemy_idx].hp == 0) {
+            vb->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
+            vb->turn = BATTLE_TURN_ENEMY;
+            while (count < vb->enemy_count && vb->enemies[vb->attacking_enemy_idx].hp == 0) {
                 /* Wrap instead of % -- keeps the SDCC int-mod library
                  * out of the tight fixed bank. */
-                b->attacking_enemy_idx++;
-                if (b->attacking_enemy_idx >= b->enemy_count) {
-                    b->attacking_enemy_idx = 0;
+                vb->attacking_enemy_idx++;
+                if (vb->attacking_enemy_idx >= vb->enemy_count) {
+                    vb->attacking_enemy_idx = 0;
                 }
                 count++;
             }
@@ -592,46 +601,46 @@ void battle_update(Battle *b)
              * frozen attacker skips its swing: no enemy card, nothing
              * incoming this cycle. */
             if ((g_status_frozen_mask &
-                 (uint8_t)(1u << (b->attacking_enemy_idx + 1))) != 0 &&
-                b->enemies[b->attacking_enemy_idx].hp != 0) {
+                 (uint8_t)(1u << (vb->attacking_enemy_idx + 1))) != 0 &&
+                vb->enemies[vb->attacking_enemy_idx].hp != 0) {
                 g_status_frozen_mask &=
-                    (uint8_t)~(1u << (b->attacking_enemy_idx + 1));
-                b->enemy_incoming_dmg = 0;
+                    (uint8_t)~(1u << (vb->attacking_enemy_idx + 1));
+                vb->enemy_incoming_dmg = 0;
                 telemetry_emit(EVENT_TURN_SKIPPED,
-                               (uint8_t)(b->attacking_enemy_idx + 1),
+                               (uint8_t)(vb->attacking_enemy_idx + 1),
                                STATUS_FREEZE, 0, 0);
-            } else if (b->enemy_deck.count > 0) {
-                b->enemy_played_card = b->enemy_deck.cards[b->enemy_deck.draw_idx];
-                b->enemy_incoming_dmg = b->enemy_played_card.value;
+            } else if (vb->enemy_deck.count > 0) {
+                vb->enemy_played_card = vb->enemy_deck.cards[vb->enemy_deck.draw_idx];
+                vb->enemy_incoming_dmg = vb->enemy_played_card.value;
                 telemetry_emit(EVENT_ENEMY_CARD_PLAYED,
-                               b->enemy_deck.draw_idx,
-                               b->enemy_played_card.type,
-                               b->enemy_played_card.value, 0);
-                b->enemy_deck.draw_idx++;
-                if (b->enemy_deck.draw_idx >= b->enemy_deck.count) {
-                    b->enemy_deck.draw_idx = 0;
+                               vb->enemy_deck.draw_idx,
+                               vb->enemy_played_card.type,
+                               vb->enemy_played_card.value, 0);
+                vb->enemy_deck.draw_idx++;
+                if (vb->enemy_deck.draw_idx >= vb->enemy_deck.count) {
+                    vb->enemy_deck.draw_idx = 0;
                 }
             } else {
-                b->enemy_incoming_dmg = 3;
+                vb->enemy_incoming_dmg = 3;
             }
-            b->delay_timer = 20;
+            vb->delay_timer = 20;
         } else {
-            b->phase = (b->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
-            b->turn = BATTLE_TURN_PLAYER;
-            b->combo_count = 0;
-            b->energy = BATTLE_ENERGY_PER_TURN;
-            b->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
-            if (b->phase == BATTLE_PHASE_PLAYER_SELECT && b->enemy_count > 1) {
+            vb->phase = (vb->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) ? BATTLE_PHASE_PLAYER_DEFEND : BATTLE_PHASE_PLAYER_SELECT;
+            vb->turn = BATTLE_TURN_PLAYER;
+            vb->combo_count = 0;
+            vb->energy = BATTLE_ENERGY_PER_TURN;
+            vb->timer_ticks = BATTLE_TIMER_MAX_FRAMES;
+            if (vb->phase == BATTLE_PHASE_PLAYER_SELECT && vb->enemy_count > 1) {
                 /* Wrap instead of % (see note above). */
-                b->attacking_enemy_idx++;
-                if (b->attacking_enemy_idx >= b->enemy_count) {
-                    b->attacking_enemy_idx = 0;
+                vb->attacking_enemy_idx++;
+                if (vb->attacking_enemy_idx >= vb->enemy_count) {
+                    vb->attacking_enemy_idx = 0;
                 }
             }
-            if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
+            if (vb->phase == BATTLE_PHASE_PLAYER_SELECT) {
                 battle_tick_statuses(b);
-                if (b->battle_over) {
-                    b->dirty = BATTLE_DIRTY_ALL;
+                if (vb->battle_over) {
+                    vb->dirty = BATTLE_DIRTY_ALL;
                     return;
                 }
             }
@@ -644,11 +653,11 @@ void battle_update(Battle *b)
                 telemetry_emit(EVENT_DECK_RESHUFFLED,
                                (uint8_t)(b->deck.count - b->deck.draw_idx),
                                b->deck.discard_count, 0, 0);
-                b->phase = BATTLE_PHASE_SHUFFLE;
-                b->turn = BATTLE_TURN_ENEMY;
-                b->delay_timer = 45;
+                vb->phase = BATTLE_PHASE_SHUFFLE;
+                vb->turn = BATTLE_TURN_ENEMY;
+                vb->delay_timer = 45;
             }
         }
-        b->dirty = BATTLE_DIRTY_ALL;
+        vb->dirty = BATTLE_DIRTY_ALL;
     }
 }

@@ -81,13 +81,22 @@ gfx:
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+# --max-allocs-per-node: SDCC 4.4.1 (sm83) miscompiles aggressive pointer
+# caching across branch joins -- cached &struct.field stack slots are reused
+# on paths that never initialize them, producing wild stores/calls (observed:
+# b->turn store zeroing battle.player.hp; a wild call into lcd_off during the
+# battle HUD redraw).  Lowering the alloc budget keeps those cached pointers
+# from forming; the patrol_banked/battle_update volatile workarounds stay as
+# belt-and-braces.  Budget verified by make memmap after the change.
+SDCC_OPT = -Wf--max-allocs-per-node12000
+
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -c $(INCLUDES) -o $@ $<
+	$(CC) -c $(SDCC_OPT) $(INCLUDES) -o $@ $<
 
 $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
+	$(CC) -c $(SDCC_OPT) -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
 $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)
@@ -100,7 +109,7 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 LDFLAGS = -Wl-b_DATA=0xC940
 
 $(TARGET): gfx $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
-	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
+	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
 $(TARGET_DEBUG): gfx $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)

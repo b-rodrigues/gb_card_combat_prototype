@@ -10,6 +10,11 @@
 
 void battle_screen_update(Game *g)
 {
+    /* SDCC pointer-cache workaround (see battle_update in battle.c): the
+     * optimizer reuses branch-local cached &g->field stack slots across
+     * joins, producing wild stores/calls when a different path filled the
+     * slot.  volatile forces every access through a real address. */
+    volatile Game *vg = g;
     Battle *b;
     if (!g) return;
     b = &g->battle;
@@ -23,7 +28,7 @@ void battle_screen_update(Game *g)
          * the bank-2 HUD can render the identity name.  No drop ->
          * silence. */
         if (b->result == BATTLE_RESULT_VICTORY &&
-            g->world.encounter_actor_index != NO_ACTOR_INDEX) {
+            vg->world.encounter_actor_index != NO_ACTOR_INDEX) {
             world_on_battle_end(g, true);
             if (g_loot_id != CARD_NONE) {
                 (void)card_get_def(g_loot_id);
@@ -34,8 +39,8 @@ void battle_screen_update(Game *g)
         }
         if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
             if (b->result == BATTLE_RESULT_VICTORY || b->result == BATTLE_RESULT_FLED) {
-                g->world.player.hp = b->player.hp;
-                g->state.party.members[0].hp = b->player.hp;
+                vg->world.player.hp = b->player.hp;
+                vg->state.party.members[0].hp = b->player.hp;
                 audio_play_music(MUSIC_OVERWORLD);
                 telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
                 if (b->result == BATTLE_RESULT_VICTORY) {
@@ -47,7 +52,7 @@ void battle_screen_update(Game *g)
                 }
             } else {
                 world_on_battle_end(g, false);
-                g->game_over_choice = 0;
+                vg->game_over_choice = 0;
                 screen_change(g, SCREEN_GAME_OVER);
             }
         }
@@ -81,6 +86,8 @@ void battle_screen_update(Game *g)
 
 void battle_screen_render(Game *g)
 {
+    /* SDCC pointer-cache workaround: see battle_screen_update above. */
+    volatile Game *vg = g;
     RenderCache *rc;
     uint8_t timer_bar;
     Battle *b;
@@ -95,13 +102,13 @@ void battle_screen_render(Game *g)
         ui_draw_battle_full(b);
         ui_lcd_on();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_BATTLE, 0, 0, 0);
-        rc->valid = true;
-        rc->prev_screen = SCREEN_BATTLE;
+        vg->render_cache.valid = true;
+        vg->render_cache.prev_screen = SCREEN_BATTLE;
     } else if (b->dirty) {
         ui_update_battle(b);
-    } else if (rc->prev_battle_timer_bar != timer_bar) {
+    } else if (vg->render_cache.prev_battle_timer_bar != timer_bar) {
         ui_draw_battle_timer(b);
     }
     b->dirty = 0;
-    rc->prev_battle_timer_bar = timer_bar;
+    vg->render_cache.prev_battle_timer_bar = timer_bar;
 }
