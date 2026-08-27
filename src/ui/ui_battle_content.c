@@ -325,15 +325,16 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         /* Color the code + its selection digit by the card's effect. */
         ccolor = battle_color_class(cstat,
                                     (cring != 0) ||
-                                    (ctype == BATTLE_CARD_TYPE_HEAL));
+                                    (ctype == BATTLE_CARD_TYPE_HEAL) ||
+                                    (battle->hand[i].effect == CARD_EFFECT_HEAL_HP));
         battle_color_span(col, 14, 3, ccolor);
         if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
+            battle_color_span((uint8_t)(col + 1), 15, 1, 0);
         } else {
             battle_put_char((uint8_t)(col + 1), 15, s_sel_marker);
-            if (s_sel_marker != ' ') {
-                battle_color_span((uint8_t)(col + 1), 15, 1, ccolor);
-            }
+            battle_color_span((uint8_t)(col + 1), 15, 1,
+                              (s_sel_marker != ' ') ? ccolor : 0);
         }
     }
 }
@@ -412,7 +413,8 @@ void ui_update_battle_banked(void)
             x = (uint8_t)((20 - len) / 2);
             ncolor = battle_color_class(
                 g_card_scratch.status_id,
-                g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL);
+                (g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                (g_card_scratch.effect == CARD_EFFECT_HEAL_HP));
             battle_color_span(x, 12, len, ncolor);
         } else {
             battle_draw_text_line(0, 12,

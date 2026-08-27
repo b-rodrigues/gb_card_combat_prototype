@@ -50,7 +50,7 @@ void ui_color_span_banked(void)
     uint8_t i;
     volatile uint8_t *dst;
 
-    if (!g_is_cgb || palette == 0) return;
+    if (!g_is_cgb) return;
     if (y >= 18 || x >= 32) return;
     if ((uint8_t)(x + len) > 32) len = (uint8_t)(32 - x);
 

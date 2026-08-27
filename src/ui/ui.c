@@ -668,7 +668,7 @@ static uint8_t s_color_span_args[4];
 /* Set the CGB per-tile palette for a horizontal span of background tiles.
  * Thin fixed-bank wrapper: stages x/y/len/palette and dispatches the bank-3
  * body (ui_color_banked.c) through the WRAM trampoline so the fixed bank
- * stays under 0x8000 (AGENTS.md §55.5).  No-op for palette 0. */
+ * stays under 0x8000 (AGENTS.md §55.5).  Palette 0 resets to grayscale. */
 void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
 {
     s_color_span_args[0] = x;

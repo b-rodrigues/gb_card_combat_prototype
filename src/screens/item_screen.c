@@ -255,7 +255,8 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     ui_draw_text_line(2, y, def->name, 10);
     ui_color_span(2, y, 8,
                   ui_color_class(def->status_id,
-                                 def->battle_type == BATTLE_CARD_TYPE_HEAL));
+                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                 (def->effect == CARD_EFFECT_HEAL_HP)));
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
@@ -356,7 +357,8 @@ static void draw_card_detail_page(Game *g)
     ui_draw_text_line(0, y, def->name, 11);
     ui_color_span(0, y, 11,
                   ui_color_class(def->status_id,
-                                 def->battle_type == BATTLE_CARD_TYPE_HEAL));
+                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                 (def->effect == CARD_EFFECT_HEAL_HP)));
     y += 2;
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);
