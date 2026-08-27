@@ -29,8 +29,14 @@ uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal);
  * (no-op on DMG; palette 0 resets to grayscale). */
 void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette);
 
-void ui_init(void);
-void ui_clear_screen(void);
+/* Bank-3 no-arg body dispatched by ui_lcd_off() (src/ui/ui_color_banked.c);
+ * clears every BG tilemap attribute byte back to palette 0. */
+void ui_clear_atts_banked(void);
+
+/* Bank-3 DEBUG-only body behind ui_draw_font_test(); prints the full ASCII
+ * font to the tilemap.  Lives in bank 3 to keep the debug fixed bank under
+ * 0x8000. */
+void ui_draw_font_test_banked(void);
 
 /* Player rendered as a real OAM sprite.  Background stays console-font
  * ASCII; only the player is a hardware sprite.  Deliberately scoped to the
@@ -42,6 +48,9 @@ void ui_sprite_hide(void);
 void ui_sprite_begin_transition(void);
 void ui_sprite_commit(void);
 void oam_dma_init(void);
+
+void ui_init(void);
+void ui_clear_screen(void);
 
 /* Toggle LCDC bit 7 directly (harness-safe: no GBDK display_off VBlank
  * wait).  Full-screen redraws span several display sweeps and cannot fit

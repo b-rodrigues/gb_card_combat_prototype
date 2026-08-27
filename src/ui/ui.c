@@ -197,6 +197,15 @@ void ui_sprite_commit(void)
 void ui_lcd_off(void)
 {
     LCDC_REG &= ~0x80;
+    /* Wipe CGB tile attributes before the full redraw that follows, so
+     * spans drawn by the previous screen (menu/battle) cannot tint the new
+     * one's tiles.  The LCD is off here, so the banked body's per-byte PPU
+     * wait is skipped and the 1024-byte clear is a plain write.  The banked
+     * dispatch is inlined (not a wrapper function) to keep the packed debug
+     * fixed bank within a few bytes of 0x8000. */
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_clear_atts_banked;
+    banked_call_run();
 }
 
 void ui_lcd_on(void)
@@ -705,16 +714,10 @@ void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t s
 #ifdef DEBUG_BUILD
 void ui_draw_font_test(void)
 {
-    uint8_t ch, row = 0, col = 0;
-    ui_clear_screen();
-    for (ch = ' '; ch <= '~'; ch++) {
-        ((volatile uint8_t *)0x9800)[row * 32 + col] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-        g_ui_screen_buf[row][col] = (char)ch;
-        col++;
-        if (col == 20) {
-            col = 0;
-            row += 2;
-        }
-    }
+    /* Body lives in bank 3 to keep the debug fixed bank under 0x8000
+     * (AGENTS.md §52.18).  Self-contained there; this is a thin wrapper. */
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_draw_font_test_banked;
+    banked_call_run();
 }
 #endif
