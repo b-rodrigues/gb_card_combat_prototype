@@ -31,7 +31,9 @@ extern CardDefinition g_card_scratch;
  * boot; the SameBoy harness runs with the LCD off/vsync skipped and could
  * not see it).  di/ei keeps the 256 Hz timer ISR (AGENTS.md 35) from
  * eclipsing the wait->store window (the Pan Docs interrupt caveat); IE is
- * clear under the harness, so ei() is a no-op there. */
+ * clear under the harness, so ei() is a no-op there.  Unconditionally
+ * re-enabling IME via ei is safe because interrupts are always active during
+ * normal play and stubbed under the harness. */
 static void battle_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {

@@ -20,11 +20,11 @@ Whether it hung flipped with unrelated code-size changes — hence the
 "identical scripts flip between passing and failing" behavior.
 
 Fix: restructured the drop path so it costs almost no fixed code — the whole
-decision (50% gate on the isolated loot RNG, weapon pick from the enemy
-profile, material+effect roll, derived-id encode) is ONE bank-2 body
-(`src/game/loot_drop_banked.c`) behind a thin wrapper (`game_loot_drop()`,
-`src/game/content.c`); `world_on_battle_end` only records the result
-(telemetry + collection add).  Regression scenarios: `loot_drop_victory`
+decision (weapon pick from the enemy profile bias, material+effect roll,
+derived-id encode) is ONE bank-3 body (`src/game/loot_drop_banked.c`) behind
+a thin wrapper (`game_loot_drop()`, `src/game/content.c`); `world_on_battle_end`
+only records the result (telemetry + collection add).  Regression scenarios:
+`loot_drop_victory`
 (deterministic wood plain dagger from seed 5002 + telemetry payload asserts)
 and `loot_drop_slime`.  See AGENTS.md §52.18 for the general rule.
 

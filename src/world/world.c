@@ -251,11 +251,14 @@ void world_on_battle_end(Game *g, bool victory)
          * battle start (game_loot_drop, isolated RNG) and its derived id
          * waits in g_loot_id -- victory grants it to the collection.
          * CARD_NONE = collection previously full (no room to grant). */
-        if (g_loot_id != CARD_NONE &&
-            deck_collection_add(&g->state.cards, g_loot_id, 1)) {
-            telemetry_emit(EVENT_LOOT_CARD_ADDED, g_loot_id,
-                           deck_collection_count(&g->state.cards,
-                                                 g_loot_id), 0, 0);
+        if (g_loot_id != CARD_NONE) {
+            if (deck_collection_add(&g->state.cards, g_loot_id, 1)) {
+                telemetry_emit(EVENT_LOOT_CARD_ADDED, g_loot_id,
+                               deck_collection_count(&g->state.cards,
+                                                     g_loot_id), 0, 0);
+            } else {
+                g_loot_id = CARD_NONE;
+            }
         }
     }
 }

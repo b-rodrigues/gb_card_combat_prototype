@@ -108,10 +108,13 @@ void ui_init(void)
     OBP0_REG = 0xE4;
     OBP1_REG = 0xE4;
 
-    /* CGB detection (see g_is_cgb): on CGB the VBK write/read round-trips;
-     * on DMG 0xFF4F is unmapped (open bus) so it never matches 0x01. */
+    /* CGB detection (see g_is_cgb): on CGB VBK unused bits 1-7 read as 1,
+     * so writing 0 reads back as 0xFE and writing 1 reads as 0xFF.  On DMG
+     * (open bus or unmapped) VBK is constant 0xFF (real HW) or 0 (simple emus). */
+    VBK_REG = 0;
+    p = VBK_REG;
     VBK_REG = 1;
-    g_is_cgb = (VBK_REG == 1);
+    g_is_cgb = (p == 0xFE && VBK_REG == 0xFF);
     VBK_REG = 0;
 
     /* Program all 8 BG palettes unconditionally (harmless on DMG, where
@@ -260,7 +263,9 @@ static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
  * backwards: the line sequence is Mode 2 -> 3 -> 0.)  di/ei keeps the
  * 256 Hz timer ISR (AGENTS.md 35) from eclipsing the wait->store window
  * (the Pan Docs interrupt caveat); IE is clear under the harness, so ei()
- * is a no-op there.  When the LCD is off, VRAM is fully accessible and the
+ * is a no-op there.  Unconditionally re-enabling IME via ei is safe because
+ * interrupts are always active during normal play and stubbed under the harness.
+ * When the LCD is off, VRAM is fully accessible and the
  * wait is skipped (it would spin forever, as STAT stays idle). */
 static void ui_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {

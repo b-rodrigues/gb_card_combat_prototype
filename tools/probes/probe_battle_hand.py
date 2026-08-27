@@ -32,7 +32,7 @@ CARD_STRIDE = 8
 HAND_SIZE = 5
 CARD_TYPE_EMPTY = 255
 
-TYPE_CODES = {0: "SW", 1: "SH", 2: "BO", 3: "FI", 4: "HE", 5: "DA"}
+TYPE_CODES = {0: "SW", 1: "SH", 2: "BO", 3: "HE", 4: "DA"}
 PLAYER_BOOT_PATTERN = bytes([4, 4, 10, 10, 1, 1, 1])
 
 

@@ -20,7 +20,9 @@ const palette_color_t cgb_bg_palettes[5][4] = {
     /* 4 poison */ { RGB8(255,255,255), RGB8(224,192,255), RGB8(160,96,255), RGB8(96,0,192) }
 };
 
-/* Self-contained VRAM-sync write (banked code cannot call ui_vram_sync_write). */
+/* Self-contained VRAM-sync write (banked code cannot call ui_vram_sync_write).
+ * di/ei guards the PPU wait; unconditionally re-enabling IME via ei is safe
+ * because interrupts are always active during normal play and stubbed under the harness. */
 static void color_vram_sync_write(volatile uint8_t *dst, uint8_t v)
 {
     if (LCDC_REG & 0x80) {

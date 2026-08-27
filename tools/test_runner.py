@@ -219,7 +219,7 @@ def run_scenario(scenario):
                 session.debug_action(session.DBG_ACT_LOAD, slot, 0, 0)
             elif act_type == "set_hand_card":
                 # Overwrite one battle hand slot (index 0-4) with a specific
-                # card (type like"SW"/"SH"/"BO"/"FI"/"HE", value 1-9).  Used by
+                # card (type like "SW"/"SH"/"BO"/"HE"/"DA", value 1-9).  Used by
                 # combo-regression scenarios to build a guaranteed hand rather
                 # than depending on the RNG-shuffled deal.  Runs through the
                 # ROM's real mechanic state (g_game.battle.hand), not test-only

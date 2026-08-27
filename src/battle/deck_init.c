@@ -38,6 +38,16 @@ static const uint8_t s_type_effects[5] = {
     CARD_EFFECT_DAMAGE_TARGET   /* DAGGER */
 };
 
+/* Compile-time check: s_type_effects positional order must match the
+ * BattleCardType enum (SW=0, SH=1, BO=2, HE=3, DA=4). */
+typedef char assert_battle_card_types_match[
+    (BATTLE_CARD_TYPE_SWORD == 0 &&
+     BATTLE_CARD_TYPE_SHIELD == 1 &&
+     BATTLE_CARD_TYPE_BOW == 2 &&
+     BATTLE_CARD_TYPE_HEAL == 3 &&
+     BATTLE_CARD_TYPE_DAGGER == 4) ? 1 : -1
+];
+
 void deck_init_default_banked(void)
 {
     Deck *d = (Deck *)g_bk_ptr_a;
