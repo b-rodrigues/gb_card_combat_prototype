@@ -274,12 +274,13 @@ static const char *battle_combo_pending_name(const volatile Battle *battle)
         w++;
     }
     if (ring_pos != 0xFF) {
-        /* Ring JOKER (docs/loot.md §34.3): mirror the resolution's trial
-         * -- the ring substitutes freely, so preview the BEST tier over
-         * values 1..10, not the ring's raw value.  Gameplay allows at
-         * most one ring per selection (battle_card_select), so tracking
-         * the first ring is exact. */
-        best = combo_classify(s_pv_vals, s_pv_types, w);
+        /* Ring JOKER (docs/loot.md §34.3): the ring substitutes freely,
+         * so preview the BEST tier over values 1..10 -- the full legal
+         * value range, which covers the ring's raw value, so no separate
+         * baseline classify is needed.  Gameplay allows at most one ring
+         * per selection (battle_card_select), so tracking the first ring
+         * is exact. */
+        best = HAND_NONE;
         for (v = 1; v <= 10; v++) {
             saved = s_pv_vals[ring_pos];
             s_pv_vals[ring_pos] = v;
