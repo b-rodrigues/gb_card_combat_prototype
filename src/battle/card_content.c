@@ -16,7 +16,6 @@ const uint8_t s_card_desc_blob[CARD_DESC_TYPES][CARD_DESC_STRIDE] = {
     /* SWORD */  "Sword: physical\0\0",
     /* SHIELD */ "Shield: block dmg",
     /* BOW */    "Bow: ranged dmg\0\0",
-    /* FIRE */   "Fire: magic dmg\0\0",
     /* HEAL */   "Heal: restore HP\0",
     /* DAGGER */ "Dagger: poison"
 };

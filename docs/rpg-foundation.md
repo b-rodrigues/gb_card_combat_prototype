@@ -433,7 +433,7 @@ Foundation:
 Game:
     POTION
     PHOENIX_SWORD
-    FIRE_CARD
+    FIRE_SWORD
     MAYOR_KEY
 ```
 
@@ -573,7 +573,7 @@ The save system should not need to know about:
 ```text
 Mayor
 Slime
-Fire Card
+Fire Sword
 Town
 ```
 
@@ -828,7 +828,7 @@ FOUNDATION
     Progression
 
 GAME
-    Fire Card
+    Fire Sword
     Deck
     Card Combo
     Slime

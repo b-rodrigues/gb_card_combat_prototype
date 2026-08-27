@@ -108,17 +108,17 @@ def main():
     # silent jump into garbage.  Catch this at build time instead of
     # under the harness at runtime.
     banked_targets = {
-        "_combo_resolve_banked": "combo eval + effect dispatch (bank 2)",
-        "_effect_resolve_into": "effect scaling body (bank 2)",
+        "_combo_resolve_banked": "combo eval + effect dispatch (bank 3)",
+        "_effect_resolve_into": "effect scaling body (bank 3)",
         "_battle_init_deck_banked": "battle deck bridge (bank 2)",
-        "_status_apply_banked": "status apply body (bank 2)",
-        "_status_tick_banked": "status tick body (bank 2)",
-        "_save_op_banked": "SRAM save/load body (bank 2)",
-        "_deck_discard_banked": "discard push (bank 2)",
-        "_world_px_banked": "pixel interpolation (bank 2)",
-        "_game_render_reset_banked": "render cache reset (bank 2)",
+        "_status_apply_banked": "status apply body (bank 3)",
+        "_status_tick_banked": "status tick body (bank 3)",
+        "_save_op_banked": "SRAM save/load body (bank 3)",
+        "_deck_discard_banked": "discard push (bank 3)",
+        "_world_px_banked": "pixel interpolation (bank 3)",
+        "_game_render_reset_banked": "render cache reset (bank 3)",
         "_dialogue_start_def_banked": "dialogue start (bank 2)",
-        "_world_on_battle_fled_banked": "battle-fled world update (bank 2)",
+        "_world_on_battle_fled_banked": "battle-fled world update (bank 3)",
         "_debug_snapshot_banked": "core snapshot builder (bank 2)",
         "_deck_init_default_banked": "starter deck unpacker (bank 2)",
         "_deck_reshuffle_banked": "discard reshuffle (bank 2)",
@@ -126,8 +126,12 @@ def main():
         "_ui_format_int_banked": "int formatter (bank 2)",
         "_scene_load_tiles_banked": "scene tile loader (bank 2)",
         "_enemy_deck_setup_banked": "enemy deck setup (bank 2)",
-        "_battle_card_undo_banked": "battle card undo (bank 2)",
-        "_ui_update_battle_banked": "battle render (bank 2)",
+        "_battle_card_undo_banked": "battle card undo (bank 3)",
+        "_ui_update_battle_banked": "battle render (bank 3)",
+        "_actor_load_scene_banked": "scene actor loader (bank 2)",
+        "_loot_synth_banked": "loot def synthesis (bank 3)",
+        "_game_loot_drop_banked": "victory drop roll (bank 3)",
+        "_world_patrol_slot_banked": "world actor patrol step (bank 3)",
     }
     print()
     print("Banked target address validation")

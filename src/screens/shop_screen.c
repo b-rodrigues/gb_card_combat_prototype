@@ -47,6 +47,12 @@ static void shop_draw(Game *g)
             /* Label derives from the card definition, never a string. */
             ui_card_code_str(card->battle_type, card->power, code);
             ui_draw_text_line(1, y, code, 4);
+            /* Heal cards (rings) shade green, mirroring the quick-screen
+             * list (item_screen.c); plain cards use the default palette. */
+            ui_color_span(1, y, 4,
+                          ui_color_class(card->status_id,
+                                         (card->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                         (card->effect == CARD_EFFECT_HEAL_HP)));
         } else {
             ui_draw_text_line(1, y, "???", 3);
         }

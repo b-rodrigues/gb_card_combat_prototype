@@ -6,10 +6,26 @@
 #include "actor.h"
 #include "rpg/party.h"
 #include "rpg/deck.h"
+#include "rpg/loot.h"
 #include "core/game.h"
+#include "banked.h"
 
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
+
+/* ── Victory loot drop (docs/loot.md §17/§34.5) ─────────────────────
+ * Thin fixed-bank wrapper: the whole decision (profile pick, roll,
+ * encode) runs as ONE bank-3 body (loot_drop_banked.c); only this
+ * staging call stays fixed.  Returns the derived CardId (always drops
+ * -- quality varies, not presence). */
+uint8_t game_loot_drop(uint8_t battle_type)
+{
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&game_loot_drop_banked;
+    g_bk_byte_a = battle_type;
+    banked_call_run();
+    return g_loot_id;
+}
 
 void game_content_init(void)
 {
@@ -39,24 +55,25 @@ void game_new_game(GameState *state)
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
 
-    /* Starter deck (docs/deck-management.md §1): 10 cards — 4x SW3, 3x SH2,
-     * 3x FI4.  The original five are decked first so the opening battle hand
-     * (SW SW SH SH FI) is unchanged; the extras only deepen the draw pile.
+    /* Starter deck (docs/deck-management.md §1): 12 cards — 4x SW3, 3x SH2,
+     * 3x SW4 (Fire Sword), 2x DA1.  The original five are decked first so the
+     * opening battle hand (SW SW SH SH SW) is unchanged; the extras only
+     * deepen the draw pile.
      * Granted as real owned state via the silent mutators so battles draw
      * from the player's actual deck from turn one. */
     deck_collection_add(&state->cards, CARD_IRON_SWORD, 4);
     deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 3);
-    deck_collection_add(&state->cards, CARD_FIRE_TOME, 3);
+    deck_collection_add(&state->cards, CARD_FIRE_SWORD, 3);
     deck_collection_add(&state->cards, CARD_POISON_DAGGER, 2);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
     deck_add_card(&state->cards, CARD_POISON_DAGGER);
     deck_add_card(&state->cards, CARD_POISON_DAGGER);
     deck_add_card(&state->cards, CARD_IRON_SWORD);

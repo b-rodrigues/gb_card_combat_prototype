@@ -1,13 +1,13 @@
 {
   "name": "inventory_initial",
   "test": true,
-  "description": "Declarative initial_state injects card collection quantities into the canonical GameState; injected HEALING_HERB x2 coexists with the new-game starter grant (IRON_SWORD x4)",
+  "description": "Declarative initial_state injects card collection quantities into the canonical GameState; injected WOOD_RING x2 coexists with the new-game starter grant (IRON_SWORD x4)",
   "scenario_id": "NEW_GAME",
   "actions": [],
   "assertions": [
     {
       "type": "inventory",
-      "item": "HEALING_HERB",
+      "item": "WOOD_RING",
       "expected": 2
     },
     {
@@ -25,7 +25,7 @@
     },
     "seed": 7003,
     "inventory": {
-      "HEALING_HERB": 2
+      "WOOD_RING": 2
     }
   }
 }

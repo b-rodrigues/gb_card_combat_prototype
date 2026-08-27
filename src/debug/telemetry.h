@@ -152,6 +152,10 @@ typedef enum {
     EVENT_CARD_REMOVED_FROM_DECK,
     EVENT_ACTOR_STATE_CHANGE,
     EVENT_SCRIPT_TRIGGERED,
+    /* d0 = HP restored; d1 = cause: 0 = heal card, 1 = ring resolving
+     * with an offense hand (docs/loot.md §34.3), 2 = defense net
+     * over-block WITH a ring (healing shield) in the defense combo
+     * (docs/loot.md §34.4). */
     EVENT_HEALED,
     EVENT_ITEM_USED,
     EVENT_ITEM_USE_FAILED,
@@ -177,7 +181,13 @@ typedef enum {
     /* Phase C statuses (docs/combo-system.md §12-§19). */
     EVENT_STATUS_APPLIED,   /* d0=status id d1=stacks d2=duration */
     EVENT_STATUS_TICKED,    /* d0=tick damage d1=actor slot (0=player) */
-    EVENT_STATUS_EXPIRED    /* d0=status id d1=actor slot (0=player) */
+    EVENT_STATUS_EXPIRED,   /* d0=status id d1=actor slot (0=player) */
+    /* Loot instances (docs/loot.md §34). */
+    EVENT_LOOT_CARD_ADDED,  /* d0=derived id d1=count after */
+    EVENT_LOOT_GENERATED,   /* reserved (kept for wire stability) */
+    EVENT_CARD_SOLD,        /* d0=CardId d1=gold received d2=count after */
+    EVENT_TURN_SKIPPED,     /* d0=enemy slot (1..n) d1=cause StatusId */
+    EVENT_STATUS_RESISTED   /* d0=status id d1=target slot (roll failed) */
 } GameEventType;
 
 typedef struct {

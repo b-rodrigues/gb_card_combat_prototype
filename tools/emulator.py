@@ -62,7 +62,9 @@ EVENT_TYPE_MAP = {
     44: "CARD_ADDED_TO_COLLECTION", 45: "CARD_REMOVED_FROM_COLLECTION",
     46: "CARD_PLAYED", 47: "ENEMY_CARD_PLAYED", 48: "DECK_RESHUFFLED",
     49: "COMBO_RESOLVED", 50: "EFFECT_RESOLVED",
-    51: "STATUS_APPLIED", 52: "STATUS_TICKED", 53: "STATUS_EXPIRED"
+    51: "STATUS_APPLIED", 52: "STATUS_TICKED", 53: "STATUS_EXPIRED",
+    54: "LOOT_CARD_ADDED", 55: "LOOT_GENERATED", 56: "CARD_SOLD",
+    57: "TURN_SKIPPED", 58: "STATUS_RESISTED"
 }
 EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 1: "QUEST_START",
@@ -169,14 +171,14 @@ VARIABLE_ID_MAP = {"CHAPTER": 1, "MONSTERS_DEFEATED": 2,
 CHARACTER_ID_MAP = {"HERO": 1}
 ITEM_ID_MAP = {"NONE": 0,
                "IRON_SWORD": 0x40, "WOODEN_SHIELD": 0x41,
-               "HEALING_HERB": 0x42, "FIRE_TOME": 0x43,
+               "WOOD_RING": 0x42, "FIRE_SWORD": 0x43,
                "POISON_DAGGER": 0x44, "AMULET": 0x45}
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
 # Card type names -> CardType enum (src/battle/card.h):
-# SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, FI=FIRE 3, HE=HEAL 4.
-CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "FI": 3, "HE": 4}
+# SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, HE=HEAL 3, DA=DAGGER 4.
+CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "HE": 3, "DA": 4}
 # Deck-builder filter names -> CardType (src/rpg/cards.h), plus ALL.
 FILTER_TYPE_MAP = {"ALL": 0xFF, "ATTACK": 0, "DEFENSE": 1, "HEAL": 2,
                    "STATUS": 3, "UTILITY": 4}
@@ -934,6 +936,8 @@ class EmulatorSession:
     DBG_ACT_DECK_REMOVE = 16
     DBG_ACT_SET_HAND_CARD_STATUS = 17
     DBG_ACT_SET_ENEMY_HP = 18
+    DBG_ACT_APPLY_STATUS = 19
+    DBG_ACT_SET_HAND_RING = 20
 
     def debug_action(self, action, a0=0, a1=0, a2=0):
         """Run a debug action through the ROM's real mechanic functions."""

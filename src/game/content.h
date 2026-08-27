@@ -27,6 +27,11 @@ void game_on_level_up(GameState *state, ProgressionTarget target,
  * battle screen. */
 ScreenId game_screen_after_victory(const Game *g);
 
+/* Victory loot drop (docs/loot.md §17/§34.5): runs the bank-3
+ * profile + roll body and returns the derived CardId (always drops).
+ * Uses the isolated loot RNG only -- never consumes the shared stream. */
+uint8_t game_loot_drop(uint8_t battle_type);
+
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
 void game_dialogue_register(void);

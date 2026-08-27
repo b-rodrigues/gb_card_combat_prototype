@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 3
 
 #include "combo.h"
 #include "rpg/effects.h"
@@ -7,7 +7,7 @@
 /* ── Banked combo evaluation + effect dispatch ──────────────────────
  * The fixed-bank wrapper (src/battle/combo.c) stages its arguments into
  * the _DATA globals (banked.c) and runs this no-arg body through the WRAM
- * banked-call trampoline (crt0.s).  This file stays in ROM bank 2 so combo
+ * banked-call trampoline (crt0.s).  This file stays in ROM bank 3 so combo
  * evaluation does not consume the fixed-bank budget.  Apart from the
  * bank-local call into effects_content.c below (same ROM bank, direct
  * call -- allowed), it is self-contained: no fixed-bank calls.
@@ -26,7 +26,7 @@
  *
  * No multiplies/divides here or in effect_resolve_into(): SDCC lowers
  * them to __mulint/__divuint, which link into the FIXED bank -- an
- * illegal call while bank 2 is mapped (AGENTS.md 52.11.1). */
+ * illegal call while bank 3 is mapped (AGENTS.md 52.11.1). */
 
 static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
     100, /* NONE */
@@ -41,7 +41,7 @@ static const uint16_t s_tier_mult[HAND_TIER_COUNT] = {
     400  /* FIVE KIND */
 };
 
-/* Classify n card values (order-independent).  vals are 1..9,
+/* Classify n card values (order-independent).  vals are 1..10,
  * types are BattleCardType. */
 uint8_t combo_classify(const uint8_t *vals, const uint8_t *types,
                        uint8_t n)
@@ -126,9 +126,11 @@ void combo_resolve_banked(void)
     if (count > 5) count = 5;
     out_result->count = count;
 
-    /* Phase rules (unchanged): attack sums every non-SHIELD value;
-     * defend sums SHIELD values only.  The same filter decides which
-     * cards enter the hand for classification. */
+    /* Phase rules (docs/loot.md §34.3/§34.4): attack sums every
+     * non-SHIELD, non-RING value (rings deal 0 attack -- they heal
+     * instead); defend sums SHIELD values AND rings (a ring is a
+     * wild-card shield worth its power).  All selected cards enter the
+     * hand for classification either way. */
     {
         uint8_t vals[5];
         uint8_t types[5];
@@ -137,9 +139,10 @@ void combo_resolve_banked(void)
         for (i = 0; i < count; i++) {
             uint8_t t = cards[i].type;
             if (phase == COMBO_PHASE_ATTACK) {
-                if (t != BATTLE_CARD_TYPE_SHIELD) sum += cards[i].value;
+                if (t != BATTLE_CARD_TYPE_SHIELD && !cards[i].ring)
+                    sum += cards[i].value;
             } else {
-                if (t != BATTLE_CARD_TYPE_SHIELD) continue;
+                if (t != BATTLE_CARD_TYPE_SHIELD && !cards[i].ring) continue;
                 sum += cards[i].value;
             }
             vals[w] = cards[i].value;
@@ -156,7 +159,30 @@ void combo_resolve_banked(void)
             out_result->suited = 0;
             out_result->multiplier = 100;
         } else {
-            out_result->tier = combo_classify(vals, types, eff_count);
+            /* Ring JOKER (§34.3): a ring's value substitutes freely --
+             * try every legal value (1..10) and keep the best tier (types are
+             * untouched, so the suited bonus is unaffected). */
+            uint8_t has_ring = 0;
+            for (i = 0; i < eff_count; i++) {
+                if (cards[i].ring) has_ring = 1;
+            }
+            if (has_ring) {
+                uint8_t trial[5];
+                uint8_t best = combo_classify(vals, types, eff_count);
+                uint8_t v, k2, t2;
+                /* Card values are 1..10 (BOW 10): the joker tries the
+                 * full legal range. */
+                for (v = 1; v <= 10; v++) {
+                    for (k2 = 0; k2 < eff_count; k2++) {
+                        trial[k2] = cards[k2].ring ? v : vals[k2];
+                    }
+                    t2 = combo_classify(trial, types, eff_count);
+                    if (t2 > best) best = t2;
+                }
+                out_result->tier = best;
+            } else {
+                out_result->tier = combo_classify(vals, types, eff_count);
+            }
             mult = s_tier_mult[out_result->tier];
             if (out_result->tier == HAND_NONE) {
                 out_result->suited = 0;

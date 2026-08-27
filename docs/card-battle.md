@@ -25,7 +25,7 @@ Examples:
 SW3
 SH5
 BO2
-FI4
+SW4
 HE7
 ```
 
@@ -122,7 +122,7 @@ Examples:
 SW3
 SH5
 BO2
-FI4
+SW4
 HE7
 ```
 
@@ -168,7 +168,7 @@ Likewise:
 ```text
 SH5
 BO2
-FI4
+SW4
 HE7
 ```
 
@@ -698,7 +698,7 @@ This is important.
 A combo can be:
 
 ```text
-SW2 → BO3 → FI4
+SW2 → BO3 → SW4
 ```
 
 and still be a valid straight.
@@ -927,25 +927,24 @@ Its distinction can be expanded later.
 
 ---
 
-## FI — Fire
+## Fire — sword element
 
-Elemental attack.
-
-Example:
+There is no Fire *card type*. Fire (and later Ice) is an **element carried on
+a weapon**: the Fire Sword renders as `SW4` and has the BURN on-hit rider
+(`STATUS_BURN`, see `docs/loot.md §34`). Example:
 
 ```text
-FI4
+F SW   (battle code SW4)
 ```
 
 Description:
 
 ```text
-Fire elemental attack.
+Sword: physical (with a chance to burn the target)
 ```
 
-Initially, simply treat it as an attack with a Fire type.
-
-Elemental weaknesses can be added later.
+Elemental weaknesses can be added later; the fire effect walks a sword until
+then.
 
 ---
 
@@ -1420,8 +1419,8 @@ BO2
 BO3
 BO5
 
-FI3
-FI4
+SW3
+SW4
 
 HE2
 HE5
@@ -1439,7 +1438,7 @@ The player should draw replacement cards after cards are played according to the
 > represented as compact type+value structs, not strings. Battles always draw from
 > the player's persistent deck; the packed fallback table (`s_starter_deck_packed`
 > in `src/battle/deck_init.c`, unpacked through the WRAM banked-call trampoline)
-> mirrors the granted 10-card starter deck (4xSW3 / 3xSH2 / 3xFI4) and only serves
+> mirrors the granted 12-card starter deck (4xSW3 / 3xSH2 / 3xSW4 / 2xDA1) and only serves
 > empty/legacy state. Removals are floored at `DECK_MIN_CARDS` (5, one full hand)
 > by an engine backstop in `deck_remove_card`. Deck composition and management
 > rules live in `docs/deck.md` and `docs/deck-management.md`.
@@ -1686,7 +1685,7 @@ Implement the system in this exact order.
 Make the Game Boy display:
 
 ```text
-SW2 SH5 BO3 FI4 HE7
+SW2 SH5 BO3 SW4 HE7
 ```
 
 with a movable cursor.

@@ -6,7 +6,7 @@
 
 /* ── Status system foundation (docs/combo-system.md Phase C, §12-§21) ──
  * Three distinct concepts, per plan §12:
- *   StatusDefinition -- what a status IS (bank-2 table, status_content.c)
+ *   StatusDefinition -- what a status IS (bank-3 table, status_content.c)
  *   StatusInstance   -- a status currently affecting one combatant
  *                       (runtime Battle state, never GameState/save)
  *   Application      -- the event of trying to inflict one (battle flow
@@ -18,7 +18,9 @@
 
 typedef enum {
     STATUS_NONE = 0,
-    STATUS_POISON = 1
+    STATUS_POISON = 1,
+    STATUS_BURN = 2,
+    STATUS_FREEZE = 3
 } StatusId;
 
 /* Instances per combatant.  Small fixed budget: statuses are rare, and
@@ -39,7 +41,7 @@ typedef struct {
 
 /* Definition table geometry (rows live in src/rpg/status_content.c).
  * Kept minimal by design (plan §26 leaves balance open). */
-#define STATUS_DEF_COUNT 2
+#define STATUS_DEF_COUNT 4
 
 typedef struct {
     uint8_t id;              /* StatusId */
@@ -59,6 +61,14 @@ typedef struct {
 
 extern StatusTickResult g_status_tick;
 
+/* Frozen-combatant bitmask, maintained by the bank-3 tick body: bit N
+ * set = slots[N] holds STATUS_FREEZE (bit 0 = player, 1..n = enemies).
+ * Written at each end-of-round tick; battle consumes (tests and clears)
+ * the bit when a frozen enemy's attack comes up -- one skipped swing per
+ * application (docs/combo-system.md §12).  Kept as a flat WRAM byte so
+ * the fixed-bank test costs one load/and -- no helper code. */
+extern uint8_t g_status_frozen_mask;
+
 /* What the last apply landed on the actor (STATUS_NONE when nothing did);
  * shared WRAM slot written by the banked body, read by the wrapper. */
 extern StatusInstance g_status_applied;
@@ -76,14 +86,17 @@ StatusSlots *status_slots(uint8_t actor_slot);
 
 /* Apply a status to an actor's slots (STACK rule: cap at max_stacks,
  * refresh duration).  stacks==0 means 1; duration==0 means the
- * definition's default.  Emits STATUS_APPLIED when a new instance or new
- * stack lands; returns true when the actor is now afflicted.
+ * definition's default.  Both are packed 4-bit by the wrapper -- pass 0
+ * rather than >15.  actor_slot is the combatant's status slot index
+ * (0 = player, 1..n = enemy; used for the frozen bitmask).
+ * Emits STATUS_APPLIED when a new instance or new stack lands; returns
+ * true when the actor is now afflicted.
  *
- * Fixed-bank wrapper around the ROM-bank-2 body; see banked.h. */
-bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
-                  uint8_t duration);
+ * Fixed-bank wrapper around the ROM-bank-3 body; see banked.h. */
+bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
+                  uint8_t stacks, uint8_t duration);
 
-/* Bank-2 body dispatched by status_apply(). */
+/* Bank-3 body dispatched by status_apply(). */
 void status_apply_banked(void);
 
 /* Run one end-of-turn tick over an actor's slots: accumulate tick damage
@@ -93,7 +106,7 @@ void status_apply_banked(void);
  * actor_slot: 0 = player, 1..n = enemy index (telemetry context only). */
 uint8_t status_tick(StatusSlots *slots, uint8_t actor_slot);
 
-/* Bank-2 body dispatched by status_tick(). */
+/* Bank-3 body dispatched by status_tick(). */
 void status_tick_banked(void);
 
 #endif /* RPG_STATUS_H */

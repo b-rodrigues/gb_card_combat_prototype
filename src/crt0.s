@@ -446,6 +446,10 @@ banked_call_init_loop:
         ret
 
         .area   _HOME
+        .area   _LIT
+        .area   _GSINIT
+        .area   _GSFINAL
+        .area   _INITIALIZER
 
         .area   _DATA
 __cpu:
@@ -468,10 +472,6 @@ __shadow_OAM_base:
         .ds     4
 
         .area   _INITIALIZED
-        .area   _INITIALIZER
         .area   _BSS
-        .area   _GSINIT
-        .area   _GSFINAL
         .area   _HEAP
         .area   _HEAP_END
-        .area   _LIT

@@ -386,7 +386,7 @@ Supported `initial_state` fields:
   "variables": { "GOLD": 150, "CHAPTER": 2 },
   "party": { "HERO": { "level": 3, "hp": 24, "max_hp": 30 } },
   "inventory": { "POTION": 2, "BOMB": 1 },
-  "deck": { "IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1 },
+  "deck": { "IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_SWORD": 1 },
   "world": { "SLIME_FIELD": "DEFEATED" },
   "screen": "BATTLE",
   "dialogue": "MAYOR_GREETING",
@@ -490,6 +490,22 @@ dialogue + sets `MET_MAYOR`), `MAYOR_GREETING` (already met),
 in the active battle: `{"type": "set_enemy_hp", "index": 0, "hp": 20}`.
 Direct state write, no telemetry -- scenario setup semantics (deterministic
 fight lengths, e.g. the boss fight pins the Lord of Slimes to 20 HP).
+
+`apply_status` (`DBG_ACT_APPLY_STATUS`) applies a status through the real
+mechanic (`status_apply`, `STATUS_APPLIED` telemetry included):
+`{"type": "apply_status", "slot": 0, "status": 3, "duration": 1}` -- slot
+0 = player, 1..n = enemy index.  Reaches targets no card rider can hit
+today (e.g. freezing the PLAYER; see `status_freeze_player`).
+
+`set_hand_card_ring` (`DBG_ACT_SET_HAND_RING`) marks an injected hand card
+as a loot RING (docs/loot.md §34.3): joker classification, defense shield
+value, one-ring selection gate.  See `ring_one_ring_gate` /
+`ring_joker_heal`.
+
+`collection_add` (`DBG_ACT_ADD_ITEM`) grants cards to the collection by
+RAW id: `{"type": "collection_add", "card_id": 139, "quantity": 1}` --
+raw ids let scenarios reach derived loot-range CardIds that have no name
+in the host maps (docs/loot.md §34).
 
 ### Items, money, progression & the shop
 
@@ -1337,26 +1353,58 @@ On-hit status riders scale with the same multiplier:
 
 ---
 
-# 31.2 STATUS_APPLIED / STATUS_TICKED (card combat statuses)
+# 31.2 STATUS_APPLIED / STATUS_TICKED / STATUS_EXPIRED / STATUS_RESISTED
 
-Phase C statuses (`docs/combo-system.md` §12-§19).  `STATUS_APPLIED` fires
-when an on-hit rider lands (after the deterministic RNG roll passes);
-`STATUS_TICKED` fires once per round per afflicted combatant at the
-transition back into the player select phase.
+Phase C/D statuses (`docs/combo-system.md` §12-§19).  `STATUS_APPLIED`
+fires when an on-hit rider lands (after the deterministic RNG roll passes)
+or a debug `apply_status` action succeeds; `STATUS_TICKED` fires once per
+round per afflicted combatant at the transition back into the player
+select phase; `STATUS_EXPIRED` accompanies each tick that removed an
+instance; `STATUS_RESISTED` fires when an on-hit roll fails (§19).
 
 ```text
 STATUS_APPLIED
-  data[0] = status id (1 = POISON)
+  data[0] = status id (1 = POISON, 2 = BURN, 3 = FREEZE)
   data[1] = stacks after application (capped by the definition)
   data[2] = duration in turns
 
 STATUS_TICKED
-  data[0] = flat tick damage (poison: 1 HP per round regardless of stacks;
-            extra applications refresh duration and deepen stacks for
-            telemetry only)
+  data[0] = flat tick damage (POISON 1, BURN 2, FREEZE 0 per round
+            regardless of stacks; extra applications refresh duration
+            and deepen stacks for telemetry only)
   data[1] = actor slot (0 = player; otherwise enemy index)
   data[2] = instances expired by this tick
   data[3] = first expired status id (valid when data[2] != 0)
+
+STATUS_EXPIRED
+  data[0] = status id of the first instance removed by this tick
+  data[1] = actor slot
+
+STATUS_RESISTED
+  data[0] = status id whose roll failed
+  data[1] = target slot
+
+TURN_SKIPPED (docs/combo-system.md §12, Phase D)
+  data[0] = combatant slot whose turn was skipped (0 = player,
+            1..n = enemy index)
+  data[1] = cause StatusId (always STATUS_FREEZE today)
+```
+
+---
+
+# 31.3 LOOT (docs/loot.md §34)
+
+```text
+LOOT_CARD_ADDED
+  data[0] = derived CardId (0x80..0xFF; decode via the §34.1 macros:
+            material = (id-0x80)>>5, effect = (id>>3)&3, weapon = id&7)
+  data[1] = collection count after the add
+
+CARD_SOLD (docs/loot.md §34.6)
+  data[0] = CardId sold
+  data[1] = gold received (the def's price -- the centralized sell
+            value for loot ids)
+  data[2] = collection count after the sale
 ```
 
 ---

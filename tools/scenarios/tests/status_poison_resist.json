@@ -51,7 +51,7 @@
       "frames": 150
     }
   ],
-  "assertions": [
+    "assertions": [
     {
       "type": "game_state",
       "expected": "BATTLE"
@@ -63,6 +63,11 @@
     {
       "type": "event_not_occurred",
       "event": "STATUS_TICKED"
+    },
+    {
+      "type": "event_occurred",
+      "event": "STATUS_RESISTED",
+      "note": "Phase D: failed rider rolls are now observable (docs/combo-system.md 19)"
     }
   ],
   "initial_state": {

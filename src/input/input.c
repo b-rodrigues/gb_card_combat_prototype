@@ -72,9 +72,16 @@ void input_update(void)
     pad_state = physical_pad_state | injected_pad_state;
     injected_pad_state = 0;
 #else
+    /* Honor the debug injection channel outside DEBUG_BUILD too: without
+     * this, g_inp_mask writes are silently discarded (the mask is cleared
+     * below but never sampled), breaking any tooling that drives the
+     * release ROM through the debugger. */
+    if (g_inp_mask != 0) {
+        injected_pad_state = g_inp_mask;
+        g_inp_mask = 0;
+    }
     pad_state = joypad() | injected_pad_state;
     injected_pad_state = 0;
-    g_inp_mask = 0;
 #endif
 }
 

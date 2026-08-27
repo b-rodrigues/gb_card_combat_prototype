@@ -21,7 +21,7 @@ static const Card s_bat_deck[] = {
     { BATTLE_CARD_TYPE_BOW,   2, 0xFF },
     { BATTLE_CARD_TYPE_BOW,   3, 0xFF },
     { BATTLE_CARD_TYPE_SWORD, 4, 0xFF },
-    { BATTLE_CARD_TYPE_FIRE,  3, 0xFF },
+    { BATTLE_CARD_TYPE_SWORD, 3, 0xFF },
 };
 static const Card s_slime_trio_deck[] = {
     { BATTLE_CARD_TYPE_SWORD, 2, 0xFF },

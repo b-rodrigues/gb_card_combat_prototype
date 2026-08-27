@@ -1,7 +1,7 @@
 {
   "name": "card_sort_power",
   "test": true,
-  "description": "Power-desc sort shows strongest cards first in the CARDS tab: FI4, SW3, SH2 for the granted starter collection",
+  "description": "Power-desc sort shows strongest cards first in the CARDS tab: F SW, I SW, W SH for the granted starter collection",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -29,17 +29,17 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "FI4"
+      "contains": "F SW"
     },
     {
       "type": "screen_row",
       "row": 8,
-      "contains": "SW3"
+      "contains": "I SW"
     },
     {
       "type": "screen_row",
       "row": 10,
-      "contains": "SH2"
+      "contains": "W SH"
     }
   ],
   "initial_state": {

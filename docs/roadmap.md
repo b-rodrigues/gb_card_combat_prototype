@@ -83,6 +83,45 @@ testable, save/load works, and the memory budget is understood.
     card with flat 1-HP poison ticks.  Open: more statuses, finer-grained
     status telemetry.
 
+### HARNESS REGRESSION POST-MORTEM (resolved 2026-08-26)
+
+Three scenarios (`patrol_slime_cross`, `patrol_enemy_bumps_player`,
+`battle_multi_enemy_cycle_kill`) regressed after the SDCC pointer-cache
+hardening.  Root cause, established by clean-worktree A/B builds and an
+mGBA watchpoint (NOT by inspecting a dirty working tree — stale mixed
+objects mislead two earlier diagnoses, see AGENTS.md §52.2/§52.13):
+
+* The SDCC 4.4.1 pointer-cache miscompile family is layout-sensitive:
+  which instance fires depends on where the linker places neighboring
+  banked bodies.  Each codegen knob flipped a different instance:
+  - global `--max-allocs-per-node12000` + volatile `g_bk_*` staging
+    globals: patrol stepping died entirely (zero movement);
+  - function-local volatiles alone (battle/screen/UI): HP transition bug
+    fixed BUT the volatile-parameter codegen in `ui_battle_content.c`
+    shifted bank-3 layout and broke patrol step-interval persistence —
+    watchpoint showed `ai_timer` being zeroed every frame from inside
+    the patrol body's own window, so actors moved continuously instead
+    of pausing between legs;
+  - capping allocs in the UI unit instead re-exposed the HP corruption.
+* Final configuration (all constraints satisfied simultaneously):
+  function-local volatile guards everywhere (`volatile Battle *vb`,
+  `volatile Game *vg`, `const volatile Battle *` render params), plain
+  non-volatile `g_bk_*` globals, default optimization flags globally,
+  plus per-file `-Wf--max-allocs-per-node500` overrides for
+  `src/world/world.c` and `src/world/patrol_banked.c` (Makefile rules;
+  both debug and release must stay in sync).
+* Validation on that config: 144/144 harness, lint/memmap/verify-oam/
+  ROM checks clean, full auto-play battle preserves hp=10 across 1500
+  frames, patrol interval honored.
+* Hardening kept: `patrol_enemy_bumps_player` wait 33->120 (sat exactly
+  on the engagement boundary); `patrol_slime_cross` converted to
+  ACTOR_STATE_CHANGE payload assertions (position-at-frame raced the
+  first commit boundary even at baseline).
+* Tooling note: `make test-scenario` returns rc=2 both for assertion
+  failures and for missing scenario files; `python3 tools/dev.py scenario`
+  now exits 2 (not-found) vs 1 (fail) and suggests close names.  Do not
+  treat make's rc alone as evidence.
+
 ### DONE
 
 - Card battle prototype (hand/deck/discard, draw, play, resolve; per-card

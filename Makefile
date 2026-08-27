@@ -81,9 +81,41 @@ gfx:
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+# NOTE: deliberately NO global --max-allocs-per-node override.  SDCC 4.4.1
+# (sm83) has a pointer-cache miscompile family across branch joins; the
+# per-function volatile guards (battle_update vb, battle_screen vg,
+# const-volatile Battle* render params, patrol_banked byte-pointer reads)
+# are the fix -- verified by clean-tree A/B (commit history Aug 2026).
+# Empirically, BOTH a lowered budget (12000) AND making the g_bk_* banked
+# staging globals volatile change codegen in ways that break patrol stepping
+# under otherwise-identical sources; default flags with the local guards is
+# the only validated configuration.  If you touch optimization flags, run
+# patrol_slime_cross / patrol_enemy_bumps_player / battle_multi_enemy_cycle_kill
+# plus the full harness before trusting the build.
+
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c $(INCLUDES) -o $@ $<
+
+# Per-file alloc caps (see docs/roadmap.md post-mortem): the bank-3 patrol
+# path needs a hard-capped budget in these units to keep its commit-path
+# stores intact under SDCC 4.4.1; battle/UI keep their volatile guards with
+# default flags (caps there re-expose the transition-render HP corruption).
+build/debug/world/world.o: src/world/world.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/debug/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/world/world.o: src/world/world.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
 
 $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
@@ -100,7 +132,8 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 LDFLAGS = -Wl-b_DATA=0xC940
 
 $(TARGET): gfx $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
-	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
+	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
+	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
 $(TARGET_DEBUG): gfx $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)

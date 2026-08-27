@@ -22,7 +22,7 @@
     {
       "type": "set_hand_card",
       "index": 2,
-      "card_type": "FI",
+      "card_type": "BO",
       "value": 4
     },
     {
@@ -75,7 +75,7 @@
     {
       "type": "screen_row",
       "row": 14,
-      "contains": "SW3 SH2 FI4 SW4 HE7"
+      "contains": "SW3 SH2 BO4 SW4 HE7"
     },
     {
       "type": "screen_row",

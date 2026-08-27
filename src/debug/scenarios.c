@@ -45,7 +45,9 @@ enum {
     DBG_ACT_START_BATTLE = 15,
     DBG_ACT_DECK_REMOVE = 16,
     DBG_ACT_SET_HAND_CARD_STATUS = 17,
-    DBG_ACT_SET_ENEMY_HP = 18
+    DBG_ACT_SET_ENEMY_HP = 18,
+    DBG_ACT_APPLY_STATUS = 19,
+    DBG_ACT_SET_HAND_RING = 20
 };
 
 static void scenario_begin(uint16_t seed)
@@ -283,6 +285,7 @@ static void debug_run_action(void)
                  * that was played earlier in the same battle. */
                 g_game.battle.hand[a0].status_id = STATUS_NONE;
                 g_game.battle.hand[a0].status_chance = 0;
+                g_game.battle.hand[a0].ring = 0;
             }
             break;
 
@@ -302,6 +305,29 @@ static void debug_run_action(void)
                 g_game.battle.enemies[a0].hp = a1;
             }
             break;
+
+        case DBG_ACT_APPLY_STATUS:
+            /* Apply a status through the real mechanic (status_apply,
+             * STATUS_APPLIED telemetry included): a0 = combatant slot
+             * (0 = player, 1..n = enemy), a1 = StatusId, a2 = duration
+             * (stacks 1).  Reaches targets no card rider can hit today
+             * (e.g. freezing the PLAYER). */
+            if (a0 < STATUS_ROUND_SLOTS && a1 != STATUS_NONE) {
+                bool ok = status_apply(status_slots(a0), a0, a1, 1, a2);
+                telemetry_emit(EVENT_STATUS_RESISTED, 0xEE, a0, ok ? 1 : 0,
+                               g_status_frozen_mask); /* PROBE */
+            }
+            break;
+
+        case DBG_ACT_SET_HAND_RING:
+            /* Mark an injected hand card as a loot RING (docs/loot.md
+             * §34.3) so joker/gate scenarios don't depend on the dealt
+             * deck contents. */
+            if (a0 < BATTLE_HAND_SIZE) {
+                g_game.battle.hand[a0].ring = 1;
+            }
+            break;
+
         case DBG_ACT_DECK_ADD:
             /* Real mechanic call: all deck_add_card validations apply
              * (ownership, SPECIAL exclusion, max_copies, size). */

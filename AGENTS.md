@@ -2196,6 +2196,90 @@ loop order instead: `game_render()` runs before `vsync()`, so from a
 run checks that arm their own breakpoints in separate sessions (one per
 section) to avoid cross-pauses.
 
+## 52.18 Fixed-bank overflow presents as a mysterious "guest spin"
+
+The `_CODE`/`_HOME` fixed area sits hard against `0x8000` (§55.5).  When an
+addition pushes it over, rgblink emits `Warning: Write from one bank spans
+into the next ... (bank 1 -> 2)` / `Possible overflow from Bank 1 into Bank
+2` and silently overwrites the START of bank 2 with the overflowing bytes.
+Symptom: any trampoline dispatch or execution path touching the corrupted
+region spins the guest (mGBA ~300% CPU, debugger pipe dead,
+game_render breakpoint never re-hit) — it looks like a nested-trampoline or
+codegen bug but is a link overflow.  This caused the original victory-loot
+"long-battle hang": wiring the drop hook grew the fixed bank ~30 B past the
+boundary; whether it hung flipped with unrelated code-size changes.
+
+Rules:
+
+* After ANY new fixed-bank code, run `make memmap` (it fails on violation)
+  AND grep the link step for `Possible overflow` — the build itself does not
+  fail on the warning.
+* Keep fat logic out of the fixed bank by structure, not by trimming: pure
+  arithmetic (rolls, encodes) belongs in a bank-2 body behind one thin
+  staging wrapper (see `src/game/loot_drop_banked.c` + `game_loot_drop()`),
+  not inlined at the call site.
+* `%`/`/` in new fixed-bank code pulls in the SDCC div/mod library; use
+  masks for power-of-two bounds.
+
+## 52.19 SDCC miscompile instances are LAYOUT-SENSITIVE (Aug 2026)
+
+The pointer-cache miscompile family (§52.11.1, `patrol_banked.c`,
+`battle_update`) is not a fixed set of bugs — WHICH instance fires depends
+on where the linker places neighboring banked bodies.  Changing any of the
+following can flip a latent instance on or off somewhere else entirely:
+
+* global optimization flags (`-Wf--max-allocs-per-node...`);
+* `volatile` qualifiers on shared staging globals (`g_bk_*`) or function
+  parameters (`volatile Battle *`, `const volatile ...`);
+* the size/placement of ANY object in the same output bank.
+
+Documented flip-flop (full post-mortem: `docs/roadmap.md`, Aug 2026):
+global volatiles + alloc cap killed patrol stepping; function-local
+volatiles alone fixed the battle HP corruption but `ui_battle_content.c`'s
+volatile-parameter codegen shifted bank-3 layout and broke patrol step-
+interval persistence (mGBA watchpoint: `ai_timer` zeroed every frame from
+inside the patrol body's own window); capping allocs in the UI unit re-
+exposed the HP bug.  Final validated config: function-local volatiles,
+plain `g_bk_*` globals, default flags globally, per-file caps below.
+
+Rules:
+
+* NEVER diagnose from a dirty working tree — mixed stale objects produce
+  plausible-but-wrong symptoms (this cost two wrong root causes in one
+  day).  Bisect with clean worktrees: `git worktree add /tmp/x <commit>`,
+  build there, run the three sentinel scenarios.
+* After ANY change to optimization flags, volatile qualifiers on shared
+  globals/params, or banked-body placement, run the sentinels BEFORE
+  trusting the build: `patrol_slime_cross`, `patrol_enemy_bumps_player`,
+  `battle_multi_enemy_cycle_kill`, plus the full harness.
+* mGBA watchpoints (`watch <addr>`; delete connect()'s breakpoints 1/2
+  first, then arm) catch wild writers red-handed — state probes cannot
+  distinguish "bad data" from "good data rendered wrong".
+
+## 52.20 Per-file alloc-cap escape hatch (Makefile)
+
+When one unit needs different SDCC codegen than the global default,
+add an explicit target rule AFTER the generic pattern rules (explicit
+rules win; keep debug AND release variants in sync):
+
+```make
+build/debug/world/patrol_banked.o: src/world/patrol_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+```
+
+Current users: `src/world/world.c` + `src/world/patrol_banked.c`
+(both builds).  Removing these rules re-breaks patrol cadence; see §52.19.
+
+## 52.21 Harness CLI exit codes
+
+`python3 tools/dev.py scenario|state|roundtrip <name>`:
+0 = PASS, 1 = assertion FAIL, **2 = scenario NOT FOUND** (with
+close-name hints).  `make test-scenario` flattens everything to rc=2 —
+never use make's exit code to decide whether a scenario name exists;
+that ambiguity once produced a triage listing nonexistent scenarios as
+"failing".
+
 ---
 
 # 53. State Ownership
@@ -2371,14 +2455,17 @@ reset on exit.  A screen must never become the home of gameplay state
 The quick screen (`SCREEN_ITEM`) is a tabbed menu: CARDS (collection/deck
 management: paired rows whose membership glyph is the decked-copy count,
 A adds one copy and clears every copy once the card is fully decked, all
-through the real `deck_add_card`/`deck_remove_card`; SELECT opens a detail
-page whose FILTER/SORT entry opens an inline picker) and QUEST (ongoing
+through the real `deck_add_card`/`deck_remove_card`; SELECT opens a detailpage whose FILTER/SORT entry opens an inline picker) and QUEST (ongoing
 quests; SELECT shows a placeholder detail line).  START is the universal
 open key (overworld and battle player-turn).  Inside, LEFT/RIGHT switches
 tabs, UP/DOWN moves the list, A confirms/toggles, B backs out (two-step on
 the CARDS list: first B jumps to the first card row, B again on the top row
 closes), SELECT opens the detail submenu.  Rejections (`DECK FULL`) show a
-transient message cleared by a frame TTL, never a silent no-op.
+transient message cleared by a frame TTL, never a silent no-op.  On a loot
+card's detail page, A sells one copy while the player has engaged a buying
+shop (`ShopDefinition.buys`; `g->shop_id` is set by the shop actor and
+cleared on scene change) — docs/loot.md §24/§34.6, scenario
+`merchant_sell_loot`.
 
 ## 54.3 Actor lifecycle
 

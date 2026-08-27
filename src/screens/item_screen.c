@@ -2,11 +2,15 @@
 #include "screen.h"
 #include "telemetry.h"
 #include "rpg/cards.h"
+#include "rpg/loot.h"
 #include "rpg/deck.h"
+#include "rpg/currency.h"
 #include "quest.h"
 #include "ui.h"
 #include "menu.h"
 #include "card.h"
+#include "shops.h"
+#include "game_ids.h"
 
 #define TAB_CARDS 0
 #define TAB_QUEST 1
@@ -51,6 +55,50 @@ static bool card_deckable(const CardDefinition *def)
 static CardId view_card_id(Game *g, uint8_t pos)
 {
     return g->state.cards.collection.entries[s_view_indices[pos]].id;
+}
+
+/* ── Sell at the card merchant (docs/loot.md §24/§34.6) ─────────────
+ * A loot card's detail page offers SELL while the player has engaged a
+ * buying shop (g->shop_id set by the shop actor, cleared on scene
+ * change).  Value = the def's price field -- for loot ids that is the
+ * centralized sell value synthesized by loot_synth_banked. */
+static bool merchant_buys(const Game *g)
+{
+    const ShopDefinition *shop;
+    shop = game_shop_for_id(g->shop_id);
+    return shop && shop->buys;
+}
+
+static void card_detail_sell(Game *g)
+{
+    CardState *cs = &g->state.cards;
+    CardId id;
+    const CardDefinition *def;
+    uint8_t owned;
+
+    if ((uint8_t)(g->item_menu_index - FIRST_CARD) >= s_view_count)
+        return;
+    id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
+    if (!loot_is_loot_id(id) || !merchant_buys(g)) return;
+    def = card_get_def(id);
+
+    /* Selling must never strand a decked card without ownership
+     * backing: require at least one copy outside the battle deck. */
+    owned = deck_collection_count(cs, id);
+    if (def == NULL || owned <= deck_count_in_deck(&cs->deck, id)) {
+        g->item_menu_message = MSG_DECK_FULL;
+        g->item_menu_msg_ttl = 45;
+        g->item_menu_mode = MODE_LIST;
+        return;
+    }
+    if (!deck_collection_remove(cs, id, 1)) return;
+    currency_add(&g->state, CURRENCY_ID_GOLD, (int16_t)def->price);
+    telemetry_emit(EVENT_CARD_SOLD, id, def->price,
+                   (uint8_t)(owned - 1), 0);
+    /* Back to the list: it rebuilds its view every frame, so a fully
+     * sold-out entry simply disappears and the OWN digit drops -- the
+     * CARD_SOLD event is the authoritative feedback for tests. */
+    g->item_menu_mode = MODE_LIST;
 }
 
 static bool filter_matches(Game *g, CardId id)
@@ -133,7 +181,10 @@ static void cycle_filter(Game *g)
 
 static void cycle_sort(Game *g)
 {
-    g->item_menu_sort = (uint8_t)((g->item_menu_sort + 1) % (SORT_COST_DESC + 1));
+    /* Wrap instead of % -- SM83 has no hardware divide and the SDCC
+     * int-mod library would land in the tight fixed bank. */
+    g->item_menu_sort = (g->item_menu_sort >= SORT_COST_DESC) ?
+        SORT_NONE : (uint8_t)(g->item_menu_sort + 1);
 }
 
 /* Shared label tables (fixed bank, same file — safe per AGENTS.md §54.6). */
@@ -198,12 +249,18 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
-    ui_card_code_str(def->battle_type, def->power, code);
-    ui_draw_text_line(2, y, code, 4);
+    /* All cards show their descriptive identity name ("I SW", "W F SW"),
+     * not the battle code (docs/loot.md §34.1); colored by effect (fixed
+     * 8-tile span; trailing blanks are invisible). */
+    ui_draw_text_line(2, y, def->name, 10);
+    ui_color_span(2, y, 8,
+                  ui_color_class(def->status_id,
+                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                 (def->effect == CARD_EFFECT_HEAL_HP)));
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
-    code[0] = (char)('0' + (in_deck % 10));
+    code[0] = ui_ones_digit(in_deck);
     code[1] = '\0';
     ui_draw_text_line(19, y, code, 1);
     ui_draw_text_line(2, (uint8_t)(y + 1),
@@ -288,7 +345,6 @@ static void draw_card_detail_page(Game *g)
 {
     const CardDefinition *def;
     CardId id;
-    char b[21];
     uint8_t y = 5;
 
     if (g->item_menu_index < FIRST_CARD ||
@@ -298,31 +354,41 @@ static void draw_card_detail_page(Game *g)
     def = card_get_def(id);
     if (!def) return;
 
-    ui_draw_text_line(0, y, def->name, 9);
+    ui_draw_text_line(0, y, def->name, 11);
+    ui_color_span(0, y, 11,
+                  ui_color_class(def->status_id,
+                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                 (def->effect == CARD_EFFECT_HEAL_HP)));
     y += 2;
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);
     y += 2;
-    /* Composed rows keep the fixed-bank call-site cost down. */
-    b[0]='P'; b[1]='W'; b[2]='R'; b[3]=' '; b[4]=' '; b[5]=(char)('0'+(def->power%10));
-    b[6]=' '; b[7]='C'; b[8]='O'; b[9]='S'; b[10]='T'; b[11]=' ';
-    b[12]=(char)('0'+(def->cost%10)); b[13]='\0';
-    ui_draw_text_line(0, y, b, 13);
+    /* Literal labels + positioned number draws: per-character buffer
+     * composition compiles to ~8 instructions per char in the tight
+     * fixed bank (AGENTS.md 52.18). */
+    ui_draw_text_line(0, y, "PWR", 3);
+    ui_draw_num2(4, y, def->power);
+    ui_draw_text_line(7, y, "COST", 4);
+    ui_draw_num2(12, y, def->cost);
     y += 2;
-    b[0]='U'; b[1]='S'; b[2]='E'; b[3]='S'; b[4]=' ';
-    b[5]=def->uses_per_battle ? (char)('0'+(def->uses_per_battle%10)) : '-';
-    b[6]='/'; b[7]='B'; b[8]='T'; b[9]='L'; b[10]=' ';
-    b[11]='M'; b[12]='X'; b[13]='C'; b[14]='P'; b[15]=' ';
-    b[16]=def->max_copies ? (char)('0'+(def->max_copies%10)) : '-';
-    b[17]='\0';
-    ui_draw_text_line(0, y, b, 17);
+    ui_draw_text_line(0, y, "USES", 4);
+    if (def->uses_per_battle) {
+        ui_draw_num2(4, y, def->uses_per_battle);
+    } else {
+        ui_draw_text_line(5, y, "-", 1);
+    }
+    ui_draw_text_line(6, y, "/BTL", 4);
+    ui_draw_text_line(11, y, "MXCP", 4);
+    if (def->max_copies) {
+        ui_draw_num2(15, y, def->max_copies);
+    } else {
+        ui_draw_text_line(16, y, "-", 1);
+    }
     y += 2;
-    b[0]='O'; b[1]='W'; b[2]='N'; b[3]=' '; b[4]=' ';
-    b[5]=(char)('0'+(deck_collection_count(&g->state.cards, id)%10));
-    b[6]=' '; b[7]='D'; b[8]='E'; b[9]='C'; b[10]='K'; b[11]=' ';
-    b[12]=(char)('0'+(deck_count_in_deck(&g->state.cards.deck, id)%10));
-    b[13]='\0';
-    ui_draw_text_line(0, y, b, 13);
+    ui_draw_text_line(0, y, "OWN", 3);
+    ui_draw_num2(4, y, deck_collection_count(&g->state.cards, id));
+    ui_draw_text_line(7, y, "DECK", 4);
+    ui_draw_num2(12, y, deck_count_in_deck(&g->state.cards.deck, id));
     y += 2;
     ui_draw_text_line(0, y, "PRICE", 5);
     ui_draw_num2(6, y, def->price);
@@ -436,6 +502,9 @@ void item_screen_update(Game *g)
         case MODE_CARD_DETAIL:
             if (input_pressed(INPUT_SELECT)) {
                 g->item_menu_mode = MODE_LIST;
+                g->render_cache.valid = false;
+            } else if (input_pressed(INPUT_A)) {
+                card_detail_sell(g);
                 g->render_cache.valid = false;
             }
             return;

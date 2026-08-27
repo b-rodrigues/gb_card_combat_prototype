@@ -14,7 +14,7 @@ typedef enum {
  * STRAIGHT / FLUSH / STRAIGHT_FLUSH / FIVE_KIND require all five
  * selected cards; pairs and kinds work at any count >= 2.  Order here
  * mirrors ranking; the scored multiplier table lives in
- * combo_content.c (bank 2). */
+ * combo_content.c (bank 3). */
 typedef enum {
     HAND_NONE = 0,           /* high card / fewer than 2 effective cards */
     HAND_PAIR = 1,           /* 120% */
@@ -62,13 +62,13 @@ typedef struct {
 void combo_resolve(const Card *cards, uint8_t count, ComboPhase phase,
                    uint8_t effect_type, ComboResult *out_result);
 
-/* The banked no-arg body (src/battle/combo_content.c, ROM bank 2), run via
+/* The banked no-arg body (src/battle/combo_content.c, ROM bank 3), run via
  * the WRAM banked-call trampoline.  Read only the staged _DATA globals;
  * self-contained apart from the bank-local call into effects_content.c. */
 void combo_resolve_banked(void);
 
 /* Order-independent hand classifier (bank-local utility): evaluates vals
- * 1..10 with phase-filtered entries.  Bank-2 callers (e.g. the battle HUD's
+ * 1..10 with phase-filtered entries.  Bank-3 callers (e.g. the battle HUD's
  * live COMBO row) invoke this DIRECTLY -- same bank, no trampoline. */
 uint8_t combo_classify(const uint8_t *vals, const uint8_t *types, uint8_t n);
 

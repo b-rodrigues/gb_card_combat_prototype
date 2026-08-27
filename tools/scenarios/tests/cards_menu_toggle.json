@@ -12,13 +12,13 @@
     },
     "seed": 8410,
     "inventory": {
-      "HEALING_HERB": 3
+      "WOOD_RING": 3
     },
     "deck": {
       "IRON_SWORD": 4,
       "WOODEN_SHIELD": 3,
-      "FIRE_TOME": 3,
-      "HEALING_HERB": 3
+      "FIRE_SWORD": 3,
+      "WOOD_RING": 3
     }
   },
   "actions": [
@@ -81,7 +81,7 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "SW3"
+      "contains": "I SW"
     },
     {
       "type": "screen_row",

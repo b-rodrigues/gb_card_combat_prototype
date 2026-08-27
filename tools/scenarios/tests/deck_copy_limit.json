@@ -1,7 +1,7 @@
 {
   "name": "deck_copy_limit",
   "test": true,
-  "description": "deck_add_card enforces CardDefinition.max_copies: 3 HEALING_HERB copies deck successfully, the 4th is rejected; POISON_DAGGER (cap 3, 2 granted at new game) decks its third copy and further copies are rejected by add_item's cap. FIRE_TOME is already saturated at cap 3 by the starter grant, so both add_item and deck_add reject it. Exactly 4 CARD_ADDED_TO_DECK events fire.",
+  "description": "deck_add_card enforces CardDefinition.max_copies: 3 WOOD_RING copies deck successfully, the 4th is rejected; POISON_DAGGER (cap 3, 2 granted at new game) decks its third copy and further copies are rejected by add_item's cap. FIRE_SWORD is already saturated at cap 3 by the starter grant, so both add_item and deck_add reject it. Exactly 4 CARD_ADDED_TO_DECK events fire.",
   "actions": [
     {
       "type": "wait",
@@ -9,7 +9,7 @@
     },
     {
       "type": "add_item",
-      "item": "HEALING_HERB",
+      "item": "WOOD_RING",
       "quantity": 3
     },
     {
@@ -18,7 +18,7 @@
     },
     {
       "type": "deck_add",
-      "card": "HEALING_HERB"
+      "card": "WOOD_RING"
     },
     {
       "type": "wait",
@@ -26,7 +26,7 @@
     },
     {
       "type": "deck_add",
-      "card": "HEALING_HERB"
+      "card": "WOOD_RING"
     },
     {
       "type": "wait",
@@ -34,7 +34,7 @@
     },
     {
       "type": "deck_add",
-      "card": "HEALING_HERB"
+      "card": "WOOD_RING"
     },
     {
       "type": "wait",
@@ -42,7 +42,7 @@
     },
     {
       "type": "deck_add",
-      "card": "HEALING_HERB"
+      "card": "WOOD_RING"
     },
     {
       "type": "wait",
@@ -84,7 +84,7 @@
     },
     {
       "type": "add_item",
-      "item": "FIRE_TOME",
+      "item": "FIRE_SWORD",
       "quantity": 1
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "type": "deck_add",
-      "card": "FIRE_TOME"
+      "card": "FIRE_SWORD"
     },
     {
       "type": "wait",
@@ -112,7 +112,7 @@
     },
     {
       "type": "inventory",
-      "item": "HEALING_HERB",
+      "item": "WOOD_RING",
       "expected": 3
     },
     {
@@ -122,7 +122,7 @@
     },
     {
       "type": "inventory",
-      "item": "FIRE_TOME",
+      "item": "FIRE_SWORD",
       "expected": 3
     }
   ],

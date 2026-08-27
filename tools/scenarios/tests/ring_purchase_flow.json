@@ -1,7 +1,7 @@
 {
-  "name": "herb_purchase_flow",
+  "name": "ring_purchase_flow",
   "test": true,
-  "description": "The Shopkeeper sells HEALING_HERB as the HE5 card (20 gold): purchase adds it to the collection (CURRENCY_SPENT + CARD_PURCHASED), it appears in CARDS as an undecked row, and A decks it",
+  "description": "The Shopkeeper sells WOOD_RING as the I RG card (20 gold): purchase adds it to the collection (CURRENCY_SPENT + CARD_PURCHASED), it appears in CARDS as an undecked row, and A decks it",
   "scenario_id": "TOWN_BOOT",
   "actions": [
     {
@@ -88,7 +88,7 @@
   "assertions": [
     {
       "type": "inventory",
-      "item": "HEALING_HERB",
+      "item": "WOOD_RING",
       "expected": 1
     },
     {
@@ -111,7 +111,7 @@
     {
       "type": "screen_row",
       "row": 14,
-      "contains": "HE5"
+      "contains": "I RG"
     },
     {
       "type": "screen_row",

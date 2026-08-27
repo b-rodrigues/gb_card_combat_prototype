@@ -13,12 +13,30 @@ Usage:
 """
 
 import argparse
+import difflib
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from test_runner import (run_all, run_scenario, load_scenarios, print_result,
                          run_roundtrip, print_roundtrip)
+
+def require_scenario(scenarios, name):
+    """Return the named scenario or exit 2.
+
+    Exit codes: 0 = PASS, 1 = assertion FAIL, 2 = scenario NOT FOUND.
+    The distinction matters: `make` flattens every failure to rc=2, so a
+    missing-name diagnosis must go through this CLI directly (an earlier
+    regression triage listed nonexistent scenarios as 'failing' because
+    both cases surfaced the same code)."""
+    matched = [s for s in scenarios if s.get("name") == name]
+    if matched:
+        return matched[0]
+    names = [s.get("name", "") for s in scenarios]
+    close = difflib.get_close_matches(name, names, n=5)
+    hint = "Did you mean: " + ", ".join(close) if close else "(no similar names)"
+    print(f"Error: Scenario '{name}' not found. {hint}", file=sys.stderr)
+    sys.exit(2)
 
 def main():
     parser = argparse.ArgumentParser(description="Game Boy RPG LLM Development Harness CLI")
@@ -52,29 +70,17 @@ def main():
             parser.error(str(e))
     elif args.command == "scenario":
         scenarios = load_scenarios("tools/scenarios")
-        matched = [s for s in scenarios if s.get("name") == args.name]
-        if not matched:
-            print(f"Error: Scenario '{args.name}' not found.", file=sys.stderr)
-            sys.exit(1)
-        res = run_scenario(matched[0])
+        res = run_scenario(require_scenario(scenarios, args.name))
         print_result(res, show_state=args.state)
         sys.exit(0 if res["status"] == "PASS" else 1)
     elif args.command == "state":
         scenarios = load_scenarios("tools/scenarios")
-        matched = [s for s in scenarios if s.get("name") == args.name]
-        if not matched:
-            print(f"Error: Scenario '{args.name}' not found.", file=sys.stderr)
-            sys.exit(1)
-        res = run_scenario(matched[0])
+        res = run_scenario(require_scenario(scenarios, args.name))
         print_result(res, show_state=True)
         sys.exit(0 if res["status"] == "PASS" else 1)
     elif args.command == "roundtrip":
         scenarios = load_scenarios("tools/scenarios")
-        matched = [s for s in scenarios if s.get("name") == args.name]
-        if not matched:
-            print(f"Error: Scenario '{args.name}' not found.", file=sys.stderr)
-            sys.exit(1)
-        res = run_roundtrip(matched[0])
+        res = run_roundtrip(require_scenario(scenarios, args.name))
         print_roundtrip(res)
         sys.exit(0 if res["status"] == "PASS" else 1)
     elif args.command == "list":

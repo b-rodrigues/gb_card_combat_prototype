@@ -2,12 +2,20 @@
 #include "actor.h"
 #include "scene.h"
 #include "card.h"
+#include "rpg/status.h"
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <gbdk/console.h>
 #include <stdio.h>
 
 char g_ui_screen_buf[18][21];
+
+/* CGB present flag: detected once at ui_init() via a VBK write/read (the
+ * only technique reliable when the boot ROM is skipped and _cpu is 0 --
+ * AGENTS.md §38.1).  Gates every VRAM bank-1 attribute write so a DMG's
+ * tilemap is never overwritten with palette bytes.  Read from the banked
+ * battle renderer too (WRAM, always mapped). */
+uint8_t g_is_cgb;
 
 #ifdef DEBUG_BUILD
 /* Mirror of the background tilemap ring (0x9800), written alongside every
@@ -27,12 +35,10 @@ static void ui_put_char(uint8_t x, uint8_t y, char ch);
  * rendering module (ui_battle_content.c) so it must be extern. */
 uint8_t ui_font_tile_base;
 
-static const palette_color_t cgb_palette[4] = {
-    RGB8(255, 255, 255),
-    RGB8(170, 170, 170),
-    RGB8(85, 85, 85),
-    RGB8(0, 0, 0)
-};
+/* Background palette ramps live in bank 3 (ui_color_banked.c); ui_init()
+ * banked_copies them into WRAM to program BCPS.  Index 0 = grayscale,
+ * 1-4 = effect colors (fire red / ice blue / heal green / poison purple). */
+extern const palette_color_t cgb_bg_palettes[5][4];
 
 /* Player-sprite ramp: entry 3 (the hero ink color) is light grey so the
  * hero is visible against the white floor on CGB. */
@@ -102,11 +108,32 @@ void ui_init(void)
     OBP0_REG = 0xE4;
     OBP1_REG = 0xE4;
 
-    /* Set CGB Palettes 0-7 with auto-increment bit (0x80) */
-    BCPS_REG = 0x80;
+    /* CGB detection (see g_is_cgb): on CGB VBK unused bits 1-7 read as 1,
+     * so writing 0 reads back as 0xFE and writing 1 reads as 0xFF.  On DMG
+     * (open bus or unmapped) VBK is constant 0xFF (real HW) or 0 (simple emus). */
+    VBK_REG = 0;
+    p = VBK_REG;
+    VBK_REG = 1;
+    g_is_cgb = (p == 0xFE && VBK_REG == 0xFF);
+    VBK_REG = 0;
+
+    /* Program all 8 BG palettes unconditionally (harmless on DMG, where
+     * BCPS/BCPD are unmapped no-ops): 0 = gray, 1-4 = effect colors,
+     * 5-7 = gray.  The ramps are banked_copy'd from bank 3 into WRAM
+     * scratch first (banked_copy already ran for the font above).
+     * OBJ palettes stay grayscale for the player sprite. */
+    banked_copy(3, g_ui_screen_buf, cgb_bg_palettes, 40);
+    for (p = 0; p < 8; p++) {
+        const uint8_t *ramp = (const uint8_t *)g_ui_screen_buf +
+                              (uint8_t)(((p <= 4) ? p : 0) << 3);
+        uint8_t c;
+        BCPS_REG = (uint8_t)(0x80 | (p << 3));
+        for (c = 0; c < 8; c++) {
+            BCPD_REG = ramp[c];
+        }
+    }
     OCPS_REG = 0x80;
     for (p = 0; p < 64; p++) {
-        BCPD_REG = ((const uint8_t *)cgb_palette)[p & 7];
         OCPD_REG = ((const uint8_t *)cgb_sprite_palette)[p & 7];
     }
 
@@ -170,6 +197,15 @@ void ui_sprite_commit(void)
 void ui_lcd_off(void)
 {
     LCDC_REG &= ~0x80;
+    /* Wipe CGB tile attributes before the full redraw that follows, so
+     * spans drawn by the previous screen (menu/battle) cannot tint the new
+     * one's tiles.  The LCD is off here, so the banked body's per-byte PPU
+     * wait is skipped and the 1024-byte clear is a plain write.  The banked
+     * dispatch is inlined (not a wrapper function) to keep the packed debug
+     * fixed bank within a few bytes of 0x8000. */
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_clear_atts_banked;
+    banked_call_run();
 }
 
 void ui_lcd_on(void)
@@ -222,24 +258,38 @@ static void ui_draw_text_line_ring(uint8_t x, uint8_t y, const char *text,
     }
 }
 
-/* Write one tile to the BG tilemap (0x9800) such that the store always lands
- * at the start of a fresh HBlank/VBlank window.  STAT bit 1 is set during PPU
- * modes 2/3 (OAM search / data transfer), when VRAM is inaccessible and a
- * write is silently dropped.  A bare `while (STAT_REG & 0x02);` can exit near
- * the end of HBlank and roll the store into the next mode 2/3, dropping the
- * write while g_ui_screen_buf is still updated -- the caller's skip-optimization
- * then never re-writes, leaving stale tiles (e.g. ghost battle cursors).
- * Waiting for a full render cycle first places the store at the start of a
- * ~200-cycle HBlank (or VBlank), which cannot be eclipsed.  When the LCD is
- * off, VRAM is fully accessible and the waits are skipped (they would spin
- * forever, as STAT stays idle). */
+/* Write one tile to the BG tilemap (0x9800) such that the store lands in a
+ * VRAM-accessible PPU window.  Per Pan Docs (Accessing_VRAM_and_OAM), VRAM
+ * is accessible in Modes 0-2 and writes are IGNORED in Mode 3; the safe
+ * wait is `while (STAT_REG & 0x02)` -- exit on Mode 0 (HBlank) or 1
+ * (VBlank).  A store issued at the very end of Mode 0 rolls into Mode 2,
+ * which is still accessible, so it cannot be eclipsed by the PPU.  (An
+ * earlier double-wait -- wait UNTIL Mode 2 starts, then UNTIL it ends --
+ * placed every store at the START of Mode 3 on LCD-on frames, silently
+ * dropping writes while g_ui_screen_buf was updated; the caller's
+ * skip-optimization then never re-wrote, leaving stale tiles.  That
+ * pattern's "start of a fresh HBlank" rationale had the scanline order
+ * backwards: the line sequence is Mode 2 -> 3 -> 0.)  di/ei keeps the
+ * 256 Hz timer ISR (AGENTS.md 35) from eclipsing the wait->store window
+ * (the Pan Docs interrupt caveat); IE is clear under the harness, so ei()
+ * is a no-op there.  Unconditionally re-enabling IME via ei is safe because
+ * interrupts are always active during normal play and stubbed under the harness.
+ * When the LCD is off, VRAM is fully accessible and the
+ * wait is skipped (it would spin forever, as STAT stays idle). */
 static void ui_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
-        while (!(STAT_REG & 0x02));
+        __asm
+            di
+        __endasm;
         while (STAT_REG & 0x02);
+        *dst = tile;
+        __asm
+            ei
+        __endasm;
+    } else {
+        *dst = tile;
     }
-    *dst = tile;
 }
 
 void ui_draw_text_line(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
@@ -558,20 +608,23 @@ void ui_draw_battle_full(const Battle *battle)
 }
 
 /* ui_update_battle() is a fixed-bank wrapper that dispatches the full battle
- * rendering logic through the banked-call trampoline into ROM bank 2
+ * rendering logic through the banked-call trampoline into ROM bank 3
  * (ui_battle_content.c).  The banked body contains all the per-dirty-bit
  * helpers (enemy columns, hero row, hand, combo, banner, card description). */
 void ui_update_battle(const Battle *battle)
 {
     if (!battle) return;
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&ui_update_battle_banked;
     g_bk_ptr_a = (void *)battle;
     banked_call_run();
 }
 
-/* Indexed by BattleCardType (src/battle/card.h). */
-static const char s_card_bt_codes[] = "SW\0SH\0BO\0FI\0HE\0DA";
+/* Shop item codes indexed by BattleCardType (src/battle/card.h).  The shop
+ * labels a HEAL card with its ITEM code — a heal card is a ring, RG — while
+ * the combat hand shows the battle code (HE) via its own table in
+ * ui_battle_content.c. */
+static const char s_card_bt_codes[] = "SW\0SH\0BO\0RG\0DA";
 
 static const char *ui_card_code(uint8_t battle_type)
 {
@@ -579,20 +632,65 @@ static const char *ui_card_code(uint8_t battle_type)
         (s_card_bt_codes + (battle_type * 3)) : "??";
 }
 
+char ui_ones_digit(uint8_t v)
+{
+    while (v >= 10) v -= 10;
+    return (char)('0' + v);
+}
+
 void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
 {
-    /* Two-digit powers (e.g. BOW 10) need 5 bytes incl. NUL. */
+    /* Two-digit powers (e.g. BOW 10) need 5 bytes incl. NUL.
+     * Subtraction-based digits -- see ui_ones_digit(). */
     const char *bt = ui_card_code(battle_type);
+    uint8_t tens = 0;
+    uint8_t ones = power;
+    while (ones >= 10) {
+        ones -= 10;
+        tens++;
+    }
     out[0] = bt[0];
     out[1] = bt[1];
     if (power >= 10) {
-        out[2] = (char)('0' + (power / 10));
-        out[3] = (char)('0' + (power % 10));
+        out[2] = (char)('0' + tens);
+        out[3] = (char)('0' + ones);
         out[4] = '\0';
     } else {
-        out[2] = (char)('0' + (power % 10));
+        out[2] = (char)('0' + ones);
         out[3] = '\0';
     }
+}
+
+/* Effect color for a card, keyed by its elemental effect (fire/ice/poison)
+ * or heal role.  The engine currently encodes the element as the on-hit
+ * rider (status_id) and the heal role as the HEAL type / ring flag, so this
+ * reads those -- not the future burn/frozen *statuses* (docs/loot.md §34). */
+uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal)
+{
+    if (is_heal) return UI_COLOR_HEAL;
+    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    return UI_COLOR_NONE;
+}
+
+/* Staging for the bank-3 attribute writer (x, y, len, palette). */
+static uint8_t s_color_span_args[4];
+
+/* Set the CGB per-tile palette for a horizontal span of background tiles.
+ * Thin fixed-bank wrapper: stages x/y/len/palette and dispatches the bank-3
+ * body (ui_color_banked.c) through the WRAM trampoline so the fixed bank
+ * stays under 0x8000 (AGENTS.md §55.5).  Palette 0 resets to grayscale. */
+void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
+{
+    s_color_span_args[0] = x;
+    s_color_span_args[1] = y;
+    s_color_span_args[2] = len;
+    s_color_span_args[3] = palette;
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_color_span_banked;
+    g_bk_ptr_a = (void *)s_color_span_args;
+    banked_call_run();
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)
@@ -619,16 +717,10 @@ void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t s
 #ifdef DEBUG_BUILD
 void ui_draw_font_test(void)
 {
-    uint8_t ch, row = 0, col = 0;
-    ui_clear_screen();
-    for (ch = ' '; ch <= '~'; ch++) {
-        ((volatile uint8_t *)0x9800)[row * 32 + col] = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
-        g_ui_screen_buf[row][col] = (char)ch;
-        col++;
-        if (col == 20) {
-            col = 0;
-            row += 2;
-        }
-    }
+    /* Body lives in bank 3 to keep the debug fixed bank under 0x8000
+     * (AGENTS.md §52.18).  Self-contained there; this is a thin wrapper. */
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_draw_font_test_banked;
+    banked_call_run();
 }
 #endif

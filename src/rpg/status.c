@@ -2,7 +2,7 @@
 #include "banked.h"
 #include "telemetry.h"
 
-/* Fixed-bank wrappers around the bank-2 bodies (src/rpg/status_content.c),
+/* Fixed-bank wrappers around the bank-3 bodies (src/rpg/status_content.c),
  * keeping the stacking/ticking logic out of the fixed-bank budget.  The
  * trampoline exposes two pointers + two bytes; the apply call packs
  * stacks/duration into byte_b (both <= 15).  Telemetry is emitted HERE,
@@ -17,6 +17,9 @@ StatusInstance g_status_applied;
 /* Written by status_tick_banked(); declared in status.h. */
 StatusTickResult g_status_tick;
 
+/* Frozen-combatant bitmask (status.h); cleared at battle start. */
+uint8_t g_status_frozen_mask;
+
 /* Battle-scoped storage (see status.h).  Zeroed at battle start. */
 static StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
 
@@ -26,6 +29,7 @@ void status_reset_battle(void)
     for (i = 0; i < STATUS_ROUND_SLOTS; i++) {
         s_battle_status[i].count = 0;
     }
+    g_status_frozen_mask = 0;
 }
 
 StatusSlots *status_slots(uint8_t actor_slot)
@@ -34,15 +38,12 @@ StatusSlots *status_slots(uint8_t actor_slot)
     return &s_battle_status[actor_slot];
 }
 
-bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
-                  uint8_t duration)
+bool status_apply(StatusSlots *slots, uint8_t actor_slot, uint8_t id,
+                  uint8_t stacks, uint8_t duration)
 {
-    if (stacks > 15) stacks = 15;
-    if (duration > 15) duration = 15;
-
     g_status_applied.id = STATUS_NONE;
 
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&status_apply_banked;
     g_bk_ptr_a = (void *)slots;
     g_bk_byte_a = id;
@@ -50,8 +51,19 @@ bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
     banked_call_run();
 
     if (g_status_applied.id == STATUS_NONE) {
+        /* Rejected (e.g. slots full): nothing landed, so the frozen
+         * mask must stay untouched -- a rejected FREEZE must not skip
+         * anyone's turn. */
         return false;
     }
+
+    /* FREEZE takes effect immediately: the next attack by this
+     * combatant is skipped; the tick body re-arms the bit while an
+     * instance remains alive. */
+    if (id == STATUS_FREEZE && actor_slot < STATUS_ROUND_SLOTS) {
+        g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
+    }
+
     telemetry_emit(EVENT_STATUS_APPLIED, g_status_applied.id,
                    g_status_applied.stacks, g_status_applied.duration, 0);
     return true;
@@ -59,19 +71,25 @@ bool status_apply(StatusSlots *slots, uint8_t id, uint8_t stacks,
 
 uint8_t status_tick(StatusSlots *slots, uint8_t actor_slot)
 {
-    g_bk_call_bank = 2;
+    g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&status_tick_banked;
     g_bk_ptr_a = (void *)slots;
     g_bk_byte_a = actor_slot;
     banked_call_run();
 
     /* One combined event: damage taken + expiry summary (d2=count,
-     * d3=first expired id).  Only one instance can expire per tick while
-     * the definition table has a single ticking status. */
+     * d3=first expired id), plus one dedicated STATUS_EXPIRED per tick
+     * reporting the first removed instance (docs/combo-system.md §19;
+     * MAX_STATUSES_PER_COMBATANT bounds simultaneity, and multi-expiry
+     * rounds remain fully described by TICKED's d2 count). */
     if (g_status_tick.damage != 0 || g_status_tick.expired_count != 0) {
         telemetry_emit(EVENT_STATUS_TICKED, g_status_tick.damage,
                        actor_slot, g_status_tick.expired_count,
                        g_status_tick.expired_ids[0]);
+        if (g_status_tick.expired_count != 0) {
+            telemetry_emit(EVENT_STATUS_EXPIRED,
+                           g_status_tick.expired_ids[0], actor_slot, 0, 0);
+        }
     }
     return g_status_tick.damage;
 }

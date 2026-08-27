@@ -1,7 +1,7 @@
 {
   "name": "combo_pair_label",
   "test": true,
-  "description": "Two same-value cards read PAIR on the COMBO row regardless of symbol match (SW3+FI3 unsuited: tier PAIR, x120, damage 6*120/100=7). Regression for the old label order that showed FLUSH for suited pairs.",
+  "description": "Two same-value cards read PAIR on the COMBO row regardless of symbol match (SW3+BO3 unsuited: tier PAIR, x120, damage 6*120/100=7). Regression for the old label order that showed FLUSH for suited pairs.",
   "scenario_id": "BATTLE_BOOT",
   "initial_state": {
     "scene": "FIELD",
@@ -27,7 +27,7 @@
     {
       "type": "set_hand_card",
       "index": 1,
-      "card_type": "FI",
+      "card_type": "BO",
       "value": 3
     },
     {

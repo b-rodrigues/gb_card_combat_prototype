@@ -1,7 +1,7 @@
 {
   "name": "card_defend_inert_nonshield",
   "test": true,
-  "description": "In defend phase non-shield cards are inert: playing FI4 contributes 0 block, so the hero takes the full 2 damage from the enemy (slime deck SWORD(2))",
+  "description": "In defend phase non-shield cards are inert: playing BO4 contributes 0 block, so the hero takes the full 2 damage from the enemy (slime deck SWORD(2))",
   "actions": [
     {
       "type": "wait",
@@ -22,7 +22,7 @@
     {
       "type": "set_hand_card",
       "index": 1,
-      "card_type": "FI",
+      "card_type": "BO",
       "value": 4
     },
     {

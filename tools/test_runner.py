@@ -58,7 +58,7 @@ VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
 # scenarios that never ran NEW_GAME would under-report inventory by these
 # starter amounts.  If that use ever broadens, gate the delta on the
 # snapshot's actual origin instead.
-NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_TOME": 3}
+NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_SWORD": 3, "POISON_DAGGER": 2}
 
 def validate_scenario(data, filepath):
     scen_id = data.get("scenario_id")
@@ -219,7 +219,7 @@ def run_scenario(scenario):
                 session.debug_action(session.DBG_ACT_LOAD, slot, 0, 0)
             elif act_type == "set_hand_card":
                 # Overwrite one battle hand slot (index 0-4) with a specific
-                # card (type like"SW"/"SH"/"BO"/"FI"/"HE", value 1-9).  Used by
+                # card (type like "SW"/"SH"/"BO"/"HE"/"DA", value 1-9).  Used by
                 # combo-regression scenarios to build a guaranteed hand rather
                 # than depending on the RNG-shuffled deal.  Runs through the
                 # ROM's real mechanic state (g_game.battle.hand), not test-only
@@ -273,6 +273,28 @@ def run_scenario(scenario):
             elif act_type == "set_sort":
                 session.debug_action(session.DBG_ACT_SET_SORT,
                                      SORT_MODE_MAP[act.get("mode", "OFF")] & 0xFF, 0, 0)
+            elif act_type == "set_hand_card_ring":
+                # Mark an injected hand card as a loot RING (docs/loot.md
+                # 34.3): joker classification, defense shield value,
+                # one-ring selection gate.
+                session.debug_action(session.DBG_ACT_SET_HAND_RING,
+                                     int(act.get("index", 0)) & 0xFF, 0, 0)
+            elif act_type == "apply_status":
+                # Apply a status through the real mechanic (status_apply,
+                # STATUS_APPLIED telemetry included): reaches targets no
+                # card rider can hit today (e.g. freezing the PLAYER).
+                session.debug_action(session.DBG_ACT_APPLY_STATUS,
+                                     int(act.get("slot", 0)) & 0xFF,
+                                     int(act.get("status", 1)) & 0xFF,
+                                     int(act.get("duration", 1)) & 0xFF)
+            elif act_type == "collection_add":
+                # Grant a card to the collection by RAW id (real mechanic:
+                # deck_collection_add).  Raw ids let scenarios reach derived
+                # loot-range CardIds (docs/loot.md §34) that have no name
+                # in the host maps.
+                session.debug_action(session.DBG_ACT_ADD_ITEM,
+                                     int(act.get("card_id", 0)) & 0xFF,
+                                     0, int(act.get("quantity", 1)) & 0xFF)
 
         # Read final snapshot, canonical state buffer and telemetry
         snap = session.snapshot()
@@ -753,7 +775,7 @@ def build_initial_state_from_snapshot(snap, state_snap):
             continue
         # Emit only the delta over the new-game starter grants
         # (game_new_game in src/game/content.c adds IRON_SWORD x2,
-        # WOODEN_SHIELD x2, FIRE_TOME x1 to the collection): the loader
+        # WOODEN_SHIELD x2, FIRE_SWORD x1 to the collection): the loader
         # applies inventory additively, so re-emitting the full observed
         # collection would double-add the starters on reload.
         qty = it.get("quantity", 0) - NEW_GAME_COLLECTION.get(iname, 0)

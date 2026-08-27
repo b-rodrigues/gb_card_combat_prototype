@@ -6,12 +6,13 @@
 
 /* ── Actor engine ──────────────────────────────────────────────────
  * Per-scene actor definitions live in banked ROM (GAME_CONTENT_BANK).
- * actor_load_scene() copies the current scene's definitions at map load:
- * hostiles into World.actors runtime slots and friendlies into
- * g_static_actors[].  Gameplay lookups are pure WRAM. */
+ * actor_load_scene() stages the bank-2 loader body
+ * (src/world/actor_load_banked.c), which reads the registered tables
+ * directly and spawns hostiles into World.actors runtime slots and
+ * friendlies into g_static_actors[].  Gameplay lookups are pure WRAM. */
 
-static const WorldActorTable *g_actor_tables = NULL;
-static uint8_t g_actor_table_count = 0;
+const WorldActorTable *g_actor_registry = NULL;
+uint8_t g_actor_registry_count = 0;
 static uint8_t g_actor_bank = 2;
 
 WorldActorDefinition g_static_actors[7];
@@ -19,44 +20,9 @@ uint8_t g_static_actor_count = 0;
 
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank)
 {
-    g_actor_tables = tables;
-    g_actor_table_count = count;
+    g_actor_registry = tables;
+    g_actor_registry_count = count;
     g_actor_bank = bank;
-}
-
-static const char *actor_name_for_visual(uint8_t visual)
-{
-    if (visual == 'V') return "BAT";
-    if (visual == 'L') return "LORD OF SLIMES";
-    if (visual == 'W') return "WIZARD";
-    return "SLIME";
-}
-
-static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
-{
-    r->actor_id = def->actor_id;
-    r->id = def->id;
-    r->active = 1;
-    r->x = def->x;
-    r->y = def->y;
-    r->facing = def->facing;
-    r->hp = def->hp;
-    r->max_hp = def->max_hp;
-    r->flags = ACTOR_STATE_NONE;
-    r->gold_reward = def->gold_reward;
-    r->reward_currency = def->reward_currency;
-    r->display_name = actor_name_for_visual(def->visual);
-    r->visual = def->visual;
-    r->spawn_x = def->x;
-    r->spawn_y = def->y;
-    r->ai_type = def->ai_type;
-    r->ai_step = 0;
-    r->ai_timer = PATROL_STEP_INTERVAL;
-    r->move_state = 0;
-    r->move_target_x = def->x;
-    r->move_target_y = def->y;
-    r->move_progress = 0;
-    r->battle_type = (uint8_t)def->battle_id;
 }
 
 uint8_t actor_find_hostile_slot(const World *world, uint8_t x, uint8_t y)
@@ -108,46 +74,35 @@ ActorEngageResult actor_engage(const WorldActorDefinition *actor, DialogueState 
     return ENGAGE_NONE;
 }
 
+static const char *actor_name_for_visual(uint8_t visual)
+{
+    if (visual == 'V') return "BAT";
+    if (visual == 'L') return "LORD OF SLIMES";
+    if (visual == 'W') return "WIZARD";
+    return "SLIME";
+}
+
 void actor_load_scene(World *world, MapId map_id, const GameState *state)
 {
-    static WorldActorTable s_load_tbl;
-    static WorldActorDefinition s_load_def;
-    uint8_t i, d, slot;
+    uint8_t i;
 
-    if (!world) return;
+    /* Body runs banked (src/world/actor_load_banked.c): the registered
+     * tables live in the same ROM bank, so the body reads them directly
+     * with no staging copies (AGENTS.md 52.11.1). */
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&actor_load_scene_banked;
+    g_bk_ptr_a = (void *)world;
+    g_bk_ptr_b = (void *)state;
+    g_bk_byte_a = (uint8_t)map_id;
+    banked_call_run();
 
-    for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
-        world->actors[slot].active = 0;
-    }
-    g_static_actor_count = 0;
-
-    if (!g_actor_tables) return;
-
-    for (i = 0; i < g_actor_table_count; i++) {
-        banked_copy(g_actor_bank, &s_load_tbl, &g_actor_tables[i], sizeof(WorldActorTable));
-        if (s_load_tbl.map_id == map_id) {
-            slot = 0;
-            for (d = 0; d < s_load_tbl.count; d++) {
-                banked_copy(g_actor_bank, &s_load_def, &s_load_tbl.defs[d], sizeof(WorldActorDefinition));
-
-                if (s_load_def.actor_id != 0 && game_world_actor_is_defeated(state, s_load_def.actor_id)) {
-                    continue;
-                }
-                if (s_load_def.spawn_variable != 0 &&
-                    game_variable_get(state, (VariableId)s_load_def.spawn_variable) != s_load_def.spawn_value) {
-                    continue;
-                }
-
-                if (s_load_def.flags & ACTOR_FLAG_HOSTILE) {
-                    if (slot < MAX_WORLD_ACTORS) {
-                        actor_spawn(&world->actors[slot++], &s_load_def);
-                    }
-                } else if (g_static_actor_count < 6) {
-                    g_static_actors[g_static_actor_count++] = s_load_def;
-                }
-            }
-            break;
+    /* display_name literals must live in the fixed bank: derive them
+     * here, after the trampoline returns (the body leaves the field
+     * untouched rather than pointing it into bank 2). */
+    for (i = 0; i < MAX_WORLD_ACTORS; i++) {
+        if (world->actors[i].active) {
+            world->actors[i].display_name =
+                actor_name_for_visual(world->actors[i].visual);
         }
     }
 }
-

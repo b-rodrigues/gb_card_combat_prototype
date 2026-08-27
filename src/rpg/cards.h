@@ -50,7 +50,10 @@ typedef struct {
      * chance is in 1/255 units (e.g. 160 ~= 63%); 0 = no rider. */
     uint8_t status_id;    /* StatusId (rpg/status.h); 0 = none */
     uint8_t status_chance; /* roll threshold, 1/255 units */
-    char name[9];       /* 4-8 char display name + NUL */
+    /* 11 chars max incl NUL so a synthesized loot name fits:
+     * "M P DA" — 1-letter material + 1-letter effect + 2-letter weapon
+     * (docs/loot.md §34.1). */
+    char name[12];       /* 4-8 char display name + NUL */
 } CardDefinition;
 
 /* Register the game's card catalog (content, banked ROM).
@@ -68,7 +71,14 @@ extern const CardDefinition *g_card_defs;
 extern uint8_t g_card_defs_count;
 
 /* Look up a card definition by id.  Returns a pointer to a scratch copy
- * (valid until the next call).  Returns NULL for unknown ids. */
+ * (valid until the next call).  Returns NULL for unknown ids.
+ * Loot-range ids (>= LOOT_ID_BASE) synthesize from the loot identity
+ * tables (docs/loot.md §34). */
 const CardDefinition *card_get_def(CardId id);
+
+/* Shared definition scratch (WRAM): card_get_def's return target.  The
+ * bank-3 synth body (loot_synth_banked) writes it directly, so it must
+ * be visible project-wide rather than file-static. */
+extern CardDefinition g_card_scratch;
 
 #endif /* RPG_CARDS_H */

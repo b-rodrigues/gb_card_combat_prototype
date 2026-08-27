@@ -5,12 +5,11 @@
 #include <stdbool.h>
 
 typedef enum {
-    BATTLE_CARD_TYPE_SWORD = 0,  /* SW: Physical attack */
+    BATTLE_CARD_TYPE_SWORD = 0,  /* SW: Physical attack (fire/ice = riders) */
     BATTLE_CARD_TYPE_SHIELD = 1, /* SH: Defense / block */
     BATTLE_CARD_TYPE_BOW = 2,    /* BO: Ranged physical attack */
-    BATTLE_CARD_TYPE_FIRE = 3,   /* FI: Elemental fire attack */
-    BATTLE_CARD_TYPE_HEAL = 4,   /* HE: Restore HP */
-    BATTLE_CARD_TYPE_DAGGER = 5  /* DA: 1 dmg, poison rider (POISON DAGGER) */
+    BATTLE_CARD_TYPE_HEAL = 3,   /* HE: Restore HP (rings) */
+    BATTLE_CARD_TYPE_DAGGER = 4  /* DA: 1 dmg, poison rider (POISON DAGGER) */
 } BattleCardType;
 
 /* Sentinel for an empty hand slot (played cards stay empty until the turn-
@@ -32,6 +31,12 @@ typedef struct {
      * status_chance in 1/255 units; 0/0 = no rider. */
     uint8_t status_id;
     uint8_t status_chance;
+    /* Loot RING marker (docs/loot.md §34.3): joker for both hand
+     * phases -- offense skips its value in the damage sum (the ring
+     * heals its power instead), defense counts it as shield value;
+     * classification substitutes its value freely for the best tier.
+     * MAX ONE per selection (battle-side gate). */
+    uint8_t ring;
 } Card;
 
 /* Get one-line short description for card type */
@@ -40,6 +45,6 @@ const char *card_get_description(uint8_t type);
 /* Packed description table geometry shared by card.c (fixed wrapper) and
  * card_content.c (bank-2 blob).  Stride = longest text + NUL, padded. */
 #define CARD_DESC_STRIDE 18
-#define CARD_DESC_TYPES  6
+#define CARD_DESC_TYPES  5
 
 #endif /* CARD_H */

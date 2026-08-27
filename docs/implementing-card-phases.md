@@ -97,7 +97,7 @@ For example:
 
 ```text
 SW2 SW3 SW4 SH3 SH5
-BO2 BO4 FI3 HE5 ...
+BO2 BO4 SW3 HE5 ...
 ```
 
 Don't randomize yet.
@@ -113,7 +113,7 @@ This should be its own isolated system.
 Given:
 
 ```text
-SW2 BO3 FI4
+SW2 BO3 SW4
 ```
 
 it should return something like:

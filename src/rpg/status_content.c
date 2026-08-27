@@ -1,21 +1,25 @@
-#pragma bank 2
+#pragma bank 3
 
 #include "status.h"
 #include "banked.h"
 
 /* ── Status definitions + banked bodies (Phase C) ───────────────────
- * Runs from ROM bank 2 via the WRAM banked-call trampoline; reads only
+ * Runs from ROM bank 3 via the WRAM banked-call trampoline; reads only
  * its own bank-local definition table and the staged pointers/bytes, and
  * writes through staged pointers / shared WRAM result structs
  * (g_status_applied in status.c).  Never calls fixed-bank code.
  *
- * Stacking rule (plan §16): POISON STACKs up to max_stacks and refreshes
- * duration.  Balance values are deliberately provisional (§26). */
+ * Stacking rule (plan §16): POISON/BURN STACK up to max_stacks and
+ * refresh duration; FREEZE does not stack (control status -- a frozen
+ * combatant skips its next attack, battle-side).  Balance values are
+ * deliberately provisional (§26). */
 
 static const StatusDefinition s_status_defs[STATUS_DEF_COUNT] = {
     /* id            tick  max  dur */
     { STATUS_NONE,     0,   0,   0 },
-    { STATUS_POISON,   1,   5,   3 }
+    { STATUS_POISON,   1,   5,   3 },
+    { STATUS_BURN,     2,   3,   2 },
+    { STATUS_FREEZE,   0,   1,   1 }
 };
 
 static const StatusDefinition *status_def(uint8_t id)
@@ -74,6 +78,7 @@ void status_apply_banked(void)
 void status_tick_banked(void)
 {
     StatusSlots *slots = (StatusSlots *)g_bk_ptr_a;
+    uint8_t actor_slot = g_bk_byte_a;
     uint8_t i;
     uint8_t damage = 0;
     uint8_t expired = 0;
@@ -82,6 +87,10 @@ void status_tick_banked(void)
 
     g_status_tick.damage = 0;
     g_status_tick.expired_count = 0;
+    /* Consume last round's frozen flag for this actor; re-set below if
+     * the status is still active (battle tests the bit once per attack).
+     * Slots beyond STATUS_ROUND_SLOTS can't occur (wrapper guards). */
+    g_status_frozen_mask &= (uint8_t)~(1 << actor_slot);
 
     for (i = 0; i < slots->count; ) {
         StatusInstance *inst = &slots->slot[i];
@@ -92,6 +101,11 @@ void status_tick_banked(void)
              * applications only refresh duration and deepen stacks for
              * telemetry. */
             damage += def->tick;
+            if (inst->id == STATUS_FREEZE) {
+                /* Still frozen entering this round: the combatant skips
+                 * its next attack (battle consumes the mask bit). */
+                g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
+            }
         }
         inst->duration--;
         if (inst->duration == 0) {
@@ -100,7 +114,7 @@ void status_tick_banked(void)
             }
             /* Remove by shifting the tail down, field-wise: struct
              * assignment lowers to __memcpy, which lives in the fixed
-             * bank and is unreachable while bank 2 is mapped. */
+             * bank and is unreachable while bank 3 is mapped. */
             slots->slot[i].id = slots->slot[slots->count - 1].id;
             slots->slot[i].stacks = slots->slot[slots->count - 1].stacks;
             slots->slot[i].duration = slots->slot[slots->count - 1].duration;
