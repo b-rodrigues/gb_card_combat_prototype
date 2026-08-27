@@ -107,6 +107,8 @@ void battle_card_undo_banked(void);
 void battle_execute_combo(Battle *b);
 void battle_update(Battle *b);
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx);
+void battle_defend_resolve(Battle *b);
+void battle_defend_resolve_banked(void);
 
 /* Banked no-arg deck-bridge body (src/battle/battle_init_content.c, ROM
  * bank 2), dispatched by battle_start via the WRAM trampoline. */

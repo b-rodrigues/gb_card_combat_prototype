@@ -1668,23 +1668,26 @@ collection.  Owning two identical combos = two copies in the collection.
 
 Rollable EFFECTS are the §34.1 axis rows (plain / poison / fire-resv /
 ice-resv).  "Healing" below is NOT an effect axis: it is the weapon
-ROLE (rings, and future healing shields) whose combat resolution heals.
+ROLE (rings) whose combat resolution heals.
 
 | Weapon | plain | poison | fire/ice | healing role |
 |---|---|---|---|---|
 | Sword  | Y | N | Y | N |
 | Dagger | Y | Y | N | N |
 | Bow    | Y | N | N | N |
-| Shield | Y | N | N | Y |
+| Shield | Y | N | N | N |
 | Ring   | N | N | N | Y |
 
-Rings are ALWAYS healing-class.  Illegal combinations are unrepresentable:
-the generator only rolls legal (weapon, effect) pairs from the table.
+Rings are ALWAYS healing-class.  Plain shields never restore HP: a defense
+over-block without a ring is clamped to zero (no heal) — see §34.4.
+Illegal combinations are unrepresentable: the generator only rolls legal
+(weapon, effect) pairs from the table.
 
 ## 34.3 Rings
 
-* Rings have NO attack or block of their own -- they are the best healing
-  vector (ring heal > healing-shield heal at every material).
+* Rings have NO attack or block of their own -- they are the only healing
+  role: plain shields never restore HP, so any defense over-block heal must
+  come from a ring in the combo (see §34.4).
 * Attack phase: a selected ring is a JOKER for the offense hand -- it
   substitutes as whatever value produces the best poker tier, deals 0
   attack damage (excluded from the attack sum), and heals its power when
@@ -1703,10 +1706,13 @@ the generator only rolls legal (weapon, effect) pairs from the table.
 ## 34.4 Combat resolution rules
 
 * Defense: hero always takes the NET --
-  `net = attack - sum(shield block) - sum(ring/heal)` -- positive or
-  negative (negative net restores HP, capped at max HP).  IMPLEMENTED.
-* Attack: healing shields/rings count toward poker hands, deal 0 attack
-  damage, and heal their value as the combo resolves.  IMPLEMENTED.
+  `net = attack - sum(shield block) - sum(ring/heal)`.  Positive net
+  damages; negative net (over-block) is CLAMPED to zero — a plain-shield
+  over-block never restores HP.  Over-block heals (restored by `-net`,
+  capped at max HP) ONLY when a ring (healing shield) is in the defense
+  combo (`EVENT_HEALED` cause d1=2).  IMPLEMENTED.
+* Attack: rings count toward poker hands, deal 0 attack damage, and heal
+  their value as the combo resolves.  IMPLEMENTED.
 * Poison rider: poison-effect daggers carry the on-hit status rider
   (existing status system); chance tuned like DA1.  IMPLEMENTED.
 

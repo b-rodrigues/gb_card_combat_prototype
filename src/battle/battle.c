@@ -291,6 +291,29 @@ void battle_card_undo(Battle *b)
     }
 }
 
+/* Fixed-bank wrapper for the defense net resolution (docs/loot.md §34.4).
+ * The banked body (src/battle/battle_defend_content.c) computes and applies
+ * the HP change from staged WRAM state, then stages back the two possible
+ * magnitudes (g_bk_byte_a = net damage, g_bk_byte_b = net heal).  Only the
+ * telemetry stays here -- the fixed bank is completely full (make memmap). */
+void battle_defend_resolve(Battle *b)
+{
+    if (!b) return;
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&battle_defend_resolve_banked;
+    g_bk_ptr_a = (void *)b;
+    banked_call_run();
+
+    if (g_bk_byte_a != 0) {
+        telemetry_emit(EVENT_DAMAGE_RECEIVED, g_bk_byte_a, 0, 0, 0);
+    } else {
+        telemetry_emit(EVENT_DAMAGE_RECEIVED, 0, 0, 0, 0);
+        if (g_bk_byte_b != 0) {
+            telemetry_emit(EVENT_HEALED, g_bk_byte_b, 2, 0, 0);
+        }
+    }
+}
+
 static void battle_resolve_hand_discard(Battle *b)
 {
     uint8_t i, idx;
@@ -369,7 +392,6 @@ static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
 
 void battle_execute_combo(Battle *b)
 {
-    int16_t net;
     EffectResult res;
     if (!b || b->battle_over) return;
 
@@ -488,24 +510,10 @@ void battle_execute_combo(Battle *b)
         }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
         battle_play_hand(b, false, &res);
-        /* Net-damage defense (docs/loot.md §34.4): the hero takes the
-         * NET -- positive net damages, negative net RESTORES HP
-         * (capped at max). */
-        net = (int16_t)b->enemy_incoming_dmg - (int16_t)res.amount;
-        if (net > 0) {
-            combatant_take_damage(&b->player, (uint8_t)net);
-            telemetry_emit(EVENT_DAMAGE_RECEIVED, (uint8_t)net, 0, 0, 0);
-        } else {
-            /* net <= 0: the unsigned trick is safe -- subtracting a
-             * negative `net` ADDS its magnitude; capped at max_hp. */
-            uint16_t nh = (uint16_t)b->player.hp - net;
-            b->player.hp = (nh > b->player.max_hp) ? b->player.max_hp
-                                                   : (uint8_t)nh;
-            telemetry_emit(EVENT_DAMAGE_RECEIVED, 0, 0, 0, 0);
-            if (net < 0) {
-                telemetry_emit(EVENT_HEALED, (uint8_t)-net, 2, 0, 0);
-            }
-        }
+        /* Net-damage defense (docs/loot.md §34.4): computed and applied in
+         * the banked body (battle_defend_content.c) to keep the fixed bank
+         * small; the wrapper above emits the damage/heal telemetry. */
+        battle_defend_resolve(b);
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
         b->delay_timer = 30;
