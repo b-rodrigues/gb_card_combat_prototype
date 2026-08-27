@@ -259,17 +259,40 @@ static const char *battle_combo_pending_name(const volatile Battle *battle)
 {
     uint8_t i, w = 0;
     uint8_t defend = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND);
+    uint8_t ring_pos = 0xFF;
+    uint8_t saved, tier, best, v;
 
     if (battle->combo_count == 0) return "";
     for (i = 0; i < battle->combo_count; i++) {
         const Card *c = &battle->hand[battle->selected_indices[i]];
-        if (defend && c->type != BATTLE_CARD_TYPE_SHIELD) continue;
+        /* Defend preview mirrors combo_resolve_banked: SHIELD cards AND
+         * rings enter the hand; everything else is ignored. */
+        if (defend && c->type != BATTLE_CARD_TYPE_SHIELD && !c->ring) continue;
         s_pv_vals[w] = c->value;
         s_pv_types[w] = c->type;
+        if (c->ring && ring_pos == 0xFF) ring_pos = w;
         w++;
     }
-    return battle_combo_tier_name(
-        combo_classify(s_pv_vals, s_pv_types, w));
+    if (ring_pos != 0xFF) {
+        /* Ring JOKER (docs/loot.md §34.3): the ring substitutes freely,
+         * so preview the BEST tier over values 1..10 -- the full legal
+         * value range, which covers the ring's raw value, so no separate
+         * baseline classify is needed.  Gameplay allows at most one ring
+         * per selection (battle_card_select), so tracking the first ring
+         * is exact. */
+        best = HAND_NONE;
+        for (v = 1; v <= 10; v++) {
+            saved = s_pv_vals[ring_pos];
+            s_pv_vals[ring_pos] = v;
+            tier = combo_classify(s_pv_vals, s_pv_types, w);
+            if (tier > best) best = tier;
+            s_pv_vals[ring_pos] = saved;
+        }
+        tier = best;
+    } else {
+        tier = combo_classify(s_pv_vals, s_pv_types, w);
+    }
+    return battle_combo_tier_name(tier);
 }
 
 static void battle_draw_battle_combo(const volatile Battle *battle)
