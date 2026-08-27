@@ -51,7 +51,8 @@ typedef struct {
     uint8_t status_id;    /* StatusId (rpg/status.h); 0 = none */
     uint8_t status_chance; /* roll threshold, 1/255 units */
     /* 11 chars max incl NUL so a synthesized loot name fits:
-     * "MYT PSN DA" (docs/loot.md §34.1). */
+     * "M P DA" — 1-letter material + 1-letter effect + 2-letter weapon
+     * (docs/loot.md §34.1). */
     char name[12];       /* 4-8 char display name + NUL */
 } CardDefinition;
 

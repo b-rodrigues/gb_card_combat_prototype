@@ -2,12 +2,20 @@
 #include "actor.h"
 #include "scene.h"
 #include "card.h"
+#include "rpg/status.h"
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <gbdk/console.h>
 #include <stdio.h>
 
 char g_ui_screen_buf[18][21];
+
+/* CGB present flag: detected once at ui_init() via a VBK write/read (the
+ * only technique reliable when the boot ROM is skipped and _cpu is 0 --
+ * AGENTS.md §38.1).  Gates every VRAM bank-1 attribute write so a DMG's
+ * tilemap is never overwritten with palette bytes.  Read from the banked
+ * battle renderer too (WRAM, always mapped). */
+uint8_t g_is_cgb;
 
 #ifdef DEBUG_BUILD
 /* Mirror of the background tilemap ring (0x9800), written alongside every
@@ -27,12 +35,10 @@ static void ui_put_char(uint8_t x, uint8_t y, char ch);
  * rendering module (ui_battle_content.c) so it must be extern. */
 uint8_t ui_font_tile_base;
 
-static const palette_color_t cgb_palette[4] = {
-    RGB8(255, 255, 255),
-    RGB8(170, 170, 170),
-    RGB8(85, 85, 85),
-    RGB8(0, 0, 0)
-};
+/* Background palette ramps live in bank 3 (ui_color_banked.c); ui_init()
+ * banked_copies them into WRAM to program BCPS.  Index 0 = grayscale,
+ * 1-4 = effect colors (fire red / ice blue / heal green / poison purple). */
+extern const palette_color_t cgb_bg_palettes[5][4];
 
 /* Player-sprite ramp: entry 3 (the hero ink color) is light grey so the
  * hero is visible against the white floor on CGB. */
@@ -102,11 +108,29 @@ void ui_init(void)
     OBP0_REG = 0xE4;
     OBP1_REG = 0xE4;
 
-    /* Set CGB Palettes 0-7 with auto-increment bit (0x80) */
-    BCPS_REG = 0x80;
+    /* CGB detection (see g_is_cgb): on CGB the VBK write/read round-trips;
+     * on DMG 0xFF4F is unmapped (open bus) so it never matches 0x01. */
+    VBK_REG = 1;
+    g_is_cgb = (VBK_REG == 1);
+    VBK_REG = 0;
+
+    /* Program all 8 BG palettes unconditionally (harmless on DMG, where
+     * BCPS/BCPD are unmapped no-ops): 0 = gray, 1-4 = effect colors,
+     * 5-7 = gray.  The ramps are banked_copy'd from bank 3 into WRAM
+     * scratch first (banked_copy already ran for the font above).
+     * OBJ palettes stay grayscale for the player sprite. */
+    banked_copy(3, g_ui_screen_buf, cgb_bg_palettes, 40);
+    for (p = 0; p < 8; p++) {
+        const uint8_t *ramp = (const uint8_t *)g_ui_screen_buf +
+                              (uint8_t)(((p <= 4) ? p : 0) << 3);
+        uint8_t c;
+        BCPS_REG = (uint8_t)(0x80 | (p << 3));
+        for (c = 0; c < 8; c++) {
+            BCPD_REG = ramp[c];
+        }
+    }
     OCPS_REG = 0x80;
     for (p = 0; p < 64; p++) {
-        BCPD_REG = ((const uint8_t *)cgb_palette)[p & 7];
         OCPD_REG = ((const uint8_t *)cgb_sprite_palette)[p & 7];
     }
 
@@ -583,7 +607,7 @@ void ui_update_battle(const Battle *battle)
 }
 
 /* Indexed by BattleCardType (src/battle/card.h). */
-static const char s_card_bt_codes[] = "SW\0SH\0BO\0FI\0HE\0DA";
+static const char s_card_bt_codes[] = "SW\0SH\0BO\0HE\0DA";
 
 static const char *ui_card_code(uint8_t battle_type)
 {
@@ -618,6 +642,38 @@ void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
         out[2] = (char)('0' + ones);
         out[3] = '\0';
     }
+}
+
+/* Effect color for a card, keyed by its elemental effect (fire/ice/poison)
+ * or heal role.  The engine currently encodes the element as the on-hit
+ * rider (status_id) and the heal role as the HEAL type / ring flag, so this
+ * reads those -- not the future burn/frozen *statuses* (docs/loot.md §34). */
+uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal)
+{
+    if (is_heal) return UI_COLOR_HEAL;
+    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    return UI_COLOR_NONE;
+}
+
+/* Staging for the bank-3 attribute writer (x, y, len, palette). */
+static uint8_t s_color_span_args[4];
+
+/* Set the CGB per-tile palette for a horizontal span of background tiles.
+ * Thin fixed-bank wrapper: stages x/y/len/palette and dispatches the bank-3
+ * body (ui_color_banked.c) through the WRAM trampoline so the fixed bank
+ * stays under 0x8000 (AGENTS.md §55.5).  No-op for palette 0. */
+void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
+{
+    s_color_span_args[0] = x;
+    s_color_span_args[1] = y;
+    s_color_span_args[2] = len;
+    s_color_span_args[3] = palette;
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_color_span_banked;
+    g_bk_ptr_a = (void *)s_color_span_args;
+    banked_call_run();
 }
 
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)

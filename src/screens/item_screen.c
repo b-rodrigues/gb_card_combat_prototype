@@ -249,15 +249,13 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
-    if (loot_is_loot_id(id)) {
-        /* Loot cards show their synthesized identity name ("WD SW",
-         * "MYT PSN DA") instead of the generic type/power code so drops
-         * feel distinct (docs/loot.md §34.1). */
-        ui_draw_text_line(2, y, def->name, 10);
-    } else {
-        ui_card_code_str(def->battle_type, def->power, code);
-        ui_draw_text_line(2, y, code, 4);
-    }
+    /* All cards show their descriptive identity name ("I SW", "W F SW"),
+     * not the battle code (docs/loot.md §34.1); colored by effect (fixed
+     * 8-tile span; trailing blanks are invisible). */
+    ui_draw_text_line(2, y, def->name, 10);
+    ui_color_span(2, y, 8,
+                  ui_color_class(def->status_id,
+                                 def->battle_type == BATTLE_CARD_TYPE_HEAL));
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
@@ -356,6 +354,9 @@ static void draw_card_detail_page(Game *g)
     if (!def) return;
 
     ui_draw_text_line(0, y, def->name, 11);
+    ui_color_span(0, y, 11,
+                  ui_color_class(def->status_id,
+                                 def->battle_type == BATTLE_CARD_TYPE_HEAL));
     y += 2;
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);

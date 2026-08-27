@@ -55,24 +55,25 @@ void game_new_game(GameState *state)
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
 
-    /* Starter deck (docs/deck-management.md §1): 10 cards — 4x SW3, 3x SH2,
-     * 3x FI4.  The original five are decked first so the opening battle hand
-     * (SW SW SH SH FI) is unchanged; the extras only deepen the draw pile.
+    /* Starter deck (docs/deck-management.md §1): 12 cards — 4x SW3, 3x SH2,
+     * 3x SW4 (Fire Sword), 2x DA1.  The original five are decked first so the
+     * opening battle hand (SW SW SH SH SW) is unchanged; the extras only
+     * deepen the draw pile.
      * Granted as real owned state via the silent mutators so battles draw
      * from the player's actual deck from turn one. */
     deck_collection_add(&state->cards, CARD_IRON_SWORD, 4);
     deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 3);
-    deck_collection_add(&state->cards, CARD_FIRE_TOME, 3);
+    deck_collection_add(&state->cards, CARD_FIRE_SWORD, 3);
     deck_collection_add(&state->cards, CARD_POISON_DAGGER, 2);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
     deck_add_card(&state->cards, CARD_IRON_SWORD);
     deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
-    deck_add_card(&state->cards, CARD_FIRE_TOME);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
+    deck_add_card(&state->cards, CARD_FIRE_SWORD);
     deck_add_card(&state->cards, CARD_POISON_DAGGER);
     deck_add_card(&state->cards, CARD_POISON_DAGGER);
     deck_add_card(&state->cards, CARD_IRON_SWORD);

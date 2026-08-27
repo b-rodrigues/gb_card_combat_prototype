@@ -17,9 +17,9 @@
 
 static const struct {
     uint8_t power_bonus;   /* stacked onto weapon base power */
-    char code[4];          /* abbreviated name prefix (§34.1) */
+    char code[4];          /* 1-letter material initial (§34.1) */
 } s_materials[LOOT_NMATERIALS] = {
-    { 0, "WD"  }, { 1, "BRN" }, { 2, "IRN" }, { 3, "MYT" }
+    { 0, "W"  }, { 1, "B" }, { 2, "I" }, { 3, "M" }
 };
 
 /* Effect rows: on-hit status rider applied by battle (docs/combo-system.md
@@ -28,31 +28,31 @@ static const struct {
 static const struct {
     uint8_t status_id;
     uint8_t chance;        /* on-hit threshold, 1/255 units */
-    char code[4];          /* abbreviated name infix (§34.1) */
+    char code[4];          /* 1-letter effect initial (§34.1) */
 } s_effects[LOOT_NEFFECTS] = {
-    { STATUS_NONE,     0,   ""    },   /* plain   */
-    { STATUS_POISON,   128, "PSN" },   /* daggers */
-    { STATUS_BURN,     128, "FR"  },   /* swords  */
-    { STATUS_FREEZE,   96,  "IC"  }    /* swords  */
+    { STATUS_NONE,     0,   ""  },   /* plain   */
+    { STATUS_POISON,   128, "P" },   /* daggers */
+    { STATUS_BURN,     128, "F" },   /* swords  */
+    { STATUS_FREEZE,   96,  "I" }    /* swords  */
 };
 
 static const struct {
     uint8_t base_power;
     uint8_t cost;
-    char symbol[3];        /* abbreviated name suffix (§34.1) */
+    char symbol[3];        /* 2-letter weapon code (§34.1) */
 } s_weapons[LOOT_NWEAPONS] = {
     { 3, 1, "SW" },   /* sword */
     { 2, 1, "SH" },   /* shield */
     { 2, 1, "BO" },   /* bow */
     { 1, 1, "DA" },   /* dagger */
-    { 2, 1, "HE" },   /* ring (heal amount = power) */
+    { 2, 1, "RG" },   /* ring (heal amount = power) */
     { 0, 0, "??" },   /* reserved */
     { 0, 0, "??" },   /* reserved */
     { 0, 0, "??" }    /* reserved */
 };
 
-/* Build the abbreviated name "[material] [effect ]weapon" into the
- * scratch def (§34.1): e.g. "WD SW", "MYT PSN DA".  Max 10 chars +
+/* Build the compact identity name "[material][ effect] weapon" into the
+ * scratch def (§34.1): e.g. "W SW", "M P DA", "W F SW".  Max 7 chars +
  * NUL -- fits CardDefinition.name[12].  `has_rider` false suppresses
  * the effect infix (illegal pairs carry no rider to name). */
 static void synth_name(uint8_t material, uint8_t effect, uint8_t weapon,

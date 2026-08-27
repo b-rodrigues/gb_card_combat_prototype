@@ -5,6 +5,7 @@
 #include "battle.h"
 #include "card.h"
 #include "banked.h"
+#include "rpg/status.h"
 #include <gb/gb.h>
 
 /* ── Self-contained VRAM helpers (duplicated from ui.c so the banked module
@@ -106,12 +107,43 @@ static void battle_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     battle_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
+/* Effect color for a battle card (mirrors ui_color_class; banked code must
+ * not call the fixed-bank helper).  status_id = on-hit rider element,
+ * is_heal = ring/heal role. */
+static uint8_t battle_color_class(uint8_t status_id, uint8_t is_heal)
+{
+    if (is_heal) return UI_COLOR_HEAL;
+    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    return UI_COLOR_NONE;
+}
+
+/* CGB per-tile palette span (self-contained mirror of ui_color_span, gated
+ * on g_is_cgb).  Banked body, so it cannot call fixed-bank helpers. */
+static void battle_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
+{
+    uint8_t i;
+    volatile uint8_t *dst;
+
+    if (!g_is_cgb || palette == 0) return;
+    if (y >= 18 || x >= 32) return;
+    if ((uint8_t)(x + len) > 32) len = (uint8_t)(32 - x);
+
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+    VBK_REG = 1;
+    for (i = 0; i < len; i++) {
+        battle_vram_sync_write(&dst[i], (uint8_t)(palette & 0x07));
+    }
+    VBK_REG = 0;
+}
+
 /* ── Card helpers (inlined from card.c — banked code cannot call fixed). ── */
 
 static const char *battle_card_type_code(uint8_t type)
 {
-    static const char codes[] = "SW\0SH\0BO\0FI\0HE\0DA\0??";
-    return (type < 6) ? (codes + (type * 3)) : (codes + 18);
+    static const char codes[] = "SW\0SH\0BO\0HE\0DA\0??";
+    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
 }
 
 static const char *battle_card_get_description(uint8_t type)
@@ -120,7 +152,6 @@ static const char *battle_card_get_description(uint8_t type)
         case BATTLE_CARD_TYPE_SWORD:  return "Sword: physical";
         case BATTLE_CARD_TYPE_SHIELD: return "Shield: block dmg";
         case BATTLE_CARD_TYPE_BOW:    return "Bow: ranged dmg";
-        case BATTLE_CARD_TYPE_FIRE:   return "Fire: magic dmg";
         case BATTLE_CARD_TYPE_HEAL:   return "Heal: restore HP";
         case BATTLE_CARD_TYPE_DAGGER: return "Dagger: poison";
         default: return "";
@@ -257,7 +288,7 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
 static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i, k;
-    uint8_t col, ctype, cvalue;
+    uint8_t col, ctype, cvalue, cstat, cring, ccolor;
     /* Snapshot ALL volatile struct fields into locals before the loops.
      * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); the
      * battle_draw_card_at call + timer ISR (di/wait/ei on real hardware)
@@ -278,6 +309,8 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         col = (uint8_t)(i << 2);
         ctype  = battle->hand[i].type;
         cvalue = battle->hand[i].value;
+        cstat  = battle->hand[i].status_id;
+        cring  = battle->hand[i].ring;
 
         s_sel_marker = ' ';
         for (k = 0; k < cc; k++) {
@@ -287,10 +320,18 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             }
         }
         battle_draw_card_at(col, 14, ctype, cvalue);
+        /* Color the code + its selection digit by the card's effect. */
+        ccolor = battle_color_class(cstat,
+                                    (cring != 0) ||
+                                    (ctype == BATTLE_CARD_TYPE_HEAL));
+        battle_color_span(col, 14, 3, ccolor);
         if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
         } else {
             battle_put_char((uint8_t)(col + 1), 15, s_sel_marker);
+            if (s_sel_marker != ' ') {
+                battle_color_span((uint8_t)(col + 1), 15, 1, ccolor);
+            }
         }
     }
 }
@@ -359,9 +400,18 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
             /* Loot reveal (docs/loot.md §34.5): a two-line centered
-             * "YOU FOUND:" block over the otherwise-blank rows 11-12. */
+             * "YOU FOUND:" block over the otherwise-blank rows 11-12,
+             * with the card name colored by its effect. */
+            uint8_t len = 0, x;
+            uint8_t ncolor;
             battle_draw_banner_line(11, "YOU FOUND:", 20);
             battle_draw_banner_line(12, g_card_scratch.name, 20);
+            while (len < 20 && g_card_scratch.name[len]) len++;
+            x = (uint8_t)((20 - len) / 2);
+            ncolor = battle_color_class(
+                g_card_scratch.status_id,
+                g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL);
+            battle_color_span(x, 12, len, ncolor);
         } else {
             battle_draw_text_line(0, 12,
                 (battle->msg_id == 1) ? "NO ENERGY!" :

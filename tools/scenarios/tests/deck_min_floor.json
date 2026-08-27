@@ -1,7 +1,7 @@
 {
   "name": "deck_min_floor",
   "test": true,
-  "description": "deck_remove_card enforces DECK_MIN_CARDS=5 on the 12-card starter deck (SW4 SH3 FI3 DA2): two removals succeed (12 -> 10); after decking 3 herbs (deck=13) seven more single-copy removals succeed (deck=6); a tenth removal lands exactly on the floor (5, allowed) and an eleventh is rejected by the floor guard (no CARD_REMOVED_FROM_DECK event -- pinned by the exact success count of 10 despite 11 attempts).",
+  "description": "deck_remove_card enforces DECK_MIN_CARDS=5 on the 12-card starter deck (SW4 SH3 SW3 DA2): two removals succeed (12 -> 10); after decking 3 herbs (deck=13) seven more single-copy removals succeed (deck=6); a tenth removal lands exactly on the floor (5, allowed) and an eleventh is rejected by the floor guard (no CARD_REMOVED_FROM_DECK event -- pinned by the exact success count of 10 despite 11 attempts).",
   "actions": [
     {
       "type": "wait",
@@ -9,7 +9,7 @@
     },
     {
       "type": "deck_remove",
-      "card": "FIRE_TOME"
+      "card": "FIRE_SWORD"
     },
     {
       "type": "wait",
@@ -74,7 +74,7 @@
     },
     {
       "type": "deck_remove",
-      "card": "FIRE_TOME"
+      "card": "FIRE_SWORD"
     },
     {
       "type": "wait",
@@ -106,7 +106,7 @@
     },
     {
       "type": "deck_remove",
-      "card": "FIRE_TOME"
+      "card": "FIRE_SWORD"
     },
     {
       "type": "wait",

@@ -386,7 +386,7 @@ Supported `initial_state` fields:
   "variables": { "GOLD": 150, "CHAPTER": 2 },
   "party": { "HERO": { "level": 3, "hp": 24, "max_hp": 30 } },
   "inventory": { "POTION": 2, "BOMB": 1 },
-  "deck": { "IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_TOME": 1 },
+  "deck": { "IRON_SWORD": 2, "WOODEN_SHIELD": 2, "FIRE_SWORD": 1 },
   "world": { "SLIME_FIELD": "DEFEATED" },
   "screen": "BATTLE",
   "dialogue": "MAYOR_GREETING",

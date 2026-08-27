@@ -1633,16 +1633,20 @@ Phase 2 shipped on branch `loot-instances`.
 ## 34.1 Identity: material x effect x weapon
 
 Every loot card is fully defined by three axes; the assembled name is
-"[material] [effect?] [weapon]" (effect omitted when plain):
+"[material][effect?][space]weapon" — one letter per material/effect, two
+letters for the weapon (effect omitted when plain):
 
 ```text
-MATERIALS (power bonus)      EFFECTS                WEAPONS (symbol)
-wood   +0                    plain (no rider)       sword  SW
-bronze +1                   poison                 bow    BO
-iron   +2                   fire  (reserved)       dagger DA
-mythril +3                  ice   (reserved)       shield SH
-                                                   ring   HE
+MATERIALS (power bonus)      EFFECTS                WEAPONS
+wood   W   +0                plain (no rider, no code)   sword  SW
+bronze B   +1                poison P                    bow    BO
+iron   I   +2                fire   F                    dagger DA
+mythril M   +3               ice    I                    shield SH
+                                                         ring   RG (battle code HE)
 ```
+
+Names look like `W SW` (plain wood sword), `M P DA` (mythril poison
+dagger), `W F SW` (wood fire sword).
 
 * Weapon base powers: sword 3, shield 2, bow 2, ring 2 (heals), dagger 1.
 * Material bonus stacks on top: mythril sword = 6.

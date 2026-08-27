@@ -1,7 +1,7 @@
 {
   "name": "loot_reveal_message",
   "test": true,
-  "description": "Always-drop + victory reveal (docs/loot.md 34.5): every victory grants a loot card and the battle result banner shows the two-line 'YOU FOUND: <name>' block. Seed 5002 yields a WOOD POISON DAGGER (WD PSN DA); asserts BATTLE_WON + LOOT_CARD_ADDED and the row-11 reveal text.",
+  "description": "Always-drop + victory reveal (docs/loot.md 34.5): every victory grants a loot card and the battle result banner shows the two-line 'YOU FOUND: <name>' block. Seed 5002 yields a WOOD POISON DAGGER (W P DA); asserts BATTLE_WON + LOOT_CARD_ADDED and the row-11 reveal text.",
   "initial_state": {
     "scene": "FIELD",
     "player": {

@@ -42,7 +42,7 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "SW3"
+      "contains": "I SW"
     }
   ],
   "initial_state": {

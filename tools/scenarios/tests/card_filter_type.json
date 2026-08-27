@@ -1,7 +1,7 @@
 {
   "name": "card_filter_type",
   "test": true,
-  "description": "Type filter ATTACK shows only attack cards in the CARDS tab: the merged collection's single SW3 entry",
+  "description": "Type filter ATTACK shows only attack cards in the CARDS tab (swords + dagger, no shield/ring rows)",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -29,7 +29,7 @@
     {
       "type": "screen_row",
       "row": 6,
-      "contains": "SW3"
+      "contains": "I SW"
     },
     {
       "type": "screen_row_not_contains",

@@ -43,7 +43,7 @@
     {
       "type": "screen_row",
       "row": 11,
-      "contains": "Fire: magic dmg"
+      "contains": "Sword: physical"
     },
     {
       "type": "screen_row",

@@ -58,7 +58,7 @@ VALID_PROGRESSION_NAMES = set(PROGRESSION_TARGET_MAP)
 # scenarios that never ran NEW_GAME would under-report inventory by these
 # starter amounts.  If that use ever broadens, gate the delta on the
 # snapshot's actual origin instead.
-NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_TOME": 3, "POISON_DAGGER": 2}
+NEW_GAME_COLLECTION = {"IRON_SWORD": 4, "WOODEN_SHIELD": 3, "FIRE_SWORD": 3, "POISON_DAGGER": 2}
 
 def validate_scenario(data, filepath):
     scen_id = data.get("scenario_id")
@@ -775,7 +775,7 @@ def build_initial_state_from_snapshot(snap, state_snap):
             continue
         # Emit only the delta over the new-game starter grants
         # (game_new_game in src/game/content.c adds IRON_SWORD x2,
-        # WOODEN_SHIELD x2, FIRE_TOME x1 to the collection): the loader
+        # WOODEN_SHIELD x2, FIRE_SWORD x1 to the collection): the loader
         # applies inventory additively, so re-emitting the full observed
         # collection would double-add the starters on reload.
         qty = it.get("quantity", 0) - NEW_GAME_COLLECTION.get(iname, 0)

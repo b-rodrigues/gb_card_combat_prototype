@@ -30,7 +30,7 @@
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)
 #define CARD_WOODEN_SHIELD (CARD_FIRST_GAME + 1)
 #define CARD_WOOD_RING     (CARD_FIRST_GAME + 2)   /* curated shop ring (docs/loot.md §34.6) */
-#define CARD_FIRE_TOME     (CARD_FIRST_GAME + 3)
+#define CARD_FIRE_SWORD    (CARD_FIRST_GAME + 3)
 #define CARD_POISON_DAGGER (CARD_FIRST_GAME + 4)
 #define CARD_AMULET        (CARD_FIRST_GAME + 5)
 #define CARD_BOW_10        (CARD_FIRST_GAME + 6)

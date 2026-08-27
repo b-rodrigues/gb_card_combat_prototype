@@ -14,24 +14,26 @@
  * It never calls fixed-bank code (see src/core/banked.h). */
 
 /* Safety-net fallback deck, mirroring the granted starter deck
- * (docs/deck-management.md §1): 4x SW3, 3x SH2, 3x FI4 (3 uses).  Only used
- * when the persistent DeckState is empty (legacy saves / debug states).
- * First five entries match the granted deal order so the opening hand is
- * identical whether battles run on real or fallback state. */
+ * (docs/deck-management.md §1): 4x SW3, 3x SH2, 3x Fire Sword (SW4, burn
+ * rider applied below), 2x DA1.  Only used when the persistent DeckState
+ * is empty (legacy saves / debug states).  First five entries match the
+ * granted deal order so the opening hand is identical whether battles run
+ * on real or fallback state.  Nibble = (type<<4)|value with the renumbered
+ * BattleCardType (SW=0, SH=1, BO=2, HE=3, DA=4); the fire sword rides the
+ * SWORD type (0) with value 4 and is marked BURN below by index. */
 static const uint8_t s_starter_deck_packed[MAX_DECK_SIZE] = {
-    0x03, 0x03, 0x12, 0x12, 0x34,
-    0x03, 0x12, 0x34, 0x34, 0x03,
-    0x51, 0x51,
+    0x03, 0x03, 0x12, 0x12, 0x04,
+    0x03, 0x12, 0x04, 0x04, 0x03,
+    0x41, 0x41,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
 /* Bank-local type→effect defaults (mirrors card_effect_for_type(); banked
  * code must not call fixed-bank helpers, AGENTS.md 52.11.1). */
-static const uint8_t s_type_effects[6] = {
+static const uint8_t s_type_effects[5] = {
     CARD_EFFECT_DAMAGE_TARGET,  /* SWORD */
     CARD_EFFECT_BLOCK_DAMAGE,   /* SHIELD */
     CARD_EFFECT_DAMAGE_TARGET,  /* BOW */
-    CARD_EFFECT_DAMAGE_TARGET,  /* FIRE */
     CARD_EFFECT_HEAL_HP,        /* HEAL */
     CARD_EFFECT_DAMAGE_TARGET   /* DAGGER */
 };
@@ -53,17 +55,17 @@ void deck_init_default_banked(void)
         d->cards[i].uses_remaining = 0xFF; /* unlimited until overridden */
         d->cards[i].cost = 1;              /* basic starter cards are cheap */
         d->cards[i].effect =
-            (t < 6) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
+            (t < 5) ? s_type_effects[t] : CARD_EFFECT_DAMAGE_TARGET;
         d->cards[i].status_id = STATUS_NONE; /* starter cards: no rider */
         d->cards[i].status_chance = 0;
+        /* Fire Sword: the starter's fire entries are SWORD value 4 and
+         * carry the BURN rider (the packed nibble encodes type+value
+         * only, so the rider is applied here, mirroring CARD_FIRE_SWORD). */
+        if (t == BATTLE_CARD_TYPE_SWORD && d->cards[i].value == 4) {
+            d->cards[i].status_id = STATUS_BURN;
+            d->cards[i].status_chance = 128;
+        }
     }
-    /* FI4 mirrors FIRE_TOME: 3 uses per battle, energy cost 2. */
-    d->cards[4].uses_remaining = 3;
-    d->cards[4].cost = 2;
-    d->cards[7].uses_remaining = 3;
-    d->cards[7].cost = 2;
-    d->cards[8].uses_remaining = 3;
-    d->cards[8].cost = 2;
 }
 
 /* Field-wise card copy/swap helpers.  The banked body MUST NOT use struct
