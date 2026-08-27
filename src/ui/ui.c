@@ -620,8 +620,11 @@ void ui_update_battle(const Battle *battle)
     banked_call_run();
 }
 
-/* Indexed by BattleCardType (src/battle/card.h). */
-static const char s_card_bt_codes[] = "SW\0SH\0BO\0HE\0DA";
+/* Shop item codes indexed by BattleCardType (src/battle/card.h).  The shop
+ * labels a HEAL card with its ITEM code — a heal card is a ring, RG — while
+ * the combat hand shows the battle code (HE) via its own table in
+ * ui_battle_content.c. */
+static const char s_card_bt_codes[] = "SW\0SH\0BO\0RG\0DA";
 
 static const char *ui_card_code(uint8_t battle_type)
 {

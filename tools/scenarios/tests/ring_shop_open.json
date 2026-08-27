@@ -1,7 +1,7 @@
 {
   "name": "ring_shop_open",
   "test": true,
-  "description": "The Shopkeeper's stock row renders the battle code derived from the card definition (HE5 for WOOD_RING, price 20) \u2014 the shop layer duplicates no display strings",
+  "description": "The Shopkeeper's stock row renders the item code derived from the card definition (RG5 for the iron healing ring, price 20) \u2014 the shop layer duplicates no display strings",
   "scenario_id": "TOWN_BOOT",
   "actions": [
     {
@@ -21,7 +21,7 @@
     {
       "type": "screen_row",
       "row": 5,
-      "contains": "HE5"
+      "contains": "RG5"
     },
     {
       "type": "screen_row",

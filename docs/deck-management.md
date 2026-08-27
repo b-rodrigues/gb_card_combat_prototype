@@ -32,11 +32,13 @@ Consequences:
   state and mirrors this same 12-card set (first five entries in the same
   order).
 - Healing is **not** free at the start. The only heal source is the shop's
-  WOOD RING card — **HE5** (power 5, `uses_per_battle` 3, price 20g).
+  IRON RING card — **RG5** (power 5, `uses_per_battle` 3, price 20g).
   Buy it, then add it to the deck from the CARDS menu.
-- Shop rows render the battle code derived from the card definition
-  (`ui_card_code_str`: type code + power digit, e.g. `HE5`, `SW3`) plus its
-  `price` — no display strings are duplicated in the shop layer.
+- Shop rows render the ITEM code derived from the card definition
+  (`ui_card_code_str`: weapon-type code + power digit, e.g. `RG5`, `SW3` --
+  a HEAL card is a ring, so the shop shows `RG` rather than its battle
+  code `HE`) plus its `price` — no display strings are duplicated in the
+  shop layer.
 - The old 20-card starter table is gone; the deck grows toward the 20-card
   cap through play.
 
@@ -60,7 +62,7 @@ Each card occupies a **pair of rows**:
 ```
 
 - **Lore name**: `def->name`, the player-facing card name (e.g. `I SW`,
-  `W SH`, `F SW`, `W RG`), shown in the CARDS tab and the detail page. The
+  `W SH`, `F SW`, `I RG`), shown in the CARDS tab and the detail page. The
   combat hand keeps the short `<battle_type><power>` code (`SW3`, `HE5`, ...)
   since that is where the abbreviation fits the HUD.
 - **Description**: `card_get_description(battle_type)` — the same string the
