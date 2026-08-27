@@ -26,7 +26,7 @@ extern uint8_t g_is_cgb;
 uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal);
 
 /* Set the CGB per-tile palette for a horizontal span of background tiles
- * (no-op on DMG and for palette 0). */
+ * (no-op on DMG; palette 0 resets to grayscale). */
 void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette);
 
 void ui_init(void);

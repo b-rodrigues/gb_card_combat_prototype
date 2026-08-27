@@ -122,13 +122,14 @@ static uint8_t battle_color_class(uint8_t status_id, uint8_t is_heal)
 }
 
 /* CGB per-tile palette span (self-contained mirror of ui_color_span, gated
- * on g_is_cgb).  Banked body, so it cannot call fixed-bank helpers. */
+ * on g_is_cgb; keep in sync with ui_color_span_banked in ui_color_banked.c).
+ * Banked body, so it cannot call fixed-bank helpers. */
 static void battle_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
 {
     uint8_t i;
     volatile uint8_t *dst;
 
-    if (!g_is_cgb || palette == 0) return;
+    if (!g_is_cgb) return;
     if (y >= 18 || x >= 32) return;
     if ((uint8_t)(x + len) > 32) len = (uint8_t)(32 - x);
 
@@ -290,7 +291,7 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
 static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i, k;
-    uint8_t col, ctype, cvalue, cstat, cring, ccolor;
+    uint8_t col, ctype, cvalue, cstat, cring, ceffect, ccolor;
     /* Snapshot ALL volatile struct fields into locals before the loops.
      * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); the
      * battle_draw_card_at call + timer ISR (di/wait/ei on real hardware)
@@ -309,10 +310,11 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
 
     for (i = 0; i < BATTLE_HAND_SIZE; i++) {
         col = (uint8_t)(i << 2);
-        ctype  = battle->hand[i].type;
-        cvalue = battle->hand[i].value;
-        cstat  = battle->hand[i].status_id;
-        cring  = battle->hand[i].ring;
+        ctype   = battle->hand[i].type;
+        cvalue  = battle->hand[i].value;
+        cstat   = battle->hand[i].status_id;
+        cring   = battle->hand[i].ring;
+        ceffect = battle->hand[i].effect;
 
         s_sel_marker = ' ';
         for (k = 0; k < cc; k++) {
@@ -326,7 +328,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         ccolor = battle_color_class(cstat,
                                     (cring != 0) ||
                                     (ctype == BATTLE_CARD_TYPE_HEAL) ||
-                                    (battle->hand[i].effect == CARD_EFFECT_HEAL_HP));
+                                    (ceffect == CARD_EFFECT_HEAL_HP));
         battle_color_span(col, 14, 3, ccolor);
         if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');
