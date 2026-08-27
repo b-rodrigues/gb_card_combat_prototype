@@ -512,7 +512,15 @@ void battle_execute_combo(Battle *b)
         battle_play_hand(b, false, &res);
         /* Net-damage defense (docs/loot.md §34.4): computed and applied in
          * the banked body (battle_defend_content.c) to keep the fixed bank
-         * small; the wrapper above emits the damage/heal telemetry. */
+         * small; the wrapper above emits the damage/heal telemetry.
+         *
+         * Contract for the banked body: the immediately-preceding
+         * battle_play_hand() populated last_combo (count == combo_count,
+         * cards[0..combo_count) are the defend hand) and resolved the block
+         * sum into g_effect_last.amount.  The banked body relies on both --
+         * its ring scan walks last_combo.cards[0..combo_count) and its net
+         * uses g_effect_last.amount -- so nothing may run between this call
+         * and battle_defend_resolve(). */
         battle_defend_resolve(b);
         battle_resolve_hand_discard(b);
         b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
