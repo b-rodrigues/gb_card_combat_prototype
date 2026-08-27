@@ -57,7 +57,7 @@ extern uint16_t g_loot_rng_state;
  * Catalog (non-loot) prices come from the game's card table. */
 
 /* Bank-3 bodies:
- * game_loot_drop_banked   -- victory gate + profile pick + roll
+ * game_loot_drop_banked   -- always-drop + profile pick + roll
  *                            (src/game/loot_drop_banked.c), dispatched
  *                            by game_loot_drop() in src/game/content.c.
  * loot_synth_banked       -- fills g_card_scratch for a derived id,

@@ -250,7 +250,7 @@ void world_on_battle_end(Game *g, bool victory)
         /* Loot grant (docs/loot.md §8/§17/§34.5): the drop was ROLLED at
          * battle start (game_loot_drop, isolated RNG) and its derived id
          * waits in g_loot_id -- victory grants it to the collection.
-         * CARD_NONE = gate missed or collection previously full. */
+         * CARD_NONE = collection previously full (no room to grant). */
         if (g_loot_id != CARD_NONE &&
             deck_collection_add(&g->state.cards, g_loot_id, 1)) {
             telemetry_emit(EVENT_LOOT_CARD_ADDED, g_loot_id,

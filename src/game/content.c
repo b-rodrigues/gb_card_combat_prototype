@@ -14,10 +14,10 @@
 #define HERO_START_GOLD  20
 
 /* ── Victory loot drop (docs/loot.md §17/§34.5) ─────────────────────
- * Thin fixed-bank wrapper: the whole decision (gate, profile pick,
- * roll, encode) runs as ONE bank-3 body (loot_drop_banked.c); only
- * this staging call stays fixed.  Returns the derived CardId, or 0 =
- * no drop this victory. */
+ * Thin fixed-bank wrapper: the whole decision (profile pick, roll,
+ * encode) runs as ONE bank-3 body (loot_drop_banked.c); only this
+ * staging call stays fixed.  Returns the derived CardId (always drops
+ * -- quality varies, not presence). */
 uint8_t game_loot_drop(uint8_t battle_type)
 {
     g_bk_call_bank = 3;

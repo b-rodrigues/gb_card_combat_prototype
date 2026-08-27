@@ -358,10 +358,10 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
-            /* Loot reveal: "LOOT:" + the drop's synthesized identity
-             * name (docs/loot.md §34.5). */
-            battle_draw_text_line(0, 12, "LOOT:", 5);
-            battle_draw_text_line(5, 12, g_card_scratch.name, 11);
+            /* Loot reveal (docs/loot.md §34.5): a two-line centered
+             * "YOU FOUND:" block over the otherwise-blank rows 11-12. */
+            battle_draw_banner_line(11, "YOU FOUND:", 20);
+            battle_draw_banner_line(12, g_card_scratch.name, 20);
         } else {
             battle_draw_text_line(0, 12,
                 (battle->msg_id == 1) ? "NO ENERGY!" :

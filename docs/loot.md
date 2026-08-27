@@ -1707,7 +1707,8 @@ the generator only rolls legal (weapon, effect) pairs from the table.
 
 ## 34.5 Generation (Phase 2, implemented)
 
-On victory, one combat card rolls behind a 50% rng gate:
+Every victory drops exactly one combat card (no rng gate — quality is
+what varies, not presence):
 
 ```text
 archetype weapon <- enemy profile bias (game layer, docs/loot.md §17)
@@ -1719,7 +1720,7 @@ Deterministic per seed (§26).  Telemetry: LOOT_CARD_ADDED
 (d0=derived id, d1=count after) -- the id itself identifies the
 material/effect/weapon roll via the §34.1 macros.
 
-Implementation: the whole decision (gate + profile pick + roll + encode)
+Implementation: the whole decision (profile pick + roll + encode)
 is ONE bank-2 body (`src/game/loot_drop_banked.c`) behind the thin
 `game_loot_drop()` wrapper; it steps the ISOLATED loot stream
 (`g_loot_rng_state`, seeded from the main seed by `rng_set_seed`) so drops
@@ -1727,6 +1728,9 @@ never shift shared-RNG scenario outcomes.  The drop path must stay nearly
 fixed-bank-free — overflowing `_CODE`/`_HOME` past 0x8000 corrupts bank 2
 and hangs the guest (AGENTS.md §52.18).  Regression:
 `tools/scenarios/tests/loot_drop_victory.json`.
+
+The reveal is a two-line centered "YOU FOUND: / <name>" block drawn on the
+battle victory banner (rows 11-12) when the drop is granted.
 
 ## 34.6 Economy (Merchant = Card Merchant)
 
