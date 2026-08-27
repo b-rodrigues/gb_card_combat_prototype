@@ -19,6 +19,19 @@
  * <= 0 is CLAMPED to zero (no damage); HP is restored only when a ring
  * (healing shield) is in the defense combo, capped at max HP.
  *
+ * Damage path replicates combatant_take_damage() inline (the banked body
+ * may not call the fixed-bank helper per §52.11.1): the helper is only
+ * `hp = (damage >= hp) ? 0 : hp - damage` -- a pure HP clamp with no death
+ * flag / status / invuln side effects, so the inline copy is equivalent.
+ * The hero's HP==0 defeat check that follows in battle_execute_combo still
+ * relies on this writing hp to 0 on an overkill hit.
+ *
+ * Telemetry: g_bk_byte_a reports the HP ACTUALLY lost (clamped to current
+ * HP), not the nominal `net` -- on an overkill hit it is the remaining HP
+ * (possibly 0), a deliberate change from the old nominal-net reporting
+ * (the two agree whenever the hit does not overkill; the clamped value is
+ * the observable damage).
+ *
  * On return it stages the two possible magnitudes into g_bk_byte_a
  * (net damage taken) and g_bk_byte_b (net HP healed); the fixed wrapper
  * emits the corresponding telemetry. */
