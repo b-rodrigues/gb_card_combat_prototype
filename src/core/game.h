@@ -12,6 +12,13 @@
 #include "rpg/state.h"
 #include "rpg/progression.h"
 
+/* Targeted menu updates (AGENTS.md 36): a cursor-only UP/DOWN in the ITEM
+ * and SHOP screens repaints just the `>` glyph via the bank-2 cursor body
+ * (screen_content.c, mirrored into g_ui_screen_buf) instead of invalidating
+ * the render cache (which forces a whole-screen LCD-off redraw + banked
+ * calls that mask the 256 Hz music ISR).  Window-scroll moves (which also
+ * shift the card list) still take the rare full-redraw path. */
+
 typedef struct {
     bool valid;
     ScreenId prev_screen;

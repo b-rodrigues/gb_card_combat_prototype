@@ -189,6 +189,88 @@ static const ShopDefinition *sc_shop_active(const Game *g)
     return &g_shops[id - 1];
 }
 
+/* Cursor-only menu move (ITEM_DIRTY_CURSOR, AGENTS.md 36): called from the
+ * ITEM and SHOP screens' update() on UP/DOWN.  Repaints just the `>` glyph:
+ * two 1-tile writes, no frame/tab redraw and no LCD-off, so the music ISR
+ * stays uninterrupted (AGENTS.md 35/36/52.18).  The wider body also owns the
+ * window-shift decision: when the CARDS window must scroll, it moves the
+ * scroll and flags the render cache so render() takes the rare full-redraw
+ * path; a pure caret move leaves the render cache untouched.
+ *
+ * Banked so the row math and VRAM writes stay out of the fixed bank
+ * (AGENTS.md 52.18).  Inputs via staging: g_bk_ptr_a = Game*, g_bk_byte_a =
+ * old index, g_bk_byte_b = new index.  Writes game state through the staged
+ * Game* (WRAM is always mapped).  The row layout is derived from
+ * g->item_menu_tab for the ITEM screen; when g->screen == SCREEN_SHOP the
+ * rows are linear 5 + i (shop_content_render).  ITEM_FIRST_CARD /
+ * ITEM_VISIBLE_CARD mirror src/screens/item_screen.c (the CARDS window
+ * layout: ROW_TOP 0, FIRST_CARD 1, VISIBLE_CARDS 5). */
+#define ITEM_FIRST_CARD   1
+#define ITEM_VISIBLE_CARD 5
+
+static uint8_t bm_mode(const Game *g)
+{
+    return (g->screen == SCREEN_SHOP) ? 2 : (uint8_t)g->item_menu_tab;
+}
+
+static uint8_t bm_cursor_row(uint8_t mode, uint8_t index, uint8_t scroll)
+{
+    uint8_t pos;
+    if (mode == 2)                /* SHOP: linear rows */
+        return (uint8_t)(5u + index);
+    if (mode == 1)                /* TAB_QUEST */
+        return (uint8_t)(5 + (index << 1));
+    if (index == 0)               /* ROW_TOP (FILTER/SORT row) */
+        return 5;
+    pos = (uint8_t)(index - ITEM_FIRST_CARD);
+    if (scroll == 0)
+        return (uint8_t)(6 + (pos << 1));
+    return (uint8_t)(5 + ((pos - scroll) << 1));
+}
+
+void item_menu_cursor_banked(void)
+{
+    Game *g = (Game *)g_bk_ptr_a;
+    uint8_t mode, old_index, new_index;
+    uint8_t old_row, new_row;
+    uint8_t pos, need_scroll;
+
+    if (!g) return;
+    mode = bm_mode(g);
+    old_index = g_bk_byte_a;
+    new_index = g_bk_byte_b;
+    g->item_menu_index = new_index;
+
+    /* Window-shift decision (CARDS tab only): the visible card window must
+     * follow the caret.  When it moves, let render() do the full redraw
+     * (the per-cell row math is meaningless outside the visible window). */
+    if (mode == 0) {
+        need_scroll = g->item_menu_scroll;
+        if (new_index <= ITEM_FIRST_CARD)
+            need_scroll = 0;
+        else {
+            pos = (uint8_t)(new_index - ITEM_FIRST_CARD);
+            if (pos < need_scroll)
+                need_scroll = pos;
+            else if (pos > (uint8_t)(need_scroll + ITEM_VISIBLE_CARD - 1))
+                need_scroll = (uint8_t)(pos - (ITEM_VISIBLE_CARD - 1));
+        }
+        if (need_scroll != g->item_menu_scroll) {
+            g->item_menu_scroll = need_scroll;
+            g->render_cache.valid = false;   /* rare window shift -> full redraw */
+            return;
+        }
+    }
+
+    /* Pure caret move: repaint the two cells only. */
+    old_row = bm_cursor_row(mode, old_index, g->item_menu_scroll);
+    new_row = bm_cursor_row(mode, new_index, g->item_menu_scroll);
+    if (old_row != new_row) {
+        sc_put_char(0, old_row, ' ');
+        sc_put_char(0, new_row, '>');
+    }
+}
+
 void shop_content_render(void)
 {
     Game *g = (Game *)g_bk_ptr_a;

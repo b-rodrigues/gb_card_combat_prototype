@@ -25,6 +25,21 @@ static const ShopDefinition *shop_active(const Game *g)
 /* Full shop content draw lives in the bank-2 body (screen_content.c) so the
  * fixed _CODE/_HOME area stays under 0x8000 (AGENTS.md 52.11.1). */
 void shop_content_render(void);
+/* Shared caret repaint (bank 2, with the ITEM screen). */
+void item_menu_cursor_banked(void);
+
+/* Cursor-only move (AGENTS.md 36): stage the old index (banked_run -> body)
+ * and let the bank-2 body set g->item_menu_index and repaint row 5+index.
+ * No fixed-side cell math, no render-cache touch. */
+static void shop_menu_step(Game *g, uint8_t new_index)
+{
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&item_menu_cursor_banked;
+    g_bk_ptr_a = (void *)g;
+    g_bk_byte_a = g->item_menu_index;   /* old index; body owns mutation */
+    g_bk_byte_b = new_index;
+    banked_call_run();
+}
 
 void shop_screen_update(Game *g)
 {
@@ -37,11 +52,9 @@ void shop_screen_update(Game *g)
 
     if (count > 0) {
         if (input_pressed(INPUT_UP) && g->item_menu_index > 0) {
-            g->item_menu_index--;
-            g->render_cache.valid = false;
+            shop_menu_step(g, (uint8_t)(g->item_menu_index - 1));
         } else if (input_pressed(INPUT_DOWN) && (uint8_t)(g->item_menu_index + 1) < count) {
-            g->item_menu_index++;
-            g->render_cache.valid = false;
+            shop_menu_step(g, (uint8_t)(g->item_menu_index + 1));
         } else if (input_pressed(INPUT_A) && g->item_menu_index < count) {
             CardId card_id = def->items[g->item_menu_index];
             const CardDefinition *card = card_get_def(card_id);
