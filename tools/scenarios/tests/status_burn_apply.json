@@ -1,7 +1,7 @@
 {
   "name": "status_burn_apply",
   "test": true,
-  "description": "On-hit status rider Phase D: a SW1 hand card carrying BURN (chance 255=guaranteed) applies BURN (stacks 1, duration 2) to the slime; burn ticks 2 damage per round for 2 rounds and then expires",
+  "description": "On-hit status rider Phase D: a SW1 hand card carrying BURN (chance 255=guaranteed) applies BURN (stacks 1, duration 3) to the slime; burn ticks 1 damage per round for 3 rounds and then expires",
   "scenario_id": "BATTLE_BOOT",
   "actions": [
     {
@@ -116,11 +116,15 @@
     },
     {
       "type": "press",
-      "button": "A"
+      "button": "SELECT"
     },
     {
       "type": "wait",
-      "frames": 6
+      "frames": 55
+    },
+    {
+      "type": "wait",
+      "frames": 70
     },
     {
       "type": "press",
@@ -131,12 +135,8 @@
       "frames": 55
     },
     {
-      "type": "press",
-      "button": "A"
-    },
-    {
       "type": "wait",
-      "frames": 6
+      "frames": 70
     },
     {
       "type": "press",
@@ -144,7 +144,19 @@
     },
     {
       "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "wait",
       "frames": 70
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
     },
     {
       "type": "wait",
@@ -172,18 +184,18 @@
       "type": "event_arg",
       "event": "STATUS_APPLIED",
       "index": 2,
-      "value": 2
+      "value": 3
     },
     {
       "type": "event_count",
       "event": "STATUS_TICKED",
-      "count": 2
+      "count": 3
     },
     {
       "type": "event_arg",
       "event": "STATUS_TICKED",
       "index": 0,
-      "value": 2
+      "value": 1
     },
     {
       "type": "event_arg",

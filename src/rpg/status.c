@@ -20,8 +20,9 @@ StatusTickResult g_status_tick;
 /* Frozen-combatant bitmask (status.h); cleared at battle start. */
 uint8_t g_status_frozen_mask;
 
-/* Battle-scoped storage (see status.h).  Zeroed at battle start. */
-static StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
+/* Battle-scoped storage (see status.h).  Zeroed at battle start.
+ * Non-static so the bank-3 battle HUD can color names by active status. */
+StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
 
 void status_reset_battle(void)
 {
