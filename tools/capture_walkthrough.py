@@ -387,7 +387,8 @@ def main():
     def picker_open():
         return any("LR CYCLE" in r for r in bg_text(pb))
 
-    ret = press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
+    ret = press_until("b", lambda: stable(
+        lambda: "SHOP" not in bg_text(pb)[0]), settle=30,
                 label="shop close")
     check("shop closed", ret)
     ret = press_until("start", quick_open, settle=30, label="quick screen")
@@ -465,10 +466,6 @@ def main():
 
     x, y = pos2()
     print(f"battle walk: boot at ({x},{y})")
-    if not advance_to_overworld(pb):
-        check("Walk B: boot reached overworld", False, "stuck on title/intro")
-    pos_addr = find_player(pb)
-
     # FIELD (4,4) -> down to row 8 -> right to (13,8) -> right into the
     # hostile slime at (14,8), which resolves to an encounter on commit.
     ok = walk2("down", lambda: pos2()[1] == 8)
@@ -500,8 +497,8 @@ def main():
     pos_addr = find_player(pb)
 
     def pos3():
-        return (pb.memory[WRAM_BASE + pos_addr],
-                pb.memory[WRAM_BASE + pos_addr + 1])
+        return (pb.memory[pos_addr],
+                pb.memory[pos_addr + 1])
 
     def step3(btn):
         pb.button_press(btn)
