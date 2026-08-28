@@ -1,8 +1,34 @@
 #include "audio.h"
 
 MusicTrack g_audio_current_track = MUSIC_NONE;
+uint8_t g_sound_enabled = 1;
 static uint8_t step_counter = 0;
 static uint8_t note_index = 0;
+
+/* ── Channel-2 SFX layer ────────────────────────────────────────────
+ * Music runs on channel 1 (see play_note / audio_update below).  Effect
+ * sounds are short one-shot notes on channel 2 (NR21-NR24), so they never
+ * collide with the music channel.  A tiny one-entry sequencer steps one
+ * note every timer tick (same ISR clock); it is a fixed set of small
+ * squelch/confirm blips rather than a note table. */
+#define SFX_ENVELOPE_ON 0xF4
+#define SFX_ENVELOPE_OFF 0x00
+static uint8_t sfx_active = 0;
+static uint8_t sfx_ticks = 0;
+
+void audio_play_sfx(uint8_t s)
+{
+    (void)s;
+    if (!g_sound_enabled) return;
+    /* A short confirm-style square blip on channel 2.  Split trigger so
+     * the volume/envelope lands on a fresh triggering edge. */
+    NR21_REG = 0x80;
+    NR22_REG = SFX_ENVELOPE_ON;
+    NR23_REG = 0x64;
+    NR24_REG = 0x80 | 0x03;
+    sfx_active = 1;
+    sfx_ticks = 1;
+}
 
 #ifdef DEBUG_BUILD
 volatile uint16_t g_audio_ticks = 0;
@@ -52,6 +78,35 @@ static const uint8_t victory_notes[VICTORY_NOTE_COUNT] = {
     1, 5, 6, 8, 0           /* D4 G4 A4 D5 rest */
 };
 
+/* Title: a slow, open modal theme (D minor-ish), sparse and mysterious.
+ * The waking whale / closed-sky motif. */
+static const uint8_t title_notes[16] = {
+    1, 4, 6, 8,  6, 4, 1, 0,
+    13, 6, 5, 3,  1, 3, 4, 0
+};
+
+/* Town: warm, comfortable major-ish melody (F/C-ish), a friendly hub. */
+static const uint8_t town_notes[24] = {
+    4, 5, 6, 5,  4, 1, 3, 5,
+    4, 3, 4, 5,  6, 5, 4, 3,
+    4, 4, 5, 6,  8, 6, 5, 0
+};
+
+/* Dungeon / castle: tense, close, minor, with an ominous downward turn. */
+static const uint8_t dungeon_notes[24] = {
+    2, 2, 13, 2,  4, 4, 2, 2,
+    13, 13, 11, 13,  4, 2, 13, 2,
+    1, 1, 2, 1,  4, 5, 4, 0
+};
+
+/* Boss: rapid, driving, urgent -- a fast ostinato against a rising answer. */
+static const uint8_t boss_notes[32] = {
+    2, 2, 13, 2,  4, 4, 2, 2,
+    13, 13, 11, 13,  5, 5, 13, 5,
+    5, 5, 4, 5,  6, 6, 5, 6,
+    8, 8, 6, 8,  4, 2, 13, 0
+};
+
 static void play_note(uint16_t freq)
 {
     if (freq == 0) {
@@ -88,6 +143,7 @@ void audio_init(void)
 void audio_play_music(MusicTrack track)
 {
     if (g_audio_current_track == track) return;
+    if (!g_sound_enabled) return;
     /* Suppress the ISR while switching: set MUSIC_NONE first so the
      * timer interrupt never sees the new track with a stale note_index
      * (which could immediately kill a one-shot like MUSIC_VICTORY). */
@@ -109,14 +165,15 @@ MusicTrack audio_get_current_track(void)
  * here in the fixed bank because the timer ISR calls audio_update()
  * directly.  len is the note count; loops wrap via mask/compare,
  * VICTORY (one_shot) falls silent after its last note. */
-static const uint8_t *const s_track_notes[MUSIC_VICTORY + 1] = {
-    0, lacrimosa_notes, summer_notes, victory_notes
+static const uint8_t *const s_track_notes[MUSIC_BOSS + 1] = {
+    0, lacrimosa_notes, summer_notes, victory_notes,
+    title_notes, town_notes, dungeon_notes, boss_notes
 };
-static const uint8_t s_track_len[MUSIC_VICTORY + 1] = {
-    0, 32, 32, VICTORY_NOTE_COUNT
+static const uint8_t s_track_len[MUSIC_BOSS + 1] = {
+    0, 32, 32, VICTORY_NOTE_COUNT, 16, 24, 24, 32
 };
-static const uint8_t s_track_ticks[MUSIC_VICTORY + 1] = {
-    0, 43, 17, VICTORY_TICKS_PER_NOTE
+static const uint8_t s_track_ticks[MUSIC_BOSS + 1] = {
+    0, 43, 17, VICTORY_TICKS_PER_NOTE, 60, 40, 30, 12
 };
 
 void audio_update(void)
@@ -127,6 +184,18 @@ void audio_update(void)
 #ifdef DEBUG_BUILD
     g_audio_ticks++;
 #endif
+
+    /* Step the channel-2 SFX one-shot (a handful of timer ticks), then
+     * silence it so it does not ring on past its envelope. */
+    if (sfx_active) {
+        if (sfx_ticks == 0) {
+            NR22_REG = SFX_ENVELOPE_OFF;
+            sfx_active = 0;
+        } else {
+            sfx_ticks--;
+        }
+    }
+
     if (g_audio_current_track == MUSIC_NONE) return;
 
     notes = s_track_notes[g_audio_current_track];

@@ -20,7 +20,9 @@ typedef enum {
     SCREEN_SHOP      = 5,
     SCREEN_ITEM      = 6,
     SCREEN_ENDING    = 7,
-    SCREEN_SAVE_LOAD = 8
+    SCREEN_SAVE_LOAD = 8,
+    SCREEN_TITLE     = 9,
+    SCREEN_INTRO     = 10
 } ScreenId;
 
 /*
@@ -68,5 +70,23 @@ void ending_screen_update(Game *g);
 void ending_screen_render(Game *g);
 void save_load_screen_update(Game *g);
 void save_load_screen_render(Game *g);
+void title_screen_update(Game *g);
+void title_screen_render(Game *g);
+void intro_screen_update(Game *g);
+void intro_screen_render(Game *g);
+
+/* Bank-2 no-arg bodies dispatched by title_screen_render() (banked layout
+ * constraint, AGENTS.md 52.11.1).  title_content_render() reads
+ * g_bk_byte_a/b (menu showing + index); intro_content_render() reads
+ * g_bk_byte_a (slide). */
+void title_content_render(void);
+void intro_content_render(void);
+
+/* Bank-2 no-arg bodies dispatched by the simple_screens render wrappers
+ * (thanks/ending/game-over).  game_over_content_render() reads
+ * g_bk_byte_a (choice). */
+void thanks_content_render(void);
+void ending_content_render(void);
+void game_over_content_render(void);
 
 #endif /* SCREEN_H */

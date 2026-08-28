@@ -18,21 +18,31 @@ void game_render_reset(Game *g)
     banked_call_run();
 }
 
-/* Reset the world to a fresh new-game state (used by the Continue? menu and boot). */
-void game_restart(Game *g)
+/* Reset the world to a fresh new-game state: canonical state, the runtime
+ * world engine copy, dialogue, and the frame counter.  Does NOT choose a
+ * screen or music -- the caller (boot->TITLE or in-game restart) decides
+ * where the player lands (AGENTS.md 54.1). */
+static void game_prepare_new_game(Game *g)
 {
-    if (!g) return;
     g->frame = 0;
     g->game_over_choice = 0;
     g->shop_id = 1;
-    g->screen = SCREEN_OVERWORLD;
-    g->prev_screen = SCREEN_OVERWORLD;
     game_new_game(&g->state);
     world_init(&g->world, &g->state);
     dialogue_init(&g->dialogue);
+    game_render_reset(g);
+}
+
+/* Start a fresh playthrough at the overworld (ENDING restart, GAME_OVER
+ * YES, and the last intro slide's drop into the world). */
+void game_restart(Game *g)
+{
+    if (!g) return;
+    g->screen = SCREEN_OVERWORLD;
+    g->prev_screen = SCREEN_OVERWORLD;
+    game_prepare_new_game(g);
     audio_play_music(MUSIC_OVERWORLD);
     telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
-    game_render_reset(g);
 }
 
 void game_init(Game *g)
@@ -45,7 +55,22 @@ void game_init(Game *g)
     banked_call_init();
     telemetry_init();
     telemetry_set_frame_ptr(&g->frame);
-    game_restart(g);
+    /* Boot into the classic title screen (not straight into the world),
+     * with a fresh new-game state behind it. */
+    g->screen = SCREEN_TITLE;
+    g->prev_screen = SCREEN_TITLE;
+    g->title_menu_showing = 0;
+    g->title_menu_index = 0;
+    g->intro_slide = 0;
+    game_prepare_new_game(g);
+    /* On real hardware the `uint8_t g_sound_enabled = 1` default is applied
+     * by CRT0's .data copy; the debug harness skips CRT0 and jumps straight
+     * to main(), so re-assert the sound-on default here (matches the
+     * hardware boot state).  Without this, audio_play_music() no-ops under
+     * the harness and music_track assertions report NONE. */
+    g_sound_enabled = 1;
+    audio_play_music(MUSIC_TITLE);
+    telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_TITLE, 0, 0, 0);
     game_render(g);
 
 #ifdef DEBUG_BUILD

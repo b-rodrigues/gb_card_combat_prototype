@@ -187,7 +187,11 @@ typedef enum {
     EVENT_LOOT_GENERATED,   /* reserved (kept for wire stability) */
     EVENT_CARD_SOLD,        /* d0=CardId d1=gold received d2=count after */
     EVENT_TURN_SKIPPED,     /* d0=enemy slot (1..n) d1=cause StatusId */
-    EVENT_STATUS_RESISTED   /* d0=status id d1=target slot (roll failed) */
+    EVENT_STATUS_RESISTED,  /* d0=status id d1=target slot (roll failed) */
+    /* Title / presentation (append-only wire contract). */
+    EVENT_NEW_GAME_STARTED, /* NEW GAME chosen on the title menu */
+    EVENT_GAME_CONTINUED,   /* CONTINUE chosen on the title menu */
+    EVENT_SOUND_TOGGLED     /* d0 = g_sound_enabled (1 = ON, 0 = OFF) */
 } GameEventType;
 
 typedef struct {

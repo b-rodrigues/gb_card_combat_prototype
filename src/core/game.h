@@ -53,6 +53,9 @@ typedef struct Game {
     uint8_t save_slot_index;   /* 0 = Slot 1, 1 = Slot 2, 2 = Slot 3 */
     uint8_t save_slot_mode;    /* 0 = LOAD, 1 = SAVE */
     uint8_t save_slot_message; /* 0 = none, 1 = saved, 2 = empty */
+    uint8_t title_menu_showing; /* 0 = PRESS START state, 1 = main menu */
+    uint8_t title_menu_index;  /* 0 = NEW GAME, 1 = CONTINUE, 2 = SOUND */
+    uint8_t intro_slide;       /* current ASCII intro slide (0-2) */
     RenderCache render_cache;
 } Game;
 
