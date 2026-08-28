@@ -32,7 +32,7 @@ Three sessions, each starting from a fresh boot (fresh persistent state):
 
 The walks are POSITION-based, not press-count based (see
 tools/vram_dialogue_check.py for why PyBoy button delays are lossy): each
-step is a single 1-tick press edge followed by a wait for the tile commit,
+step is a single 4-tick press edge followed by a wait for the tile commit,
 the player position is read back from WRAM after every press, and a dropped
 press is re-pressed so the route self-corrects.
 
@@ -277,7 +277,7 @@ def main():
         press or an in-transition eat is retried until the intended screen
         state is reached).  Warns loudly when the state is never reached:
         a silently-exhausted retry loop poisons every later milestone."""
-        for t_i in range(tries):
+        for _ in range(tries):
             if cond():
                 return True
             press(btn, settle=settle)
@@ -500,19 +500,33 @@ def main():
         return (pb.memory[pos_addr],
                 pb.memory[pos_addr + 1])
 
-    def step3(btn):
+    def step3(btn, settle=12):
         pb.button_press(btn)
         for _ in range(4):
             pb.tick()
         pb.button_release(btn)
-        for _ in range(24):
+        for _ in range(settle):
             pb.tick()
 
-    # FIELD (4,4) -> right to col 12 (8 steps) -> up to row 1 (3 steps) -> up into north gate (12,0)
-    for _ in range(8):
-        step3("right")
-    for _ in range(3):
-        step3("up")
+    def walk3(btn, is_goal, budget=2000):
+        for _ in range(budget):
+            if is_goal():
+                return True
+            x0, y0 = pos3()
+            pb.button_press(btn)
+            for _ in range(4):
+                pb.tick()
+            pb.button_release(btn)
+            for _ in range(24):
+                pb.tick()
+                if pos3() != (x0, y0):
+                    break
+        return is_goal()
+
+    # FIELD (4,4) -> right to col 12 -> up to row 1 -> up into north gate (12,0)
+    ok = walk3("right", lambda: pos3()[0] == 12)
+    ok = walk3("up", lambda: pos3()[1] == 1) and ok
+    check("walk: reached forest gate", ok)
     step3("up")
     for _ in range(120):
         pb.tick()
