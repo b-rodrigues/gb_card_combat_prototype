@@ -397,12 +397,14 @@ void battle_execute_combo(Battle *b)
 
     /* STATUS_FREEZE on the player (docs/combo-system.md §12): the whole
      * offense is skipped -- no hand play this cycle, the enemy attack
-     * follows via the ANIM phase.  FREEZE never stacks: exactly one
-     * turn is lost per application (bit 0 of the frozen mask, set by
-     * status_apply and consumed here). */
+     * follows via the ANIM phase.  FREEZE never stacks: it lasts
+     * def->duration rounds, during which the player can neither attack nor
+     * defend.  The frozen-mask bit 0 (set by status_apply, re-armed by the
+     * banked tick body each round) is TESTED here and in the defend gate
+     * at BATTLE_PHASE_PLAYER_DEFEND, but never consumed -- the tick body
+     * clears it each round and re-sets it while a freeze instance remains. */
     if ((g_status_frozen_mask & 1u) != 0 &&
         b->phase == BATTLE_PHASE_PLAYER_SELECT) {
-        g_status_frozen_mask &= (uint8_t)~1u;
         telemetry_emit(EVENT_TURN_SKIPPED, 0, STATUS_FREEZE, 0, 0);
         b->combo_count = 0;
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
@@ -509,6 +511,32 @@ void battle_execute_combo(Battle *b)
             battle_set_result(b, BATTLE_RESULT_VICTORY);
         }
     } else if (b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        /* STATUS_FREEZE on the player (see the attack gate above): a frozen
+         * player cannot defend either.  The enemy's already-telegraphed
+         * swing lands unblocked (full enemy_incoming_dmg), the defend hand
+         * is skipped, and we move straight to DEFENSE_RESOLVE.  Test-only,
+         * never consumes bit 0 -- the tick body re-arms it each round. */
+        if ((g_status_frozen_mask & 1u) != 0) {
+            uint8_t dmg = b->enemy_incoming_dmg;
+            telemetry_emit(EVENT_TURN_SKIPPED, 0, STATUS_FREEZE, 0, 0);
+            if (dmg != 0) {
+                if (dmg >= b->player.hp) {
+                    b->player.hp = 0;
+                } else {
+                    b->player.hp = (uint8_t)(b->player.hp - dmg);
+                }
+            }
+            telemetry_emit(EVENT_DAMAGE_RECEIVED, dmg, 0, 0, 0);
+            b->combo_count = 0;
+            b->phase = BATTLE_PHASE_DEFENSE_RESOLVE;
+            b->delay_timer = 30;
+            b->dirty = BATTLE_DIRTY_ALL;
+            if (b->player.hp == 0) {
+                telemetry_emit(EVENT_ENTITY_DEFEATED, 0, 0, 0, 0);
+                battle_set_result(b, BATTLE_RESULT_DEFEAT);
+            }
+            return;
+        }
         battle_play_hand(b, false, &res);
         /* Net-damage defense (docs/loot.md §34.4): computed and applied in
          * the banked body (battle_defend_content.c) to keep the fixed bank

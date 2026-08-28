@@ -141,6 +141,26 @@ static void battle_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette
     VBK_REG = 0;
 }
 
+/* Name color for a combatant by its active statuses (status effects):
+ * priority FREEZE (blue) > BURN (red) > POISON (purple), matching the
+ * battle-card element colors.  Reads s_battle_status (WRAM) directly --
+ * banked code may not call the fixed-bank status_slots() helper. */
+static uint8_t battle_status_color(const StatusSlots *slots)
+{
+    uint8_t i;
+    if (slots == (const StatusSlots *)0) return UI_COLOR_NONE;
+    for (i = 0; i < slots->count; i++) {
+        if (slots->slot[i].id == STATUS_FREEZE) return UI_COLOR_ICE;
+    }
+    for (i = 0; i < slots->count; i++) {
+        if (slots->slot[i].id == STATUS_BURN) return UI_COLOR_FIRE;
+    }
+    for (i = 0; i < slots->count; i++) {
+        if (slots->slot[i].id == STATUS_POISON) return UI_COLOR_POISON;
+    }
+    return UI_COLOR_NONE;
+}
+
 /* ── Card helpers (inlined from card.c — banked code cannot call fixed). ── */
 
 static const char *battle_card_type_code(uint8_t type)
@@ -188,8 +208,11 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             e = &battle->enemies[k];
             if (blink_name && k == battle->attacking_enemy_idx) {
                 battle_draw_text_line(x, 2, NULL, 6);
+                battle_color_span(x, 2, 6, UI_COLOR_NONE);
             } else {
                 battle_draw_text_line(x, 2, e->name[0] ? e->name : "ENEMY", 6);
+                battle_color_span(x, 2, 6,
+                                  battle_status_color(&s_battle_status[k + 1]));
             }
             battle_draw_num2(x, 3, e->hp);
             battle_put_char((uint8_t)(x + 2), 3, '/');
@@ -211,6 +234,7 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
 static void battle_draw_hero_row(const volatile Battle *battle)
 {
     battle_draw_text_line(0, 6, "HERO        HP:", 15);
+    battle_color_span(0, 6, 4, battle_status_color(&s_battle_status[0]));
     battle_draw_num2(15, 6, battle->player.hp);
     battle_put_char(17, 6, '/');
     battle_draw_num2(18, 6, battle->player.max_hp);

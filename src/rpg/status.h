@@ -84,6 +84,12 @@ extern StatusInstance g_status_applied;
 void status_reset_battle(void);
 StatusSlots *status_slots(uint8_t actor_slot);
 
+/* Battle-scoped status storage (owned by this module, see above).  Exposed
+ * so the bank-3 battle HUD (ui_battle_content.c) can color a combatant's
+ * name by its active status without calling the fixed-bank status_slots()
+ * helper.  slot 0 = player, 1..n = enemy. */
+extern StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
+
 /* Apply a status to an actor's slots (STACK rule: cap at max_stacks,
  * refresh duration).  stacks==0 means 1; duration==0 means the
  * definition's default.  Both are packed 4-bit by the wrapper -- pass 0

@@ -1,7 +1,7 @@
 {
   "name": "status_freeze_player",
   "test": true,
-  "description": "Player-side freeze (docs/combo-system.md 12): DBG_APPLY_STATUS freezes the PLAYER (slot 0); the player's next offense is skipped entirely (TURN_SKIPPED data[0]=0) while the enemy still attacks (ENEMY_CARD_PLAYED fires)",
+  "description": "Player-side freeze (status effects): DBG_APPLY_STATUS freezes the PLAYER (slot 0, duration 3); the frozen player can neither attack NOR defend -- its offense is skipped and its defense is skipped (two TURN_SKIPPED data[0]=0) while the enemy still attacks (ENEMY_CARD_PLAYED fires)",
   "scenario_id": "BATTLE_BOOT",
   "initial_state": {
     "scene": "FIELD",
@@ -22,7 +22,7 @@
       "type": "apply_status",
       "slot": 0,
       "status": 3,
-      "duration": 1
+      "duration": 3
     },
     {
       "type": "wait",
@@ -72,11 +72,12 @@
       "type": "event_arg",
       "event": "STATUS_APPLIED",
       "index": 2,
-      "value": 1
+      "value": 3
     },
     {
-      "type": "event_occurred",
-      "event": "TURN_SKIPPED"
+      "type": "event_count",
+      "event": "TURN_SKIPPED",
+      "count": 2
     },
     {
       "type": "event_arg",
