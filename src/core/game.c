@@ -42,7 +42,6 @@ void game_restart(Game *g)
     g->prev_screen = SCREEN_OVERWORLD;
     game_prepare_new_game(g);
     audio_play_music(MUSIC_OVERWORLD);
-    telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
 }
 
 void game_init(Game *g)
@@ -70,7 +69,6 @@ void game_init(Game *g)
      * the harness and music_track assertions report NONE. */
     g_sound_enabled = 1;
     audio_play_music(MUSIC_TITLE);
-    telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_TITLE, 0, 0, 0);
     game_render(g);
 
 #ifdef DEBUG_BUILD

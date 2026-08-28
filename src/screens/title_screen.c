@@ -44,7 +44,7 @@ void title_screen_update(Game *g)
         if (input_pressed(INPUT_START) || input_pressed(INPUT_A)) {
             g->title_menu_showing = 1;
             g->title_menu_index = 0;
-            audio_play_sfx(0);
+            audio_play_sfx(SFX_CURSOR);
         }
         return;
     }
@@ -52,24 +52,24 @@ void title_screen_update(Game *g)
     if (input_pressed(INPUT_UP)) {
         if (g->title_menu_index == 0) g->title_menu_index = max_idx;
         else g->title_menu_index--;
-        audio_play_sfx(0);
+        audio_play_sfx(SFX_CURSOR);
     }
     if (input_pressed(INPUT_DOWN)) {
         if (g->title_menu_index == max_idx) g->title_menu_index = 0;
         else g->title_menu_index++;
-        audio_play_sfx(0);
+        audio_play_sfx(SFX_CURSOR);
     }
 
     if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
         switch (g->title_menu_index) {
         case 0: /* NEW GAME */
-            audio_play_sfx(1);
+            audio_play_sfx(SFX_CONFIRM);
             telemetry_emit(EVENT_NEW_GAME_STARTED, 0, 0, 0, 0);
             g->intro_slide = 0;
             screen_change(g, SCREEN_INTRO);
             break;
         case 1: /* CONTINUE */
-            audio_play_sfx(1);
+            audio_play_sfx(SFX_CONFIRM);
             telemetry_emit(EVENT_GAME_CONTINUED, 0, 0, 0, 0);
             g->save_slot_mode = 0; /* LOAD */
             g->save_slot_index = 0;
@@ -77,7 +77,7 @@ void title_screen_update(Game *g)
             break;
         default: /* SOUND */
             g_sound_enabled = ~g_sound_enabled & 1;
-            audio_play_sfx(0);
+            audio_play_sfx(SFX_CURSOR);
             telemetry_emit(EVENT_SOUND_TOGGLED, g_sound_enabled, 0, 0, 0);
             break;
         }

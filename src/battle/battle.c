@@ -271,7 +271,6 @@ void battle_set_result(Battle *b, uint8_t res)
         /* One-shot victory fanfare; the exit path switches back to the
          * overworld track. */
         audio_play_music(MUSIC_VICTORY);
-        telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_VICTORY, 0, 0, 0);
     }
 }
 

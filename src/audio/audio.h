@@ -23,6 +23,14 @@ extern uint8_t g_sound_enabled;
 
 void audio_init(void);
 void audio_play_music(MusicTrack track);
+
+/* Channel-2 one-shot SFX ids.  Distinct pitches: SFX_CURSOR is the short
+ * navigation blip (menu open, cursor move, sound toggle); SFX_CONFIRM is a
+ * lower-pitch variant for selections (NEW GAME / CONTINUE). */
+enum {
+    SFX_CURSOR = 0,
+    SFX_CONFIRM = 1
+};
 void audio_play_sfx(uint8_t sfx);
 void audio_update(void);
 

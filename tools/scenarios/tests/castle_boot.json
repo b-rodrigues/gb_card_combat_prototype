@@ -21,6 +21,10 @@
       "type": "player_position",
       "expected_x": 8,
       "expected_y": 6
+    },
+    {
+      "type": "music_track",
+      "expected": "DUNGEON"
     }
   ],
   "initial_state": {

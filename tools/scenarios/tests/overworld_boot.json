@@ -1,7 +1,7 @@
 {
   "name": "overworld_boot",
   "test": true,
-  "description": "Boot directly into the overworld screen on the Town scene",
+  "description": "Boot directly into the overworld screen on the Town scene (plays the Town theme)",
   "scenario_id": "OVERWORLD_BOOT",
   "actions": [],
   "assertions": [
@@ -28,7 +28,7 @@
     },
     {
       "type": "music_track",
-      "expected": "OVERWORLD"
+      "expected": "TOWN"
     }
   ],
   "initial_state": {

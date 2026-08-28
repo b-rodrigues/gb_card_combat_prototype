@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "telemetry.h"
 
 MusicTrack g_audio_current_track = MUSIC_NONE;
 uint8_t g_sound_enabled = 1;
@@ -18,13 +19,14 @@ static uint8_t sfx_ticks = 0;
 
 void audio_play_sfx(uint8_t s)
 {
-    (void)s;
     if (!g_sound_enabled) return;
-    /* A short confirm-style square blip on channel 2.  Split trigger so
-     * the volume/envelope lands on a fresh triggering edge. */
+    /* A short square blip on channel 2.  SFX_CURSOR (navigation: menu open,
+     * cursor move, sound toggle) is a higher blip; SFX_CONFIRM (selection)
+     * is a lower one.  Split trigger so the volume/envelope lands on a
+     * fresh triggering edge. */
     NR21_REG = 0x80;
     NR22_REG = SFX_ENVELOPE_ON;
-    NR23_REG = 0x64;
+    NR23_REG = (s == SFX_CONFIRM) ? 0x45 : 0x64;
     NR24_REG = 0x80 | 0x03;
     sfx_active = 1;
     sfx_ticks = 1;
@@ -154,6 +156,9 @@ void audio_play_music(MusicTrack track)
     if (track == MUSIC_NONE) {
         play_note(0);
     }
+    /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
+     * the track actually changes, so callers never forget it. */
+    telemetry_emit(EVENT_MUSIC_CHANGED, track, 0, 0, 0);
 }
 
 MusicTrack audio_get_current_track(void)

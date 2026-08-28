@@ -39,8 +39,13 @@ void start_battle_from_world(Game *g)
                          act->hp, act->max_hp);
     }
 
-    audio_play_music(MUSIC_BATTLE);
-    telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_BATTLE, 0, 0, 0);
+    /* Boss actors carry no enemy deck (BATTLE_NONE) and stand alone;
+     * give them the dedicated boss theme, everyone else the battle theme. */
+    if (act->battle_type == BATTLE_NONE) {
+        audio_play_music(MUSIC_BOSS);
+    } else {
+        audio_play_music(MUSIC_BATTLE);
+    }
     telemetry_emit(EVENT_ACTOR_COMBAT_START, (uint8_t)act->id, 0, 0, 0);
     screen_change(g, SCREEN_BATTLE);
     /* encounter_actor_index stays set until world_on_battle_end() */

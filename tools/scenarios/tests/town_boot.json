@@ -23,6 +23,10 @@
       "expected_y": 6
     },
     {
+      "type": "music_track",
+      "expected": "TOWN"
+    },
+    {
       "type": "story_flag",
       "flag": "ARRIVED_TOWN",
       "expected": true

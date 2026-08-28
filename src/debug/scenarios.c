@@ -58,7 +58,10 @@ static void scenario_begin(uint16_t seed)
     input_reset();
     telemetry_init();
     telemetry_set_frame_ptr(&g_game.frame);
-    audio_play_music(MUSIC_OVERWORLD);
+    /* Baseline music is the loaded scene's track (runs after
+     * world_load_map), so TOWN/CASTLE boots start on their own area theme
+     * instead of a hardcoded overworld track. */
+    audio_play_music(scene_definition_for_map(g_game.world.map_id)->music);
 }
 
 #define snap_read16(p) (*(const uint16_t *)(p))

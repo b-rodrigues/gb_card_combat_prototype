@@ -11,6 +11,7 @@
 #include "rng.h"
 #include "content.h"
 #include "ui.h"
+#include "audio.h"
 #include "banked.h"
 
 void world_load_map(World *w, MapId map_id, const GameState *state)
@@ -31,6 +32,9 @@ void world_load_map(World *w, MapId map_id, const GameState *state)
     w->move_state = MOVE_STATE_IDLE;
     w->move_progress = 0;
     w->move_outcome = MOVE_OUTCOME_NONE;
+    /* The scene owns its music (SceneDefinition.music): switch to it on
+     * every map load so gate crossings boot the right area track. */
+    audio_play_music(def ? def->music : MUSIC_OVERWORLD);
     /* New scene: start the camera at the scene origin; world_update_scroll
      * brings the player into view (and clamps) on the next overworld frame. */
     w->scroll_x = 0;

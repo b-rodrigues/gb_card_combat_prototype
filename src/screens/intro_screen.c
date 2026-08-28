@@ -34,7 +34,7 @@ void intro_screen_update(Game *g)
 {
     if (!g) return;
     if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
-        audio_play_sfx(0);
+        audio_play_sfx(SFX_CONFIRM);
         if (g->intro_slide + 1 >= INTRO_SLIDE_COUNT) {
             g->intro_slide = 0;
             game_restart(g);
