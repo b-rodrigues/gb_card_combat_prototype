@@ -45,6 +45,7 @@ void title_screen_update(Game *g)
             g->title_menu_showing = 1;
             g->title_menu_index = 0;
             audio_play_sfx(SFX_CURSOR);
+            g->render_cache.valid = false;
         }
         return;
     }
@@ -53,11 +54,13 @@ void title_screen_update(Game *g)
         if (g->title_menu_index == 0) g->title_menu_index = max_idx;
         else g->title_menu_index--;
         audio_play_sfx(SFX_CURSOR);
+        g->render_cache.valid = false;
     }
     if (input_pressed(INPUT_DOWN)) {
         if (g->title_menu_index == max_idx) g->title_menu_index = 0;
         else g->title_menu_index++;
         audio_play_sfx(SFX_CURSOR);
+        g->render_cache.valid = false;
     }
 
     if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
@@ -79,6 +82,7 @@ void title_screen_update(Game *g)
             g_sound_enabled = ~g_sound_enabled & 1;
             audio_play_sfx(SFX_CURSOR);
             telemetry_emit(EVENT_SOUND_TOGGLED, g_sound_enabled, 0, 0, 0);
+            g->render_cache.valid = false;
             break;
         }
     }
