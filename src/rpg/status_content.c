@@ -101,11 +101,6 @@ void status_tick_banked(void)
              * applications only refresh duration and deepen stacks for
              * telemetry. */
             damage += def->tick;
-            if (inst->id == STATUS_FREEZE) {
-                /* Still frozen entering this round: the combatant skips
-                 * its next attack (battle consumes the mask bit). */
-                g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
-            }
         }
         inst->duration--;
         if (inst->duration == 0) {
@@ -114,12 +109,21 @@ void status_tick_banked(void)
             }
             /* Remove by shifting the tail down, field-wise: struct
              * assignment lowers to __memcpy, which lives in the fixed
-             * bank and is unreachable while bank 3 is mapped. */
+             * bank and is unreachable while bank 3 is mapped.  An
+             * expiring FREEZE must NOT re-arm the frozen-mask bit: it
+             * armed at the top of the round, and the expiry consumes the
+             * status, so the combatant resumes acting next round. */
             slots->slot[i].id = slots->slot[slots->count - 1].id;
             slots->slot[i].stacks = slots->slot[slots->count - 1].stacks;
             slots->slot[i].duration = slots->slot[slots->count - 1].duration;
             slots->count--;
         } else {
+            if (def != (const StatusDefinition *)0 && inst->id == STATUS_FREEZE) {
+                /* Still frozen after this round: the combatant skips its
+                 * attack again; the mask bit is tested (never consumed)
+                 * by the battle gates. */
+                g_status_frozen_mask |= (uint8_t)(1 << actor_slot);
+            }
             i++;
         }
     }

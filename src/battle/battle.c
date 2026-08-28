@@ -520,11 +520,7 @@ void battle_execute_combo(Battle *b)
             uint8_t dmg = b->enemy_incoming_dmg;
             telemetry_emit(EVENT_TURN_SKIPPED, 0, STATUS_FREEZE, 0, 0);
             if (dmg != 0) {
-                if (dmg >= b->player.hp) {
-                    b->player.hp = 0;
-                } else {
-                    b->player.hp = (uint8_t)(b->player.hp - dmg);
-                }
+                combatant_take_damage(&b->player, dmg);
             }
             telemetry_emit(EVENT_DAMAGE_RECEIVED, dmg, 0, 0, 0);
             b->combo_count = 0;
@@ -639,16 +635,15 @@ void battle_update(Battle *b)
                 count++;
             }
             /* STATUS_FREEZE (docs/combo-system.md §12): the frozen-mask
-             * bit is maintained by the status system (apply + banked
-             * tick body); battle only tests + consumes it.  Mask bits
-             * follow status SLOTS (player = 0, enemies = 1..n).  A
-             * frozen attacker skips its swing: no enemy card, nothing
-             * incoming this cycle. */
+             * bit is TESTED here but never consumed -- status_apply sets
+             * it and status_tick_banked clears it each round and re-sets
+             * it while a freeze instance remains (see the player attack
+             * gate above).  Mask bits follow status SLOTS (player = 0,
+             * enemies = 1..n).  A frozen attacker skips its swing: no
+             * enemy card, nothing incoming this cycle. */
             if ((g_status_frozen_mask &
                  (uint8_t)(1u << (vb->attacking_enemy_idx + 1))) != 0 &&
                 vb->enemies[vb->attacking_enemy_idx].hp != 0) {
-                g_status_frozen_mask &=
-                    (uint8_t)~(1u << (vb->attacking_enemy_idx + 1));
                 vb->enemy_incoming_dmg = 0;
                 telemetry_emit(EVENT_TURN_SKIPPED,
                                (uint8_t)(vb->attacking_enemy_idx + 1),
