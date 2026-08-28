@@ -46,7 +46,10 @@ void battle_screen_update(Game *g)
                 vg->state.party.members[0].hp = vg->battle.player.hp;
                 /* Return to the current scene's area track (TOWN/DUNGEON
                  * get their own theme again instead of the field's). */
-                audio_play_music(scene_definition_for_map(vg->world.map_id)->music);
+                {
+                    const SceneDefinition *def = scene_definition_for_map(vg->world.map_id);
+                    audio_play_music(def ? def->music : MUSIC_OVERWORLD);
+                }
                 if (vg->battle.result == BATTLE_RESULT_VICTORY) {
                     world_on_battle_end(g, true);
                     screen_change(g, game_screen_after_victory(g));

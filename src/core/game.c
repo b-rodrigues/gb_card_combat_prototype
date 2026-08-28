@@ -41,7 +41,6 @@ void game_restart(Game *g)
     g->screen = SCREEN_OVERWORLD;
     g->prev_screen = SCREEN_OVERWORLD;
     game_prepare_new_game(g);
-    audio_play_music(MUSIC_OVERWORLD);
 }
 
 void game_init(Game *g)
