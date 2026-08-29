@@ -211,6 +211,15 @@ static void scenario_load_state(void)
     if (screen == SCREEN_GAME_OVER || screen == SCREEN_THANKS || screen == SCREEN_ENDING) {
         g_game.screen = (ScreenId)screen;
     }
+    if (screen == SCREEN_TITLE) {
+        /* Boot into the real title screen so title-menu flow scenarios
+         * exercise the actual menu path (INPUT -> index 3 TUTORIAL). */
+        g_game.screen = SCREEN_TITLE;
+        g_game.prev_screen = SCREEN_TITLE;
+        g_game.title_menu_showing = 0;
+        g_game.title_menu_index = 0;
+        audio_play_music(MUSIC_TITLE);
+    }
 
     game_render_reset(&g_game);
 

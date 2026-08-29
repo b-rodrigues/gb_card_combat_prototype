@@ -34,7 +34,7 @@ void title_screen_render(Game *g)
 
 void title_screen_update(Game *g)
 {
-    uint8_t max_idx = 2;
+    uint8_t max_idx = 3;
 
     if (!g) return;
 
@@ -78,11 +78,15 @@ void title_screen_update(Game *g)
             g->save_slot_index = 0;
             screen_change(g, SCREEN_SAVE_LOAD);
             break;
-        default: /* SOUND */
+        case 2: /* SOUND */
             g_sound_enabled = ~g_sound_enabled & 1;
             audio_play_sfx(SFX_CURSOR);
             telemetry_emit(EVENT_SOUND_TOGGLED, g_sound_enabled, 0, 0, 0);
             g->render_cache.valid = false;
+            break;
+        default: /* TUTORIAL */
+            g->tutorial_slide = 0;
+            screen_change(g, SCREEN_TUTORIAL);
             break;
         }
     }

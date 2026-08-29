@@ -106,6 +106,7 @@ static void title_draw_menu(uint8_t index)
     } else {
         title_draw_text(3, 14, index == 2 ? "> SOUND: OFF" : "  SOUND: OFF", 13);
     }
+    title_draw_text(3, 16, index == 3 ? "> TUTORIAL" : "  TUTORIAL", 10);
 }
 
 void title_content_render(void)
