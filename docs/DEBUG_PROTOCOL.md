@@ -1097,6 +1097,7 @@ ENTITY_DEFEATED
 
 COMBO_RESOLVED
 EFFECT_RESOLVED
+TARGET_CHANGED
 
 TURN_STARTED
 TURN_ENDED
@@ -1392,7 +1393,25 @@ TURN_SKIPPED (docs/combo-system.md §12, Phase D)
 
 ---
 
-# 31.3 LOOT (docs/loot.md §34)
+# 31.3 TARGET_CHANGED (battle target selection)
+
+Fires whenever the battle's attacker/card target caret moves (UP/DOWN during
+the player select or defend phase, `battle_target_move`) and when the target
+auto-advances to the next living enemy after its current target is defeated
+(`battle_target_auto_advance`).  The target persists across turns — this
+event only fires when the *selection itself* changes, never on the reset of
+a new turn.  Single-enemy battles do not emit it (the caret is trapped on
+the only slot).
+
+```text
+TARGET_CHANGED
+  data[0] = previous enemy slot (0..enemy_count-1)
+  data[1] = new enemy slot (0..enemy_count-1)
+```
+
+---
+
+# 31.4 LOOT (docs/loot.md §34)
 
 ```text
 LOOT_CARD_ADDED

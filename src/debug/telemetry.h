@@ -193,7 +193,9 @@ typedef enum {
     /* Title / presentation (append-only wire contract). */
     EVENT_NEW_GAME_STARTED, /* NEW GAME chosen on the title menu */
     EVENT_GAME_CONTINUED,   /* CONTINUE chosen on the title menu */
-    EVENT_SOUND_TOGGLED     /* d0 = g_sound_enabled (1 = ON, 0 = OFF) */
+    EVENT_SOUND_TOGGLED,    /* d0 = g_sound_enabled (1 = ON, 0 = OFF) */
+    EVENT_TARGET_CHANGED    /* d0 = old enemy slot (0..n-1) d1 = new enemy slot
+                               (battle target caret moved or auto-advanced) */
 } GameEventType;
 
 typedef struct {
