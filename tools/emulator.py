@@ -159,7 +159,9 @@ STATE_LOAD_DESC_DECK_PRESENT_OFF = 229
 STATE_LOAD_DESC_DECK_COUNT_OFF = 230
 STATE_LOAD_DESC_DECK_ENTRY_OFF = 231
 MAX_DESC_DECK_CARDS = 20
-STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_DECK_ENTRY_OFF + MAX_DESC_DECK_CARDS
+# Status effects (v4): byte 251 = frozen bitmask (bit 0 = player, 1..3 = enemies)
+STATE_LOAD_DESC_STATUS_OFF = 251
+STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_STATUS_OFF + 1
 STATE_LOAD_DESC_VERSION = 0x04
 
 SCENE_NAME_TO_ID = {v: k for k, v in SCENE_MAP.items()}
@@ -178,6 +180,8 @@ ITEM_ID_MAP = {"NONE": 0,
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
+# Status IDs (mirrors src/rpg/status.h StatusId enum)
+STATUS_ID_MAP = {"NONE": 0, "POISON": 1, "BURN": 2, "FREEZE": 3}
 # Card type names -> CardType enum (src/battle/card.h):
 # SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, HE=HEAL 3, DA=DAGGER 4.
 CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "HE": 3, "DA": 4}
@@ -320,6 +324,25 @@ def serialize_initial_state(initial_state):
     buf[STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF] = initial_state.get("game_over_choice", 0)
     if initial_state.get("font_test"):
         buf[STATE_LOAD_DESC_FONT_TEST_OFF] = 1
+    # Status effects (v4): frozen bitmask (bit 0 = player, 1..3 = enemies)
+    status = initial_state.get("status")
+    if status:
+        frozen_mask = 0
+        if isinstance(status, dict):
+            # Support {"frozen_mask": int} or {"frozen": ["PLAYER", "ENEMY1", ...]}
+            if "frozen_mask" in status:
+                frozen_mask = status["frozen_mask"] & 0xFF
+            elif "frozen" in status:
+                for target in status["frozen"]:
+                    if target == "PLAYER":
+                        frozen_mask |= 0x01
+                    elif target.startswith("ENEMY"):
+                        idx = int(target.replace("ENEMY", ""))
+                        if 1 <= idx <= 3:
+                            frozen_mask |= (1 << idx)
+        elif isinstance(status, int):
+            frozen_mask = status & 0xFF
+        buf[STATE_LOAD_DESC_STATUS_OFF] = frozen_mask
     return buf
 
 def decode_story_flags(flags_mask):

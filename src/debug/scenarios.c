@@ -193,6 +193,8 @@ static void scenario_load_state(void)
         dialogue_start_def(&g_game.dialogue, (DialogueId)dialogue_id);
         g_game.screen = SCREEN_DIALOGUE;
     }
+    /* Apply initial status effects (frozen mask) before starting battle. */
+    g_status_frozen_mask = b[STATE_LOAD_DESC_STATUS_OFF];
     if (start_battle) {
         /* Engage the last spawned hostile.  Scenes list their headline
          * hostile last (e.g. CASTLE: wandering BAT, then the gated boss),
