@@ -110,7 +110,7 @@ static const char s_tut_3[4][20] = {
 static const char s_tut_4[4][20] = {
     "ENERGY & COMBAT:",
     "Cards cost ENERGY",
-    "Start with 3/turn.",
+    "Start with 6/turn.",
     "Energy fades away."
 };
 
