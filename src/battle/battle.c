@@ -176,10 +176,11 @@ void battle_cursor_move(Battle *b, int8_t dir)
 
 void battle_target_move(Battle *b, int8_t dir)
 {
-    uint8_t i, t;
+    uint8_t i, t, old;
     if (!b || b->enemy_count <= 1) return;
 
-    t = b->target_idx;
+    old = b->target_idx;
+    t = old;
     for (i = 0; i < b->enemy_count; i++) {
         if (dir < 0) {
             t = (t == 0) ? (uint8_t)(b->enemy_count - 1) : (uint8_t)(t - 1);
@@ -187,8 +188,11 @@ void battle_target_move(Battle *b, int8_t dir)
             t = (uint8_t)((t + 1 >= b->enemy_count) ? 0 : (t + 1));
         }
         if (b->enemies[t].hp != 0) {
-            b->target_idx = t;
-            b->dirty |= BATTLE_DIRTY_ENEMIES;
+            if (t != old) {
+                b->target_idx = t;
+                b->dirty |= BATTLE_DIRTY_ENEMIES;
+                telemetry_emit(EVENT_TARGET_CHANGED, old, t, 0, 0);
+            }
             return;
         }
     }
