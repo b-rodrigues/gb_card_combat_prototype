@@ -97,14 +97,14 @@ static const char s_tut_2[4][20] = {
     "CARD TYPES 2:",
     "HE: HEAL - restore",
     "DA: DAGGER - dmg",
-    "",
+    "F SW: FIRE + BURN"
 };
 
 static const char s_tut_3[4][20] = {
     "COMBOS:",
-    "PAIR: 2 same type",
-    "FLUSH: 3+ alike",
-    "STRAIGHT: 3+ seq.",
+    "Played cards rank",
+    "like poker hands,",
+    "boosting effects."
 };
 
 static const char s_tut_4[4][20] = {
