@@ -78,6 +78,10 @@ void intro_screen_render(Game *g);
 void tutorial_screen_update(Game *g);
 void tutorial_screen_render(Game *g);
 
+/* Shared by tutorial_screen.c (RIGHT/LEFT wrap) and tutorial_content.c
+ * (slide table end).  Keep in one place so the two cannot drift. */
+#define TUTORIAL_SLIDE_COUNT 7
+
 /* Shared slide-show renderer (intro + tutorial screens). */
 void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide);
 

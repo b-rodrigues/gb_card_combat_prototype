@@ -607,6 +607,7 @@ def main():
         ("19-tutorial-slide3", "COMBOS"),
         ("20-tutorial-slide4", "6/turn"),
         ("21-tutorial-slide5", "DEFEND & STATUS"),
+        ("22-tutorial-slide6", "SHIELD CARD"),
     ):
         ret = press_until4("right", slide_marker(marker), label=label)
         check(f"reached {label}", ret)

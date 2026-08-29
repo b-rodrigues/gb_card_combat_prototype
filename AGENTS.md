@@ -2683,10 +2683,10 @@ the commit/PR without booting anything.
   quick screen), Walk B (slime battle on the Field), Walk C (Forest gate),
   and Walk D (title-menu + tutorial slides), so persistent state never bleeds
   between milestones.  Walk D stops at the boot title screen (START → menu,
-  DOWN to the TUTORIAL entry, A, then RIGHT through the six slides); it never
+  DOWN to the TUTORIAL entry, A, then RIGHT through the seven slides); it never
   enters the game.
 * Determinism is verified: the walk's position/caret/text checks make the
-  22 frames byte-identical across repeated runs.
+  23 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2713,6 +2713,7 @@ the commit/PR without booting anything.
 19-tutorial-slide3   COMBOS
 20-tutorial-slide4   ENERGY & COMBAT (6/turn)
 21-tutorial-slide5   DEFEND & STATUS
+22-tutorial-slide6   SHIELD CARD
 ```
 
 Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land

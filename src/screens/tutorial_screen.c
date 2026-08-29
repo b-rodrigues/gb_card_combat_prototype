@@ -8,8 +8,6 @@
 /* ASCII tutorial screen.  Left/right navigates slides, B exits to title.
  * Rendering lives in bank-2 body (tutorial_content.c) to keep fixed bank small. */
 
-#define TUTORIAL_SLIDE_COUNT 6
-
 void tutorial_screen_render(Game *g)
 {
     slide_screen_render(g, SCREEN_TUTORIAL, (uint16_t)&tutorial_content_render, g->tutorial_slide);
