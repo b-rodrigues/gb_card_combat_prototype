@@ -4,6 +4,7 @@
 #include "ui.h"
 #include "banked.h"
 #include "screen.h"
+#include "game.h"
 #include <gb/gb.h>
 
 /* Bank-2 self-contained title/intro render bodies (AGENTS.md 52.11.1):
@@ -121,6 +122,39 @@ void title_content_render(void)
     } else {
         title_draw_menu(index);
     }
+}
+
+/* Pure caret move for the title menu (AGENTS.md 36): computes the next
+ * index from the direction (staged in g_bk_byte_b, 1 = DOWN) and the
+ * current index, writes it back through the staged Game* (WRAM always
+ * mapped), and repaints only the two '>' cells -- mirroring
+ * g_ui_screen_buf so the render cache stays valid and no full redraw
+ * flickers on navigation.  Rows are 10, 12, 14, 16 for indices 0..3. */
+void title_menu_step_banked(void)
+{
+    Game *g = (Game *)g_bk_ptr_a;
+    uint8_t index;
+    uint8_t new_index;
+    uint8_t old_row;
+    uint8_t new_row;
+    uint8_t max_idx = 3;
+
+    if (!g) return;
+    index = g->title_menu_index;
+    if (g_bk_byte_b) {
+        if (index == max_idx) new_index = 0;
+        else new_index = (uint8_t)(index + 1);
+    } else {
+        if (index == 0) new_index = max_idx;
+        else new_index = (uint8_t)(index - 1);
+    }
+    old_row = (uint8_t)(10 + (index << 1));
+    new_row = (uint8_t)(10 + (new_index << 1));
+    if (old_row != new_row) {
+        title_put_char(3, old_row, ' ');
+        title_put_char(3, new_row, '>');
+    }
+    g->title_menu_index = new_index;
 }
 
 /* ── Intro: three scripted ASCII slides ───────────────────────────── */

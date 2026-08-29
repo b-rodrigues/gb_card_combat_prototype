@@ -32,10 +32,24 @@ void title_screen_render(Game *g)
     }
 }
 
+void title_content_render(void);
+void title_menu_step_banked(void);
+
+/* Targeted caret move (AGENTS.md 36).  The bank-2 body computes the next
+ * index from the staged direction, writes it back through g_bk_ptr_a, and
+ * repaints only the two '>' cells, so a pure UP/DOWN never touches the
+ * render cache and the full title redraw is avoided. */
+static void title_menu_step(Game *g, uint8_t direction)
+{
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&title_menu_step_banked;
+    g_bk_ptr_a = (void *)g;
+    g_bk_byte_b = direction;
+    banked_call_run();
+}
+
 void title_screen_update(Game *g)
 {
-    uint8_t max_idx = 3;
-
     if (!g) return;
 
     if (!g->title_menu_showing) {
@@ -51,16 +65,12 @@ void title_screen_update(Game *g)
     }
 
     if (input_pressed(INPUT_UP)) {
-        if (g->title_menu_index == 0) g->title_menu_index = max_idx;
-        else g->title_menu_index--;
+        title_menu_step(g, 0); /* UP */
         audio_play_sfx(SFX_CURSOR);
-        g->render_cache.valid = false;
     }
     if (input_pressed(INPUT_DOWN)) {
-        if (g->title_menu_index == max_idx) g->title_menu_index = 0;
-        else g->title_menu_index++;
+        title_menu_step(g, 1); /* DOWN */
         audio_play_sfx(SFX_CURSOR);
-        g->render_cache.valid = false;
     }
 
     if (input_pressed(INPUT_A) || input_pressed(INPUT_START)) {
