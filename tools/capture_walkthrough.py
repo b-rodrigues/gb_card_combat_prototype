@@ -7,7 +7,7 @@ developer or LLM can review the current look without booting the ROM
 (AGENTS.md §56).  Screenshots are for VISUAL review only; semantic state and
 telemetry remain authoritative (AGENTS.md §7/§40).
 
-Three sessions, each starting from a fresh boot (fresh persistent state):
+Four sessions, each starting from a fresh boot (fresh persistent state):
 
   Walk A (town):
     00-boot-field        overworld at spawn with the HUD
@@ -30,6 +30,15 @@ Three sessions, each starting from a fresh boot (fresh persistent state):
   Walk C (forest):
     14-forest-arrived    FOREST gate arrival
 
+  Walk D (tutorial):
+    15-title-menu        title menu with the TUTORIAL entry (index 3)
+    16-tutorial-slide0   TUTORIAL BASICS
+    17-tutorial-slide1   CARD TYPES
+    18-tutorial-slide2   CARD TYPES 2
+    19-tutorial-slide3   COMBOS
+    20-tutorial-slide4   ENERGY & COMBAT (6/turn)
+    21-tutorial-slide5   DEFEND & STATUS
+
 The walks are POSITION-based, not press-count based (see
 tools/vram_dialogue_check.py for why PyBoy button delays are lossy): each
 step is a single 4-tick press edge followed by a wait for the tile commit,
@@ -37,7 +46,9 @@ the player position is read back from WRAM after every press, and a dropped
 press is re-pressed so the route self-corrects.
 
 Each session now ADVANCES past the boot-time title splash, title menu and
-three-slide intro before any walking begins.  Milestone frames are verified:
+three-slide intro before any walking begins (Walk D instead stops at the
+title menu and pans through the tutorial slides without entering the game).
+Milestone frames are verified:
 no frame may still show title/intro text; text-bearing milestones must show
 their expected substrings.  Any failure aborts with a non-zero exit code.
 
@@ -532,6 +543,75 @@ def main():
         pb.tick()
 
     shoot(pb, "14-forest-arrived")
+    pb.stop()
+
+    # ── Walk D: title menu + tutorial slides ─────────────────────────
+    pb = PyBoy(ROM, window="null")
+    for _ in range(180):
+        pb.tick()
+
+    def press4(btn, settle=12):
+        pb.button_press(btn)
+        for _ in range(4):
+            pb.tick()
+        pb.button_release(btn)
+        for _ in range(settle):
+            pb.tick()
+
+    def press_until4(btn, cond, tries=8, settle=30, timeout=90, label=""):
+        for _ in range(tries):
+            if cond():
+                return True
+            press4(btn, settle=settle)
+            for _ in range(timeout):
+                if cond():
+                    return True
+                pb.tick()
+        if not cond():
+            print(f"warning: press_until4({btn}{' ' + label if label else ''})"
+                  " never reached its condition", file=sys.stderr)
+        return cond()
+
+    def title_menu_open():
+        return any("NEW GAME" in r for r in bg_text(pb))
+
+    def caret_tutorial():
+        return any("> TUTORIAL" in r for r in bg_text(pb))
+
+    def slide_marker(marker):
+        return lambda: any(marker in r for r in bg_text(pb))
+
+    if not wait_rendered(pb):
+        check("Walk D: boot rendered", False, "screen never became non-blank")
+
+    # Boot splash -> press START once for the menu -> caret to TUTORIAL.
+    ret = press_until4("start", title_menu_open, label="title menu open")
+    check("title menu opened", ret)
+    ret = press_until4("down", caret_tutorial, label="tutorial entry")
+    check("tutorial entry selected", ret)
+    wait_rendered(pb)
+    shoot(pb, "15-title-menu", need="> TUTORIAL", check_title=False)
+
+    # A enters the tutorial; RIGHT pans through the six slides.  Each
+    # marker is unique to its slide (no substring overlap) so the walk
+    # stops exactly on every milestone.
+    ret = press_until4("a", slide_marker("TUTORIAL BASICS"),
+                       label="tutorial slide 0")
+    check("tutorial entered", ret)
+    wait_rendered(pb)
+    shoot(pb, "16-tutorial-slide0", need="TUTORIAL BASICS")
+
+    for label, marker in (
+        ("17-tutorial-slide1", "SW: SWORD"),
+        ("18-tutorial-slide2", "CARD TYPES 2"),
+        ("19-tutorial-slide3", "COMBOS"),
+        ("20-tutorial-slide4", "6/turn"),
+        ("21-tutorial-slide5", "DEFEND & STATUS"),
+    ):
+        ret = press_until4("right", slide_marker(marker), label=label)
+        check(f"reached {label}", ret)
+        wait_rendered(pb)
+        shoot(pb, label, need=marker)
     pb.stop()
 
     print()
