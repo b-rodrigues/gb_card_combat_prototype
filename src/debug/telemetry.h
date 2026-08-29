@@ -117,8 +117,10 @@
 /* Descriptor layout (version 0x04): byte 229 = deck-present flag (1 = the
  * following deck section replaces the starter deck, count may be 0 for an
  * intentionally empty deck); byte 230 = deck card count; bytes 231..250 =
- * up to 20 deck entries x {card_id}. */
-#define STATE_LOAD_DESC_SIZE              251
+ * up to 20 deck entries x {card_id}.
+ * Byte 251 = initial status: frozen bitmask (bit 0 = player, 1..3 = enemies). */
+#define STATE_LOAD_DESC_STATUS_OFF        251
+#define STATE_LOAD_DESC_SIZE              252
 
 typedef enum {
     EVENT_PLAYER_MOVED,
@@ -187,7 +189,11 @@ typedef enum {
     EVENT_LOOT_GENERATED,   /* reserved (kept for wire stability) */
     EVENT_CARD_SOLD,        /* d0=CardId d1=gold received d2=count after */
     EVENT_TURN_SKIPPED,     /* d0=enemy slot (1..n) d1=cause StatusId */
-    EVENT_STATUS_RESISTED   /* d0=status id d1=target slot (roll failed) */
+    EVENT_STATUS_RESISTED,  /* d0=status id d1=target slot (roll failed) */
+    /* Title / presentation (append-only wire contract). */
+    EVENT_NEW_GAME_STARTED, /* NEW GAME chosen on the title menu */
+    EVENT_GAME_CONTINUED,   /* CONTINUE chosen on the title menu */
+    EVENT_SOUND_TOGGLED     /* d0 = g_sound_enabled (1 = ON, 0 = OFF) */
 } GameEventType;
 
 typedef struct {

@@ -13,9 +13,11 @@ TELEMETRY_EVENT_SIZE = 13
 
 GAME_STATE_MAP = {0: "OVERWORLD", 1: "BATTLE", 2: "GAME_OVER", 3: "THANKS"}
 SCREEN_MAP = {0: "OVERWORLD", 1: "DIALOGUE", 2: "BATTLE", 3: "GAME_OVER", 4: "THANKS",
-              5: "SHOP", 6: "ITEM", 7: "ENDING", 8: "SAVE_LOAD"}
+              5: "SHOP", 6: "ITEM", 7: "ENDING", 8: "SAVE_LOAD", 9: "TITLE", 10: "INTRO",
+              11: "TUTORIAL"}
 SCENE_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE"}
-MUSIC_TRACK_MAP = {0: "NONE", 1: "OVERWORLD", 2: "BATTLE"}
+MUSIC_TRACK_MAP = {0: "NONE", 1: "OVERWORLD", 2: "BATTLE", 3: "VICTORY",
+                   4: "TITLE", 5: "TOWN", 6: "DUNGEON", 7: "BOSS"}
 BATTLE_TURN_MAP = {0: "PLAYER", 1: "ENEMY_DELAY", 2: "ENEMY", 3: "RESULT"}
 BATTLE_RESULT_MAP = {0: "NONE", 1: "VICTORY", 2: "DEFEAT", 3: "FLED"}
 MAP_NAME_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE"}
@@ -64,7 +66,8 @@ EVENT_TYPE_MAP = {
     49: "COMBO_RESOLVED", 50: "EFFECT_RESOLVED",
     51: "STATUS_APPLIED", 52: "STATUS_TICKED", 53: "STATUS_EXPIRED",
     54: "LOOT_CARD_ADDED", 55: "LOOT_GENERATED", 56: "CARD_SOLD",
-    57: "TURN_SKIPPED", 58: "STATUS_RESISTED"
+    57: "TURN_SKIPPED", 58: "STATUS_RESISTED",
+    59: "NEW_GAME_STARTED", 60: "GAME_CONTINUED", 61: "SOUND_TOGGLED"
 }
 EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
                 GAME_ID_BASE + 1: "QUEST_START",
@@ -114,7 +117,8 @@ SCENARIO_IDS = {
     "MOUNTAIN_PASS_BOOT": 21, "CASTLE_BOOT": 22, "TOWN_BOOT": 23,
     "ACTOR_COLLISION_BLOCKING": 24, "ACTOR_SHOPKEEPER": 25, "ACTOR_BAT": 26,
     "LARGE_MAP_SCROLL": 27, "FIELD_EAST_SCROLL": 28, "CAMERA_BOUNDARY_CLAMP": 29,
-    "SCROLL_RENDER_ALIGNMENT": 30, "START_SWALLOWS_MAP_COMMIT": 31
+    "SCROLL_RENDER_ALIGNMENT": 30, "START_SWALLOWS_MAP_COMMIT": 31,
+    "TITLE_BOOT": 32
 }
 
 # ── Declarative initial-state descriptor ─────────────────────────────
@@ -158,7 +162,9 @@ STATE_LOAD_DESC_DECK_PRESENT_OFF = 229
 STATE_LOAD_DESC_DECK_COUNT_OFF = 230
 STATE_LOAD_DESC_DECK_ENTRY_OFF = 231
 MAX_DESC_DECK_CARDS = 20
-STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_DECK_ENTRY_OFF + MAX_DESC_DECK_CARDS
+# Status effects (v4): byte 251 = frozen bitmask (bit 0 = player, 1..3 = enemies)
+STATE_LOAD_DESC_STATUS_OFF = 251
+STATE_LOAD_DESC_SIZE = STATE_LOAD_DESC_STATUS_OFF + 1
 STATE_LOAD_DESC_VERSION = 0x04
 
 SCENE_NAME_TO_ID = {v: k for k, v in SCENE_MAP.items()}
@@ -172,10 +178,13 @@ CHARACTER_ID_MAP = {"HERO": 1}
 ITEM_ID_MAP = {"NONE": 0,
                "IRON_SWORD": 0x40, "WOODEN_SHIELD": 0x41,
                "WOOD_RING": 0x42, "FIRE_SWORD": 0x43,
-               "POISON_DAGGER": 0x44, "AMULET": 0x45}
+               "POISON_DAGGER": 0x44, "AMULET": 0x45,
+               "BOW_10": 0x46}
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
+# Status IDs (mirrors src/rpg/status.h StatusId enum)
+STATUS_ID_MAP = {"NONE": 0, "POISON": 1, "BURN": 2, "FREEZE": 3}
 # Card type names -> CardType enum (src/battle/card.h):
 # SW=SWORD 0, SH=SHIELD 1, BO=BOW 2, HE=HEAL 3, DA=DAGGER 4.
 CARD_TYPE_MAP = {"SW": 0, "SH": 1, "BO": 2, "HE": 3, "DA": 4}
@@ -318,6 +327,25 @@ def serialize_initial_state(initial_state):
     buf[STATE_LOAD_DESC_GAME_OVER_CHOICE_OFF] = initial_state.get("game_over_choice", 0)
     if initial_state.get("font_test"):
         buf[STATE_LOAD_DESC_FONT_TEST_OFF] = 1
+    # Status effects (v4): frozen bitmask (bit 0 = player, 1..3 = enemies)
+    status = initial_state.get("status")
+    if status:
+        frozen_mask = 0
+        if isinstance(status, dict):
+            # Support {"frozen_mask": int} or {"frozen": ["PLAYER", "ENEMY1", ...]}
+            if "frozen_mask" in status:
+                frozen_mask = status["frozen_mask"] & 0xFF
+            elif "frozen" in status:
+                for target in status["frozen"]:
+                    if target == "PLAYER":
+                        frozen_mask |= 0x01
+                    elif target.startswith("ENEMY"):
+                        idx = int(target.replace("ENEMY", ""))
+                        if 1 <= idx <= 3:
+                            frozen_mask |= (1 << idx)
+        elif isinstance(status, int):
+            frozen_mask = status & 0xFF
+        buf[STATE_LOAD_DESC_STATUS_OFF] = frozen_mask
     return buf
 
 def decode_story_flags(flags_mask):

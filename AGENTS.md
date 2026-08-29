@@ -2679,11 +2679,14 @@ the commit/PR without booting anything.
 * Frames are saved with PyBoy's `screen.image` (headless framebuffer render);
   each save prints the first non-blank `bg_text` row so a mislabeled frame
   is obvious in the build log without decoding PNGs.
-* Two fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
-  quick screen) and Walk B (slime battle on the Field), so persistent state
-  never bleeds between milestones.
+* Four fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
+  quick screen), Walk B (slime battle on the Field), Walk C (Forest gate),
+  and Walk D (title-menu + tutorial slides), so persistent state never bleeds
+  between milestones.  Walk D stops at the boot title screen (START → menu,
+  DOWN to the TUTORIAL entry, A, then RIGHT through the seven slides); it never
+  enters the game.
 * Determinism is verified: the walk's position/caret/text checks make the
-  15 frames byte-identical across repeated runs.
+  23 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2703,6 +2706,14 @@ the commit/PR without booting anything.
 12-wizard-save       save menu at the wizard
 13-wizard-saved      after saving to Slot 1
 14-forest-arrived    FOREST gate arrival after Walk B
+15-title-menu        title menu with the TUTORIAL entry (index 3)
+16-tutorial-slide0   TUTORIAL BASICS
+17-tutorial-slide1   CARD TYPES
+18-tutorial-slide2   CARD TYPES 2
+19-tutorial-slide3   COMBOS
+20-tutorial-slide4   ENERGY & COMBAT (6/turn)
+21-tutorial-slide5   DEFEND & STATUS
+22-tutorial-slide6   SHIELD CARD
 ```
 
 Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land

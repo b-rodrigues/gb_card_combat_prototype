@@ -271,7 +271,6 @@ void battle_set_result(Battle *b, uint8_t res)
         /* One-shot victory fanfare; the exit path switches back to the
          * overworld track. */
         audio_play_music(MUSIC_VICTORY);
-        telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_VICTORY, 0, 0, 0);
     }
 }
 
@@ -520,7 +519,10 @@ void battle_execute_combo(Battle *b)
             uint8_t dmg = b->enemy_incoming_dmg;
             telemetry_emit(EVENT_TURN_SKIPPED, 0, STATUS_FREEZE, 0, 0);
             if (dmg != 0) {
+                uint8_t hp_before = b->player.hp;
                 combatant_take_damage(&b->player, dmg);
+                uint8_t hp_after = b->player.hp;
+                dmg = hp_before - hp_after;
             }
             telemetry_emit(EVENT_DAMAGE_RECEIVED, dmg, 0, 0, 0);
             b->combo_count = 0;

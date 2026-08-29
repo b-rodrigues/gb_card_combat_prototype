@@ -58,7 +58,13 @@ static void scenario_begin(uint16_t seed)
     input_reset();
     telemetry_init();
     telemetry_set_frame_ptr(&g_game.frame);
-    audio_play_music(MUSIC_OVERWORLD);
+    /* Baseline music is the loaded scene's track (runs after
+     * world_load_map), so TOWN/CASTLE boots start on their own area theme
+     * instead of a hardcoded overworld track. */
+    {
+        const SceneDefinition *def = scene_definition_for_map(g_game.world.map_id);
+        audio_play_music(def ? def->music : MUSIC_OVERWORLD);
+    }
 }
 
 #define snap_read16(p) (*(const uint16_t *)(p))
@@ -198,9 +204,21 @@ static void scenario_load_state(void)
             }
         }
         start_battle_from_world(&g_game);
+        /* Apply initial status effects (frozen mask) AFTER battle_start()
+         * status_reset_battle() which clears g_status_frozen_mask. */
+        g_status_frozen_mask = b[STATE_LOAD_DESC_STATUS_OFF];
     }
     if (screen == SCREEN_GAME_OVER || screen == SCREEN_THANKS || screen == SCREEN_ENDING) {
         g_game.screen = (ScreenId)screen;
+    }
+    if (screen == SCREEN_TITLE) {
+        /* Boot into the real title screen so title-menu flow scenarios
+         * exercise the actual menu path (INPUT -> index 3 TUTORIAL). */
+        g_game.screen = SCREEN_TITLE;
+        g_game.prev_screen = SCREEN_TITLE;
+        g_game.title_menu_showing = 0;
+        g_game.title_menu_index = 0;
+        audio_play_music(MUSIC_TITLE);
     }
 
     game_render_reset(&g_game);

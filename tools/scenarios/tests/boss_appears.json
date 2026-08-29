@@ -19,6 +19,10 @@
       "expected": "BATTLE"
     },
     {
+      "type": "music_track",
+      "expected": "BOSS"
+    },
+    {
       "type": "battle_enemy_hp",
       "expected": 50
     },

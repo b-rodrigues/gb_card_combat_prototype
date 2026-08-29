@@ -60,8 +60,8 @@ static const SceneTerrainBlock s_castle_terrain[] = {
 
 const SceneDefinition g_scenes[] = {
     { MAP_FIELD,         MUSIC_OVERWORLD, 32, 18, &g_all_exits[0], 2, WORLD_TILESET_EXTERIOR, 0 },
-    { MAP_TOWN,          MUSIC_OVERWORLD, 20, 18, &g_all_exits[2], 1, WORLD_TILESET_EXTERIOR, s_town_terrain },
+    { MAP_TOWN,          MUSIC_TOWN,      20, 18, &g_all_exits[2], 1, WORLD_TILESET_EXTERIOR, s_town_terrain },
     { MAP_FOREST,        MUSIC_OVERWORLD, 20, 18, &g_all_exits[3], 2, WORLD_TILESET_FOREST,   s_forest_terrain },
     { MAP_MOUNTAIN_PASS, MUSIC_OVERWORLD, 20, 18, &g_all_exits[5], 2, WORLD_TILESET_EXTERIOR, s_mountain_terrain },
-    { MAP_CASTLE,        MUSIC_OVERWORLD, 20, 18, &g_all_exits[7], 1, WORLD_TILESET_INTERIOR, s_castle_terrain }
+    { MAP_CASTLE,        MUSIC_DUNGEON,   20, 18, &g_all_exits[7], 1, WORLD_TILESET_INTERIOR, s_castle_terrain }
 };

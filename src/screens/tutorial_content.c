@@ -1,0 +1,147 @@
+#pragma bank 2
+#pragma disable_warning 110
+
+#include "ui.h"
+#include "banked.h"
+#include "screen.h"
+#include <gb/gb.h>
+
+/* Bank-2 self-contained tutorial render body (AGENTS.md 52.11.1):
+ * the fixed _CODE/_HOME area is at its size limit (see make memmap), so
+ * the entire tutorial text draw lives here, writing VRAM directly
+ * with bank-local helpers (a banked body must never call fixed-bank
+ * functions -- see title_content.c for the same pattern).
+ *
+ * Staged inputs (set by the fixed wrapper in tutorial_screen.c):
+ *   g_bk_byte_a = tutorial_slide (0..TUTORIAL_SLIDE_COUNT-1) */
+
+extern char g_ui_screen_buf[18][21];
+extern uint8_t ui_font_tile_base;
+
+static void tutorial_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
+{
+    if (LCDC_REG & 0x80) {
+        __asm
+            di
+        __endasm;
+        while (STAT_REG & 0x02);
+        *dst = tile;
+        __asm
+            ei
+        __endasm;
+    } else {
+        *dst = tile;
+    }
+}
+
+static void tutorial_put_char(uint8_t x, uint8_t y, char ch)
+{
+    if (y < 18 && x < 20) {
+        if (g_ui_screen_buf[y][x] != ch) {
+            uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+            volatile uint8_t *dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+            VBK_REG = 0;
+            tutorial_vram_sync_write(dst, tile);
+            g_ui_screen_buf[y][x] = ch;
+        }
+    }
+}
+
+static void tutorial_draw_text(uint8_t x, uint8_t y, const char *text, uint8_t max_chars)
+{
+    uint8_t i;
+    char ch;
+    volatile uint8_t *dst;
+    char *buf;
+    uint8_t ended;
+
+    if (y >= 18) return;
+    if ((uint8_t)(x + max_chars) > 20) max_chars = (uint8_t)(20 - x);
+
+    VBK_REG = 0;
+    ended = 0;
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+    buf = &g_ui_screen_buf[y][x];
+
+    for (i = 0; i < max_chars; i++) {
+        ch = text[i];
+        if (ch == '\0') ended = 1;
+        if (ended) ch = ' ';
+        if (*buf != ch) {
+            uint8_t tile = (uint8_t)(ui_font_tile_base + (uint8_t)(ch - ' '));
+            tutorial_vram_sync_write(dst, tile);
+            *buf = ch;
+        }
+        dst++;
+        buf++;
+    }
+}
+
+static const char s_tut_0[4][20] = {
+    "TUTORIAL BASICS",
+    "Use LEFT/RIGHT to",
+    "navigate slides.",
+    "Press B to exit."
+};
+
+static const char s_tut_1[4][20] = {
+    "CARD TYPES:",
+    "SW: SWORD - damage",
+    "SH: SHIELD - block",
+    "BO: BOW - damage",
+};
+
+static const char s_tut_2[4][20] = {
+    "CARD TYPES 2:",
+    "HE: HEAL - restore",
+    "DA: DAGGER - dmg",
+    "F SW: FIRE + BURN"
+};
+
+static const char s_tut_3[4][20] = {
+    "COMBOS:",
+    "Played cards rank",
+    "like poker hands,",
+    "boosting effects."
+};
+
+static const char s_tut_4[4][20] = {
+    "ENERGY & COMBAT:",
+    "Cards cost ENERGY",
+    "Start with 6/turn.",
+    "Energy fades away."
+};
+
+static const char s_tut_5[4][20] = {
+    "DEFEND & STATUS:",
+    "Only SH blocks dmg.",
+    "SW/BO/DA block 0.",
+    "POISON: 1/turn dot"
+};
+
+static const char s_tut_6[4][20] = {
+    "SHIELD CARD:",
+    "Offense: 0 dmg,",
+    "but still counts",
+    "for your combos."
+};
+
+static const char (* const s_tut_slides[TUTORIAL_SLIDE_COUNT])[20] = {
+    s_tut_0, s_tut_1, s_tut_2, s_tut_3, s_tut_4, s_tut_5, s_tut_6
+};
+
+void tutorial_content_render(void)
+{
+    uint8_t slide = g_bk_byte_a;
+    const char (*lines)[20];
+    uint8_t count = 4;
+    uint8_t i;
+
+    if (slide >= TUTORIAL_SLIDE_COUNT) slide = 0;
+    lines = s_tut_slides[slide];
+
+    for (i = 0; i < count; i++) {
+        tutorial_draw_text(2, (uint8_t)(5 + i), lines[i], 18);
+    }
+    tutorial_draw_text(2, 16, "[LR] NAV  [B] EXIT", 18);
+}

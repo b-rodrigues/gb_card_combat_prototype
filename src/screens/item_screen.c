@@ -10,7 +10,12 @@
 #include "menu.h"
 #include "card.h"
 #include "shops.h"
+#include "banked.h"
 #include "game_ids.h"
+
+/* Bank-2 helper (screen_content.c); keeps the fixed bank small
+ * (AGENTS.md 52.18). */
+void item_menu_cursor_banked(void);
 
 #define TAB_CARDS 0
 #define TAB_QUEST 1
@@ -222,18 +227,22 @@ static void switch_tab(Game *g)
     g->render_cache.valid = false;
 }
 
-static void scroll_to_index(Game *g)
+/* Targeted cursor move (AGENTS.md 36).  The bank-2 body (screen_content.c)
+ * computes the caret rows, repaints the two cells via sc_put_char (mirrored
+ * into g_ui_screen_buf) and, when the visible window must shift, moves the
+ * scroll and flags g->render_cache.valid=false so render takes the rare
+ * full-redraw path.  A pure caret move never touches the render cache, so
+ * the big item_screen_render stays at its baseline shape (AGENTS.md 52.19).
+ * No staging bytes beyond the old/new indices; the body writes game state
+ * directly through the staged Game* (WRAM is always mapped). */
+static void item_menu_step(Game *g, uint8_t new_index)
 {
-    uint8_t pos;
-    if (g->item_menu_index <= FIRST_CARD) {
-        g->item_menu_scroll = 0;
-        return;
-    }
-    pos = (uint8_t)(g->item_menu_index - FIRST_CARD);
-    if (pos < g->item_menu_scroll)
-        g->item_menu_scroll = pos;
-    else if (pos > (uint8_t)(g->item_menu_scroll + VISIBLE_CARDS - 1))
-        g->item_menu_scroll = (uint8_t)(pos - (VISIBLE_CARDS - 1));
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&item_menu_cursor_banked;
+    g_bk_ptr_a = (void *)g;
+    g_bk_byte_a = g->item_menu_index;
+    g_bk_byte_b = new_index;
+    banked_call_run();
 }
 
 static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
@@ -461,7 +470,7 @@ void item_screen_update(Game *g)
                     g->item_menu_index > ROW_TOP) {
                     /* Two-step close: first B jumps to the top row. */
                     g->item_menu_index = ROW_TOP;
-                    scroll_to_index(g);
+                    g->item_menu_scroll = 0;
                 } else {
                     close_menu(g);
                 }
@@ -486,13 +495,11 @@ void item_screen_update(Game *g)
         total = quest_count();
         if (total == 0) return;
         if (input_pressed(INPUT_UP)) {
-            g->item_menu_index = (g->item_menu_index > 0) ?
-                (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1);
-            g->render_cache.valid = false;
+            item_menu_step(g, (g->item_menu_index > 0) ?
+                (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1));
         } else if (input_pressed(INPUT_DOWN)) {
-            g->item_menu_index = (g->item_menu_index < (uint8_t)(total - 1)) ?
-                (uint8_t)(g->item_menu_index + 1) : 0;
-            g->render_cache.valid = false;
+            item_menu_step(g, (g->item_menu_index < (uint8_t)(total - 1)) ?
+                (uint8_t)(g->item_menu_index + 1) : 0);
         }
         return;
     }
@@ -563,6 +570,9 @@ void item_screen_update(Game *g)
             if (card_get_def(id)->type == CARD_TYPE_SPECIAL) {
                 g->item_menu_message = MSG_QUEST_ITEM;
                 g->item_menu_msg_ttl = 45;
+                /* Without the invalidate the transient message never
+                 * appears until the next unrelated redraw. */
+                g->render_cache.valid = false;
                 return;
             }
             if (deck_add_card(cs, id)) {
@@ -588,15 +598,11 @@ void item_screen_update(Game *g)
     if (total <= 1) return;
 
     if (input_pressed(INPUT_UP)) {
-        g->item_menu_index = (g->item_menu_index > 0) ?
-            (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1);
-        scroll_to_index(g);
-        g->render_cache.valid = false;
+        item_menu_step(g, (g->item_menu_index > 0) ?
+            (uint8_t)(g->item_menu_index - 1) : (uint8_t)(total - 1));
     } else if (input_pressed(INPUT_DOWN)) {
-        g->item_menu_index = (g->item_menu_index < (uint8_t)(total - 1)) ?
-            (uint8_t)(g->item_menu_index + 1) : ROW_TOP;
-        scroll_to_index(g);
-        g->render_cache.valid = false;
+        item_menu_step(g, (g->item_menu_index < (uint8_t)(total - 1)) ?
+            (uint8_t)(g->item_menu_index + 1) : ROW_TOP);
     }
 }
 

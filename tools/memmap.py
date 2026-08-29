@@ -25,7 +25,7 @@ def main():
             if not m:
                 continue
             name, start, size, nbytes = m.groups()
-            if name in ("_CODE", "_HOME", "_DATA"):
+            if name in ("_CODE", "_HOME", "_INITIALIZER", "_DATA"):
                 areas[name] = (int(start, 16), int(size, 16), int(nbytes))
 
     # The RAM-resident banked trampolines (crt0.s) are byte-copied at boot
@@ -66,12 +66,23 @@ def main():
     if "_HOME" in areas:
         start, size, nbytes = areas["_HOME"]
         end = start + size
+        # The linker appends the _INITIALIZER table (initialized-WRAM image
+        # the CRT0 copies to _INITIALIZED at boot) directly after _HOME in
+        # the same non-bankable fixed area.  Both must stay below 0x8000.
+        init_size = 0
+        if "_INITIALIZER" in areas:
+            init_start = areas["_INITIALIZER"][0]
+            init_size = areas["_INITIALIZER"][1]
+            init_end = init_start + init_size
+            end = max(end, init_end)
         headroom = 0x8000 - end
         status = "OK" if end <= 0x8000 else "VIOLATION (>= 0x8000 aliases VRAM)"
         if end > 0x8000:
             ok = False
         print(f"_HOME (non-bankable)          : {nbytes:>6} B  @ 0x{start:04X}-0x{end:04X}  "
               f"headroom to 0x8000: {headroom} B  [{status}]")
+        if init_size:
+            print(f"  (includes {init_size} B _INITIALIZER table after _HOME)")
     else:
         print("_HOME : (not found)")
         ok = False

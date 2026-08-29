@@ -493,16 +493,22 @@ def run_scenario(scenario):
         elif a_type == "screen_row":
             row_idx = a.get("row", 0)
             contains_str = a.get("contains", expected)
+            if contains_str is None:
+                raise ValueError(
+                    f"screen_row assertion row {row_idx} requires 'contains'")
             expected = f"row {row_idx} contains '{contains_str}'"
-            actual_row = screen_lines[row_idx] if row_idx < len(screen_lines) else ""
+            actual_row = screen_lines[row_idx] if row_idx < len(screen_lines) and screen_lines[row_idx] else ""
             passed = contains_str in actual_row
             actual = f"row {row_idx}: '{actual_row.strip()}'"
 
         elif a_type == "screen_row_not_contains":
             row_idx = a.get("row", 0)
             contains_str = a.get("contains", expected)
+            if contains_str is None:
+                raise ValueError(
+                    f"screen_row_not_contains assertion row {row_idx} requires 'contains'")
             expected = f"row {row_idx} does not contain '{contains_str}'"
-            actual_row = screen_lines[row_idx] if row_idx < len(screen_lines) else ""
+            actual_row = screen_lines[row_idx] if row_idx < len(screen_lines) and screen_lines[row_idx] else ""
             passed = contains_str not in actual_row
             actual = f"row {row_idx}: '{actual_row.strip()}'"
 

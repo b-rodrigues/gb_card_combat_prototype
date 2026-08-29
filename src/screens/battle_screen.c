@@ -1,6 +1,7 @@
 #include "game.h"
 #include "screen.h"
 #include "battle.h"
+#include "scene.h"
 #include "telemetry.h"
 #include "audio.h"
 #include "content.h"
@@ -43,8 +44,12 @@ void battle_screen_update(Game *g)
                 vg->battle.result == BATTLE_RESULT_FLED) {
                 vg->world.player.hp = vg->battle.player.hp;
                 vg->state.party.members[0].hp = vg->battle.player.hp;
-                audio_play_music(MUSIC_OVERWORLD);
-                telemetry_emit(EVENT_MUSIC_CHANGED, MUSIC_OVERWORLD, 0, 0, 0);
+                /* Return to the current scene's area track (TOWN/DUNGEON
+                 * get their own theme again instead of the field's). */
+                {
+                    const SceneDefinition *def = scene_definition_for_map(vg->world.map_id);
+                    audio_play_music(def ? def->music : MUSIC_OVERWORLD);
+                }
                 if (vg->battle.result == BATTLE_RESULT_VICTORY) {
                     world_on_battle_end(g, true);
                     screen_change(g, game_screen_after_victory(g));

@@ -7,7 +7,7 @@ developer or LLM can review the current look without booting the ROM
 (AGENTS.md §56).  Screenshots are for VISUAL review only; semantic state and
 telemetry remain authoritative (AGENTS.md §7/§40).
 
-Two sessions, each starting from a fresh boot (fresh persistent state):
+Four sessions, each starting from a fresh boot (fresh persistent state):
 
   Walk A (town):
     00-boot-field        overworld at spawn with the HUD
@@ -27,11 +27,30 @@ Two sessions, each starting from a fresh boot (fresh persistent state):
     10-battle-attack     after a player attack (damage dealt)
     11-battle-run        after fleeing (result line)
 
+  Walk C (forest):
+    14-forest-arrived    FOREST gate arrival
+
+  Walk D (tutorial):
+    15-title-menu        title menu with the TUTORIAL entry (index 3)
+    16-tutorial-slide0   TUTORIAL BASICS
+    17-tutorial-slide1   CARD TYPES
+    18-tutorial-slide2   CARD TYPES 2
+    19-tutorial-slide3   COMBOS
+    20-tutorial-slide4   ENERGY & COMBAT (6/turn)
+    21-tutorial-slide5   DEFEND & STATUS
+
 The walks are POSITION-based, not press-count based (see
 tools/vram_dialogue_check.py for why PyBoy button delays are lossy): each
-step is a single 1-tick press edge followed by a wait for the tile commit,
+step is a single 4-tick press edge followed by a wait for the tile commit,
 the player position is read back from WRAM after every press, and a dropped
 press is re-pressed so the route self-corrects.
+
+Each session now ADVANCES past the boot-time title splash, title menu and
+three-slide intro before any walking begins (Walk D instead stops at the
+title menu and pans through the tutorial slides without entering the game).
+Milestone frames are verified:
+no frame may still show title/intro text; text-bearing milestones must show
+their expected substrings.  Any failure aborts with a non-zero exit code.
 
 Run:
     make screenshots     # builds the release ROM, then runs this
@@ -52,6 +71,33 @@ OUT = os.path.join(REPO, "screenshots")
 PLAYER_BOOT = bytes([4, 4, 10, 10, 1, 1, 1])
 WRAM_BASE = 0xC000
 WRAM_SIZE = 0x2000
+
+# Title / intro BG markers.  Title shows "G I A U S A R" (logo) plus menu
+# items "NEW GAME", "CONTINUE", "SOUND".  Intro has three scripted slides.
+TITLE_LINES = (
+    # Title logo & menu - unique markers only
+    "G I A U S A R",
+    "The Waking Whale",
+    "and the Closed",
+    "NEW GAME",
+    "CONTINUE",
+    "SOUND",
+    # Intro slide 0
+    "The skies above",
+    "A whale stirs",
+    "in the deep.",
+    # Intro slide 1
+    "The sky closes,",
+    "sealed against",
+    "the waking whale.",
+    # Intro slide 2
+    "Only the Lord of",
+    "Slimes stands",
+    "between all that",
+    "lives and the end.",
+    # Intro prompt
+    "[A] NEXT",
+)
 
 failures = []
 
@@ -97,18 +143,6 @@ def wait_rendered(pb, timeout=360, settle=8):
     return False
 
 
-def shoot(pb, label, settle=True):
-    path = os.path.join(OUT, label + ".png")
-    if settle and not wait_rendered(pb):
-        print(f"warning: {label}: screen never became non-blank; "
-              "capturing anyway", file=sys.stderr)
-    pb.screen.image.save(path)
-    rows = bg_text(pb)
-    top = next((r.strip() for r in rows if r.strip()), "")
-    print("saved", os.path.relpath(path, REPO), f"[{top[:18]}]")
-    return path
-
-
 def bg_text(pb):
     """The visible BG tilemap as 18 rows of 20 chars.  The console font
     lives at tile base 0 (tile = ASCII - 32), so map cells read directly
@@ -125,6 +159,68 @@ def bg_text(pb):
             line += chr(t + 32) if t < 96 else "?"
         rows.append(line)
     return rows
+
+
+def on_title_or_intro_pb(pb):
+    rows = bg_text(pb)
+    for r in rows:
+        for m in TITLE_LINES:
+            if m in r:
+                return True
+    return False
+
+
+def quick_open_pb(pb):
+    return any("CARDS QUEST" in r for r in bg_text(pb))
+
+
+def on_overworld_pb(pb):
+    return (not quick_open_pb(pb)) and not on_title_or_intro_pb(pb)
+
+
+def press_start(pb, settle=40):
+    pb.button_press("start")
+    for _ in range(4):
+        pb.tick()
+    pb.button_release("start")
+    for _ in range(settle):
+        pb.tick()
+
+
+def advance_to_overworld(pb, tries=12):
+    """Press START through the boot title splash, menu and the 3-slide
+    intro until the game is back on the overworld (FIELD).  A START that
+    lands on the open overworld opens the quick screen instead; the loop
+    detects that (quick screen text) and closes it with the next START, so
+    the sequence self-heals and always ends on the overworld."""
+    for _ in range(tries):
+        wait_rendered(pb)
+        if on_overworld_pb(pb):
+            return True
+        press_start(pb)
+        for _ in range(90):
+            if on_overworld_pb(pb):
+                return True
+            pb.tick()
+    return on_overworld_pb(pb)
+
+
+def shoot(pb, label, need=None, check_title=True):
+    path = os.path.join(OUT, label + ".png")
+    if not wait_rendered(pb):
+        print(f"warning: {label}: screen never became non-blank; "
+              "capturing anyway", file=sys.stderr)
+    pb.screen.image.save(path)
+    rows = bg_text(pb)
+    top = next((r.strip() for r in rows if r.strip()), "")
+    print("saved", os.path.relpath(path, REPO), f"[{top[:18]}]")
+
+    # Title/intro check only for pure-overworld frames (not dialogue/shop/battle).
+    if check_title and on_title_or_intro_pb(pb):
+        check(f"{label} past title", False, "frame still shows title/intro")
+    if need:
+        check(f"{label} shows {need!r}", any(need in r for r in rows))
+    return path
 
 
 def main():
@@ -145,6 +241,8 @@ def main():
     pb = PyBoy(ROM, window="null")
     for _ in range(180):
         pb.tick()
+    if not advance_to_overworld(pb):
+        check("boot: reached overworld", False, "stuck on title/intro")
     pos_addr = find_player(pb)
 
     def pos():
@@ -190,7 +288,7 @@ def main():
         press or an in-transition eat is retried until the intended screen
         state is reached).  Warns loudly when the state is never reached:
         a silently-exhausted retry loop poisons every later milestone."""
-        for t_i in range(tries):
+        for _ in range(tries):
             if cond():
                 return True
             press(btn, settle=settle)
@@ -225,6 +323,11 @@ def main():
                 return False
         return True
 
+    # Advance past title/intro and locate player
+    if not advance_to_overworld(pb):
+        check("Walk A: boot reached overworld", False, "stuck on title/intro")
+    pos_addr = find_player(pb)
+
     x, y = pos()
     print(f"boot: player at ({x},{y}) (WRAM 0x{pos_addr:04X})")
     shoot(pb, "00-boot-field")
@@ -235,6 +338,7 @@ def main():
     # vertically in TOWN (18 tall), so the dialogue box is exercised with a
     # scrolled camera.
     ok = walk("right", lambda: pos()[0] >= 22)
+    check("walk: camera scrolled (x>=22)", ok)
     wait(20)
     shoot(pb, "01-field-scrolled")
     ok = walk("right", lambda: pos()[0] == 30) and ok
@@ -244,18 +348,20 @@ def main():
     shoot(pb, "02-town-arrived")
     ok = walk("down", lambda: pos()[1] == 8) and ok
     ok = walk("right", lambda: pos()[0] == 9) and ok
+    check("walk: reached the town guard", ok)
     if not ok:
         print("warning: walk did not reach the guard; sampling anyway")
 
     # Bump the guard at (10,8): a blocked RIGHT press engages the dialogue,
     # verified by the GUARD: speaker tag on the BG tilemap (the window bit
     # alone also drops for menus and the shop).
-    press_until("right",
+    ret = press_until("right",
                 lambda: any("GUARD:" in r for r in bg_text(pb)), settle=30,
                 label="guard dialogue")
-    ok = shoot(pb, "03-guard-dialogue") and ok
+    check("guard dialogue opened", ret)
+    shoot(pb, "03-guard-dialogue", need="GUARD:", check_title=False)
     press("a", settle=30)
-    shoot(pb, "04-dialogue-next")
+    shoot(pb, "04-dialogue-next", check_title=False)
     # GUARD_GREETING has exactly two lines ("Halt! Keep peace." /
     # "Watch for slimes."): the A above advanced line 1 -> line 2 (captured
     # above); the next A closes the dialogue.  Two traps here: (a) a stray
@@ -274,10 +380,11 @@ def main():
     # Walk to the shopkeeper at (9,3): from (9,8) up to (9,4), then bump UP
     # to open the shop -- verified by the SHOP title on the BG tilemap.
     ok = walk("up", lambda: pos()[1] == 4) and ok
-    press_until("up", lambda: "SHOP" in bg_text(pb)[0], settle=30,
+    ret = press_until("up", lambda: "SHOP" in bg_text(pb)[0], settle=30,
                 label="shop open")
+    check("shop opened", ret)
     wait(20)
-    shoot(pb, "05-shop")
+    shoot(pb, "05-shop", need="SHOP", check_title=False)
 
     # Close the shop (B restores the overworld), then open the quick
     # screen (START).  Each transition is content-verified so a dropped
@@ -291,42 +398,55 @@ def main():
     def picker_open():
         return any("LR CYCLE" in r for r in bg_text(pb))
 
-    press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
+    ret = press_until("b", lambda: stable(
+        lambda: "SHOP" not in bg_text(pb)[0]), settle=30,
                 label="shop close")
-    press_until("start", quick_open, settle=30, label="quick screen")
+    check("shop closed", ret)
+    ret = press_until("start", quick_open, settle=30, label="quick screen")
+    check("quick screen opened", ret)
     wait(10)
-    shoot(pb, "06-cards-menu")
+    shoot(pb, "06-cards-menu", need="CARDS QUEST", check_title=False)
 
     # The menu opens on the CARDS tab with the cursor on the top
     # FILTER/SORT row: A opens the picker (footer "LR CYCLE  A:OK B:NO"),
     # B backs out, RIGHT switches to the QUEST tab (^ caret under QUEST).
-    press_until("a", picker_open, settle=30, label="filter picker")
-    shoot(pb, "07-filter-picker")
-    press_until("b", lambda: not picker_open(), settle=30, label="picker close")
-    tab_to(6)
-    shoot(pb, "08-quests-tab")
+    ret = press_until("a", picker_open, settle=30, label="filter picker")
+    check("filter picker opened", ret)
+    shoot(pb, "07-filter-picker", need="LR CYCLE", check_title=False)
+    ret = press_until("b", lambda: not picker_open(), settle=30, label="picker close")
+    check("picker closed", ret)
+    ret = tab_to(6)
+    check("quest tab caret positioned", ret)
+    shoot(pb, "08-quests-tab", check_title=False)
 
     # Close the quick screen with B (back to the bare overworld)
-    press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
+    ret = press_until("b", lambda: stable(lambda: not quick_open()), settle=30,
                 label="quick screen close")
+    check("quick screen closed", ret)
 
     # Walk to the Wizard at (6,10): from (9,4) down to (6,11), then bump UP
     # to open the Save Menu -- verified by its SAVE GAME title.
     ok = walk("down", lambda: pos()[1] == 11)
     ok = walk("left", lambda: pos()[0] == 6) and ok
-    press_until("up", lambda: "SAVE GAME" in bg_text(pb)[0], settle=30,
+    check("walk: reached the wizard", ok)
+    if not ok:
+        print("warning: walk did not reach the wizard; sampling anyway")
+    ret = press_until("up", lambda: "SAVE GAME" in bg_text(pb)[0], settle=30,
                 label="save menu")
-    shoot(pb, "12-wizard-save")
+    check("save menu opened", ret)
+    shoot(pb, "12-wizard-save", need="SAVE GAME", check_title=False)
 
-    # Press A to save the current game state to Slot 1 (message "SAVED TO SLOT 1")
+    # Press A to save the current game state to Slot 1 (message "SAVED")
     press("a", settle=30)
-    shoot(pb, "13-wizard-saved")
+    shoot(pb, "13-wizard-saved", need="SAVED", check_title=False)
     pb.stop()
 
     # ── Walk B: slime battle on FIELD ────────────────────────────────
     pb = PyBoy(ROM, window="null")
     for _ in range(180):
         pb.tick()
+    if not advance_to_overworld(pb):
+        check("Walk B: boot reached overworld", False, "stuck on title/intro")
     pos_addr = find_player(pb)
 
     def pos2():
@@ -357,24 +477,24 @@ def main():
 
     x, y = pos2()
     print(f"battle walk: boot at ({x},{y})")
-
     # FIELD (4,4) -> down to row 8 -> right to (13,8) -> right into the
     # hostile slime at (14,8), which resolves to an encounter on commit.
     ok = walk2("down", lambda: pos2()[1] == 8)
     ok = walk2("right", lambda: pos2()[0] == 13) and ok
+    check("walk: reached the slime", ok)
     if not ok:
         print("warning: walk did not reach the slime; sampling anyway")
     press2("right", settle=40)
-    shoot(pb, "09-battle")
+    shoot(pb, "09-battle", need="DECK:")
 
     # Select card with A, then execute combo with SELECT (damage dealt)
     press2("a", settle=15)
     press2("select", settle=40)
-    shoot(pb, "10-battle-attack")
+    shoot(pb, "10-battle-attack", check_title=False)
 
     # Defense turn or next selection
     press2("a", settle=20)
-    shoot(pb, "11-battle-run")
+    shoot(pb, "11-battle-run", check_title=False)
     pb.stop()
 
     # ─────────────────────────────────────────────────────────────
@@ -383,30 +503,116 @@ def main():
     pb = PyBoy(ROM, window="null")
     for _ in range(300):
         pb.tick()
+    if not advance_to_overworld(pb):
+        check("Walk C: boot reached overworld", False, "stuck on title/intro")
+    pos_addr = find_player(pb)
 
-    px_off3 = find_player(pb)
     def pos3():
-        return (pb.memory[WRAM_BASE + px_off3],
-                pb.memory[WRAM_BASE + px_off3 + 1])
+        return (pb.memory[pos_addr],
+                pb.memory[pos_addr + 1])
 
-    def step3(btn):
+    def step3(btn, settle=12):
         pb.button_press(btn)
         for _ in range(4):
             pb.tick()
         pb.button_release(btn)
-        for _ in range(24):
+        for _ in range(settle):
             pb.tick()
 
-    # FIELD (4,4) -> right to col 12 (8 steps) -> up to row 1 (3 steps) -> up into north gate (12,0)
-    for _ in range(8):
-        step3("right")
-    for _ in range(3):
-        step3("up")
+    def walk3(btn, is_goal, budget=2000):
+        for _ in range(budget):
+            if is_goal():
+                return True
+            x0, y0 = pos3()
+            pb.button_press(btn)
+            for _ in range(4):
+                pb.tick()
+            pb.button_release(btn)
+            for _ in range(24):
+                pb.tick()
+                if pos3() != (x0, y0):
+                    break
+        return is_goal()
+
+    # FIELD (4,4) -> right to col 12 -> up to row 1 -> up into north gate (12,0)
+    ok = walk3("right", lambda: pos3()[0] == 12)
+    ok = walk3("up", lambda: pos3()[1] == 1) and ok
+    check("walk: reached forest gate", ok)
     step3("up")
     for _ in range(120):
         pb.tick()
 
     shoot(pb, "14-forest-arrived")
+    pb.stop()
+
+    # ── Walk D: title menu + tutorial slides ─────────────────────────
+    pb = PyBoy(ROM, window="null")
+    for _ in range(180):
+        pb.tick()
+
+    def press4(btn, settle=12):
+        pb.button_press(btn)
+        for _ in range(4):
+            pb.tick()
+        pb.button_release(btn)
+        for _ in range(settle):
+            pb.tick()
+
+    def press_until4(btn, cond, tries=8, settle=30, timeout=90, label=""):
+        for _ in range(tries):
+            if cond():
+                return True
+            press4(btn, settle=settle)
+            for _ in range(timeout):
+                if cond():
+                    return True
+                pb.tick()
+        if not cond():
+            print(f"warning: press_until4({btn}{' ' + label if label else ''})"
+                  " never reached its condition", file=sys.stderr)
+        return cond()
+
+    def title_menu_open():
+        return any("NEW GAME" in r for r in bg_text(pb))
+
+    def caret_tutorial():
+        return any("> TUTORIAL" in r for r in bg_text(pb))
+
+    def slide_marker(marker):
+        return lambda: any(marker in r for r in bg_text(pb))
+
+    if not wait_rendered(pb):
+        check("Walk D: boot rendered", False, "screen never became non-blank")
+
+    # Boot splash -> press START once for the menu -> caret to TUTORIAL.
+    ret = press_until4("start", title_menu_open, label="title menu open")
+    check("title menu opened", ret)
+    ret = press_until4("down", caret_tutorial, label="tutorial entry")
+    check("tutorial entry selected", ret)
+    wait_rendered(pb)
+    shoot(pb, "15-title-menu", need="> TUTORIAL", check_title=False)
+
+    # A enters the tutorial; RIGHT pans through the six slides.  Each
+    # marker is unique to its slide (no substring overlap) so the walk
+    # stops exactly on every milestone.
+    ret = press_until4("a", slide_marker("TUTORIAL BASICS"),
+                       label="tutorial slide 0")
+    check("tutorial entered", ret)
+    wait_rendered(pb)
+    shoot(pb, "16-tutorial-slide0", need="TUTORIAL BASICS")
+
+    for label, marker in (
+        ("17-tutorial-slide1", "SW: SWORD"),
+        ("18-tutorial-slide2", "CARD TYPES 2"),
+        ("19-tutorial-slide3", "COMBOS"),
+        ("20-tutorial-slide4", "6/turn"),
+        ("21-tutorial-slide5", "DEFEND & STATUS"),
+        ("22-tutorial-slide6", "SHIELD CARD"),
+    ):
+        ret = press_until4("right", slide_marker(marker), label=label)
+        check(f"reached {label}", ret)
+        wait_rendered(pb)
+        shoot(pb, label, need=marker)
     pb.stop()
 
     print()

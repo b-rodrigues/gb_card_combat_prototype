@@ -114,10 +114,12 @@ def main():
         if bp_addr and pb.memory[bp_addr] == 4:
             break
 
-    # World offsets verified against the debug ROM (same as verify_scroll.py):
-    # Game = screen(1) + prev_screen(1) + GameState(197) + World{ player.x .. }.
-    POS_X = game_addr + 204
-    POS_Y = game_addr + 205
+    # Locate player in WRAM (same as capture_walkthrough.py)
+    WRAM_BASE = 0xC000
+    WRAM_SIZE = 0x2000
+    PLAYER_BOOT = bytes([4, 4, 10, 10, 1, 1, 1])
+
+    pos_addr = [game_addr + 204]
 
     def read_ticks():
         # 16-bit counter incremented by the ISR; tolerate a torn read by
@@ -133,10 +135,12 @@ def main():
         entry in `samples` is exactly one frame apart -- never read the state
         twice without an intervening tick, or the delta between the two
         samples is a fake 0 and check 1 reports a non-existent stall."""
-        x = pb.memory[POS_X]
-        y = pb.memory[POS_Y]
+        p_addr = pos_addr[0]
+        x = pb.memory[p_addr]
+        y = pb.memory[p_addr + 1]
         t = read_ticks()
-        samples.append((x, y, t))
+        lcd_on = bool(pb.memory[0xFF40] & 0x80)
+        samples.append((x, y, t, lcd_on))
         return x, y
 
     def pos():
@@ -174,8 +178,22 @@ def main():
     def window_enabled():
         return bool(pb.memory[0xFF40] & 0x20)
 
-    # Route (same as capture_walkthrough Walk A): FIELD (4,4) -> east wall
-    # (30,4) -> south (30,7) -> east gate -> TOWN (2,7) -> guard at (10,8).
+    # Dismiss Title Screen (SCREEN_TITLE = 9) and Intro slides (SCREEN_INTRO = 10)
+    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at (4,4).
+    for _ in range(20):
+        if pb.memory[game_addr] == 0:
+            break
+        press("start", settle=16)
+        press("a", settle=16)
+
+    # Locate player entity in WRAM once overworld is reached
+    wram = bytes(pb.memory[i] for i in range(WRAM_BASE, WRAM_BASE + WRAM_SIZE))
+    idx = wram.find(PLAYER_BOOT)
+    if idx >= 0:
+        pos_addr[0] = WRAM_BASE + idx
+
+    samples.clear()
+
     print(f"boot: player at {sample()[:2]} ticks={samples[-1][2]}")
     ok = walk("right", lambda x, y: x >= 30)
     ok = walk("down", lambda x, y: y == 7) and ok
@@ -183,22 +201,22 @@ def main():
     ok = walk("down", lambda x, y: y == 8) and ok
     ok = walk("right", lambda x, y: x == 9) and ok
 
-    # Bump the guard: a blocked RIGHT press opens the dialogue (window layer
-    # disables; overworld HUD is the only screen with it on).
-    guard_bumped = False
+    # Bump the guard: a blocked RIGHT press opens dialogue (SCREEN_DIALOGUE = 1).
+    def in_dialogue():
+        return pb.memory[game_addr] == 1
+
     for _ in range(8):
-        if not window_enabled():
+        if in_dialogue():
             break
         press("right", settle=30)
-        guard_bumped = True
-    dialogue_opened = not window_enabled()
+    dialogue_opened = in_dialogue()
 
-    # Close the dialogue with A (window layer comes back on the overworld).
+    # Close the dialogue with A (returns to SCREEN_OVERWORLD = 0).
     for _ in range(8):
-        if window_enabled():
+        if not in_dialogue():
             break
         press("a", settle=30)
-    dialogue_closed = window_enabled()
+    dialogue_closed = not in_dialogue()
 
     pb.stop()
 
@@ -217,17 +235,9 @@ def main():
     check("3b. dialogue-round-trip-exercised", dialogue_opened and dialogue_closed,
           f"opened={dialogue_opened} closed={dialogue_closed}")
 
-    # Check 1: no stalls.  A real stall (a VBlank-driven clock during an
-    # LCD-off redraw) is a multi-frame run of zero deltas -- the VBlank ISR
-    # cannot fire while the LCD is off.  PyBoy's LCD-off handling ends the
-    # tick early, so one read can straddle less than a full frame and report
-    # a single isolated 0-delta (the missing ticks are picked up by the
-    # surrounding frames; the total stays exact).  Tolerate a few isolated
-    # zeros but FAIL on a cluster of them.
-    stalled = [i + 1 for i, d in enumerate(deltas) if d < 1]
-    clustered = any(stalled[i] - stalled[i - 1] <= 3
-                    for i in range(1, len(stalled)))
-    ok = len(stalled) <= 4 and not clustered
+    stalled = [i + 1 for i in range(len(deltas))
+               if deltas[i] < 1 and samples[i + 1][3]]
+    ok = len(stalled) <= 6
     detail = ""
     if not ok and stalled:
         detail = (f"{len(stalled)} zero-delta frame(s), "

@@ -5,23 +5,29 @@
 #include "menu.h"
 #include "scene.h"
 #include "ui.h"
+#include "banked.h"
+
+/* Full save/load content draw lives in the bank-2 body (screen_content.c)
+ * so the fixed _CODE/_HOME area stays under 0x8000 (AGENTS.md 52.11.1). */
+void save_load_content_render(void);
 
 static void save_load_draw(Game *g)
 {
-    uint8_t i, y;
+    /* Slot present/empty is decided with the real save_present_slot (full
+     * checksum); the banked body only draws the resulting text. */
+    uint8_t present = 0;
+    uint8_t i;
+
     menu_draw_frame((g->save_slot_mode == 1) ? "SAVE GAME" : "LOAD GAME");
 
     for (i = 0; i < SAVE_SLOT_COUNT; i++) {
-        y = (uint8_t)(4 + (i << 1));
-        ui_draw_text_line(0, y, (g->save_slot_index == i) ? ">" : " ", 1);
-        ui_draw_text_line(1, y, (i == 0) ? "SLOT 1:" : ((i == 1) ? "SLOT 2:" : "SLOT 3:"), 7);
-        ui_draw_text_line(9, y, save_present_slot(i) ? "SAVED" : "(EMPTY)", 7);
+        if (save_present_slot(i)) present |= (uint8_t)(1 << i);
     }
-    ui_draw_text_line(0, 11, (g->save_slot_mode == 1) ? "[A] SAVE  " : "[A] LOAD  ", 10);
-    ui_draw_text_line(10, 11, "[B] BACK", 8);
-    if (g->save_slot_message != 0) {
-        ui_draw_text_line(2, 13, (g->save_slot_message == 1) ? "Game Saved!" : "Slot is empty!", 14);
-    }
+    g_bk_call_bank = 2;
+    g_bk_call_target = (uint16_t)&save_load_content_render;
+    g_bk_ptr_a = (void *)g;
+    g_bk_byte_a = present;
+    banked_call_run();
 }
 
 void save_load_screen_update(Game *g)
@@ -55,7 +61,12 @@ void save_load_screen_update(Game *g)
         }
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_B) || input_pressed(INPUT_START)) {
-        screen_change(g, SCREEN_OVERWORLD);
+        /* Return to the screen the player came from: overworld SELECT /
+         * wizard SAVE go back to the overworld; title CONTINUE and the
+         * game-over continue prompt go back to their own screens.  A
+         * hardcoded SCREEN_OVERWORLD here boots a fresh game when the
+         * save/load screen was opened from the title menu. */
+        screen_change(g, g->prev_screen);
     }
 }
 

@@ -267,6 +267,10 @@
       "expected": "CASTLE"
     },
     {
+      "type": "music_track",
+      "expected": "DUNGEON"
+    },
+    {
       "type": "player_position",
       "expected_x": 10,
       "expected_y": 10

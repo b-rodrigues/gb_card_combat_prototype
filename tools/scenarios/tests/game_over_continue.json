@@ -1,7 +1,7 @@
 {
   "name": "game_over_continue",
   "test": true,
-  "description": "On the Game Over Continue? prompt, choosing YES restarts the game to a fresh overworld. The hero starts at 2 HP and the battle runs on the decision timer (no input): the hero auto-attacks, the slime's first card (SWORD 2) is lethal once the hero's inert auto-defend expires, so the battle ends in defeat after ~2520 frames.",
+  "description": "On the Game Over Continue? prompt, the default choice (Continue) resumes a save by opening the SAVE/LOAD screen in LOAD mode. The hero starts at 2 HP and the battle runs on the decision timer (no input): the hero auto-attacks, the slime's first card (SWORD 2) is lethal once the hero's inert auto-defend expires, so the battle ends in defeat and the game-over screen appears.",
   "scenario_id": "GAME_OVER",
   "actions": [
     {
@@ -9,64 +9,60 @@
       "frames": 5
     },
     {
-      "type": "press",
-      "button": "RIGHT"
+      "type": "wait",
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 8
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 250
-    },
-    {
-      "type": "press",
-      "button": "A"
+      "frames": 500
     },
     {
       "type": "wait",
-      "frames": 40
+      "frames": 500
     },
     {
       "type": "press",
@@ -74,26 +70,33 @@
     },
     {
       "type": "wait",
-      "frames": 20
+      "frames": 120
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 120
     }
   ],
   "assertions": [
     {
-      "type": "game_state",
-      "expected": "OVERWORLD"
+      "type": "battle_result",
+      "expected": "DEFEAT"
     },
     {
-      "type": "player_position",
-      "expected_x": 4,
-      "expected_y": 4
+      "type": "game_over_choice",
+      "expected": 0
     },
     {
-      "type": "player_hp",
-      "expected": 10
+      "type": "screen",
+      "expected": "SAVE_LOAD"
     },
     {
-      "type": "music_track",
-      "expected": "OVERWORLD"
+      "type": "event_occurred",
+      "event": "SCREEN_CHANGED"
     }
   ],
   "initial_state": {
