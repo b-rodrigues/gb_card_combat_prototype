@@ -188,9 +188,11 @@ void battle_target_move(Battle *b, int8_t dir)
             t = (uint8_t)((t + 1 >= b->enemy_count) ? 0 : (t + 1));
         }
         if (b->enemies[t].hp != 0) {
-            b->target_idx = t;
-            b->dirty |= BATTLE_DIRTY_ENEMIES;
-            telemetry_emit(EVENT_TARGET_CHANGED, old, t, 0, 0);
+            if (t != old) {
+                b->target_idx = t;
+                b->dirty |= BATTLE_DIRTY_ENEMIES;
+                telemetry_emit(EVENT_TARGET_CHANGED, old, t, 0, 0);
+            }
             return;
         }
     }

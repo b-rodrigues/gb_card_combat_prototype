@@ -1401,7 +1401,9 @@ auto-advances to the next living enemy after its current target is defeated
 (`battle_target_auto_advance`).  The target persists across turns — this
 event only fires when the *selection itself* changes, never on the reset of
 a new turn.  Single-enemy battles do not emit it (the caret is trapped on
-the only slot).
+the only slot), and a wrap-back press that lands on the same living enemy
+(e.g. DOWN cycling past only dead slots in a multi-enemy battle reduced to
+one survivor) emits nothing either.
 
 ```text
 TARGET_CHANGED
