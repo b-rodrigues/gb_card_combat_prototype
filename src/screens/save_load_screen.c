@@ -61,7 +61,12 @@ void save_load_screen_update(Game *g)
         }
         g->render_cache.valid = false;
     } else if (input_pressed(INPUT_B) || input_pressed(INPUT_START)) {
-        screen_change(g, SCREEN_OVERWORLD);
+        /* Return to the screen the player came from: overworld SELECT /
+         * wizard SAVE go back to the overworld; title CONTINUE and the
+         * game-over continue prompt go back to their own screens.  A
+         * hardcoded SCREEN_OVERWORLD here boots a fresh game when the
+         * save/load screen was opened from the title menu. */
+        screen_change(g, g->prev_screen);
     }
 }
 
