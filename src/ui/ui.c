@@ -60,7 +60,7 @@ static const palette_color_t cgb_sprite_palette[4] = {
 #define PLAYER_SPRITE_NUM 0
 #define PLAYER_SPRITE_TILE_ID 102
 
-static const uint16_t s_card_icon_uids[9] = {
+static const uint16_t s_card_icon_uids[13] = {
     29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
     64,  /* ASSET_EQUIP_C19_R05: Shield 6th row rightmost (UI_TILE_CARD_SHIELD) */
     138, /* ASSET_EQUIP_C07_R11: Bow (UI_TILE_CARD_BOW) */
@@ -69,7 +69,11 @@ static const uint16_t s_card_icon_uids[9] = {
     149, /* ASSET_EQUIP_C07_R12: Amulet (UI_TILE_CARD_AMULET) */
     479, /* ASSET_SYM_C23_R16: Flame Spire (UI_TILE_CARD_ELEM_FIRE) */
     351, /* ASSET_SYM_C13_R09: Snowflake Star (UI_TILE_CARD_ELEM_ICE) */
-    21   /* ASSET_EQUIP_C25_R02: Toxic Vial (UI_TILE_CARD_ELEM_POISON) */
+    21,  /* ASSET_EQUIP_C25_R02: Toxic Vial (UI_TILE_CARD_ELEM_POISON) */
+    210, /* ASSET_SYM_C30_R02: Heart (UI_TILE_HEART) */
+    463, /* ASSET_SYM_C23_R15: Lightning Bolt (UI_TILE_BOLT) */
+    53,  /* ASSET_EQUIP_C25_R04: Gold Coin (UI_TILE_COIN) */
+    134  /* ASSET_EQUIP_C28_R10: Card Deck (UI_TILE_DECK) */
 };
 
 /* ASCII semantic char per TileType (0..3): '.', '#', '>', 'B'.  The
@@ -104,8 +108,8 @@ void ui_init(void)
     }
     ui_font_tile_base = 0;
 
-    /* Load weapon & element icon tiles from Bank 6 into VRAM Block 1 (tiles 104..112) */
-    for (p = 0; p < 9; p++) {
+    /* Load weapon, element & UI icon tiles from Bank 6 into VRAM Block 1 (tiles 104..116) */
+    for (p = 0; p < 13; p++) {
         banked_copy(ASSET_ATLAS_BANK_ICONS, g_ui_screen_buf,
                     g_asset_icon_tiles + (s_card_icon_uids[p] << 4), 16);
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);

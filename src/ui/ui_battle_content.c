@@ -270,23 +270,44 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
 
 static void battle_draw_hero_row(const volatile Battle *battle)
 {
+    volatile uint8_t *dst;
+
     battle_draw_text_line(0, 6, "HERO        HP:", 15);
     battle_color_span(0, 6, 4, battle_status_color(&s_battle_status[0]));
     battle_draw_num2(15, 6, battle->player.hp);
     battle_put_char(17, 6, '/');
     battle_draw_num2(18, 6, battle->player.max_hp);
+
+    /* Stream Heart icon at col 11 into VRAM (in front of HP:) */
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)6 << 5) + 11);
+    VBK_REG = 0;
+    battle_vram_sync_write(dst, UI_TILE_HEART);
+    battle_color_span(11, 6, 1, UI_COLOR_FIRE);
 }
 
-/* Draw-pile counter under the hero HP: shows how many cards are still in
- * the deck, so the player can see a reshuffle coming.  Same formula as the
- * harness's battle_draw_remaining semantic.  The pile only changes at deal,
- * turn-start draws and reshuffles -- all sites set BATTLE_DIRTY_ALL, so
- * firing on BATTLE_DIRTY_HERO can never leave this line stale. */
+/* Draw-pile & Energy/Action-Points counter line (under the hero HP):
+ * Left side: [🎴]DECK: count (with card stack icon at col 0)
+ * Right side (under HP): [⚡]AP: energy/max (with lightning bolt icon at col 11) */
 static void battle_draw_deck_line(const volatile Battle *battle)
 {
-    battle_draw_text_line(13, 7, "DECK:", 5);
-    battle_draw_num2(18, 7,
+    volatile uint8_t *dst;
+
+    battle_draw_text_line(0, 7, " DECK:      AP:", 15);
+    battle_draw_num2(7, 7,
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
+    battle_draw_num2(15, 7, battle->energy);
+    battle_put_char(17, 7, '/');
+    battle_draw_num2(18, 7, BATTLE_ENERGY_PER_TURN);
+
+    /* Stream Deck icon at col 0 and Lightning Bolt icon at col 11 into VRAM */
+    VBK_REG = 0;
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 0);
+    battle_vram_sync_write(dst, UI_TILE_DECK);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 11);
+    battle_vram_sync_write(dst, UI_TILE_BOLT);
+
+    battle_color_span(0, 7, 1, UI_COLOR_IRON);
+    battle_color_span(11, 7, 1, UI_COLOR_GOLD);
 }
 
 /* Tier display names (docs/combo-system.md hand table).  Rows live in

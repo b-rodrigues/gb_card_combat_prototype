@@ -290,6 +290,15 @@ void shop_content_render(void)
     sc_format_int(gold, str);
     sc_draw_text(5, 3, str, 14);
 
+    /* Stream Gold Coin icon at col 0 in VRAM */
+    {
+        volatile uint8_t *dst_coin = (volatile uint8_t *)(0x9800 + ((uint16_t)3 << 5) + 0);
+        VBK_REG = 0;
+        while (STAT_REG & 0x02) ;
+        *dst_coin = UI_TILE_COIN;
+        sc_color_span(0, 3, 1, UI_COLOR_GOLD);
+    }
+
     if (!def) {
         sc_draw_text(0, 5, "(nothing)", 9);
         sc_draw_text(0, 7, "[B] Leave", 9);
@@ -342,6 +351,13 @@ void shop_content_render(void)
         sc_format_int(card ? (int16_t)card->price : 0, str);
         sc_draw_text(12, y, str, 4);
         sc_put_char(16, y, 'G');
+        {
+            volatile uint8_t *dst_g = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + 16);
+            VBK_REG = 0;
+            while (STAT_REG & 0x02) ;
+            *dst_g = UI_TILE_COIN;
+            sc_color_span(16, y, 1, UI_COLOR_GOLD);
+        }
     }
 
     sc_draw_text(0, (uint8_t)(6 + def->count), "[A] Buy  [B] Leave", 18);
