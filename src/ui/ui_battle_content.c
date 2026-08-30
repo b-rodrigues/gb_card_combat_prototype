@@ -226,7 +226,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     VBK_REG = 0;
     battle_vram_sync_write(&dst[0], tile_elem);
     battle_vram_sync_write(&dst[1], tile_wpn);
-    battle_vram_sync_write(&dst[2], (uint8_t)('0' + value));
+    battle_vram_sync_write(&dst[2], (uint8_t)('0' - ' ' + value));
 
     g_ui_screen_buf[y][x] = code[0];
     g_ui_screen_buf[y][x + 1] = code[1];
