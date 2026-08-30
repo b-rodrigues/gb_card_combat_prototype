@@ -704,7 +704,7 @@ typedef struct {
     uint8_t col;        /* grid column */
     uint8_t row;        /* grid row */
     uint8_t colors;     /* shades after quantization (0 = blank cell) */
-    uint8_t icon_uid;   /* index into g_asset_icon_tiles (0xFF = n/a) */
+    uint16_t icon_uid;  /* index into g_asset_icon_tiles (0xFFFF = n/a) */
     uint8_t icon_pal;   /* index into g_asset_icon_palettes (0xFF = n/a) */
 } AssetAtlasEntry;
 
@@ -727,7 +727,7 @@ extern const uint8_t g_asset_icon_palettes[];
 /* Copy the entry row for `id` into `out`. */
 void asset_atlas_get(AssetId id, AssetAtlasEntry *out);
 /* Copy the unique icon tile `uid` (16 bytes) into `out`. */
-void asset_atlas_icon_tile(uint8_t uid, uint8_t *out);
+void asset_atlas_icon_tile(uint16_t uid, uint8_t *out);
 /* Copy the CGB palette `pid` (8 bytes, RGB555 LE) into `out`. */
 void asset_atlas_icon_palette(uint8_t pid, uint8_t *out);
 

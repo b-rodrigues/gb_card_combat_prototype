@@ -435,7 +435,7 @@ def emit_header(catalog, asset_order):
     lines.append("    uint8_t col;        /* grid column */")
     lines.append("    uint8_t row;        /* grid row */")
     lines.append("    uint8_t colors;     /* shades after quantization (0 = blank cell) */")
-    lines.append("    uint8_t icon_uid;   /* index into g_asset_icon_tiles (0xFF = n/a) */")
+    lines.append("    uint16_t icon_uid;  /* index into g_asset_icon_tiles (0xFFFF = n/a) */")
     lines.append("    uint8_t icon_pal;   /* index into g_asset_icon_palettes (0xFF = n/a) */")
     lines.append("} AssetAtlasEntry;")
     lines.append("")
@@ -458,7 +458,7 @@ def emit_header(catalog, asset_order):
     lines.append("/* Copy the entry row for `id` into `out`. */")
     lines.append("void asset_atlas_get(AssetId id, AssetAtlasEntry *out);")
     lines.append("/* Copy the unique icon tile `uid` (16 bytes) into `out`. */")
-    lines.append("void asset_atlas_icon_tile(uint8_t uid, uint8_t *out);")
+    lines.append("void asset_atlas_icon_tile(uint16_t uid, uint8_t *out);")
     lines.append("/* Copy the CGB palette `pid` (8 bytes, RGB555 LE) into `out`. */")
     lines.append("void asset_atlas_icon_palette(uint8_t pid, uint8_t *out);")
     lines.append("")
@@ -477,7 +477,8 @@ def emit_entries_inc(catalog, named, asset_order):
             png, col, row = named[name]
             if name.startswith("GLYPH_"):
                 colors = 2
-                uid = pal = 65535   # sentinel meaning n/a
+                uid = 65535         # sentinel meaning n/a (0xFFFF)
+                pal = 255           # sentinel meaning n/a (0xFF)
             elif png in ("equipment_8x8.png", "symbols_8x8.png"):
                 info = catalog["icons"][png]["cells"][name]
                 colors = info["colors"]
@@ -485,7 +486,8 @@ def emit_entries_inc(catalog, named, asset_order):
                 pal = info["palette"]
             else:
                 colors = colormap.get(png, 4)
-                uid = pal = 65535   # sentinel meaning n/a
+                uid = 65535         # sentinel meaning n/a (0xFFFF)
+                pal = 255           # sentinel meaning n/a (0xFF)
             f.write("    { %s, %d, %d, %d, %d, %d, %d }, /* ASSET_%s */\n"
                     % (SRC_CONST[png], TILE_SIZE, col, row, colors, uid, pal,
                        name))

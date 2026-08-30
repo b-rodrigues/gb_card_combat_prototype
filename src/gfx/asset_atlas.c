@@ -26,7 +26,7 @@ void asset_atlas_get(AssetId id, AssetAtlasEntry *out)
     *out = s_atlas_scratch;
 }
 
-void asset_atlas_icon_tile(uint8_t uid, uint8_t *out)
+void asset_atlas_icon_tile(uint16_t uid, uint8_t *out)
 {
     banked_copy(ASSET_ATLAS_BANK_ICONS, out,
                 &g_asset_icon_tiles[(uint16_t)uid << 4], 16);
