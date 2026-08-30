@@ -13,14 +13,16 @@ extern uint8_t ui_font_tile_base;
  * writes; DMG = 0. */
 extern uint8_t g_is_cgb;
 
-/* Weapon & card icon tile indices (VRAM Block 1, 0x8800) */
-#define UI_TILE_CARD_SWORD    104u
-#define UI_TILE_CARD_SHIELD   105u
-#define UI_TILE_CARD_BOW      106u
-#define UI_TILE_CARD_DAGGER   107u
-#define UI_TILE_CARD_RING     108u
-#define UI_TILE_CARD_FIRE_SW  109u
-#define UI_TILE_CARD_AMULET   110u
+/* Weapon & element icon tile indices (VRAM Block 1, 0x8800) */
+#define UI_TILE_CARD_SWORD       104u
+#define UI_TILE_CARD_SHIELD      105u
+#define UI_TILE_CARD_BOW         106u
+#define UI_TILE_CARD_DAGGER      107u
+#define UI_TILE_CARD_RING        108u
+#define UI_TILE_CARD_AMULET      109u
+#define UI_TILE_CARD_ELEM_FIRE   110u
+#define UI_TILE_CARD_ELEM_ICE    111u
+#define UI_TILE_CARD_ELEM_POISON 112u
 
 /* Per-tile background palette indices (CGB VRAM bank-1 attributes):
  * 0 = default grayscale, 1 = fire, 2 = iron (steel blue), 3 = heal / cyan,

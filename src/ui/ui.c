@@ -60,14 +60,16 @@ static const palette_color_t cgb_sprite_palette[4] = {
 #define PLAYER_SPRITE_NUM 0
 #define PLAYER_SPRITE_TILE_ID 102
 
-static const uint16_t s_card_icon_uids[7] = {
+static const uint16_t s_card_icon_uids[9] = {
     29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
     87,  /* ASSET_EQUIP_C06_R08: Wooden Shield (UI_TILE_CARD_SHIELD) */
     138, /* ASSET_EQUIP_C07_R11: Bow (UI_TILE_CARD_BOW) */
-    69,  /* ASSET_EQUIP_C04_R06: Poison Dagger (UI_TILE_CARD_DAGGER) */
+    69,  /* ASSET_EQUIP_C04_R06: Dagger (UI_TILE_CARD_DAGGER) */
     148, /* ASSET_EQUIP_C06_R12: Ring (UI_TILE_CARD_RING) */
-    30,  /* ASSET_EQUIP_C05_R03: Fire Sword (UI_TILE_CARD_FIRE_SW) */
-    149  /* ASSET_EQUIP_C07_R12: Amulet (UI_TILE_CARD_AMULET) */
+    149, /* ASSET_EQUIP_C07_R12: Amulet (UI_TILE_CARD_AMULET) */
+    479, /* ASSET_SYM_C23_R16: Flame Spire (UI_TILE_CARD_ELEM_FIRE) */
+    351, /* ASSET_SYM_C13_R09: Snowflake Star (UI_TILE_CARD_ELEM_ICE) */
+    21   /* ASSET_EQUIP_C25_R02: Toxic Vial (UI_TILE_CARD_ELEM_POISON) */
 };
 
 /* ASCII semantic char per TileType (0..3): '.', '#', '>', 'B'.  The
@@ -102,8 +104,8 @@ void ui_init(void)
     }
     ui_font_tile_base = 0;
 
-    /* Load weapon / card icon tiles from Bank 6 into VRAM Block 1 (tiles 104..110) */
-    for (p = 0; p < 7; p++) {
+    /* Load weapon & element icon tiles from Bank 6 into VRAM Block 1 (tiles 104..112) */
+    for (p = 0; p < 9; p++) {
         banked_copy(ASSET_ATLAS_BANK_ICONS, g_ui_screen_buf,
                     g_asset_icon_tiles + (s_card_icon_uids[p] << 4), 16);
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);

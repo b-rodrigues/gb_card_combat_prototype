@@ -187,7 +187,7 @@ static const char *battle_card_type_code(uint8_t type)
 static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
                                 uint8_t status_id, uint8_t is_heal)
 {
-    uint8_t tile;
+    uint8_t tile_elem, tile_wpn;
     const char *code;
     volatile uint8_t *dst;
 
@@ -198,27 +198,39 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     code = battle_card_type_code(type);
 
-    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
-        tile = UI_TILE_CARD_RING;
-    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
-        tile = UI_TILE_CARD_SHIELD;
-    } else if (type == BATTLE_CARD_TYPE_BOW) {
-        tile = UI_TILE_CARD_BOW;
-    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
-        tile = UI_TILE_CARD_DAGGER;
-    } else if (status_id == STATUS_BURN) {
-        tile = UI_TILE_CARD_FIRE_SW;
+    /* Element icon at column x */
+    if (status_id == STATUS_BURN) {
+        tile_elem = UI_TILE_CARD_ELEM_FIRE;
+    } else if (status_id == STATUS_POISON) {
+        tile_elem = UI_TILE_CARD_ELEM_POISON;
+    } else if (status_id == STATUS_FREEZE) {
+        tile_elem = UI_TILE_CARD_ELEM_ICE;
     } else {
-        tile = UI_TILE_CARD_SWORD;
+        tile_elem = 0; /* Space glyph */
+    }
+
+    /* Weapon icon at column x+1 */
+    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
+        tile_wpn = UI_TILE_CARD_RING;
+    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
+        tile_wpn = UI_TILE_CARD_SHIELD;
+    } else if (type == BATTLE_CARD_TYPE_BOW) {
+        tile_wpn = UI_TILE_CARD_BOW;
+    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
+        tile_wpn = UI_TILE_CARD_DAGGER;
+    } else {
+        tile_wpn = UI_TILE_CARD_SWORD;
     }
 
     dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
     VBK_REG = 0;
-    battle_vram_sync_write(dst, tile);
-    g_ui_screen_buf[y][x] = code[0];
+    battle_vram_sync_write(&dst[0], tile_elem);
+    battle_vram_sync_write(&dst[1], tile_wpn);
+    battle_vram_sync_write(&dst[2], (uint8_t)('0' + value));
 
-    battle_put_char((uint8_t)(x + 1), y, code[1]);
-    battle_put_char((uint8_t)(x + 2), y, (char)('0' + value));
+    g_ui_screen_buf[y][x] = code[0];
+    g_ui_screen_buf[y][x + 1] = code[1];
+    g_ui_screen_buf[y][x + 2] = (char)('0' + value);
 }
 
 static void battle_draw_enemy_columns(const volatile Battle *battle)
