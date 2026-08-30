@@ -24,11 +24,19 @@ uint8_t g_status_frozen_mask;
  * Non-static so the bank-3 battle HUD can color names by active status. */
 StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
 
+/* Poison grey-out (status.h): mask/duration per actor slot.  Battle-scoped
+ * runtime state, cleared at battle start; written by status_grey_apply
+ * (wrapper + bank-3 pick body), read by battle gating and the bank-3 HUD. */
+uint8_t s_grey_mask[STATUS_ROUND_SLOTS];
+uint8_t s_grey_dur[STATUS_ROUND_SLOTS];
+
 void status_reset_battle(void)
 {
     uint8_t i;
     for (i = 0; i < STATUS_ROUND_SLOTS; i++) {
         s_battle_status[i].count = 0;
+        s_grey_mask[i] = 0;
+        s_grey_dur[i] = 0;
     }
     g_status_frozen_mask = 0;
 }
@@ -93,4 +101,55 @@ uint8_t status_tick(StatusSlots *slots, uint8_t actor_slot)
         }
     }
     return g_status_tick.damage;
+}
+
+/* Decode the two set-bit positions of a grey mask into out-a/out-b
+ * (0xFF when absent).  Pools are <= 5 positions, so only bits 0-4 are
+ * ever set. */
+void status_grey_mask_indices(uint8_t mask, uint8_t *a, uint8_t *b)
+{
+    uint8_t i, n = 0;
+    *a = 0xFF;
+    *b = 0xFF;
+    for (i = 0; i < 8; i++) {
+        if ((mask & (uint8_t)(1u << i)) != 0) {
+            if (n == 0) *a = i;
+            else { *b = i; break; }
+            n++;
+        }
+    }
+}
+
+void status_grey_apply(uint8_t actor_slot, uint8_t pool_size)
+{
+    uint8_t a, b;
+    if (actor_slot >= STATUS_ROUND_SLOTS) return;
+
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&status_grey_apply_banked;
+    g_bk_byte_a = actor_slot;
+    g_bk_byte_b = pool_size;
+    banked_call_run();
+
+    /* An empty pool or a bad slot leaves the mask untouched (no event). */
+    if (s_grey_mask[actor_slot] == 0) return;
+
+    status_grey_mask_indices(s_grey_mask[actor_slot], &a, &b);
+    telemetry_emit(EVENT_CARDS_GREYED, actor_slot, a, b,
+                   POISON_GREY_TURNS);
+}
+
+void status_grey_tick(uint8_t actor_slot)
+{
+    if (actor_slot >= STATUS_ROUND_SLOTS) return;
+    if (s_grey_dur[actor_slot] == 0) return;
+
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&status_grey_tick_banked;
+    g_bk_byte_a = actor_slot;
+    banked_call_run();
+
+    if (g_bk_byte_a != 0) {
+        telemetry_emit(EVENT_CARDS_UNGREYED, actor_slot, g_bk_byte_b, g_bk_byte_c, 0);
+    }
 }

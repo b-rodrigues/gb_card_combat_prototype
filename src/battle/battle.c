@@ -112,89 +112,60 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
     b->dirty = BATTLE_DIRTY_ALL;
 }
 
-/* Transient HUD message (row 12): id 1 = NO ENERGY, 2 = OUT OF USES,
- * 3 = ONE RING (docs/loot.md §34.3). */
-static void battle_msg(Battle *b, uint8_t id)
+/* ── Banked navigation / selection wrappers ────────────────────────
+ * The hand-cursor / combo-selection / target-selection / enemy-liveness
+ * logic lives in ROM bank 4 (src/battle/battle_nav_banked.c) to relieve
+ * the overflowing fixed bank (AGENTS.md §52.18); these thin WRAM-facing
+ * wrappers stage the dispatch through the banked-call trampoline and keep
+ * the public API (battle.h) stable.  The bodies are self-contained: they
+ * read/write only the staged Battle* (plus the battle-scoped grey masks),
+ * never call fixed-bank functions -- telemetry that the moved logic needs
+ * (EVENT_TARGET_CHANGED) is emitted here after the dispatch returns. */
+static void battle_nav(Battle *b, uint8_t op, uint8_t arg)
 {
-    b->msg_id = id;
-    b->msg_ttl = 45;
-    b->dirty |= BATTLE_DIRTY_MSG;
+    g_bk_call_bank = 4;
+    g_bk_call_target = (uint16_t)&battle_nav_banked;
+    g_bk_ptr_a = (void *)b;
+    g_bk_byte_a = op;
+    g_bk_byte_b = arg;
+    banked_call_run();
 }
 
 bool battle_is_card_selected(const Battle *b, uint8_t hand_idx)
 {
-    uint8_t i;
     if (!b) return false;
-    for (i = 0; i < b->combo_count; i++) {
-        if (b->selected_indices[i] == hand_idx) {
-            return true;
-        }
-    }
-    return false;
+    battle_nav((Battle *)b, NAV_OP_IS_CARD_SELECTED, hand_idx);
+    return g_bk_byte_c != 0;
 }
 
-/* Total energy cost reserved by the cards currently selected into the combo.
- * Selection validates against the un-reserved remainder, so this never
- * exceeds b->energy. */
-static uint8_t combo_reserved_cost(const Battle *b)
-{
-    uint8_t i, sum = 0;
-    for (i = 0; i < b->combo_count; i++) {
-        sum += b->hand[b->selected_indices[i]].cost;
-    }
-    return sum;
-}
-
-/* A hand card can be added to the current combo only while it has uses left
- * AND its cost fits in the phase energy not yet reserved by the pending
- * combo (deck.md Phase 10: check affordability at select, pay at resolve). */
+/* A hand card can be added to the current combo only while it has uses left,
+ * is not greyed out by poison, AND its cost fits in the phase energy not yet
+ * reserved by the pending combo (deck.md Phase 10, docs/combo-system.md
+ * Phase D).  The grey/unplayable decision lives in the banked body; this
+ * fixed-clone wrapper keeps battle_execute_combo's auto-play fallback in
+ * the fixed bank. */
 static bool hand_card_playable(const Battle *b, uint8_t hand_idx)
 {
-    uint8_t available;
-    if (b->hand[hand_idx].uses_remaining == 0) return false;
-    available = b->energy - combo_reserved_cost(b);
-    return b->hand[hand_idx].cost <= available;
+    if (!b) return false;
+    battle_nav((Battle *)b, NAV_OP_HAND_PLAYABLE, hand_idx);
+    return g_bk_byte_c != 0;
 }
 
 void battle_cursor_move(Battle *b, int8_t dir)
 {
-    uint8_t start, step;
     if (!b) return;
-    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) return;
-    start = b->cursor_pos;
-    for (step = 0; step < BATTLE_HAND_SIZE; step++) {
-        if (dir < 0) {
-            b->cursor_pos = (b->cursor_pos == 0) ? (BATTLE_HAND_SIZE - 1) : (uint8_t)(b->cursor_pos - 1);
-        } else {
-            b->cursor_pos = (uint8_t)((b->cursor_pos + 1 >= BATTLE_HAND_SIZE) ? 0 : (b->cursor_pos + 1));
-        }
-        if (hand_card_playable(b, b->cursor_pos)) break;
-        if (b->cursor_pos == start) break;
-    }
-    b->dirty |= (BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+    battle_nav(b, NAV_OP_CURSOR_MOVE, (uint8_t)dir);
 }
 
 void battle_target_move(Battle *b, int8_t dir)
 {
-    uint8_t i, t, old;
+    uint8_t old;
     if (!b || b->enemy_count <= 1) return;
 
     old = b->target_idx;
-    t = old;
-    for (i = 0; i < b->enemy_count; i++) {
-        if (dir < 0) {
-            t = (t == 0) ? (uint8_t)(b->enemy_count - 1) : (uint8_t)(t - 1);
-        } else {
-            t = (uint8_t)((t + 1 >= b->enemy_count) ? 0 : (t + 1));
-        }
-        if (b->enemies[t].hp != 0) {
-            if (t != old) {
-                b->target_idx = t;
-                b->dirty |= BATTLE_DIRTY_ENEMIES;
-                telemetry_emit(EVENT_TARGET_CHANGED, old, t, 0, 0);
-            }
-            return;
-        }
+    battle_nav(b, NAV_OP_TARGET_MOVE, (uint8_t)dir);
+    if (b->target_idx != old) {
+        telemetry_emit(EVENT_TARGET_CHANGED, old, b->target_idx, 0, 0);
     }
 }
 
@@ -207,58 +178,15 @@ void battle_target_auto_advance(Battle *b)
 
 bool battle_all_enemies_dead(const Battle *b)
 {
-    uint8_t i;
     if (!b) return true;
-    for (i = 0; i < b->enemy_count; i++) {
-        if (b->enemies[i].hp != 0) return false;
-    }
-    return true;
+    battle_nav((Battle *)b, NAV_OP_ALL_DEAD, 0);
+    return g_bk_byte_c != 0;
 }
 
 void battle_card_select(Battle *b)
 {
-    uint8_t step, next_pos;
     if (!b) return;
-    if (b->phase != BATTLE_PHASE_PLAYER_SELECT && b->phase != BATTLE_PHASE_PLAYER_DEFEND) {
-        return;
-    }
-
-    if (battle_is_card_selected(b, b->cursor_pos)) {
-        return;
-    }
-
-    if (!hand_card_playable(b, b->cursor_pos)) {
-        battle_msg(b,
-                   (b->hand[b->cursor_pos].uses_remaining == 0) ? 2 : 1);
-        return;
-    }
-
-    /* MAX ONE RING per selection (docs/loot.md §34.3). */
-    if (b->hand[b->cursor_pos].ring) {
-        uint8_t s;
-        for (s = 0; s < b->combo_count; s++) {
-            if (b->hand[b->selected_indices[s]].ring) {
-                battle_msg(b, 3);
-                return;
-            }
-        }
-    }
-
-    if (b->combo_count < BATTLE_HAND_SIZE) {
-        b->selected_indices[b->combo_count++] = b->cursor_pos;
-        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
-
-        next_pos = b->cursor_pos;
-        for (step = 1; step < BATTLE_HAND_SIZE; step++) {
-            next_pos++;
-            if (next_pos >= BATTLE_HAND_SIZE) next_pos = 0;
-            if (!battle_is_card_selected(b, next_pos) &&
-                hand_card_playable(b, next_pos)) {
-                b->cursor_pos = next_pos;
-                break;
-            }
-        }
-    }
+    battle_nav(b, NAV_OP_CARD_SELECT, 0);
 }
 
 void battle_set_result(Battle *b, uint8_t res)
@@ -313,6 +241,17 @@ void battle_defend_resolve(Battle *b)
         telemetry_emit(EVENT_DAMAGE_RECEIVED, 0, 0, 0, 0);
         if (g_bk_byte_b != 0) {
             telemetry_emit(EVENT_HEALED, g_bk_byte_b, 2, 0, 0);
+        }
+    }
+
+    /* Organic enemy status rider (Phase D): g_bk_byte_c = status id the
+     * banked body rolled (0 = none).  Apply through the REAL mechanic
+     * (status_apply emits STATUS_APPLIED); poison also greys the player's
+     * hand via status_grey_apply. */
+    if (g_bk_byte_c != 0) {
+        status_apply(status_slots(0), 0, g_bk_byte_c, 1, 0);
+        if (g_status_applied.id == STATUS_POISON) {
+            status_grey_apply(0, BATTLE_HAND_SIZE);
         }
     }
 }
@@ -491,8 +430,15 @@ void battle_execute_combo(Battle *b)
                     }
                     if (k > 255) k = 255;
                     if ((uint8_t)rng_next() < (uint8_t)k) {
-                        status_apply(status_slots(tslot), tslot,
-                                     b->last_combo.cards[0].status_id, 1, 0);
+                        if (status_apply(status_slots(tslot), tslot,
+                                         b->last_combo.cards[0].status_id,
+                                         1, 0) &&
+                            /* Poison also greys the victim's pool (Phase D):
+                             * the enemy's deck positions become unplayable
+                             * for POISON_GREY_TURNS rounds. */
+                            b->last_combo.cards[0].status_id == STATUS_POISON) {
+                            status_grey_apply(tslot, b->enemy_deck.count);
+                        }
                     } else {
                         /* Roll failed: resisted (docs/combo-system.md §19). */
                         telemetry_emit(EVENT_STATUS_RESISTED,
@@ -575,6 +521,8 @@ static void battle_tick_statuses(Battle *b)
     for (i = 0; i < b->enemy_count; i++) {
         if (b->enemies[i].hp == 0) continue;
         dmg = status_tick(status_slots((uint8_t)(i + 1)), (uint8_t)(i + 1));
+        /* Poison grey-out duration drains each round (Phase D). */
+        status_grey_tick((uint8_t)(i + 1));
         if (dmg == 0) continue;
         combatant_take_damage(&b->enemies[i], dmg);
         if (b->enemies[i].hp == 0) {
@@ -583,6 +531,7 @@ static void battle_tick_statuses(Battle *b)
     }
     if (b->player.hp != 0) {
         dmg = status_tick(status_slots(0), 0);
+        status_grey_tick(0);
         if (dmg != 0) {
             combatant_take_damage(&b->player, dmg);
             if (b->player.hp == 0) {
@@ -629,6 +578,8 @@ void battle_update(Battle *b)
         if (vb->phase == BATTLE_PHASE_PLAYER_ANIM ||
             vb->phase == BATTLE_PHASE_SHUFFLE) {
             uint8_t count = 0;
+            uint8_t grey_mask = 0;
+            uint8_t gi;
             vb->phase = BATTLE_PHASE_ENEMY_TELEGRAPH;
             vb->turn = BATTLE_TURN_ENEMY;
             while (count < vb->enemy_count && vb->enemies[vb->attacking_enemy_idx].hp == 0) {
@@ -639,6 +590,16 @@ void battle_update(Battle *b)
                     vb->attacking_enemy_idx = 0;
                 }
                 count++;
+            }
+            /* The enemy deck and its draw position are SHARED by the whole
+             * hostile party (every encounter engages as a trio).  A poisoned
+             * victim's grey-out therefore applies to the shared deck, not to
+             * one attacker's slot: a greyed deck position never plays, no
+             * matter which enemy is up.  OR the per-victim masks (they carry
+             * independent durations, so the union is only the currently
+             * active grey set). */
+            for (gi = 1; gi <= vb->enemy_count; gi++) {
+                grey_mask |= s_grey_mask[gi];
             }
             /* STATUS_FREEZE (docs/combo-system.md §12): the frozen-mask
              * bit is TESTED here but never consumed -- status_apply sets
@@ -654,6 +615,22 @@ void battle_update(Battle *b)
                 telemetry_emit(EVENT_TURN_SKIPPED,
                                (uint8_t)(vb->attacking_enemy_idx + 1),
                                STATUS_FREEZE, 0, 0);
+            } else if (vb->enemy_deck.count > 0 &&
+                       /* Poison grey-out (Phase D): a greyed deck position
+                        * never plays -- the enemy skips its swing while its
+                        * current draw position is greyed (no card, nothing
+                        * incoming).  The draw position does NOT advance, so
+                        * an enemy whose lead card is greyed is locked out
+                        * for the grey-out duration.  Bit = shared deck
+                        * position; the union of per-victim masks is tested
+                        * because the deck is shared by the whole party. */
+                       (grey_mask &
+                        (uint8_t)(1u << vb->enemy_deck.draw_idx)) != 0 &&
+                       vb->enemies[vb->attacking_enemy_idx].hp != 0) {
+                vb->enemy_incoming_dmg = 0;
+                telemetry_emit(EVENT_TURN_SKIPPED,
+                               (uint8_t)(vb->attacking_enemy_idx + 1),
+                               STATUS_POISON, 0, 0);
             } else if (vb->enemy_deck.count > 0) {
                 vb->enemy_played_card = vb->enemy_deck.cards[vb->enemy_deck.draw_idx];
                 vb->enemy_incoming_dmg = vb->enemy_played_card.value;

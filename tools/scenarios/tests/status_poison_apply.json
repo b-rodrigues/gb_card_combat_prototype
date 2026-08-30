@@ -148,18 +148,6 @@
     },
     {
       "type": "wait",
-      "frames": 70
-    },
-    {
-      "type": "press",
-      "button": "SELECT"
-    },
-    {
-      "type": "wait",
-      "frames": 55
-    },
-    {
-      "type": "wait",
       "frames": 100
     }
   ],

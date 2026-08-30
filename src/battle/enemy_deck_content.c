@@ -3,6 +3,7 @@
 
 #include "deck.h"
 #include "banked.h"
+#include "rpg/status.h"
 
 /* ── Enemy deck tables (banked ROM) ─────────────────────────────
  * Small decks for each enemy type.  Each enemy draws one card per
@@ -22,6 +23,9 @@ static const Card s_bat_deck[] = {
     { BATTLE_CARD_TYPE_BOW,   3, 0xFF },
     { BATTLE_CARD_TYPE_SWORD, 4, 0xFF },
     { BATTLE_CARD_TYPE_SWORD, 3, 0xFF },
+    /* Organic poison rider (Phase D): this swing carries a poison rider at
+     * ~60/255 chance; when it lands on the player it also greys her hand. */
+    { BATTLE_CARD_TYPE_BOW,   3, 0xFF, 0, 0, STATUS_POISON, 60 },
 };
 static const Card s_slime_trio_deck[] = {
     { BATTLE_CARD_TYPE_SWORD, 2, 0xFF },
@@ -42,7 +46,7 @@ void enemy_deck_setup_banked(void)
 
     switch (battle_id) {
     case 1:  src = s_slime_deck;      count = 4; break;
-    case 2:  src = s_bat_deck;        count = 4; break;
+    case 2:  src = s_bat_deck;        count = 5; break;
     case 3:  src = s_slime_trio_deck; count = 5; break;
     }
 

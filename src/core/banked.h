@@ -65,6 +65,8 @@ extern void *g_bk_ptr_a;
 extern void *g_bk_ptr_b;
 extern uint8_t g_bk_byte_a;
 extern uint8_t g_bk_byte_b;
+extern uint8_t g_bk_byte_c;
+extern uint8_t g_bk_byte_d;
 
 /* Linker-allocated home for the banked-call trampoline (WRAM), copied by
  * banked_call_init() at boot (game_init calls it, like banked_copy_init). */

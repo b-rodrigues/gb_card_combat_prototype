@@ -2,6 +2,7 @@
 
 #include "status.h"
 #include "banked.h"
+#include "rng.h"
 
 /* ── Status definitions + banked bodies (Phase C) ───────────────────
  * Runs from ROM bank 3 via the WRAM banked-call trampoline; reads only
@@ -73,6 +74,23 @@ void status_apply_banked(void)
     g_status_applied.id = id;
     g_status_applied.stacks = stacks;
     g_status_applied.duration = duration;
+    /* FREEZE takes effect immediately: the next attack by this
+     * combatant is skipped.  The banked body sets the mask directly
+     * since callers may invoke status_apply_banked directly (e.g.
+     * from combo rider or defend rider) bypassing the fixed wrapper. */
+    extern StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
+    if (id == STATUS_FREEZE) {
+        if (slots == &s_battle_status[0]) {
+            g_status_frozen_mask |= 1u;
+        } else {
+            for (i = 1; i < STATUS_ROUND_SLOTS; i++) {
+                if (&s_battle_status[i] == slots) {
+                    g_status_frozen_mask |= (uint8_t)(1u << i);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void status_tick_banked(void)
@@ -130,4 +148,85 @@ void status_tick_banked(void)
 
     g_status_tick.damage = damage;
     g_status_tick.expired_count = expired;
+}
+
+/* Poison grey-out pick body (status.h): selects POISON_GREY_CARDS distinct
+ * pool positions at random and arms the battle-scoped mask/duration.
+ * Reads the actor slot (g_bk_byte_a) and the victim's card-pool size
+ * (g_bk_byte_b) from the staged globals; writes s_grey_mask/s_grey_dur
+ * (WRAM) directly.  A victim already greyed is only refreshed (same cards,
+ * same duration) -- the STACK rule for grey, matching poison itself.
+ *
+ * Banked self-containment: randomness uses the SAME inlined xorshift step
+ * on g_rng_state as rng_next() (src/debug/rng.c), so banked code draws from
+ * the deterministic stream without calling the fixed-bank function; the
+ * modulo is a subtraction loop instead of % (which would lower to the
+ * fixed-bank div library, unreachable while bank 3 is mapped). */
+void status_grey_apply_banked(void)
+{
+    uint8_t slot = g_bk_byte_a;
+    uint8_t pool = g_bk_byte_b;
+    uint8_t i, idx, mask = 0;
+
+    if (slot >= STATUS_ROUND_SLOTS || pool == 0) return;
+
+    if (s_grey_mask[slot] != 0) {
+        s_grey_dur[slot] = (uint8_t)(POISON_GREY_TURNS + 1);
+        return;
+    }
+
+    for (i = 0; i < POISON_GREY_CARDS; i++) {
+        g_rng_state ^= (uint16_t)(g_rng_state << 7);
+        g_rng_state ^= (uint16_t)(g_rng_state >> 9);
+        g_rng_state ^= (uint16_t)(g_rng_state << 8);
+        idx = (uint8_t)g_rng_state;
+        while (idx >= pool) idx = (uint8_t)(idx - pool);
+        while ((mask & (uint8_t)(1u << idx)) != 0) {
+            idx++;
+            if (idx >= pool) idx = 0;
+        }
+        mask |= (uint8_t)(1u << idx);
+    }
+    s_grey_mask[slot] = mask;
+    /* The grey drains at the enter-select round boundary; the poison
+     * usually lands mid-round, so POISON_GREY_TURNS+1 boundaries leave
+     * exactly POISON_GREY_TURNS future decision rounds greyed. */
+    s_grey_dur[slot] = (uint8_t)(POISON_GREY_TURNS + 1);
+}
+
+/* One round boundary for a greyed combatant: decrement the duration and,
+ * when it hits zero, clear the mask and return the indices.  Banked body
+ * dispatched by status_grey_tick().  Stages: g_bk_byte_a = actor_slot.
+ * On return: g_bk_byte_a = 0 if no expiry, 1 if expired; g_bk_byte_b = idxA,
+ * g_bk_byte_c = idxB (0xFF if only one).  The fixed wrapper emits
+ * EVENT_CARDS_UNGREYED. */
+void status_grey_tick_banked(void)
+{
+    uint8_t slot = g_bk_byte_a;
+    uint8_t a, b, i;
+
+    if (slot >= STATUS_ROUND_SLOTS) {
+        g_bk_byte_a = 0;
+        return;
+    }
+    if (s_grey_dur[slot] == 0) {
+        g_bk_byte_a = 0;
+        return;
+    }
+    if (--s_grey_dur[slot] != 0) {
+        g_bk_byte_a = 0;
+        return;
+    }
+    /* Expired: decode indices and clear mask. */
+    a = 0xFF; b = 0xFF;
+    for (i = 0; i < 8; i++) {
+        if ((s_grey_mask[slot] & (uint8_t)(1u << i)) != 0) {
+            if (a == 0xFF) a = i;
+            else { b = i; break; }
+        }
+    }
+    s_grey_mask[slot] = 0;
+    g_bk_byte_a = 1;
+    g_bk_byte_b = a;
+    g_bk_byte_c = b;
 }

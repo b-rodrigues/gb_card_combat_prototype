@@ -32,6 +32,10 @@ uint8_t g_bk_byte_b;
 /* Linker-allocated home for the RAM-resident banked-call trampoline. */
 uint8_t g_banked_call_tramp[64];
 
+/* Extra staging bytes for banked ↔ fixed communication. */
+uint8_t g_bk_byte_c;
+uint8_t g_bk_byte_d;
+
 extern void banked_copy_run(void);
 
 void banked_copy(uint8_t bank, void *dst, const void *src, uint8_t n)
