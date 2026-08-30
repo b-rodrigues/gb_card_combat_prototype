@@ -12,12 +12,13 @@
  * wrapper stages x/y/len/palette through g_bk_ptr_a and dispatches here.
  */
 
-const palette_color_t cgb_bg_palettes[5][4] = {
+const palette_color_t cgb_bg_palettes[6][4] = {
     /* 0 gray */   { RGB8(255,255,255), RGB8(170,170,170), RGB8(85,85,85),  RGB8(0,0,0)      },
     /* 1 fire */   { RGB8(255,255,255), RGB8(255,192,192), RGB8(255,96,96), RGB8(192,0,0)   },
     /* 2 ice */    { RGB8(255,255,255), RGB8(192,192,255), RGB8(96,96,255), RGB8(0,0,192)   },
     /* 3 heal */   { RGB8(255,255,255), RGB8(192,255,192), RGB8(96,255,96), RGB8(0,160,0)   },
-    /* 4 poison */ { RGB8(255,255,255), RGB8(224,192,255), RGB8(160,96,255), RGB8(96,0,192) }
+    /* 4 poison */ { RGB8(255,255,255), RGB8(224,192,255), RGB8(160,96,255), RGB8(96,0,192) },
+    /* 5 dim */    { RGB8(200,200,200), RGB8(150,150,150), RGB8(90,90,90),   RGB8(40,40,40)   }
 };
 
 /* Self-contained VRAM-sync write (banked code cannot call ui_vram_sync_write).

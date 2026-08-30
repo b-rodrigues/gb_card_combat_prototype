@@ -114,4 +114,16 @@ void battle_defend_resolve_banked(void);
  * bank 2), dispatched by battle_start via the WRAM trampoline. */
 void battle_init_deck_banked(void);
 
+/* Banked navigation / selection cluster (src/battle/battle_nav_banked.c,
+ * ROM bank 4), dispatched by the fixed thin wrappers in battle.c via the
+ * WRAM trampoline: g_bk_ptr_a = Battle*, g_bk_byte_a = opcode,
+ * g_bk_byte_b = argument, boolean results returned in g_bk_byte_c. */
+#define NAV_OP_CURSOR_MOVE      1
+#define NAV_OP_TARGET_MOVE      2
+#define NAV_OP_ALL_DEAD         3
+#define NAV_OP_CARD_SELECT      4
+#define NAV_OP_IS_CARD_SELECTED 5
+#define NAV_OP_HAND_PLAYABLE    6
+void battle_nav_banked(void);
+
 #endif /* BATTLE_H */

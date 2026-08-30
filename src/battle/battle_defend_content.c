@@ -2,6 +2,8 @@
 
 #include "battle.h"
 #include "rpg/effects.h"
+#include "rpg/status.h"
+#include "rng.h"
 #include "banked.h"
 
 /* Banked body of battle_defend_resolve (src/battle/battle.c).  Computes
@@ -44,6 +46,7 @@ void battle_defend_resolve_banked(void)
 
     g_bk_byte_a = 0;
     g_bk_byte_b = 0;
+    g_bk_byte_c = 0;
     if (!b) return;
 
     for (di = 0; di < b->combo_count; di++) {
@@ -66,5 +69,23 @@ void battle_defend_resolve_banked(void)
         if (nh > b->player.max_hp) nh = b->player.max_hp;
         g_bk_byte_b = (uint8_t)(nh - (uint16_t)b->player.hp);
         b->player.hp = (uint8_t)nh;
+    }
+
+    /* Organic enemy status rider (Phase D): the enemy's telegraphed card
+     * may carry a status (e.g. the bat's poison).  The rider only lands if
+     * the swing actually deals damage (net > 0) AND the deterministic roll
+     * succeeds; g_bk_byte_c = status id to apply through the fixed wrapper
+     * (0 = none).  The roll inlines the xorshift step of rng_next() -- a
+     * banked body must not call fixed-bank functions (AGENTS.md §52.11.1);
+     * the wrapper applies via the real status_apply + status_grey_apply,
+     * so poison also greys the player's hand. */
+    if (net > 0 && b->enemy_played_card.status_id != STATUS_NONE &&
+        b->enemy_played_card.status_chance != 0) {
+        g_rng_state ^= (uint16_t)(g_rng_state << 7);
+        g_rng_state ^= (uint16_t)(g_rng_state >> 9);
+        g_rng_state ^= (uint16_t)(g_rng_state << 8);
+        if ((uint8_t)g_rng_state < b->enemy_played_card.status_chance) {
+            g_bk_byte_c = b->enemy_played_card.status_id;
+        }
     }
 }

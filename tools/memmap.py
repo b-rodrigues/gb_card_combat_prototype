@@ -143,6 +143,7 @@ def main():
         "_loot_synth_banked": "loot def synthesis (bank 3)",
         "_game_loot_drop_banked": "victory drop roll (bank 3)",
         "_world_patrol_slot_banked": "world actor patrol step (bank 3)",
+        "_battle_nav_banked": "battle hand/target nav cluster (bank 4)",
     }
     print()
     print("Banked target address validation")

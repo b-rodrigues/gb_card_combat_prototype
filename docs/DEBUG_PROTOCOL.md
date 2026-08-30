@@ -1388,8 +1388,31 @@ STATUS_RESISTED
 TURN_SKIPPED (docs/combo-system.md §12, Phase D)
   data[0] = combatant slot whose turn was skipped (0 = player,
             1..n = enemy index)
-  data[1] = cause StatusId (always STATUS_FREEZE today)
+  data[1] = cause StatusId (STATUS_FREEZE for a frozen attacker/player,
+            STATUS_POISON for a greyed-draw skip)
 ```
+
+Poison grey-out events (Phase D, docs/combo-system.md §12/§16):
+
+```text
+CARDS_GREYED
+  data[0] = actor slot (0 = player, 1..n = enemy); for an enemy the
+            grey applies to the party's SHARED battle deck
+  data[1] = first greyed pool position (deck position / hand index)
+  data[2] = second greyed pool position
+  data[3] = grey duration in rounds (POISON_GREY_TURNS)
+
+CARDS_UNGREYED
+  data[0] = actor slot
+  data[1] = first previously-greyed pool position
+  data[2] = second previously-greyed pool position
+```
+
+The enemy grey gate tests the OR of every enemy slot's mask against the
+shared deck's current draw position (every encounter engages as a trio,
+so the deck rotates through all three attackers; a greyed position never
+plays no matter which enemy is up).  The skip emits `TURN_SKIPPED` with
+`data[1] = STATUS_POISON` and leaves the draw position unadvanced.
 
 ---
 

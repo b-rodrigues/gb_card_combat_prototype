@@ -37,7 +37,19 @@ swords FREEZE riders (docs/loot.md §34.1/§34.2).  Telemetry completed:
 rider roll fails (§19 fully implemented).  Scenarios: `status_burn_apply`,
 `status_freeze_skip`, `status_freeze_player`.  Debug action
 `DBG_ACT_APPLY_STATUS` applies any status to any combatant slot.
-Still open from Phase C/D: HEAL ALL; per-effect scaling refinements.
+Poison's on-hit rider carries the **grey-out** rider (§16): applying
+poison greys 2 random positions of the afflicted combatant's pool for
+`POISON_GREY_TURNS` rounds (telemetry `CARDS_GREYED`, cleared by
+`CARDS_UNGREYED`).  The gate lives in the battle telegraph: any pool
+position covered by the victim's grey mask never plays -- for enemies the
+mask ORs across ALL enemy slots against the party's single shared battle
+deck, because every hostile encounter engages as a trio (three attackers
+rotate through one draw position), so a greyed position must never be
+drawn no matter which enemy is up.  A greyed draw emits `TURN_SKIPPED`
+(cause `STATUS_POISON`) without advancing the draw position.  Scenarios:
+`status_poison_apply` (apply + ticks + expiry + grey gate), `status_poison_reshuffle`
+(5-stack cap, greyed cards recycled out of reshuffles, skips).  Still open
+from Phase C/D: HEAL ALL; per-effect scaling refinements.
 
 # 0.1 Hand table (implemented)
 

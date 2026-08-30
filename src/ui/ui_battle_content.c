@@ -371,11 +371,15 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             }
         }
         battle_draw_card_at(col, 14, ctype, cvalue);
-        /* Color the code + its selection digit by the card's effect. */
+        /* Color the code + its selection digit by the card's effect.
+         * Poison grey-out (status.h): greyed player cards render dim. */
         ccolor = battle_color_class(cstat,
                                     (cring != 0) ||
                                     (ctype == BATTLE_CARD_TYPE_HEAL) ||
                                     (ceffect == CARD_EFFECT_HEAL_HP));
+        if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
+            ccolor = UI_COLOR_DIM;
+        }
         battle_color_span(col, 14, 3, ccolor);
         if (i == cur) {
             battle_put_char((uint8_t)(col + 1), 15, '^');

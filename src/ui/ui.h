@@ -14,12 +14,14 @@ extern uint8_t ui_font_tile_base;
 extern uint8_t g_is_cgb;
 
 /* Per-tile background palette indices (CGB VRAM bank-1 attributes):
- * 0 = default grayscale, 1 = fire, 2 = ice, 3 = heal, 4 = poison. */
+ * 0 = default grayscale, 1 = fire, 2 = ice, 3 = heal, 4 = poison,
+ * 5 = dim (poison grey-out). */
 #define UI_COLOR_NONE   0
 #define UI_COLOR_FIRE   1
 #define UI_COLOR_ICE    2
 #define UI_COLOR_HEAL   3
 #define UI_COLOR_POISON 4
+#define UI_COLOR_DIM    5
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
  * ring/heal role).  Returns a UI_COLOR_* palette index. */

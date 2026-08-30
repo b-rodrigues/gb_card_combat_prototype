@@ -81,6 +81,50 @@ extern StatusInstance g_status_applied;
  * battle_start via status_reset_battle(). */
 #define STATUS_ROUND_SLOTS 4
 
+/* ── Poison grey-out (battle-scoped) ─────────────────────────────
+ * When a combatant is poisoned, POISON_GREY_CARDS random cards in its
+ * pool become unplayable for POISON_GREY_TURNS future player-decision
+ * rounds.  For the player (slot 0) the pool is the 5-card battle hand
+ * (position bit = hand idx); for an enemy (slot 1..n) it is that enemy's
+ * deck position (bit = the shared battle deck's draw position).
+ * Battle-scoped runtime state like the statuses themselves -- never
+ * GameState/save; cleared at battle start via status_reset_battle(). */
+#define POISON_GREY_CARDS 2
+#define POISON_GREY_TURNS 2
+
+/* Bit p set = pool position p is greyed for actor slot (0 = player,
+ * 1..n = enemy).  Duration drains at each enter-select round boundary;
+ * the stored counter is POISON_GREY_TURNS+1 at apply because the poison
+ * lands mid-round, leaving exactly POISON_GREY_TURNS future rounds greyed
+ * (0 = not greyed). */
+extern uint8_t s_grey_mask[STATUS_ROUND_SLOTS];
+extern uint8_t s_grey_dur[STATUS_ROUND_SLOTS];
+
+/* Re-apply a poisoned victim's grey-out.  pool_size is the victim's card
+ * pool (BATTLE_HAND_SIZE for the player, the enemy battle deck's count for
+ * an enemy).  On a fresh grey the bank-3 body picks POISON_GREY_CARDS
+ * distinct indices from the deterministic RNG; an already-active grey is
+ * only refreshed (same cards, same duration).  Emits EVENT_CARDS_GREYED.
+ * Fixed-bank wrapper around the ROM-bank-3 body; see banked.h. */
+void status_grey_apply(uint8_t actor_slot, uint8_t pool_size);
+
+/* Bank-3 body dispatched by status_grey_apply(). */
+void status_grey_apply_banked(void);
+
+/* One round boundary for a greyed combatant: decrement the duration and,
+ * when it hits zero, clear the mask and emit EVENT_CARDS_UNGREYED.  Called
+ * by the battle tick loop alongside status_tick().  Fixed wrapper around
+ * the ROM-bank-3 body; see banked.h. */
+void status_grey_tick(uint8_t actor_slot);
+
+/* Bank-3 body dispatched by status_grey_tick(). */
+void status_grey_tick_banked(void);
+
+/* Decode the two set-bit positions of a grey mask into out-a/out-b
+ * (0xFF when absent).  Pools are <= 5 positions, so only bits 0-4 are
+ * ever set.  Exposed for battle.c's defend-resolve wrapper telemetry. */
+void status_grey_mask_indices(uint8_t mask, uint8_t *a, uint8_t *b);
+
 void status_reset_battle(void);
 StatusSlots *status_slots(uint8_t actor_slot);
 
