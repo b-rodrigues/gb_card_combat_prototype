@@ -13,15 +13,28 @@ extern uint8_t ui_font_tile_base;
  * writes; DMG = 0. */
 extern uint8_t g_is_cgb;
 
+/* Weapon & card icon tile indices (VRAM Block 1, 0x8800) */
+#define UI_TILE_CARD_SWORD    104u
+#define UI_TILE_CARD_SHIELD   105u
+#define UI_TILE_CARD_BOW      106u
+#define UI_TILE_CARD_DAGGER   107u
+#define UI_TILE_CARD_RING     108u
+#define UI_TILE_CARD_FIRE_SW  109u
+#define UI_TILE_CARD_AMULET   110u
+
 /* Per-tile background palette indices (CGB VRAM bank-1 attributes):
- * 0 = default grayscale, 1 = fire, 2 = ice, 3 = heal, 4 = poison,
- * 5 = dim (poison grey-out). */
+ * 0 = default grayscale, 1 = fire, 2 = iron (steel blue), 3 = heal / cyan,
+ * 4 = poison (emerald), 5 = wood (brown), 6 = gold (mythril),
+ * 7 = dim (poison grey-out). */
 #define UI_COLOR_NONE   0
 #define UI_COLOR_FIRE   1
+#define UI_COLOR_IRON   2
 #define UI_COLOR_ICE    2
 #define UI_COLOR_HEAL   3
 #define UI_COLOR_POISON 4
-#define UI_COLOR_DIM    5
+#define UI_COLOR_WOOD   5
+#define UI_COLOR_GOLD   6
+#define UI_COLOR_DIM    7
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
  * ring/heal role).  Returns a UI_COLOR_* palette index. */

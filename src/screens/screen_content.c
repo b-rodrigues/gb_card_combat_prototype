@@ -122,12 +122,15 @@ static void sc_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
     VBK_REG = 0;
 }
 
-static uint8_t sc_color_class(uint8_t status_id, uint8_t is_heal)
+static uint8_t sc_card_color(uint8_t battle_type, uint8_t status_id, uint8_t is_heal)
 {
-    if (is_heal) return UI_COLOR_HEAL;
     if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
-    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
     if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (battle_type == BATTLE_CARD_TYPE_SHIELD || is_heal) return UI_COLOR_WOOD;
+    if (battle_type == BATTLE_CARD_TYPE_SWORD) return UI_COLOR_IRON;
+    if (battle_type == BATTLE_CARD_TYPE_BOW) return UI_COLOR_GOLD;
+    if (battle_type == BATTLE_CARD_TYPE_DAGGER) return UI_COLOR_POISON;
     return UI_COLOR_NONE;
 }
 
@@ -302,7 +305,7 @@ void shop_content_render(void)
             sc_card_code_str(card->battle_type, card->power, code);
             sc_draw_text(1, y, code, 4);
             sc_color_span(1, y, 4,
-                          sc_color_class(card->status_id,
+                          sc_card_color(card->battle_type, card->status_id,
                                          (card->battle_type == BATTLE_CARD_TYPE_HEAL) ||
                                          (card->effect == CARD_EFFECT_HEAL_HP)));
         } else {

@@ -109,15 +109,18 @@ static void battle_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     battle_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-/* Effect color for a battle card (mirrors ui_color_class; banked code must
- * not call the fixed-bank helper).  status_id = on-hit rider element,
- * is_heal = ring/heal role. */
-static uint8_t battle_color_class(uint8_t status_id, uint8_t is_heal)
+/* Material and effect color for a battle card:
+ * Wood (Shield/Ring) = Brown, Iron (Sword) = Steel Blue, Mythril (Bow) = Gold,
+ * Fire = Red-Orange, Poison = Emerald Green. */
+static uint8_t battle_card_color(uint8_t type, uint8_t status_id, uint8_t is_heal)
 {
-    if (is_heal) return UI_COLOR_HEAL;
     if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
-    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
     if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (type == BATTLE_CARD_TYPE_SHIELD || is_heal) return UI_COLOR_WOOD;
+    if (type == BATTLE_CARD_TYPE_SWORD) return UI_COLOR_IRON;
+    if (type == BATTLE_CARD_TYPE_BOW) return UI_COLOR_GOLD;
+    if (type == BATTLE_CARD_TYPE_DAGGER) return UI_COLOR_POISON;
     return UI_COLOR_NONE;
 }
 
@@ -163,12 +166,6 @@ static uint8_t battle_status_color(const StatusSlots *slots)
 
 /* ── Card helpers (inlined from card.c — banked code cannot call fixed). ── */
 
-static const char *battle_card_type_code(uint8_t type)
-{
-    static const char codes[] = "SW\0SH\0BO\0HE\0DA\0??";
-    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
-}
-
 static const char *battle_card_get_description(uint8_t type)
 {
     switch (type) {
@@ -181,17 +178,45 @@ static const char *battle_card_get_description(uint8_t type)
     }
 }
 
-/* ── Battle rendering helpers ─────────────────────────────────────────── */
-
-static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value)
+static const char *battle_card_type_code(uint8_t type)
 {
+    static const char codes[] = "SW\0SH\0BO\0HE\0DA\0??";
+    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
+}
+
+static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
+                                uint8_t status_id, uint8_t is_heal)
+{
+    uint8_t tile;
     const char *code;
+    volatile uint8_t *dst;
+
     if (type == BATTLE_CARD_TYPE_EMPTY) {
         battle_draw_text_line(x, y, NULL, 3);
         return;
     }
+
     code = battle_card_type_code(type);
-    battle_put_char(x, y, code[0]);
+
+    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
+        tile = UI_TILE_CARD_RING;
+    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
+        tile = UI_TILE_CARD_SHIELD;
+    } else if (type == BATTLE_CARD_TYPE_BOW) {
+        tile = UI_TILE_CARD_BOW;
+    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
+        tile = UI_TILE_CARD_DAGGER;
+    } else if (status_id == STATUS_BURN) {
+        tile = UI_TILE_CARD_FIRE_SW;
+    } else {
+        tile = UI_TILE_CARD_SWORD;
+    }
+
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+    VBK_REG = 0;
+    battle_vram_sync_write(dst, tile);
+    g_ui_screen_buf[y][x] = code[0];
+
     battle_put_char((uint8_t)(x + 1), y, code[1]);
     battle_put_char((uint8_t)(x + 2), y, (char)('0' + value));
 }
@@ -370,13 +395,11 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
                 break;
             }
         }
-        battle_draw_card_at(col, 14, ctype, cvalue);
-        /* Color the code + its selection digit by the card's effect.
+        uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
+        battle_draw_card_at(col, 14, ctype, cvalue, cstat, is_heal);
+        /* Color the icon + power digit by the card's material and elemental effect.
          * Poison grey-out (status.h): greyed player cards render dim. */
-        ccolor = battle_color_class(cstat,
-                                    (cring != 0) ||
-                                    (ctype == BATTLE_CARD_TYPE_HEAL) ||
-                                    (ceffect == CARD_EFFECT_HEAL_HP));
+        ccolor = battle_card_color(ctype, cstat, is_heal);
         if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
             ccolor = UI_COLOR_DIM;
         }
@@ -464,7 +487,8 @@ void ui_update_battle_banked(void)
             battle_draw_banner_line(12, g_card_scratch.name, 20);
             while (len < 20 && g_card_scratch.name[len]) len++;
             x = (uint8_t)((20 - len) / 2);
-            ncolor = battle_color_class(
+            ncolor = battle_card_color(
+                g_card_scratch.battle_type,
                 g_card_scratch.status_id,
                 (g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL) ||
                 (g_card_scratch.effect == CARD_EFFECT_HEAL_HP));

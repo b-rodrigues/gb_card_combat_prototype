@@ -54,10 +54,21 @@ static const palette_color_t cgb_sprite_palette[4] = {
  * (make gfx); see docs/graphics.md.  The array is included verbatim. */
 #include "gfx/player_sprite_tile.h"
 #include "gfx/rpg_tile_lookup.h"
+#include "gfx/asset_atlas.h"
 #include "banked.h"
 
 #define PLAYER_SPRITE_NUM 0
 #define PLAYER_SPRITE_TILE_ID 102
+
+static const uint16_t s_card_icon_uids[7] = {
+    29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
+    87,  /* ASSET_EQUIP_C06_R08: Wooden Shield (UI_TILE_CARD_SHIELD) */
+    138, /* ASSET_EQUIP_C07_R11: Bow (UI_TILE_CARD_BOW) */
+    69,  /* ASSET_EQUIP_C04_R06: Poison Dagger (UI_TILE_CARD_DAGGER) */
+    148, /* ASSET_EQUIP_C06_R12: Ring (UI_TILE_CARD_RING) */
+    30,  /* ASSET_EQUIP_C05_R03: Fire Sword (UI_TILE_CARD_FIRE_SW) */
+    149  /* ASSET_EQUIP_C07_R12: Amulet (UI_TILE_CARD_AMULET) */
+};
 
 /* ASCII semantic char per TileType (0..3): '.', '#', '>', 'B'.  The
  * overworld renders these via the console font (ui_font_tile_base + (ch -
@@ -91,6 +102,13 @@ void ui_init(void)
     }
     ui_font_tile_base = 0;
 
+    /* Load weapon / card icon tiles from Bank 6 into VRAM Block 1 (tiles 104..110) */
+    for (p = 0; p < 7; p++) {
+        banked_copy(ASSET_ATLAS_BANK_ICONS, g_ui_screen_buf,
+                    g_asset_icon_tiles + (s_card_icon_uids[p] << 4), 16);
+        set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
+    }
+
     /* Load world background tiles from Bank 2 (16 tiles = 256 bytes) */
     for (p = 0; p < 16; p += 8) {
         banked_copy(2, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 128);
@@ -118,14 +136,11 @@ void ui_init(void)
     VBK_REG = 0;
 
     /* Program all 8 BG palettes unconditionally (harmless on DMG, where
-     * BCPS/BCPD are unmapped no-ops): 0 = gray, 1-4 = effect colors,
-     * 5-7 = gray.  The ramps are banked_copy'd from bank 3 into WRAM
-     * scratch first (banked_copy already ran for the font above).
-     * OBJ palettes stay grayscale for the player sprite. */
-    banked_copy(3, g_ui_screen_buf, cgb_bg_palettes, 40);
+     * BCPS/BCPD are unmapped no-ops): 0 = gray, 1 = fire, 2 = iron/ice,
+     * 3 = heal, 4 = poison, 5 = wood, 6 = gold, 7 = dim. */
+    banked_copy(3, g_ui_screen_buf, cgb_bg_palettes, 64);
     for (p = 0; p < 8; p++) {
-        const uint8_t *ramp = (const uint8_t *)g_ui_screen_buf +
-                              (uint8_t)(((p <= 4) ? p : 0) << 3);
+        const uint8_t *ramp = (const uint8_t *)g_ui_screen_buf + ((uint16_t)p << 3);
         uint8_t c;
         BCPS_REG = (uint8_t)(0x80 | (p << 3));
         for (c = 0; c < 8; c++) {
