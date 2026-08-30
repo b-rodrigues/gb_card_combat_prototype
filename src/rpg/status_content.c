@@ -74,23 +74,8 @@ void status_apply_banked(void)
     g_status_applied.id = id;
     g_status_applied.stacks = stacks;
     g_status_applied.duration = duration;
-    /* FREEZE takes effect immediately: the next attack by this
-     * combatant is skipped.  The banked body sets the mask directly
-     * since callers may invoke status_apply_banked directly (e.g.
-     * from combo rider or defend rider) bypassing the fixed wrapper. */
-    extern StatusSlots s_battle_status[STATUS_ROUND_SLOTS];
-    if (id == STATUS_FREEZE) {
-        if (slots == &s_battle_status[0]) {
-            g_status_frozen_mask |= 1u;
-        } else {
-            for (i = 1; i < STATUS_ROUND_SLOTS; i++) {
-                if (&s_battle_status[i] == slots) {
-                    g_status_frozen_mask |= (uint8_t)(1u << i);
-                    break;
-                }
-            }
-        }
-    }
+    /* The frozen-mask bit is armed by the fixed wrapper (status_apply,
+     * src/rpg/status.c), not here -- always go through the wrapper. */
 }
 
 void status_tick_banked(void)
@@ -168,7 +153,12 @@ void status_grey_apply_banked(void)
     uint8_t pool = g_bk_byte_b;
     uint8_t i, idx, mask = 0;
 
-    if (slot >= STATUS_ROUND_SLOTS || pool == 0) return;
+    /* Defensive: a pool smaller than POISON_GREY_CARDS cannot host that
+     * many distinct greyed positions -- the second draw's linear probe
+     * would loop forever.  Unreachable today (player hand = BATTLE_HAND_SIZE,
+     * enemy decks are 4/5 cards), but a future smaller deck must not hang
+     * bank 3. */
+    if (slot >= STATUS_ROUND_SLOTS || pool < POISON_GREY_CARDS) return;
 
     if (s_grey_mask[slot] != 0) {
         s_grey_dur[slot] = (uint8_t)(POISON_GREY_TURNS + 1);
