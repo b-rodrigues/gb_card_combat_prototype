@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "telemetry.h"
 #include "rpg/cards.h"
+#include "rpg/status.h"
 #include "rpg/loot.h"
 #include "rpg/deck.h"
 #include "rpg/currency.h"
@@ -251,6 +252,8 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
     char code[6];
     CardId id;
     uint8_t in_deck;
+    uint8_t tile_elem, tile_wpn;
+    volatile uint8_t *dst;
 
     id = view_card_id(g, pos);
     def = card_get_def(id);
@@ -258,14 +261,47 @@ static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
 
     if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
         ui_draw_text_line(0, y, ">", 1);
+
+    if (def->status_id == STATUS_BURN) {
+        tile_elem = UI_TILE_CARD_ELEM_FIRE;
+    } else if (def->status_id == STATUS_POISON) {
+        tile_elem = UI_TILE_CARD_ELEM_POISON;
+    } else if (def->status_id == STATUS_FREEZE) {
+        tile_elem = UI_TILE_CARD_ELEM_ICE;
+    } else {
+        tile_elem = 0;
+    }
+
+    if (def->battle_type == BATTLE_CARD_TYPE_HEAL || def->effect == CARD_EFFECT_HEAL_HP) {
+        tile_wpn = UI_TILE_CARD_RING;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_SHIELD) {
+        tile_wpn = UI_TILE_CARD_SHIELD;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_BOW) {
+        tile_wpn = UI_TILE_CARD_BOW;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_DAGGER) {
+        tile_wpn = UI_TILE_CARD_DAGGER;
+    } else {
+        tile_wpn = UI_TILE_CARD_SWORD;
+    }
+
     /* All cards show their descriptive identity name ("I SW", "W F SW"),
      * not the battle code (docs/loot.md §34.1); colored by effect (fixed
      * 8-tile span; trailing blanks are invisible). */
     ui_draw_text_line(2, y, def->name, 10);
+
+    /* Stream element & weapon icons to VRAM at columns 2 and 3 */
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + 2);
+    VBK_REG = 0;
+    while (STAT_REG & 0x02) ;
+    *dst = tile_elem;
+    dst++;
+    while (STAT_REG & 0x02) ;
+    *dst = tile_wpn;
+
     ui_color_span(2, y, 8,
-                  ui_color_class(def->status_id,
-                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
-                                 (def->effect == CARD_EFFECT_HEAL_HP)));
+                  ui_color_card(def->battle_type, def->status_id,
+                                (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                (def->effect == CARD_EFFECT_HEAL_HP)));
     /* Membership glyph is the decked-copy count (0..n), so partial stacks
      * (starter 2x SW3/SH2, herb up to 3) are visible. */
     in_deck = deck_count_in_deck(&g->state.cards.deck, id);
@@ -356,6 +392,9 @@ static void draw_card_detail_page(Game *g)
     CardId id;
     uint8_t y = 5;
 
+    uint8_t tile_elem, tile_wpn;
+    volatile uint8_t *dst;
+
     if (g->item_menu_index < FIRST_CARD ||
         (uint8_t)(g->item_menu_index - FIRST_CARD) >= s_view_count)
         return;
@@ -363,11 +402,43 @@ static void draw_card_detail_page(Game *g)
     def = card_get_def(id);
     if (!def) return;
 
+    if (def->status_id == STATUS_BURN) {
+        tile_elem = UI_TILE_CARD_ELEM_FIRE;
+    } else if (def->status_id == STATUS_POISON) {
+        tile_elem = UI_TILE_CARD_ELEM_POISON;
+    } else if (def->status_id == STATUS_FREEZE) {
+        tile_elem = UI_TILE_CARD_ELEM_ICE;
+    } else {
+        tile_elem = 0;
+    }
+
+    if (def->battle_type == BATTLE_CARD_TYPE_HEAL || def->effect == CARD_EFFECT_HEAL_HP) {
+        tile_wpn = UI_TILE_CARD_RING;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_SHIELD) {
+        tile_wpn = UI_TILE_CARD_SHIELD;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_BOW) {
+        tile_wpn = UI_TILE_CARD_BOW;
+    } else if (def->battle_type == BATTLE_CARD_TYPE_DAGGER) {
+        tile_wpn = UI_TILE_CARD_DAGGER;
+    } else {
+        tile_wpn = UI_TILE_CARD_SWORD;
+    }
+
     ui_draw_text_line(0, y, def->name, 11);
+
+    /* Stream icons into VRAM at col 0, 1 */
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5));
+    VBK_REG = 0;
+    while (STAT_REG & 0x02) ;
+    *dst = tile_elem;
+    dst++;
+    while (STAT_REG & 0x02) ;
+    *dst = tile_wpn;
+
     ui_color_span(0, y, 11,
-                  ui_color_class(def->status_id,
-                                 (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
-                                 (def->effect == CARD_EFFECT_HEAL_HP)));
+                  ui_color_card(def->battle_type, def->status_id,
+                                (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
+                                (def->effect == CARD_EFFECT_HEAL_HP)));
     y += 2;
     ui_draw_text_line(0, y, "TYPE", 4);
     ui_draw_text_line(6, y, card_type_name(def->type), 3);

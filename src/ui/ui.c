@@ -678,17 +678,23 @@ void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
     }
 }
 
-/* Effect color for a card, keyed by its elemental effect (fire/ice/poison)
- * or heal role.  The engine currently encodes the element as the on-hit
- * rider (status_id) and the heal role as the HEAL type / ring flag, so this
- * reads those -- not the future burn/frozen *statuses* (docs/loot.md §34). */
+/* Effect and material color for a card, keyed by elemental effect or
+ * weapon material (Wood, Iron, Mythril Gold, Poison, Fire, Ice). */
+uint8_t ui_color_card(uint8_t battle_type, uint8_t status_id, uint8_t is_heal)
+{
+    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
+    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (battle_type == 1 /* BATTLE_CARD_TYPE_SHIELD */ || is_heal) return UI_COLOR_WOOD;
+    if (battle_type == 0 /* BATTLE_CARD_TYPE_SWORD */) return UI_COLOR_IRON;
+    if (battle_type == 2 /* BATTLE_CARD_TYPE_BOW */) return UI_COLOR_GOLD;
+    if (battle_type == 4 /* BATTLE_CARD_TYPE_DAGGER */) return UI_COLOR_POISON;
+    return UI_COLOR_NONE;
+}
+
 uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal)
 {
-    if (is_heal) return UI_COLOR_HEAL;
-    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
-    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
-    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
-    return UI_COLOR_NONE;
+    return ui_color_card(0, status_id, is_heal);
 }
 
 /* Staging for the bank-3 attribute writer (x, y, len, palette). */

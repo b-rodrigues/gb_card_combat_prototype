@@ -302,8 +302,36 @@ void shop_content_render(void)
         y = (uint8_t)(5 + i);
         sc_put_char(0, y, (g->item_menu_index == i) ? '>' : ' ');
         if (card) {
+            uint8_t tile_elem, tile_wpn;
+            volatile uint8_t *dst;
+
+            if (card->status_id == STATUS_BURN) tile_elem = UI_TILE_CARD_ELEM_FIRE;
+            else if (card->status_id == STATUS_POISON) tile_elem = UI_TILE_CARD_ELEM_POISON;
+            else if (card->status_id == STATUS_FREEZE) tile_elem = UI_TILE_CARD_ELEM_ICE;
+            else tile_elem = 0;
+
+            if (card->battle_type == BATTLE_CARD_TYPE_HEAL || card->effect == CARD_EFFECT_HEAL_HP)
+                tile_wpn = UI_TILE_CARD_RING;
+            else if (card->battle_type == BATTLE_CARD_TYPE_SHIELD)
+                tile_wpn = UI_TILE_CARD_SHIELD;
+            else if (card->battle_type == BATTLE_CARD_TYPE_BOW)
+                tile_wpn = UI_TILE_CARD_BOW;
+            else if (card->battle_type == BATTLE_CARD_TYPE_DAGGER)
+                tile_wpn = UI_TILE_CARD_DAGGER;
+            else
+                tile_wpn = UI_TILE_CARD_SWORD;
+
             sc_card_code_str(card->battle_type, card->power, code);
             sc_draw_text(1, y, code, 4);
+
+            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + 1);
+            VBK_REG = 0;
+            while (STAT_REG & 0x02) ;
+            *dst = tile_elem;
+            dst++;
+            while (STAT_REG & 0x02) ;
+            *dst = tile_wpn;
+
             sc_color_span(1, y, 4,
                           sc_card_color(card->battle_type, card->status_id,
                                          (card->battle_type == BATTLE_CARD_TYPE_HEAL) ||

@@ -40,6 +40,7 @@ extern uint8_t g_is_cgb;
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
  * ring/heal role).  Returns a UI_COLOR_* palette index. */
+uint8_t ui_color_card(uint8_t battle_type, uint8_t status_id, uint8_t is_heal);
 uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal);
 
 /* Set the CGB per-tile palette for a horizontal span of background tiles
