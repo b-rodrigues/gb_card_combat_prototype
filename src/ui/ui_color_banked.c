@@ -29,14 +29,8 @@ const palette_color_t cgb_bg_palettes[8][4] = {
 static void color_vram_sync_write(volatile uint8_t *dst, uint8_t v)
 {
     if (LCDC_REG & 0x80) {
-        __asm
-            di
-        __endasm;
         while (STAT_REG & 0x02);
         *dst = v;
-        __asm
-            ei
-        __endasm;
     } else {
         *dst = v;
     }
@@ -118,7 +112,7 @@ void ui_clear_atts_banked(void)
     dst = (volatile uint8_t *)0x9800;
     VBK_REG = 1;
     for (i = 0; i < 1024; i++) {
-        color_vram_sync_write(&dst[i], 0);
+        dst[i] = 0;
     }
     VBK_REG = 0;
 }

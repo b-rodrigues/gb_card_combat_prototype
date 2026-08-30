@@ -10,48 +10,52 @@
  * DIALOGUE_STARTED afterwards.  All pointers stored into DialogueState
  * target WRAM buffers, never bank 2 rodata. */
 
+static DialogueState *s_dlg_d;
+static DialogueId s_dlg_id;
+static uint8_t s_dlg_i;
+static uint8_t s_dlg_j;
+static const DialogueDefinition *s_dlg_def;
+static const char *s_dlg_src;
+
 void dialogue_start_def_banked(void)
 {
-    DialogueState *d = (DialogueState *)g_bk_ptr_a;
-    DialogueId id = g_bk_byte_a;
-    uint8_t i;
-    const DialogueDefinition *def = (const DialogueDefinition *)0;
+    s_dlg_d = (DialogueState *)g_bk_ptr_a;
+    s_dlg_id = g_bk_byte_a;
+    s_dlg_def = (const DialogueDefinition *)0;
 
-    if (!d) return;
+    if (!s_dlg_d) return;
 
-    for (i = 0; i < g_dialogue_table_count; i++) {
-        if (g_dialogue_table[i].id == id) {
-            def = &g_dialogue_table[i];
+    for (s_dlg_i = 0; s_dlg_i < g_dialogue_table_count; s_dlg_i++) {
+        if (g_dialogue_table[s_dlg_i].id == s_dlg_id) {
+            s_dlg_def = &g_dialogue_table[s_dlg_i];
             break;
         }
     }
-    if (!def) { g_dlg_speaker[0] = 0; return; }
+    if (!s_dlg_def) { g_dlg_speaker[0] = 0; return; }
 
-    d->active = true;
-    d->id = def->id;
-    d->current_line = 0;
-    d->line_count = (def->line_count > MAX_DIALOGUE_LINES) ? MAX_DIALOGUE_LINES : def->line_count;
-    d->completion_flag = def->completion_flag;
+    s_dlg_d->active = true;
+    s_dlg_d->id = s_dlg_def->id;
+    s_dlg_d->current_line = 0;
+    s_dlg_d->line_count = (s_dlg_def->line_count > MAX_DIALOGUE_LINES) ? MAX_DIALOGUE_LINES : s_dlg_def->line_count;
+    s_dlg_d->completion_flag = s_dlg_def->completion_flag;
 
-    /* Speaker: NULL means "no named speaker" -- stage an empty WRAM string
-     * (never a bank-2 literal address; DialogueState is read later from the
-     * fixed bank).  Lines below keep their own NULL-tolerant check. */
-    if (def->speaker) {
-        for (i = 0; i < 11 && def->speaker[i]; i++) {
-            g_dlg_speaker[i] = def->speaker[i];
+    if (s_dlg_def->speaker) {
+        for (s_dlg_i = 0; s_dlg_i < 11 && s_dlg_def->speaker[s_dlg_i]; s_dlg_i++) {
+            g_dlg_speaker[s_dlg_i] = s_dlg_def->speaker[s_dlg_i];
         }
-        g_dlg_speaker[i] = 0;
-        d->speaker = g_dlg_speaker;
+        g_dlg_speaker[s_dlg_i] = 0;
+        s_dlg_d->speaker = g_dlg_speaker;
     } else {
         g_dlg_speaker[0] = 0;
-        d->speaker = g_dlg_speaker;
+        s_dlg_d->speaker = g_dlg_speaker;
     }
 
-    for (i = 0; i < MAX_DIALOGUE_LINES; i++) {
-        uint8_t j;
-        const char *src = (i < d->line_count) ? def->lines[i] : (const char *)0;
-        for (j = 0; j < 20 && src && src[j]; j++) g_dlg_lines[i][j] = src[j];
-        g_dlg_lines[i][j] = 0;
-        d->lines[i] = g_dlg_lines[i];
+    for (s_dlg_i = 0; s_dlg_i < MAX_DIALOGUE_LINES; s_dlg_i++) {
+        s_dlg_src = (s_dlg_i < s_dlg_d->line_count) ? s_dlg_def->lines[s_dlg_i] : (const char *)0;
+        for (s_dlg_j = 0; s_dlg_j < 20 && s_dlg_src && s_dlg_src[s_dlg_j]; s_dlg_j++) {
+            g_dlg_lines[s_dlg_i][s_dlg_j] = s_dlg_src[s_dlg_j];
+        }
+        g_dlg_lines[s_dlg_i][s_dlg_j] = 0;
+        s_dlg_d->lines[s_dlg_i] = g_dlg_lines[s_dlg_i];
     }
 }

@@ -27,7 +27,7 @@ void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t
     rc = &g->render_cache;
     if (!rc->valid || rc->prev_screen != scr) {
         ui_clear_screen();
-        g_bk_call_bank = 2;
+        g_bk_call_bank = 4;
         g_bk_call_target = content_target;
         g_bk_byte_a = slide;
         banked_call_run();

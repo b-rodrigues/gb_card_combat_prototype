@@ -44,8 +44,17 @@ extern uint8_t g_is_cgb;
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
  * ring/heal role).  Returns a UI_COLOR_* palette index. */
-uint8_t ui_color_card(uint8_t battle_type, uint8_t status_id, uint8_t is_heal);
-uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal);
+#define ui_color_card(bt, st, ih) ( \
+    ((st) == 1 /* STATUS_BURN */) ? (uint8_t)UI_COLOR_FIRE : \
+    ((st) == 2 /* STATUS_POISON */) ? (uint8_t)UI_COLOR_POISON : \
+    ((st) == 3 /* STATUS_FREEZE */) ? (uint8_t)UI_COLOR_ICE : \
+    (((bt) == 1 /* BATTLE_CARD_TYPE_SHIELD */) || (ih)) ? (uint8_t)UI_COLOR_WOOD : \
+    ((bt) == 0 /* BATTLE_CARD_TYPE_SWORD */) ? (uint8_t)UI_COLOR_IRON : \
+    ((bt) == 2 /* BATTLE_CARD_TYPE_BOW */) ? (uint8_t)UI_COLOR_GOLD : \
+    ((bt) == 4 /* BATTLE_CARD_TYPE_DAGGER */) ? (uint8_t)UI_COLOR_POISON : (uint8_t)UI_COLOR_NONE \
+)
+
+#define ui_color_class(st, ih) ui_color_card(0, (st), (ih))
 
 /* Set the CGB per-tile palette for a horizontal span of background tiles
  * (no-op on DMG; palette 0 resets to grayscale). */

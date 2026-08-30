@@ -95,9 +95,9 @@ void ui_init(void)
 
     oam_dma_init();
 
-    /* Load font tiles from Bank 2 (96 tiles = 1536 bytes) using g_ui_screen_buf as temporary buffer */
+    /* Load font tiles from Bank 5 (96 tiles = 1536 bytes) using g_ui_screen_buf as temporary buffer */
     for (p = 0; p < 96; p += 8) {
-        banked_copy(2, g_ui_screen_buf, g_intrepid_font_tiles + ((uint16_t)p << 4), 128);
+        banked_copy(5, g_ui_screen_buf, g_intrepid_font_tiles + ((uint16_t)p << 4), 128);
         set_bkg_data(p, 8, (const uint8_t *)g_ui_screen_buf);
         /* The overworld renders actors as OAM sprites that reference the
          * font glyph tiles, but sprites always read from the 0x8000 VRAM
@@ -115,9 +115,9 @@ void ui_init(void)
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
     }
 
-    /* Load world background tiles from Bank 2 (16 tiles = 256 bytes) */
+    /* Load world background tiles from Bank 5 (16 tiles = 256 bytes) */
     for (p = 0; p < 16; p += 8) {
-        banked_copy(2, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 128);
+        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 128);
         set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), 8, (const uint8_t *)g_ui_screen_buf);
     }
 
@@ -358,6 +358,37 @@ void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
 
     if (y >= 18 || x >= 20) return;
     if ((uint8_t)(x + max_chars) > 20) max_chars = (uint8_t)(20 - x);
+
+    if (y == 13 && text && text[0] != '\0') {
+        uint8_t icon = 0;
+        uint8_t pal = UI_COLOR_NONE;
+        if (text[0] == 'G' && text[1] == 'U') { /* GUARD */
+            icon = UI_TILE_CARD_SHIELD;
+            pal = UI_COLOR_IRON;
+        } else if (text[0] == 'M' && text[1] == 'A') { /* MAYOR */
+            icon = UI_TILE_CARD_RING;
+            pal = UI_COLOR_GOLD;
+        } else if (text[0] == 'S' && text[1] == 'H') { /* SHOP */
+            icon = UI_TILE_COIN;
+            pal = UI_COLOR_GOLD;
+        } else if (text[0] == 'W' && text[1] == 'I') { /* WIZARD */
+            icon = UI_TILE_CARD_ELEM_FIRE;
+            pal = UI_COLOR_FIRE;
+        }
+        if (icon) {
+            volatile uint8_t *v = &((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + ox) & 31)];
+            VBK_REG = 0;
+            ui_vram_sync_write(v, icon);
+            g_ui_screen_buf[y][x] = ' ';
+            if (g_is_cgb) {
+                VBK_REG = 1;
+                ui_vram_sync_write(v, pal);
+                VBK_REG = 0;
+            }
+            x++;
+            if (max_chars > 0) max_chars--;
+        }
+    }
 
     VBK_REG = 0;
     ended = (text == NULL);
@@ -682,24 +713,6 @@ void ui_card_code_str(uint8_t battle_type, uint8_t power, char *out)
     }
 }
 
-/* Effect and material color for a card, keyed by elemental effect or
- * weapon material (Wood, Iron, Mythril Gold, Poison, Fire, Ice). */
-uint8_t ui_color_card(uint8_t battle_type, uint8_t status_id, uint8_t is_heal)
-{
-    if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
-    if (status_id == STATUS_POISON) return UI_COLOR_POISON;
-    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
-    if (battle_type == 1 /* BATTLE_CARD_TYPE_SHIELD */ || is_heal) return UI_COLOR_WOOD;
-    if (battle_type == 0 /* BATTLE_CARD_TYPE_SWORD */) return UI_COLOR_IRON;
-    if (battle_type == 2 /* BATTLE_CARD_TYPE_BOW */) return UI_COLOR_GOLD;
-    if (battle_type == 4 /* BATTLE_CARD_TYPE_DAGGER */) return UI_COLOR_POISON;
-    return UI_COLOR_NONE;
-}
-
-uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal)
-{
-    return ui_color_card(0, status_id, is_heal);
-}
 
 /* Staging for the bank-3 attribute writer (x, y, len, palette). */
 static uint8_t s_color_span_args[4];

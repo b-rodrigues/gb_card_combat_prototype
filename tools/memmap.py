@@ -135,7 +135,7 @@ def main():
         "_deck_reshuffle_banked": "discard reshuffle (bank 2)",
         "_debug_state_snapshot_banked": "debug state snapshot (bank 2)",
         "_ui_format_int_banked": "int formatter (bank 2)",
-        "_scene_load_tiles_banked": "scene tile loader (bank 2)",
+        "_scene_load_tiles_banked": "scene tile loader (bank 5)",
         "_enemy_deck_setup_banked": "enemy deck setup (bank 2)",
         "_battle_card_undo_banked": "battle card undo (bank 3)",
         "_ui_update_battle_banked": "battle render (bank 3)",
@@ -144,6 +144,12 @@ def main():
         "_game_loot_drop_banked": "victory drop roll (bank 3)",
         "_world_patrol_slot_banked": "world actor patrol step (bank 3)",
         "_battle_nav_banked": "battle hand/target nav cluster (bank 4)",
+        "_title_content_render": "title screen render (bank 4)",
+        "_tutorial_content_render": "tutorial screen render (bank 4)",
+        "_thanks_content_render": "thanks screen render (bank 4)",
+        "_ending_content_render": "ending screen render (bank 4)",
+        "_game_over_content_render": "game over screen render (bank 4)",
+        "_item_screen_render_banked": "item screen render (bank 2)",
     }
     print()
     print("Banked target address validation")

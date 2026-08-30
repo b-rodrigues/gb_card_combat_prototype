@@ -48,8 +48,8 @@ void item_menu_cursor_banked(void);
 
 /* Filtered/sorted view over the deckable collection entries.  s_view_indices
  * holds collection indices; s_view_count is the number of visible cards. */
-static uint8_t s_view_indices[MAX_CARD_COLLECTION];
-static uint8_t s_view_count;
+uint8_t s_view_indices[MAX_CARD_COLLECTION];
+uint8_t s_view_count;
 
 /* SPECIAL cards (quest items like the Lost Amulet) are LISTED but never
  * deckable -- pressing A shows a transient QUEST ITEM message instead. */
@@ -136,10 +136,10 @@ static void sort_view(Game *g)
 
     for (i = 1; i < s_view_count; i++) {
         tmp = s_view_indices[i];
-        va = sort_value(card_get_def(view_card_id(g, tmp)), g->item_menu_sort);
+        va = sort_value(card_get_def(g->state.cards.collection.entries[tmp].id), g->item_menu_sort);
         j = i;
         while (j > 0) {
-            vb = sort_value(card_get_def(view_card_id(g, s_view_indices[j - 1])),
+            vb = sort_value(card_get_def(g->state.cards.collection.entries[s_view_indices[j - 1]].id),
                             g->item_menu_sort);
             if (desc ? (vb < va) : (vb > va)) {
                 s_view_indices[j] = s_view_indices[j - 1];
@@ -246,244 +246,6 @@ static void item_menu_step(Game *g, uint8_t new_index)
     banked_call_run();
 }
 
-static void draw_card_pair(Game *g, uint8_t y, uint8_t pos)
-{
-    const CardDefinition *def;
-    char code[6];
-    CardId id;
-    uint8_t in_deck;
-    uint8_t tile_elem, tile_wpn;
-    volatile uint8_t *dst;
-
-    id = view_card_id(g, pos);
-    def = card_get_def(id);
-    if (!def) return;
-
-    if ((uint8_t)(pos + FIRST_CARD) == g->item_menu_index)
-        ui_draw_text_line(0, y, ">", 1);
-
-    if (def->status_id == STATUS_BURN) {
-        tile_elem = UI_TILE_CARD_ELEM_FIRE;
-    } else if (def->status_id == STATUS_POISON) {
-        tile_elem = UI_TILE_CARD_ELEM_POISON;
-    } else if (def->status_id == STATUS_FREEZE) {
-        tile_elem = UI_TILE_CARD_ELEM_ICE;
-    } else {
-        tile_elem = 0;
-    }
-
-    if (def->battle_type == BATTLE_CARD_TYPE_HEAL || def->effect == CARD_EFFECT_HEAL_HP) {
-        tile_wpn = UI_TILE_CARD_RING;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_SHIELD) {
-        tile_wpn = UI_TILE_CARD_SHIELD;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_BOW) {
-        tile_wpn = UI_TILE_CARD_BOW;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_DAGGER) {
-        tile_wpn = UI_TILE_CARD_DAGGER;
-    } else {
-        tile_wpn = UI_TILE_CARD_SWORD;
-    }
-
-    /* All cards show their descriptive identity name ("I SW", "W F SW"),
-     * not the battle code (docs/loot.md §34.1); colored by effect (fixed
-     * 8-tile span; trailing blanks are invisible). */
-    ui_draw_text_line(2, y, def->name, 10);
-
-    /* Stream element & weapon icons to VRAM at columns 2 and 3 */
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + 2);
-    VBK_REG = 0;
-    while (STAT_REG & 0x02) ;
-    *dst = tile_elem;
-    dst++;
-    while (STAT_REG & 0x02) ;
-    *dst = tile_wpn;
-
-    ui_color_span(2, y, 8,
-                  ui_color_card(def->battle_type, def->status_id,
-                                (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
-                                (def->effect == CARD_EFFECT_HEAL_HP)));
-    /* Membership glyph is the decked-copy count (0..n), so partial stacks
-     * (starter 2x SW3/SH2, herb up to 3) are visible. */
-    in_deck = deck_count_in_deck(&g->state.cards.deck, id);
-    code[0] = ui_ones_digit(in_deck);
-    code[1] = '\0';
-    ui_draw_text_line(19, y, code, 1);
-    ui_draw_text_line(2, (uint8_t)(y + 1),
-                      card_get_description(def->battle_type), 17);
-}
-
-static void draw_cards_list(Game *g)
-{
-    uint8_t i, y, pos;
-
-    build_view(g);
-    y = 5;
-    if (g->item_menu_scroll == 0) {
-        if (g->item_menu_index == ROW_TOP)
-            ui_draw_text_line(0, y, ">", 1);
-        ui_draw_text_line(2, y, "* FILTER/SORT *", 15);
-        y = 6;
-    }
-    for (i = 0; i < VISIBLE_CARDS && y <= 15; i++) {
-        pos = (uint8_t)(g->item_menu_scroll + i);
-        if (pos >= s_view_count) break;
-        draw_card_pair(g, y, pos);
-        y = (uint8_t)(y + 2);
-    }
-
-    if (g->item_menu_message == MSG_DECK_FULL)
-        ui_draw_text_line(0, 16, "DECK FULL", 9);
-    else if (g->item_menu_message == MSG_DECK_MIN)
-        ui_draw_text_line(0, 16, "DECK MIN 5", 10);
-    else if (g->item_menu_message == MSG_QUEST_ITEM)
-        ui_draw_text_line(0, 16, "QUEST ITEM", 10);
-    else
-        ui_draw_text_line(0, 16, "A:ADD SEL:INFO", 14);
-}
-
-static void quest_draw_status_line(Game *g, const QuestDefinition *q, uint8_t y)
-{
-    QuestStatus st;
-    char b[6];
-    uint8_t val;
-    if (!q) return;
-    st = quest_status(&g->state, q);
-
-    if (st == QUEST_STATUS_NOT_STARTED) {
-        ui_draw_text_line(2, y, "not started", 11);
-    } else if (st == QUEST_STATUS_ACTIVE) {
-        if (q->progress_variable != 0) {
-            val = (uint8_t)game_variable_get(&g->state, q->progress_variable);
-            ui_draw_text_line(2, y, q->progress_label ? q->progress_label : "", 8);
-            b[0] = ':';
-            b[1] = ' ';
-            b[2] = (char)('0' + val);
-            b[3] = '/';
-            b[4] = (char)('0' + (uint8_t)q->progress_target);
-            ui_draw_text_line(10, y, b, 5);
-        } else {
-            ui_draw_text_line(2, y, "active", 6);
-        }
-    } else {
-        /* Two segments from x1 so an 8-char note still fits the 20-col row. */
-        ui_draw_text_line(1, y, "complete - ", 11);
-        ui_draw_text_line(12, y, q->complete_note ? q->complete_note : "", 8);
-    }
-}
-
-static void draw_quest(Game *g)
-{
-    uint8_t i, y = 5;
-    const QuestDefinition *q;
-    for (i = 0; i < quest_count() && y < 15; i++) {
-        q = quest_at(i);
-        if (!q) break;
-        if (g->item_menu_index == i) ui_draw_text_line(0, y, ">", 1);
-        ui_draw_text_line(2, y, q->name, 18);
-        y++;
-        quest_draw_status_line(g, q, y);
-        y++;
-    }
-}
-
-static void draw_card_detail_page(Game *g)
-{
-    const CardDefinition *def;
-    CardId id;
-    uint8_t y = 5;
-
-    uint8_t tile_elem, tile_wpn;
-    volatile uint8_t *dst;
-
-    if (g->item_menu_index < FIRST_CARD ||
-        (uint8_t)(g->item_menu_index - FIRST_CARD) >= s_view_count)
-        return;
-    id = view_card_id(g, (uint8_t)(g->item_menu_index - FIRST_CARD));
-    def = card_get_def(id);
-    if (!def) return;
-
-    if (def->status_id == STATUS_BURN) {
-        tile_elem = UI_TILE_CARD_ELEM_FIRE;
-    } else if (def->status_id == STATUS_POISON) {
-        tile_elem = UI_TILE_CARD_ELEM_POISON;
-    } else if (def->status_id == STATUS_FREEZE) {
-        tile_elem = UI_TILE_CARD_ELEM_ICE;
-    } else {
-        tile_elem = 0;
-    }
-
-    if (def->battle_type == BATTLE_CARD_TYPE_HEAL || def->effect == CARD_EFFECT_HEAL_HP) {
-        tile_wpn = UI_TILE_CARD_RING;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_SHIELD) {
-        tile_wpn = UI_TILE_CARD_SHIELD;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_BOW) {
-        tile_wpn = UI_TILE_CARD_BOW;
-    } else if (def->battle_type == BATTLE_CARD_TYPE_DAGGER) {
-        tile_wpn = UI_TILE_CARD_DAGGER;
-    } else {
-        tile_wpn = UI_TILE_CARD_SWORD;
-    }
-
-    ui_draw_text_line(0, y, def->name, 11);
-
-    /* Stream icons into VRAM at col 0, 1 */
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5));
-    VBK_REG = 0;
-    while (STAT_REG & 0x02) ;
-    *dst = tile_elem;
-    dst++;
-    while (STAT_REG & 0x02) ;
-    *dst = tile_wpn;
-
-    ui_color_span(0, y, 11,
-                  ui_color_card(def->battle_type, def->status_id,
-                                (def->battle_type == BATTLE_CARD_TYPE_HEAL) ||
-                                (def->effect == CARD_EFFECT_HEAL_HP)));
-    y += 2;
-    ui_draw_text_line(0, y, "TYPE", 4);
-    ui_draw_text_line(6, y, card_type_name(def->type), 3);
-    y += 2;
-    /* Literal labels + positioned number draws: per-character buffer
-     * composition compiles to ~8 instructions per char in the tight
-     * fixed bank (AGENTS.md 52.18). */
-    ui_draw_text_line(0, y, "PWR", 3);
-    ui_draw_num2(4, y, def->power);
-    ui_draw_text_line(7, y, "COST", 4);
-    ui_draw_num2(12, y, def->cost);
-    y += 2;
-    ui_draw_text_line(0, y, "USES", 4);
-    if (def->uses_per_battle) {
-        ui_draw_num2(4, y, def->uses_per_battle);
-    } else {
-        ui_draw_text_line(5, y, "-", 1);
-    }
-    ui_draw_text_line(6, y, "/BTL", 4);
-    ui_draw_text_line(11, y, "MXCP", 4);
-    if (def->max_copies) {
-        ui_draw_num2(15, y, def->max_copies);
-    } else {
-        ui_draw_text_line(16, y, "-", 1);
-    }
-    y += 2;
-    ui_draw_text_line(0, y, "OWN", 3);
-    ui_draw_num2(4, y, deck_collection_count(&g->state.cards, id));
-    ui_draw_text_line(7, y, "DECK", 4);
-    ui_draw_num2(12, y, deck_count_in_deck(&g->state.cards.deck, id));
-    y += 2;
-    ui_draw_text_line(0, y, "PRICE", 5);
-    ui_draw_num2(6, y, def->price);
-}
-
-static void draw_picker(Game *g)
-{
-    ui_draw_text_line(0, (uint8_t)(7 + (uint8_t)(g->item_menu_pick_row * 2)),
-                      ">", 1);
-    ui_draw_text_line(2, 7, "FILTER", 6);
-    ui_draw_text_line(12, 7, filter_name(g->item_menu_filter), 3);
-    ui_draw_text_line(2, 9, "SORT", 4);
-    ui_draw_text_line(12, 9, sort_name(g->item_menu_sort), 4);
-    ui_draw_text_line(0, 14, "LR CYCLE  A:OK B:NO", 19);
-}
 
 void item_screen_reset(Game *g)
 {
@@ -677,6 +439,8 @@ void item_screen_update(Game *g)
     }
 }
 
+void item_screen_render_banked(void);
+
 void item_screen_render(Game *g)
 {
     RenderCache *rc;
@@ -690,18 +454,10 @@ void item_screen_render(Game *g)
         ui_draw_text_line(0, 2, "CARDS QUEST", 11);
         ui_draw_text_line((uint8_t)(g->item_menu_tab * 6), 3, "^", 1);
 
-        if (g->item_menu_tab == TAB_QUEST) {
-            if (g->item_menu_mode == MODE_QUEST_DETAIL)
-                ui_draw_text_line(0, 8, "no details yet", 14);
-            else
-                draw_quest(g);
-        } else {
-            switch (g->item_menu_mode) {
-                case MODE_CARD_DETAIL: draw_card_detail_page(g); break;
-                case MODE_PICKER:      draw_picker(g); break;
-                default:               draw_cards_list(g); break;
-            }
-        }
+        g_bk_call_bank = 2;
+        g_bk_call_target = (uint16_t)&item_screen_render_banked;
+        g_bk_ptr_a = (void *)g;
+        banked_call_run();
 
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_ITEM, 0, 0, 0);
         rc->valid = true;
