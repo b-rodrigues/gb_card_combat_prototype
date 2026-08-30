@@ -34,11 +34,6 @@ extern uint8_t g_is_cgb;
 extern const CardDefinition g_cards[];
 extern const ShopDefinition g_shops[];
 
-/* Reuse the bank-2 decimal formatter that ui_format_int() dispatches:
- * we are in the same bank (2), so call the no-arg body directly after
- * staging value + out pointer. */
-extern void ui_format_int_banked(void);
-
 /* Shop message states (mirror shop_screen.c). */
 #define SC_SHOP_MSG_NONE 0
 #define SC_SHOP_MSG_BOUGHT 1
@@ -65,13 +60,37 @@ static uint8_t s_sc_old_row;
 static uint8_t s_sc_new_row;
 static uint8_t s_sc_need_scroll;
 static uint8_t s_sc_present;
-static int16_t s_sc_gold;
+static uint8_t s_sc_tile_elem;
+static uint8_t s_sc_tile_wpn;
+static uint16_t s_sc_gold;
 static const ShopDefinition *s_sc_shop_def;
 static const CardDefinition *s_sc_card_def;
 static char s_sc_str[8];
 static char s_sc_code[8];
 static volatile uint8_t *s_sc_dst;
 static char *s_sc_buf;
+static Game *s_sc_game;
+
+static const uint16_t s_sc_p10[4] = { 10000, 1000, 100, 10 };
+
+static void sc_format_uint(uint16_t uval, char *out)
+{
+    uint8_t i, started = 0;
+    for (i = 0; i < 4; i++) {
+        uint16_t p = s_sc_p10[i];
+        uint8_t d = 0;
+        while (uval >= p) {
+            uval -= p;
+            d++;
+        }
+        if (d != 0 || started) {
+            *out++ = (char)('0' + d);
+            started = 1;
+        }
+    }
+    *out++ = (char)('0' + (uint8_t)uval);
+    *out = '\0';
+}
 
 static void sc_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
@@ -142,14 +161,6 @@ static void sc_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
     VBK_REG = 0;
 }
 
-static void sc_format_int(int16_t val, char *buf)
-{
-    g_bk_ptr_a = (void *)buf;
-    g_bk_byte_a = (uint8_t)val;
-    g_bk_byte_b = (uint8_t)((uint16_t)val >> 8);
-    ui_format_int_banked();
-}
-
 static const ShopDefinition *sc_shop_active(const Game *g)
 {
     for (s_sc_shop_i = 0; s_sc_shop_i < 2; s_sc_shop_i++) {
@@ -169,6 +180,7 @@ static const CardDefinition *sc_card_get_def(CardId id)
 static void sc_card_code_str(uint8_t battle_type, uint8_t power, char *out)
 {
     char pfx;
+    uint8_t tens = 0;
     switch (battle_type) {
         case BATTLE_CARD_TYPE_SHIELD: pfx = 'D'; break;
         case BATTLE_CARD_TYPE_HEAL:   pfx = 'H'; break;
@@ -177,9 +189,13 @@ static void sc_card_code_str(uint8_t battle_type, uint8_t power, char *out)
         default:                      pfx = 'A'; break;
     }
     out[0] = pfx;
-    if (power >= 10) {
-        out[1] = (char)('0' + (power / 10));
-        out[2] = (char)('0' + (power % 10));
+    while (power >= 10) {
+        power = (uint8_t)(power - 10);
+        tens++;
+    }
+    if (tens > 0) {
+        out[1] = (char)('0' + tens);
+        out[2] = (char)('0' + power);
         out[3] = '\0';
     } else {
         out[1] = (char)('0' + power);
@@ -204,16 +220,16 @@ static uint8_t bm_cursor_row(uint8_t mode, uint8_t index, uint8_t scroll)
 
 void item_menu_cursor_banked(void)
 {
-    Game *g = (Game *)g_bk_ptr_a;
+    s_sc_game = (Game *)g_bk_ptr_a;
 
-    if (!g) return;
-    s_sc_mode = bm_mode(g);
+    if (!s_sc_game) return;
+    s_sc_mode = bm_mode(s_sc_game);
     s_sc_old_index = g_bk_byte_a;
     s_sc_new_index = g_bk_byte_b;
-    g->item_menu_index = s_sc_new_index;
+    s_sc_game->item_menu_index = s_sc_new_index;
 
     if (s_sc_mode == 0) {
-        s_sc_need_scroll = g->item_menu_scroll;
+        s_sc_need_scroll = s_sc_game->item_menu_scroll;
         if (s_sc_new_index <= ITEM_FIRST_CARD)
             s_sc_need_scroll = 0;
         else {
@@ -223,15 +239,15 @@ void item_menu_cursor_banked(void)
             else if (s_sc_pos > (uint8_t)(s_sc_need_scroll + ITEM_VISIBLE_CARD - 1))
                 s_sc_need_scroll = (uint8_t)(s_sc_pos - (ITEM_VISIBLE_CARD - 1));
         }
-        if (s_sc_need_scroll != g->item_menu_scroll) {
-            g->item_menu_scroll = s_sc_need_scroll;
-            g->render_cache.valid = false;
+        if (s_sc_need_scroll != s_sc_game->item_menu_scroll) {
+            s_sc_game->item_menu_scroll = s_sc_need_scroll;
+            s_sc_game->render_cache.valid = false;
             return;
         }
     }
 
-    s_sc_old_row = bm_cursor_row(s_sc_mode, s_sc_old_index, g->item_menu_scroll);
-    s_sc_new_row = bm_cursor_row(s_sc_mode, s_sc_new_index, g->item_menu_scroll);
+    s_sc_old_row = bm_cursor_row(s_sc_mode, s_sc_old_index, s_sc_game->item_menu_scroll);
+    s_sc_new_row = bm_cursor_row(s_sc_mode, s_sc_new_index, s_sc_game->item_menu_scroll);
     if (s_sc_old_row != s_sc_new_row) {
         sc_put_char(0, s_sc_old_row, ' ');
         sc_put_char(0, s_sc_new_row, '>');
@@ -240,15 +256,14 @@ void item_menu_cursor_banked(void)
 
 void shop_content_render(void)
 {
-    uint8_t tile_elem, tile_wpn;
-    Game *g = (Game *)g_bk_ptr_a;
+    s_sc_game = (Game *)g_bk_ptr_a;
 
-    if (!g) return;
-    s_sc_shop_def = sc_shop_active(g);
-    s_sc_gold = g->state.currency.amount[0];
+    if (!s_sc_game) return;
+    s_sc_shop_def = sc_shop_active(s_sc_game);
+    s_sc_gold = (uint16_t)s_sc_game->state.currency.amount[0];
 
     sc_draw_text(0, 3, "  GOLD: ", 8);
-    sc_format_int(s_sc_gold, s_sc_str);
+    sc_format_uint(s_sc_gold, s_sc_str);
     sc_draw_text(8, 3, s_sc_str, 10);
 
     s_sc_dst = (volatile uint8_t *)(0x9800 + ((uint16_t)3 << 5) + 0);
@@ -265,31 +280,31 @@ void shop_content_render(void)
     for (s_sc_shop_pos = 0; s_sc_shop_pos < s_sc_shop_def->count; s_sc_shop_pos++) {
         s_sc_card_def = sc_card_get_def(s_sc_shop_def->items[s_sc_shop_pos]);
         s_sc_y = (uint8_t)(5 + s_sc_shop_pos);
-        sc_put_char(0, s_sc_y, (g->item_menu_index == s_sc_shop_pos) ? '>' : ' ');
+        sc_put_char(0, s_sc_y, (s_sc_game->item_menu_index == s_sc_shop_pos) ? '>' : ' ');
         if (s_sc_card_def) {
-            if (s_sc_card_def->status_id == STATUS_BURN) tile_elem = UI_TILE_CARD_ELEM_FIRE;
-            else if (s_sc_card_def->status_id == STATUS_POISON) tile_elem = UI_TILE_CARD_ELEM_POISON;
-            else if (s_sc_card_def->status_id == STATUS_FREEZE) tile_elem = UI_TILE_CARD_ELEM_ICE;
-            else tile_elem = 0;
+            if (s_sc_card_def->status_id == 1 /* STATUS_BURN */) s_sc_tile_elem = UI_TILE_CARD_ELEM_FIRE;
+            else if (s_sc_card_def->status_id == 2 /* STATUS_POISON */) s_sc_tile_elem = UI_TILE_CARD_ELEM_POISON;
+            else if (s_sc_card_def->status_id == 3 /* STATUS_FREEZE */) s_sc_tile_elem = UI_TILE_CARD_ELEM_ICE;
+            else s_sc_tile_elem = 0;
 
             if (s_sc_card_def->battle_type == BATTLE_CARD_TYPE_HEAL || s_sc_card_def->effect == CARD_EFFECT_HEAL_HP)
-                tile_wpn = UI_TILE_CARD_RING;
+                s_sc_tile_wpn = UI_TILE_CARD_RING;
             else if (s_sc_card_def->battle_type == BATTLE_CARD_TYPE_SHIELD)
-                tile_wpn = UI_TILE_CARD_SHIELD;
+                s_sc_tile_wpn = UI_TILE_CARD_SHIELD;
             else if (s_sc_card_def->battle_type == BATTLE_CARD_TYPE_BOW)
-                tile_wpn = UI_TILE_CARD_BOW;
+                s_sc_tile_wpn = UI_TILE_CARD_BOW;
             else if (s_sc_card_def->battle_type == BATTLE_CARD_TYPE_DAGGER)
-                tile_wpn = UI_TILE_CARD_DAGGER;
+                s_sc_tile_wpn = UI_TILE_CARD_DAGGER;
             else
-                tile_wpn = UI_TILE_CARD_SWORD;
+                s_sc_tile_wpn = UI_TILE_CARD_SWORD;
 
             sc_card_code_str(s_sc_card_def->battle_type, s_sc_card_def->power, s_sc_code);
             sc_draw_text(3, s_sc_y, s_sc_code, 4);
 
             s_sc_dst = (volatile uint8_t *)(0x9800 + ((uint16_t)s_sc_y << 5) + 1);
             VBK_REG = 0;
-            sc_vram_sync_write(s_sc_dst, tile_elem);
-            sc_vram_sync_write(s_sc_dst + 1, tile_wpn);
+            sc_vram_sync_write(s_sc_dst, s_sc_tile_elem);
+            sc_vram_sync_write(s_sc_dst + 1, s_sc_tile_wpn);
 
             sc_color_span(1, s_sc_y, 6,
                           ui_color_card(s_sc_card_def->battle_type, s_sc_card_def->status_id,
@@ -298,7 +313,7 @@ void shop_content_render(void)
         } else {
             sc_draw_text(1, s_sc_y, "???", 3);
         }
-        sc_format_int(s_sc_card_def ? (int16_t)s_sc_card_def->price : 0, s_sc_str);
+        sc_format_uint(s_sc_card_def ? (uint16_t)s_sc_card_def->price : 0, s_sc_str);
         sc_draw_text(12, s_sc_y, s_sc_str, 4);
         sc_put_char(16, s_sc_y, 'G');
         s_sc_dst = (volatile uint8_t *)(0x9800 + ((uint16_t)s_sc_y << 5) + 16);
@@ -308,30 +323,30 @@ void shop_content_render(void)
     }
 
     sc_draw_text(0, (uint8_t)(6 + s_sc_shop_def->count), "[A] Buy  [B] Leave", 18);
-    if (g->shop_message != SC_SHOP_MSG_NONE) {
+    if (s_sc_game->shop_message != SC_SHOP_MSG_NONE) {
         sc_draw_text(0, (uint8_t)(8 + s_sc_shop_def->count),
-                     (g->shop_message == SC_SHOP_MSG_BOUGHT) ? "Bought!" :
-                     (g->shop_message == SC_SHOP_MSG_MAX_COPIES) ? "Too many!" : "Not enough!",
+                     (s_sc_game->shop_message == SC_SHOP_MSG_BOUGHT) ? "Bought!" :
+                     (s_sc_game->shop_message == SC_SHOP_MSG_MAX_COPIES) ? "Too many!" : "Not enough!",
                      12);
     }
 }
 
 void save_load_content_render(void)
 {
-    Game *g = (Game *)g_bk_ptr_a;
+    s_sc_game = (Game *)g_bk_ptr_a;
 
-    if (!g) return;
+    if (!s_sc_game) return;
     s_sc_present = g_bk_byte_a;
 
     for (s_sc_save_pos = 0; s_sc_save_pos < SAVE_SLOT_COUNT; s_sc_save_pos++) {
         s_sc_y = (uint8_t)(4 + (s_sc_save_pos << 1));
-        sc_put_char(0, s_sc_y, (g->save_slot_index == s_sc_save_pos) ? '>' : ' ');
+        sc_put_char(0, s_sc_y, (s_sc_game->save_slot_index == s_sc_save_pos) ? '>' : ' ');
         sc_draw_text(1, s_sc_y, (s_sc_save_pos == 0) ? "SLOT 1:" : ((s_sc_save_pos == 1) ? "SLOT 2:" : "SLOT 3:"), 7);
         sc_draw_text(9, s_sc_y, (s_sc_present & (1 << s_sc_save_pos)) ? "SAVED" : "(EMPTY)", 7);
     }
-    sc_draw_text(0, 11, (g->save_slot_mode == 1) ? "[A] SAVE  " : "[A] LOAD  ", 10);
+    sc_draw_text(0, 11, (s_sc_game->save_slot_mode == 1) ? "[A] SAVE  " : "[A] LOAD  ", 10);
     sc_draw_text(10, 11, "[B] BACK", 8);
-    if (g->save_slot_message != 0) {
-        sc_draw_text(2, 13, (g->save_slot_message == 1) ? "Game Saved!" : "Slot is empty!", 14);
+    if (s_sc_game->save_slot_message != 0) {
+        sc_draw_text(2, 13, (s_sc_game->save_slot_message == 1) ? "Game Saved!" : "Slot is empty!", 14);
     }
 }
