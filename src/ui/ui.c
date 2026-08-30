@@ -64,8 +64,8 @@ static const uint16_t s_card_icon_uids[9] = {
     29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
     87,  /* ASSET_EQUIP_C06_R08: Wooden Shield (UI_TILE_CARD_SHIELD) */
     138, /* ASSET_EQUIP_C07_R11: Bow (UI_TILE_CARD_BOW) */
-    102, /* ASSET_EQUIP_C05_R09: Dagger / Knife (UI_TILE_CARD_DAGGER) */
-    148, /* ASSET_EQUIP_C06_R12: Ring (UI_TILE_CARD_RING) */
+    117, /* ASSET_EQUIP_C04_R10: Stiletto Dagger (UI_TILE_CARD_DAGGER) */
+    299, /* ASSET_SYM_C41_R06: Diamond Gem Ring (UI_TILE_CARD_RING) */
     149, /* ASSET_EQUIP_C07_R12: Amulet (UI_TILE_CARD_AMULET) */
     479, /* ASSET_SYM_C23_R16: Flame Spire (UI_TILE_CARD_ELEM_FIRE) */
     351, /* ASSET_SYM_C13_R09: Snowflake Star (UI_TILE_CARD_ELEM_ICE) */
