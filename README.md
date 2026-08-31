@@ -148,7 +148,9 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | :--- | :--- | :--- |
 | `make release` | Build optimized release ROM | `build/rpg_card_proto.gb` |
 | `make debug` | Build debug ROM with harness & telemetry | `build/rpg_card_proto_debug.gb` |
-| `make test-harness` | Run all 159 scenarios in parallel | Parallel test results (PASS/FAIL) |
+| `make level LEVEL=<name>` | Validate and compile specific JSON level | `src/game/scenes_content.c` |
+| `make levels` | Validate and compile all `levels/*.json` to C | `src/game/scenes_content.c` |
+| `make test-harness` | Run all scenarios in parallel | Parallel test results (PASS/FAIL) |
 | `make test-scenario SCENARIO=<name>` | Run one scenario with full diagnostics | PASS/FAIL + state + telemetry |
 | `make test` | Validate ROM header and checksums | ROM verification |
 | `make verify-oam` | mGBA debugger OAM fidelity checks across transitions | OAM verification |
@@ -159,6 +161,99 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | `make run-debug` | Launch debug ROM in emulator | Debug game window |
 | `make screenshot` | Capture headless emulator screenshot | `build/screenshot.png` |
 | `make clean` | Remove all generated build artifacts | Clean directory |
+
+---
+
+## Level Editor & End-to-End Level Authoring
+
+The repository includes a web-based visual level editor and an automated compiler pipeline that transforms JSON level definitions directly into Game Boy C scene tables.
+
+### 1. Running the Web Level Editor
+
+The web editor is located in `tools/level_editor/` and built with React, TypeScript, and Vite:
+
+```bash
+cd tools/level_editor
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000` in your browser.
+
+**Features & Shortcuts:**
+* **Tool Palette**: Brush (`B`), Eraser (`E`), Filled Rectangle (`R`), Flood Fill (`G`), Eyedropper (`I`), Select / Move (`V`).
+* **History**: Undo (`Ctrl+Z`), Redo (`Ctrl+Shift+Z` / `Ctrl+Y`).
+* **Save & Export**: Download updated JSON (`Ctrl+S`), live in-browser level validation, and LLM semantic representation export.
+* **Layers**: Switch between **Terrain**, **Player Spawn**, **Exits / Warps**, **Objects & NPCs**, and **Regions (LLM)**.
+* **Overlays**: Toggle grid display and live walkability collision overlays.
+
+---
+
+### 2. End-to-End Level Authoring Pipeline
+
+To create a new level or modify an existing scene and test it in the game:
+
+```text
+┌─────────────────────────┐
+│ 1. Design Level         │ → Use web level editor or edit levels/<name>.json
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ 2. Validate             │ → python3 tools/level_compiler/validate.py levels/<name>.json
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ 3. Compile to C         │ → make levels (generates src/game/scenes_content.c)
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ 4. Build ROM            │ → make release (or make debug)
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ 5. Test in Emulator     │ → make run (or make run-debug)
+└─────────────────────────┘
+```
+
+#### Step-by-Step Commands:
+
+1. **Create or modify a level**:
+   Save your level definition to `levels/<level_id>.json` (or use presets like `forest.json`, `town.json`, `field.json`, `mountain_pass.json`, `castle.json`).
+
+2. **Validate the level**:
+   ```bash
+   python3 tools/level_compiler/validate.py levels/forest.json
+   ```
+
+3. **Compile all levels into the game**:
+   ```bash
+   make levels
+   # Or compile a specific level:
+   make level LEVEL=forest
+   ```
+
+4. **Build and test the ROM**:
+   ```bash
+   make release
+   make run
+   ```
+
+5. **Generate LLM semantic summaries (optional)**:
+   ```bash
+   python3 tools/level_compiler/describe.py levels/forest.json
+   ```
+
+6. **Automate level edits programmatically (optional)**:
+   ```bash
+   python3 tools/level_compiler/apply_ops.py levels/forest.json \
+     --op '{"operation": "paint_rectangle", "tile": "forest.tree", "x": 4, "y": 2, "width": 2, "height": 1}'
+   ```
+
+See [`docs/level-editor.md`](docs/level-editor.md) and [`tools/level_compiler/README.md`](tools/level_compiler/README.md) for full format specifications and compiler details.
 
 ### 3. Running Scenario Tests
 
@@ -194,6 +289,7 @@ make test-scenario SCENARIO=town_arrival
 - [`docs/save-format.md`](docs/save-format.md) — SRAM save format and versioning specification.
 - [`docs/memory-budget.md`](docs/memory-budget.md) — ROM and WRAM memory budgets.
 - [`docs/graphics.md`](docs/graphics.md) — Graphics conversion pipeline (`png2gb.py`) and tile layout.
+- [`docs/level-editor.md`](docs/level-editor.md) — Visual level editor & compiler architecture specification.
 - [`docs/testing.md`](docs/testing.md) — Testing strategy and harness usage.
 - [`docs/roadmap.md`](docs/roadmap.md) — Known gaps and future work.
 
