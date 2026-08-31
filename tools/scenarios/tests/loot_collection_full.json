@@ -210,7 +210,7 @@
     },
     {
       "type": "screen_row_not_contains",
-      "row": 11,
+      "row": 10,
       "contains": "YOU FOUND"
     }
   ]

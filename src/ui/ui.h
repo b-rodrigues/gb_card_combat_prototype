@@ -43,11 +43,13 @@ extern uint8_t g_is_cgb;
 #define UI_COLOR_DIM    7
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
- * ring/heal role).  Returns a UI_COLOR_* palette index. */
+ * ring/heal role).  Returns a UI_COLOR_* palette index.  status_id uses
+ * the STATUS_* enum values (STATUS_POISON=1, STATUS_BURN=2, STATUS_FREEZE=3)
+ * -- keep in sync with battle_card_color() in ui_battle_content.c. */
 #define ui_color_card(bt, st, ih) ( \
-    ((st) == 1 /* STATUS_BURN */) ? (uint8_t)UI_COLOR_FIRE : \
-    ((st) == 2 /* STATUS_POISON */) ? (uint8_t)UI_COLOR_POISON : \
-    ((st) == 3 /* STATUS_FREEZE */) ? (uint8_t)UI_COLOR_ICE : \
+    ((st) == STATUS_BURN) ? (uint8_t)UI_COLOR_FIRE : \
+    ((st) == STATUS_POISON) ? (uint8_t)UI_COLOR_POISON : \
+    ((st) == STATUS_FREEZE) ? (uint8_t)UI_COLOR_ICE : \
     (((bt) == 1 /* BATTLE_CARD_TYPE_SHIELD */) || (ih)) ? (uint8_t)UI_COLOR_WOOD : \
     ((bt) == 0 /* BATTLE_CARD_TYPE_SWORD */) ? (uint8_t)UI_COLOR_IRON : \
     ((bt) == 2 /* BATTLE_CARD_TYPE_BOW */) ? (uint8_t)UI_COLOR_GOLD : \
