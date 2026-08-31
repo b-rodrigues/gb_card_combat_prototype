@@ -14,3 +14,5 @@ build/*
 __pycache__/
 *.pyc
 generated/
+node_modules/
+tools/level_editor/dist/

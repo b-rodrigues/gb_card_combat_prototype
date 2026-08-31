@@ -137,6 +137,7 @@
             pkgs.python3
             pkgs.python3Packages.pillow
             pyboy
+            pkgs.nodejs
           ];
 
           shellHook = ''

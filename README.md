@@ -148,6 +148,7 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | :--- | :--- | :--- |
 | `make release` | Build optimized release ROM | `build/rpg_card_proto.gb` |
 | `make debug` | Build debug ROM with harness & telemetry | `build/rpg_card_proto_debug.gb` |
+| `make editor` | Launch the web Level Editor (React + Vite) | Web dev server (`localhost:3000`) |
 | `make level LEVEL=<name>` | Validate and compile specific JSON level | `src/game/scenes_content.c` |
 | `make levels` | Validate and compile all `levels/*.json` to C | `src/game/scenes_content.c` |
 | `make test-harness` | Run all scenarios in parallel | Parallel test results (PASS/FAIL) |
@@ -168,9 +169,23 @@ All build tools, compilers, emulators, and test runners are automatically provid
 
 The repository includes a web-based visual level editor and an automated compiler pipeline that transforms JSON level definitions directly into Game Boy C scene tables.
 
-### 1. Running the Web Level Editor
+### 1. Running the Web Level Editor with Nix
 
-The web editor is located in `tools/level_editor/` and built with React, TypeScript, and Vite:
+Node.js and npm are provided directly by the project's Nix flake (`flake.nix`).
+
+Enter the Nix development shell:
+
+```bash
+nix develop
+```
+
+Then start the editor with a single command:
+
+```bash
+make editor
+```
+
+Or run via `npm` directly:
 
 ```bash
 cd tools/level_editor
