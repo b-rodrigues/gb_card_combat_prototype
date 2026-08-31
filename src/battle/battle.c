@@ -187,6 +187,12 @@ void battle_card_select(Battle *b)
 {
     if (!b) return;
     battle_nav(b, NAV_OP_CARD_SELECT, 0);
+    /* The banked body reports a successful addition via g_bk_byte_c so the
+     * select blip plays only when a card actually joined the combo (not on
+     * rejections like NO ENERGY / a duplicate select). */
+    if (g_bk_byte_c != 0) {
+        audio_play_sfx(SFX_SELECT);
+    }
 }
 
 void battle_set_result(Battle *b, uint8_t res)
@@ -217,6 +223,11 @@ void battle_card_undo(Battle *b)
     g_bk_ptr_a = (void *)b;
     banked_call_run();
 
+    /* g_bk_byte_c = 1 when the banked body actually unselected a card (not
+     * the flee path): play the cancel/back bloup. */
+    if (g_bk_byte_c != 0) {
+        audio_play_sfx(SFX_BACK);
+    }
     if (prev_result != BATTLE_RESULT_FLED && b->result == BATTLE_RESULT_FLED) {
         telemetry_emit(EVENT_BATTLE_FLED, 0, 0, 0, 0);
     }
@@ -225,11 +236,13 @@ void battle_card_undo(Battle *b)
 /* Fixed-bank wrapper for the defense net resolution (docs/loot.md §34.4).
  * The banked body (src/battle/battle_defend_content.c) computes and applies
  * the HP change from staged WRAM state, then stages back the two possible
- * magnitudes (g_bk_byte_a = net damage, g_bk_byte_b = net heal).  Only the
- * telemetry stays here -- the fixed bank is completely full (make memmap). */
+ * magnitudes (g_bk_byte_a = net damage, g_bk_byte_b = net heal).  The
+ * defend-resolve wrapper runs on every hero defend, so it plays the block
+ * thump (a successful block reduces or nulls the incoming strike). */
 void battle_defend_resolve(Battle *b)
 {
     if (!b) return;
+    audio_play_sfx(SFX_BLOCK);
     g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&battle_defend_resolve_banked;
     g_bk_ptr_a = (void *)b;
@@ -400,7 +413,9 @@ void battle_execute_combo(Battle *b)
             telemetry_emit(EVENT_HEALED, res.amount, 0, 0, 0);
         } else {
             /* Damage hand: shield-led fodder deals the non-shield sum,
-             * exactly as before -- only HEAL_HP heals. */
+             * exactly as before -- only HEAL_HP heals.  The slash sound
+             * plays when the player lands a damaging attack. */
+            audio_play_sfx(SFX_ATTACK);
             combatant_take_damage(&b->enemies[b->target_idx], res.amount);
             telemetry_emit(EVENT_DAMAGE_DEALT, res.amount, 0, 0, 0);
             /* On-hit status rider (Phase C): the leading card's data
@@ -642,8 +657,13 @@ void battle_update(Battle *b)
                 if (vb->enemy_deck.draw_idx >= vb->enemy_deck.count) {
                     vb->enemy_deck.draw_idx = 0;
                 }
+                /* The enemy swung -- play its strike sound. */
+                audio_play_sfx(SFX_HIT);
             } else {
                 vb->enemy_incoming_dmg = 3;
+                /* No enemy card: the fallback flat 3-damage swipe still
+                 * marks an inbound strike, so play the hit sound. */
+                audio_play_sfx(SFX_HIT);
             }
             vb->delay_timer = 20;
         } else {

@@ -24,12 +24,23 @@ extern uint8_t g_sound_enabled;
 void audio_init(void);
 void audio_play_music(MusicTrack track);
 
-/* Channel-2 one-shot SFX ids.  Distinct pitches: SFX_CURSOR is the short
- * navigation blip (menu open, cursor move, sound toggle); SFX_CONFIRM is a
- * lower-pitch variant for selections (NEW GAME / CONTINUE). */
+/* One-shot SFX ids.  CH2 tones route through audio_play_sfx to channel 2
+ * (NR21-NR24); attack/hit sounds use the channel-4 noise generator (NR41-
+ * NR44), which sits on a separate voice from the CH1 music and CH2 blips.
+ * SFX_CURSOR is the short navigation blip (menu open, cursor move, sound
+ * toggle); SFX_CONFIRM is a lower-pitch variant for selections; SFX_SELECT
+ * is a distinct blip for battle hand / card management selects; SFX_BACK is
+ * a low downward "bloup" for cancel / going back; SFX_ATTACK / SFX_HIT are
+ * channel-4 noise bursts (player slash / enemy strike); SFX_BLOCK is a low
+ * CH2 thump for a successful defend. */
 enum {
     SFX_CURSOR = 0,
-    SFX_CONFIRM = 1
+    SFX_CONFIRM = 1,
+    SFX_SELECT = 2,
+    SFX_BACK = 3,
+    SFX_ATTACK = 4,
+    SFX_HIT = 5,
+    SFX_BLOCK = 6
 };
 void audio_play_sfx(uint8_t sfx);
 void audio_update(void);

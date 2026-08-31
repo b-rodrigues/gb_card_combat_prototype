@@ -279,6 +279,7 @@ void item_screen_update(Game *g)
 
     if (input_pressed(INPUT_START)) {
         if (g->item_menu_mode == MODE_LIST) {
+            audio_play_sfx(SFX_BACK);
             close_menu(g);
         } else {
             g->item_menu_mode = MODE_LIST;
@@ -309,6 +310,7 @@ void item_screen_update(Game *g)
                 }
                 break;
         }
+        audio_play_sfx(SFX_BACK);
         g->render_cache.valid = false;
         return;
     }
@@ -410,6 +412,7 @@ void item_screen_update(Game *g)
             }
             if (deck_add_card(cs, id)) {
                 telemetry_emit(EVENT_CARD_ADDED_TO_DECK, id, 0, 0, 0);
+                audio_play_sfx(SFX_SELECT);
             } else if (cs->deck.count >= MAX_DECK_CARDS) {
                 g->item_menu_message = MSG_DECK_FULL;
                 g->item_menu_msg_ttl = 45;
