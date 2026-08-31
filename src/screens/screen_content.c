@@ -177,29 +177,27 @@ static const CardDefinition *sc_card_get_def(CardId id)
     return NULL;
 }
 
+static const char s_card_bt_codes[] = "SW\0SH\0BO\0RG\0DA";
+
 static void sc_card_code_str(uint8_t battle_type, uint8_t power, char *out)
 {
-    char pfx;
+    const char *bt = (battle_type <= BATTLE_CARD_TYPE_DAGGER) ?
+        (s_card_bt_codes + (battle_type * 3)) : "??";
     uint8_t tens = 0;
-    switch (battle_type) {
-        case BATTLE_CARD_TYPE_SHIELD: pfx = 'D'; break;
-        case BATTLE_CARD_TYPE_HEAL:   pfx = 'H'; break;
-        case BATTLE_CARD_TYPE_BOW:    pfx = 'B'; break;
-        case BATTLE_CARD_TYPE_DAGGER: pfx = 'G'; break;
-        default:                      pfx = 'A'; break;
-    }
-    out[0] = pfx;
-    while (power >= 10) {
-        power = (uint8_t)(power - 10);
+    uint8_t ones = power;
+    while (ones >= 10) {
+        ones = (uint8_t)(ones - 10);
         tens++;
     }
-    if (tens > 0) {
-        out[1] = (char)('0' + tens);
-        out[2] = (char)('0' + power);
-        out[3] = '\0';
+    out[0] = bt[0];
+    out[1] = bt[1];
+    if (power >= 10) {
+        out[2] = (char)('0' + tens);
+        out[3] = (char)('0' + ones);
+        out[4] = '\0';
     } else {
-        out[1] = (char)('0' + power);
-        out[2] = '\0';
+        out[2] = (char)('0' + ones);
+        out[3] = '\0';
     }
 }
 
