@@ -1,0 +1,689 @@
+import React, { useState } from 'react';
+import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
+import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
+import { EditLayer } from './LayerPanel';
+
+interface InspectorProps {
+  level: EditorLevel;
+  activeLayer: EditLayer;
+  selectedEntityIndex: number | null;
+  onSelectEntityIndex: (index: number | null) => void;
+  onUpdateLevelMeta: (updates: Partial<EditorLevel>) => void;
+  onUpdateSpawn: (spawn: { x: number; y: number; facing: string }) => void;
+  onAddExit: (exit: LevelExit) => void;
+  onUpdateExit: (index: number, exit: LevelExit) => void;
+  onDeleteExit: (index: number) => void;
+  onAddObject: (obj: LevelObject) => void;
+  onUpdateObject: (index: number, obj: LevelObject) => void;
+  onDeleteObject: (index: number) => void;
+  onAddRegion: (region: LevelRegion) => void;
+  onUpdateRegion: (index: number, region: LevelRegion) => void;
+  onDeleteRegion: (index: number) => void;
+}
+
+export const Inspector: React.FC<InspectorProps> = ({
+  level,
+  activeLayer,
+  selectedEntityIndex,
+  onSelectEntityIndex,
+  onUpdateLevelMeta,
+  onUpdateSpawn,
+  onAddExit,
+  onUpdateExit,
+  onDeleteExit,
+  onAddObject,
+  onUpdateObject,
+  onDeleteObject,
+  onAddRegion,
+  onUpdateRegion,
+  onDeleteRegion,
+}) => {
+  const [tab, setTab] = useState<'context' | 'map'>('context');
+
+  const selectedExit = activeLayer === 'exits' && selectedEntityIndex !== null ? level.exits[selectedEntityIndex] : null;
+  const selectedObject = activeLayer === 'objects' && selectedEntityIndex !== null ? level.objects[selectedEntityIndex] : null;
+  const selectedRegion = activeLayer === 'regions' && selectedEntityIndex !== null ? level.regions[selectedEntityIndex] : null;
+
+  return (
+    <div className="panel inspector-panel">
+      <div className="inspector-tabs">
+        <button
+          className={`tab-btn ${tab === 'context' ? 'active' : ''}`}
+          onClick={() => setTab('context')}
+        >
+          {activeLayer === 'terrain'
+            ? '🎨 Terrain'
+            : activeLayer === 'spawn'
+            ? '🚩 Spawn'
+            : activeLayer === 'exits'
+            ? '🚪 Exits'
+            : activeLayer === 'objects'
+            ? '👾 Objects'
+            : '🏷️ Regions'}
+        </button>
+        <button
+          className={`tab-btn ${tab === 'map' ? 'active' : ''}`}
+          onClick={() => setTab('map')}
+        >
+          ⚙️ Map Info
+        </button>
+      </div>
+
+      <div className="panel-body inspector-content">
+        {tab === 'map' && (
+          <div className="inspector-section">
+            <h4>Map Configuration</h4>
+            <div className="form-group">
+              <label>Scene ID</label>
+              <input
+                type="text"
+                value={level.id}
+                onChange={(e) => onUpdateLevelMeta({ id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Scene Name</label>
+              <input
+                type="text"
+                value={level.name}
+                onChange={(e) => onUpdateLevelMeta({ name: e.target.value })}
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Width (cols)</label>
+                <input
+                  type="number"
+                  min="4"
+                  max="40"
+                  value={level.width}
+                  onChange={(e) => onUpdateLevelMeta({ width: parseInt(e.target.value) || 20 })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Height (rows)</label>
+                <input
+                  type="number"
+                  min="4"
+                  max="24"
+                  value={level.height}
+                  onChange={(e) => onUpdateLevelMeta({ height: parseInt(e.target.value) || 18 })}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>BGM Track</label>
+              <select
+                value={level.music}
+                onChange={(e) => onUpdateLevelMeta({ music: e.target.value })}
+              >
+                <option value="MUSIC_OVERWORLD">MUSIC_OVERWORLD</option>
+                <option value="MUSIC_TOWN">MUSIC_TOWN</option>
+                <option value="MUSIC_DUNGEON">MUSIC_DUNGEON</option>
+                <option value="MUSIC_BATTLE">MUSIC_BATTLE</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Engine Map ID</label>
+              <input
+                type="text"
+                value={level.mapId}
+                onChange={(e) => onUpdateLevelMeta({ mapId: e.target.value })}
+              />
+            </div>
+          </div>
+        )}
+
+        {tab === 'context' && activeLayer === 'spawn' && (
+          <div className="inspector-section">
+            <h4>Player Spawn Position</h4>
+            <p className="hint-text">Click anywhere on the map in Spawn mode to move player spawn.</p>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Spawn X</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={level.width - 1}
+                  value={level.spawn.x}
+                  onChange={(e) =>
+                    onUpdateSpawn({ ...level.spawn, x: parseInt(e.target.value) || 0, facing: level.spawn.facing || 'DOWN' })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Spawn Y</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={level.height - 1}
+                  value={level.spawn.y}
+                  onChange={(e) =>
+                    onUpdateSpawn({ ...level.spawn, y: parseInt(e.target.value) || 0, facing: level.spawn.facing || 'DOWN' })
+                  }
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Initial Facing</label>
+              <select
+                value={level.spawn.facing || 'DOWN'}
+                onChange={(e) => onUpdateSpawn({ ...level.spawn, facing: e.target.value })}
+              >
+                <option value="UP">UP / North</option>
+                <option value="DOWN">DOWN / South</option>
+                <option value="LEFT">LEFT / West</option>
+                <option value="RIGHT">RIGHT / East</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {tab === 'context' && activeLayer === 'terrain' && (
+          <div className="inspector-section">
+            <h4>Terrain Painter</h4>
+            <p className="hint-text">Select a tile from the palette and click or drag on the map.</p>
+            <div className="stats-box">
+              <div className="stat-item">
+                <span className="stat-label">Map Size:</span>
+                <span className="stat-value">{level.width} × {level.height} tiles</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Active Tileset:</span>
+                <span className="stat-value">{level.tileset}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'context' && activeLayer === 'exits' && (
+          <div className="inspector-section">
+            <div className="section-header-row">
+              <h4>Exits ({level.exits.length})</h4>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => {
+                  onAddExit({
+                    x: 12,
+                    y: 0,
+                    target_scene: 'mountain_pass',
+                    target_x: 12,
+                    target_y: 10,
+                    direction: 'NORTH',
+                    tile_char: '>',
+                  });
+                  onSelectEntityIndex(level.exits.length);
+                }}
+              >
+                ➕ Add Exit
+              </button>
+            </div>
+
+            {selectedExit && selectedEntityIndex !== null ? (
+              <div className="entity-editor-box">
+                <h5>Edit Selected Exit</h5>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Gate X</label>
+                    <input
+                      type="number"
+                      value={selectedExit.x}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, { ...selectedExit, x: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Gate Y</label>
+                    <input
+                      type="number"
+                      value={selectedExit.y}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, { ...selectedExit, y: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Target Scene</label>
+                  <input
+                    type="text"
+                    value={selectedExit.target_scene}
+                    onChange={(e) =>
+                      onUpdateExit(selectedEntityIndex, { ...selectedExit, target_scene: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Target Spawn X</label>
+                    <input
+                      type="number"
+                      value={selectedExit.target_x}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, { ...selectedExit, target_x: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Target Spawn Y</label>
+                    <input
+                      type="number"
+                      value={selectedExit.target_y}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, { ...selectedExit, target_y: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Direction</label>
+                    <select
+                      value={selectedExit.direction || 'SOUTH'}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, {
+                          ...selectedExit,
+                          direction: e.target.value,
+                          tile_char: e.target.value === 'NORTH' || e.target.value === 'EAST' ? '>' : '<',
+                        })
+                      }
+                    >
+                      <option value="NORTH">North (Up)</option>
+                      <option value="SOUTH">South (Down)</option>
+                      <option value="EAST">East (Right)</option>
+                      <option value="WEST">West (Left)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Glyph</label>
+                    <input
+                      type="text"
+                      maxLength={1}
+                      value={selectedExit.tile_char || '>'}
+                      onChange={(e) =>
+                        onUpdateExit(selectedEntityIndex, { ...selectedExit, tile_char: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="btn-group-row">
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onDeleteExit(selectedEntityIndex)}
+                  >
+                    🗑️ Delete Exit
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => onSelectEntityIndex(null)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="entity-list">
+                {level.exits.map((ex, idx) => (
+                  <div
+                    key={idx}
+                    className="entity-list-item"
+                    onClick={() => onSelectEntityIndex(idx)}
+                  >
+                    <span className="item-title">
+                      🚪 ({ex.x},{ex.y}) → <strong>{ex.target_scene}</strong>
+                    </span>
+                    <span className="item-sub">spawn ({ex.target_x},{ex.target_y})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'context' && activeLayer === 'objects' && (
+          <div className="inspector-section">
+            <div className="section-header-row">
+              <h4>Objects ({level.objects.length})</h4>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => {
+                  const t = OBJECT_TEMPLATES[0];
+                  onAddObject({
+                    id: `obj_${Date.now().toString().slice(-4)}`,
+                    type: t.type,
+                    position: { x: Math.floor(level.width / 2), y: Math.floor(level.height / 2) },
+                    properties: { ...t.defaultProps },
+                  });
+                  onSelectEntityIndex(level.objects.length);
+                }}
+              >
+                ➕ Add Object
+              </button>
+            </div>
+
+            {selectedObject && selectedEntityIndex !== null ? (
+              <div className="entity-editor-box">
+                <h5>Edit Object</h5>
+                <div className="form-group">
+                  <label>Object ID</label>
+                  <input
+                    type="text"
+                    value={selectedObject.id}
+                    onChange={(e) =>
+                      onUpdateObject(selectedEntityIndex, { ...selectedObject, id: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Type</label>
+                  <select
+                    value={selectedObject.type}
+                    onChange={(e) => {
+                      const newType = e.target.value as any;
+                      const tmpl = OBJECT_TEMPLATES.find((t) => t.type === newType);
+                      onUpdateObject(selectedEntityIndex, {
+                        ...selectedObject,
+                        type: newType,
+                        properties: tmpl ? { ...tmpl.defaultProps } : selectedObject.properties,
+                      });
+                    }}
+                  >
+                    {OBJECT_TEMPLATES.map((t) => (
+                      <option key={t.type} value={t.type}>
+                        {t.icon} {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Position X</label>
+                    <input
+                      type="number"
+                      value={selectedObject.position.x}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          position: { ...selectedObject.position, x: parseInt(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Position Y</label>
+                    <input
+                      type="number"
+                      value={selectedObject.position.y}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          position: { ...selectedObject.position, y: parseInt(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Display Name</label>
+                  <input
+                    type="text"
+                    value={selectedObject.properties?.display_name || ''}
+                    onChange={(e) =>
+                      onUpdateObject(selectedEntityIndex, {
+                        ...selectedObject,
+                        properties: { ...selectedObject.properties, display_name: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+
+                {selectedObject.type === 'enemy' && (
+                  <div className="form-group">
+                    <label>AI Pattern</label>
+                    <select
+                      value={selectedObject.properties?.ai || 'AI_PATROL_CROSS'}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          properties: { ...selectedObject.properties, ai: e.target.value },
+                        })
+                      }
+                    >
+                      <option value="AI_NONE">AI_NONE</option>
+                      <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
+                      <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
+                    </select>
+                  </div>
+                )}
+
+                {selectedObject.type === 'npc' && (
+                  <div className="form-group">
+                    <label>Dialogue ID</label>
+                    <input
+                      type="text"
+                      value={selectedObject.properties?.dialogue || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          properties: { ...selectedObject.properties, dialogue: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                )}
+
+                <div className="btn-group-row">
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onDeleteObject(selectedEntityIndex)}
+                  >
+                    🗑️ Delete
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => onSelectEntityIndex(null)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="entity-list">
+                {level.objects.map((obj, idx) => (
+                  <div
+                    key={idx}
+                    className="entity-list-item"
+                    onClick={() => onSelectEntityIndex(idx)}
+                  >
+                    <span className="item-title">
+                      👾 <strong>{obj.id}</strong> ({obj.type})
+                    </span>
+                    <span className="item-sub">pos ({obj.position.x},{obj.position.y})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'context' && activeLayer === 'regions' && (
+          <div className="inspector-section">
+            <div className="section-header-row">
+              <h4>Regions ({level.regions.length})</h4>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => {
+                  onAddRegion({
+                    id: `region_${Date.now().toString().slice(-4)}`,
+                    bounds: { x: 2, y: 2, width: 6, height: 6 },
+                    description: 'A newly defined semantic zone.',
+                    gameplay: { purpose: 'exploration', difficulty: 1 },
+                  });
+                  onSelectEntityIndex(level.regions.length);
+                }}
+              >
+                ➕ Add Region
+              </button>
+            </div>
+
+            {selectedRegion && selectedEntityIndex !== null ? (
+              <div className="entity-editor-box">
+                <h5>Edit Region</h5>
+                <div className="form-group">
+                  <label>Region ID</label>
+                  <input
+                    type="text"
+                    value={selectedRegion.id}
+                    onChange={(e) =>
+                      onUpdateRegion(selectedEntityIndex, { ...selectedRegion, id: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>X</label>
+                    <input
+                      type="number"
+                      value={selectedRegion.bounds.x}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          bounds: { ...selectedRegion.bounds, x: parseInt(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Y</label>
+                    <input
+                      type="number"
+                      value={selectedRegion.bounds.y}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          bounds: { ...selectedRegion.bounds, y: parseInt(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Width</label>
+                    <input
+                      type="number"
+                      value={selectedRegion.bounds.width}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          bounds: { ...selectedRegion.bounds, width: parseInt(e.target.value) || 1 },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Height</label>
+                    <input
+                      type="number"
+                      value={selectedRegion.bounds.height}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          bounds: { ...selectedRegion.bounds, height: parseInt(e.target.value) || 1 },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Semantic Description (LLM)</label>
+                  <textarea
+                    rows={3}
+                    value={selectedRegion.description || ''}
+                    onChange={(e) =>
+                      onUpdateRegion(selectedEntityIndex, {
+                        ...selectedRegion,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Purpose</label>
+                    <input
+                      type="text"
+                      value={selectedRegion.gameplay?.purpose || 'exploration'}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          gameplay: { ...selectedRegion.gameplay, purpose: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Difficulty</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={selectedRegion.gameplay?.difficulty || 1}
+                      onChange={(e) =>
+                        onUpdateRegion(selectedEntityIndex, {
+                          ...selectedRegion,
+                          gameplay: { ...selectedRegion.gameplay, difficulty: parseInt(e.target.value) || 1 },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="btn-group-row">
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onDeleteRegion(selectedEntityIndex)}
+                  >
+                    🗑️ Delete
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => onSelectEntityIndex(null)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="entity-list">
+                {level.regions.map((reg, idx) => (
+                  <div
+                    key={idx}
+                    className="entity-list-item"
+                    onClick={() => onSelectEntityIndex(idx)}
+                  >
+                    <span className="item-title">
+                      🏷️ <strong>{reg.id}</strong> ({reg.gameplay?.purpose || 'zone'})
+                    </span>
+                    <span className="item-sub">
+                      [{reg.bounds.x},{reg.bounds.y}] {reg.bounds.width}×{reg.bounds.height}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

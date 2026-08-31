@@ -1,0 +1,70 @@
+{
+  "id": "castle",
+  "name": "Ruined Castle",
+  "map": {
+    "width": 20,
+    "height": 18,
+    "tileset": "interior",
+    "music": "MUSIC_DUNGEON",
+    "map_id": "MAP_CASTLE"
+  },
+  "layers": {
+    "terrain": [
+      { "x": 3, "y": 3, "width": 4, "height": 6, "tile": "interior.building" },
+      { "x": 13, "y": 3, "width": 4, "height": 6, "tile": "interior.building" }
+    ]
+  },
+  "player": {
+    "spawn": {
+      "x": 10,
+      "y": 10,
+      "facing": "UP"
+    }
+  },
+  "exits": [
+    {
+      "x": 12,
+      "y": 11,
+      "target_scene": "mountain_pass",
+      "target_x": 12,
+      "target_y": 1,
+      "direction": "SOUTH",
+      "tile_char": "<"
+    }
+  ],
+  "objects": [
+    {
+      "id": "castle_bat",
+      "type": "enemy",
+      "position": { "x": 12, "y": 7 },
+      "properties": {
+        "entity_id": "ENTITY_ID_BAT",
+        "display_name": "BAT",
+        "battle": "BATTLE_BAT",
+        "ai": "AI_PATROL_CIRCLE"
+      }
+    },
+    {
+      "id": "slime_lord",
+      "type": "enemy",
+      "position": { "x": 10, "y": 5 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME_LORD",
+        "display_name": "LORD OF SLIMES",
+        "quest_var": "VARIABLE_ID_QUEST_MONSTER_HUNT",
+        "quest_val": 2
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "throne_room",
+      "bounds": { "x": 4, "y": 2, "width": 12, "height": 12 },
+      "description": "The abandoned castle throne room where the Slime Lord awaits.",
+      "gameplay": {
+        "purpose": "boss_arena",
+        "difficulty": 3
+      }
+    }
+  ]
+}

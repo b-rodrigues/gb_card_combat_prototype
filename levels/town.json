@@ -1,0 +1,98 @@
+{
+  "id": "town",
+  "name": "Oakhaven Town",
+  "map": {
+    "width": 20,
+    "height": 18,
+    "tileset": "exterior",
+    "music": "MUSIC_TOWN",
+    "map_id": "MAP_TOWN"
+  },
+  "layers": {
+    "terrain": [
+      { "x": 3, "y": 3, "width": 6, "height": 4, "tile": "exterior.building" },
+      { "x": 12, "y": 3, "width": 5, "height": 4, "tile": "exterior.building" }
+    ]
+  },
+  "player": {
+    "spawn": {
+      "x": 2,
+      "y": 7,
+      "facing": "RIGHT"
+    }
+  },
+  "exits": [
+    {
+      "x": 1,
+      "y": 7,
+      "target_scene": "field",
+      "target_x": 17,
+      "target_y": 7,
+      "direction": "WEST",
+      "tile_char": "<"
+    }
+  ],
+  "objects": [
+    {
+      "id": "town_mayor",
+      "type": "npc",
+      "position": { "x": 10, "y": 5 },
+      "properties": {
+        "entity_id": "ENTITY_ID_MAYOR",
+        "display_name": "MAYOR",
+        "dialogue": "DIALOGUE_ID_MAYOR_GREETING"
+      }
+    },
+    {
+      "id": "town_guard",
+      "type": "npc",
+      "position": { "x": 10, "y": 8 },
+      "properties": {
+        "entity_id": "ENTITY_ID_GUARD",
+        "display_name": "GUARD",
+        "dialogue": "DIALOGUE_ID_GUARD_GREETING"
+      }
+    },
+    {
+      "id": "town_shopkeeper",
+      "type": "npc",
+      "position": { "x": 9, "y": 3 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SHOPKEEPER",
+        "display_name": "SHOPKEEPER",
+        "shop": 1
+      }
+    },
+    {
+      "id": "town_merchant",
+      "type": "npc",
+      "position": { "x": 11, "y": 3 },
+      "properties": {
+        "entity_id": "ENTITY_ID_MERCHANT",
+        "display_name": "MERCHANT",
+        "shop": 2
+      }
+    },
+    {
+      "id": "town_wizard",
+      "type": "npc",
+      "position": { "x": 6, "y": 10 },
+      "properties": {
+        "entity_id": "ENTITY_ID_WIZARD",
+        "display_name": "WIZARD",
+        "save": 0
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "town_square",
+      "bounds": { "x": 8, "y": 4, "width": 6, "height": 6 },
+      "description": "Central plaza of the peaceful town where villagers gather.",
+      "gameplay": {
+        "purpose": "hub",
+        "difficulty": 0
+      }
+    }
+  ]
+}

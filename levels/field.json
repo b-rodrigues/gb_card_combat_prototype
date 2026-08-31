@@ -1,0 +1,75 @@
+{
+  "id": "field",
+  "name": "Emerald Plains",
+  "map": {
+    "width": 32,
+    "height": 18,
+    "tileset": "exterior",
+    "music": "MUSIC_OVERWORLD",
+    "map_id": "MAP_FIELD"
+  },
+  "layers": {
+    "terrain": []
+  },
+  "player": {
+    "spawn": {
+      "x": 17,
+      "y": 7,
+      "facing": "LEFT"
+    }
+  },
+  "exits": [
+    {
+      "x": 31,
+      "y": 7,
+      "target_scene": "town",
+      "target_x": 2,
+      "target_y": 7,
+      "direction": "EAST",
+      "tile_char": ">"
+    },
+    {
+      "x": 12,
+      "y": 0,
+      "target_scene": "forest",
+      "target_x": 12,
+      "target_y": 10,
+      "direction": "NORTH",
+      "tile_char": ">"
+    }
+  ],
+  "objects": [
+    {
+      "id": "field_slime",
+      "type": "enemy",
+      "position": { "x": 14, "y": 8 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME",
+        "display_name": "SLIME",
+        "battle": "BATTLE_SLIME_TRIO",
+        "ai": "AI_PATROL_CROSS"
+      }
+    },
+    {
+      "id": "field_signpost",
+      "type": "signpost",
+      "position": { "x": 2, "y": 4 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SIGNPOST",
+        "display_name": "SIGNPOST",
+        "dialogue": "DIALOGUE_ID_SIGNPOST"
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "open_field",
+      "bounds": { "x": 2, "y": 2, "width": 28, "height": 14 },
+      "description": "Rolling grasslands leading between town and forest.",
+      "gameplay": {
+        "purpose": "travel",
+        "difficulty": 1
+      }
+    }
+  ]
+}

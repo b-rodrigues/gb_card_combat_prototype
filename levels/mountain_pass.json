@@ -1,0 +1,72 @@
+{
+  "id": "mountain_pass",
+  "name": "Craggy Mountain Pass",
+  "map": {
+    "width": 20,
+    "height": 18,
+    "tileset": "exterior",
+    "music": "MUSIC_OVERWORLD",
+    "map_id": "MAP_MOUNTAIN_PASS"
+  },
+  "layers": {
+    "terrain": [
+      { "x": 0, "y": 0, "width": 4, "height": 18, "tile": "exterior.wall" },
+      { "x": 16, "y": 0, "width": 4, "height": 18, "tile": "exterior.wall" },
+      { "x": 9, "y": 2, "width": 2, "height": 1, "tile": "exterior.wall" },
+      { "x": 9, "y": 6, "width": 2, "height": 1, "tile": "exterior.wall" },
+      { "x": 9, "y": 10, "width": 2, "height": 1, "tile": "exterior.wall" },
+      { "x": 9, "y": 14, "width": 2, "height": 1, "tile": "exterior.wall" }
+    ]
+  },
+  "player": {
+    "spawn": {
+      "x": 12,
+      "y": 10,
+      "facing": "UP"
+    }
+  },
+  "exits": [
+    {
+      "x": 12,
+      "y": 11,
+      "target_scene": "forest",
+      "target_x": 12,
+      "target_y": 1,
+      "direction": "SOUTH",
+      "tile_char": "<"
+    },
+    {
+      "x": 12,
+      "y": 0,
+      "target_scene": "castle",
+      "target_x": 10,
+      "target_y": 10,
+      "direction": "NORTH",
+      "tile_char": ">"
+    }
+  ],
+  "objects": [
+    {
+      "id": "mountain_slime",
+      "type": "enemy",
+      "position": { "x": 14, "y": 7 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME",
+        "display_name": "SLIME",
+        "battle": "BATTLE_SLIME_TRIO",
+        "ai": "AI_PATROL_CROSS"
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "narrow_pass",
+      "bounds": { "x": 4, "y": 1, "width": 12, "height": 16 },
+      "description": "A narrow rocky canyon flanked by steep cliffs.",
+      "gameplay": {
+        "purpose": "corridor",
+        "difficulty": 2
+      }
+    }
+  ]
+}

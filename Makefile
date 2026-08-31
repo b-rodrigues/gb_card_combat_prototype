@@ -44,7 +44,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music level levels clean
 
 all: $(TARGET)
 
@@ -98,6 +98,18 @@ atlas:
 
 # Drift check: Makefile gfx --tile-coords must match the atlas registry, and
 # the generated artifacts must be in sync with the current source assets.
+# Level compiler targets (docs/level-editor.md)
+LEVEL ?= forest
+level:
+	@python3 tools/level_compiler/validate.py levels/$(LEVEL).json
+	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@echo "Compiled level: $(LEVEL)"
+
+levels:
+	@python3 tools/level_compiler/validate.py levels/*.json
+	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@echo "All levels compiled to src/game/scenes_content.c"
+
 atlas-check:
 	@python3 tools/asset_atlas.py --check
 

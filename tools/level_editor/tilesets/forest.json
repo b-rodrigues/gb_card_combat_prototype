@@ -1,0 +1,79 @@
+{
+  "id": "forest",
+  "label": "Forest",
+  "gb_tileset_kind": "WORLD_TILESET_FOREST",
+  "tiles": [
+    {
+      "id": "floor",
+      "label": "Floor",
+      "gb_constant": "TILE_FLOOR",
+      "gb_tile_index": 0,
+      "walkable": true,
+      "color": "#88c070",
+      "ascii": "."
+    },
+    {
+      "id": "tree",
+      "label": "Tree",
+      "gb_constant": "TILE_WALL",
+      "gb_tile_index": 1,
+      "walkable": false,
+      "color": "#205838",
+      "ascii": "#"
+    },
+    {
+      "id": "gate",
+      "label": "Gate",
+      "gb_constant": "TILE_EXIT",
+      "gb_tile_index": 2,
+      "walkable": true,
+      "color": "#e0f8d0",
+      "ascii": ">"
+    },
+    {
+      "id": "stump_tl",
+      "label": "Stump TL",
+      "gb_constant": "TILE_STUMP_TL",
+      "gb_tile_index": 3,
+      "walkable": false,
+      "color": "#704820",
+      "ascii": "p"
+    },
+    {
+      "id": "stump_tr",
+      "label": "Stump TR",
+      "gb_constant": "TILE_STUMP_TR",
+      "gb_tile_index": 4,
+      "walkable": false,
+      "color": "#704820",
+      "ascii": "q"
+    },
+    {
+      "id": "stump_bl",
+      "label": "Stump BL",
+      "gb_constant": "TILE_STUMP_BL",
+      "gb_tile_index": 5,
+      "walkable": false,
+      "color": "#704820",
+      "ascii": "b"
+    },
+    {
+      "id": "stump_br",
+      "label": "Stump BR",
+      "gb_constant": "TILE_STUMP_BR",
+      "gb_tile_index": 6,
+      "walkable": false,
+      "color": "#704820",
+      "ascii": "d"
+    },
+    {
+      "id": "mini_stump",
+      "label": "Mini Stump",
+      "gb_constant": "TILE_WALL",
+      "gb_tile_index": 7,
+      "walkable": false,
+      "color": "#704820",
+      "ascii": "o"
+    }
+  ]
+}
