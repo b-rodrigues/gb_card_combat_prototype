@@ -61,14 +61,21 @@ typedef enum {
 /* A single generic exit tile type; the scene definition owns the
  * destination/spawn/visual of each exit. */
 typedef enum {
-    TILE_FLOOR    = 0,
-    TILE_WALL     = 1,
-    TILE_EXIT     = 2,
-    TILE_BUILDING = 3,
-    TILE_STUMP_TL = 4,
-    TILE_STUMP_TR = 5,
-    TILE_STUMP_BL = 6,
-    TILE_STUMP_BR = 7
+    TILE_FLOOR         = 0,
+    TILE_WALL          = 1,
+    TILE_EXIT          = 2,
+    TILE_BUILDING      = 3,
+    TILE_STUMP_TL      = 4,
+    TILE_STUMP_TR      = 5,
+    TILE_STUMP_BL      = 6,
+    TILE_STUMP_BR      = 7,
+    TILE_DUNGEON_FLOOR = 8,
+    TILE_DUNGEON_WALL  = 9,
+    TILE_DUNGEON_CRACK = 10,
+    TILE_DUNGEON_PILLAR = 11,
+    TILE_DUNGEON_ARCH  = 12,
+    TILE_DUNGEON_DECOR = 13,
+    TILE_DUNGEON_SOLID = 14
 } TileType;
 
 /* Frames between autonomous patrol steps for hostile actors (~0.53 seconds). */
