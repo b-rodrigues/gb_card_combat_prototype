@@ -483,6 +483,47 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 
 /* ── Banked entry point ────────────────────────────────────────────────── */
 
+/* Full English description for a synthesized loot card (§34.5).
+ * Decodes the abbreviated name components into readable words
+ * (e.g. "W P DA" → "WOOD POISON DAGGER").  Stored in a file-static
+ * buffer so bank-3 code never grows the stack under the harness. */
+static char s_reveal_full_name[20];
+
+static void loot_build_full_name(const CardDefinition *card)
+{
+    char *d = s_reveal_full_name;
+    const char *s;
+
+    switch (card->name[0]) {
+        case 'W': s = "WOOD"; break;
+        case 'B': s = "BRONZE"; break;
+        case 'I': s = "IRON"; break;
+        case 'M': s = "MYTHRIL"; break;
+        default:  s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+
+    switch (card->status_id) {
+        case STATUS_POISON: s = " POISON"; break;
+        case STATUS_BURN:   s = " FIRE"; break;
+        case STATUS_FREEZE: s = " ICE"; break;
+        default:            s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+
+    *d++ = ' ';
+    switch (card->battle_type) {
+        case BATTLE_CARD_TYPE_SWORD:   s = "SWORD"; break;
+        case BATTLE_CARD_TYPE_SHIELD:  s = "SHIELD"; break;
+        case BATTLE_CARD_TYPE_BOW:     s = "BOW"; break;
+        case BATTLE_CARD_TYPE_HEAL:    s = "RING"; break;
+        case BATTLE_CARD_TYPE_DAGGER:  s = "DAGGER"; break;
+        default:                       s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+    *d = '\0';
+}
+
 void ui_update_battle_banked(void)
 {
     const volatile Battle *battle = (const Battle *)g_bk_ptr_a;
@@ -533,21 +574,23 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
-            /* Loot reveal (docs/loot.md §34.5): a two-line centered
-             * "YOU FOUND:" block over the otherwise-blank rows 11-12.
-             * Row 12 shows the card's [element][weapon] icon tiles ahead
-             * of its identity name, block-centered, all colored by the
-             * card's effect (same mapping as the battle-hand cards). */
+            /* Loot reveal (docs/loot.md §34.5): three-line centered block
+             * on the otherwise-blank rows 10-12:
+             *   row 10: "YOU FOUND:"
+             *   row 11: [element][weapon] icon tiles + identity name
+             *   row 12: full English description (e.g. "WOOD POISON DAGGER")
+             * All three lines share the card's effect color. */
             uint8_t len = 0, x, block;
             uint8_t ncolor, tile_elem, tile_wpn;
             volatile uint8_t *dst;
 
-            battle_draw_banner_line(11, "YOU FOUND:", 20);
-            while (len < 20 && g_card_scratch.name[len]) len++;
-            block = (uint8_t)(3 + len);   /* elem icon, weapon icon, gap, name */
-            x = (uint8_t)((20 - block) / 2);
+            battle_draw_banner_line(10, "YOU FOUND:", 20);
 
-            battle_draw_text_line(0, 12, NULL, 20);
+            /* Row 11: icons + abbreviated name */
+            while (len < 20 && g_card_scratch.name[len]) len++;
+            block = (uint8_t)(3 + len);
+            x = (uint8_t)((20 - block) / 2);
+            battle_draw_text_line(0, 11, NULL, 20);
             battle_card_icon_tiles(g_card_scratch.status_id,
                                    g_card_scratch.battle_type,
                                    (g_card_scratch.battle_type ==
@@ -555,19 +598,27 @@ void ui_update_battle_banked(void)
                                    (g_card_scratch.effect ==
                                     CARD_EFFECT_HEAL_HP),
                                    &tile_elem, &tile_wpn);
-            dst = (volatile uint8_t *)(0x9800 + (12u << 5) + x);
+            dst = (volatile uint8_t *)(0x9800 + (11u << 5) + x);
             VBK_REG = 0;
             battle_vram_sync_write(dst, tile_elem);
             battle_vram_sync_write(dst + 1, tile_wpn);
-            battle_draw_text_line((uint8_t)(x + 3), 12, g_card_scratch.name,
+            battle_draw_text_line((uint8_t)(x + 3), 11, g_card_scratch.name,
                                   (uint8_t)(20 - x - 3));
-
             ncolor = battle_card_color(
                 g_card_scratch.battle_type,
                 g_card_scratch.status_id,
                 (g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL) ||
                 (g_card_scratch.effect == CARD_EFFECT_HEAL_HP));
-            battle_color_span(x, 12, block, ncolor);
+            battle_color_span(x, 11, block, ncolor);
+
+            /* Row 12: full English description, centered */
+            loot_build_full_name(&g_card_scratch);
+            len = 0;
+            while (len < 20 && s_reveal_full_name[len]) len++;
+            x = (uint8_t)((20 - len) / 2);
+            battle_draw_text_line(x, 12, s_reveal_full_name,
+                                  (uint8_t)(20 - x));
+            battle_color_span(x, 12, len, ncolor);
         } else {
             battle_draw_text_line(0, 12,
                 (battle->msg_id == 1) ? "NO ENERGY!" :
