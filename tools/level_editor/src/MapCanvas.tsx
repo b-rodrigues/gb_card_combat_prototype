@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { BUILTIN_TILESETS, TileDefinition, TilesetDefinition } from './model/Tileset';
@@ -70,6 +70,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const canvasWidth = level.width * tileSize;
   const canvasHeight = level.height * tileSize;
 
+  // Pre-load tile images
+  const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  useEffect(() => {
+    const imgMap = new Map<string, HTMLImageElement>();
+    let loadedCount = 0;
+    tileset.tiles.forEach((t) => {
+      const img = new Image();
+      img.src = t.image_url;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === tileset.tiles.length) {
+          imgMap.set(t.id, img);
+          setTileImages(new Map(imgMap));
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === tileset.tiles.length) {
+          setTileImages(new Map(imgMap));
+        }
+      };
+      imgMap.set(t.id, img);
+    });
+  }, [tileset]);
+
   // Convert mouse pixel coordinates to tile coordinates
   const getTileCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
@@ -104,21 +129,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         for (let x = 0; x < level.width; x++) {
           const tileId = level.grid[y]?.[x] || 'floor';
           const tDef = tileMap.get(tileId) || tileMap.get('floor');
-          const color = tDef ? tDef.color : '#88c070';
 
           const px = x * tileSize;
           const py = y * tileSize;
 
-          ctx.fillStyle = color;
-          ctx.fillRect(px, py, tileSize, tileSize);
-
-          // Draw ASCII glyph / visual indicator
-          if (tileSize >= 16 && tDef?.ascii) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.font = `${Math.floor(tileSize * 0.45)}px 'JetBrains Mono', monospace`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(tDef.ascii, px + tileSize / 2, py + tileSize / 2);
+          // Draw tile image if loaded, fallback to colored rect
+          const img = tileImages.get(tileId);
+          if (img && img.complete && img.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, px, py, tileSize, tileSize);
+          } else {
+            const color = tDef ? tDef.color : '#88c070';
+            ctx.fillStyle = color;
+            ctx.fillRect(px, py, tileSize, tileSize);
           }
 
           // Perimeter wall highlight
@@ -138,9 +161,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       const rh = Math.abs(dragStartTile.y - hoverTile.y) + 1;
 
       const tDef = tileMap.get(selectedTileId);
-      ctx.fillStyle = tDef?.color || '#ffffff';
+      const img = tileImages.get(selectedTileId);
       ctx.globalAlpha = 0.6;
-      ctx.fillRect(rx * tileSize, ry * tileSize, rw * tileSize, rh * tileSize);
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.imageSmoothingEnabled = false;
+        for (let ty = ry; ty < ry + rh; ty++) {
+          for (let tx = rx; tx < rx + rw; tx++) {
+            ctx.drawImage(img, tx * tileSize, ty * tileSize, tileSize, tileSize);
+          }
+        }
+      } else {
+        ctx.fillStyle = tDef?.color || '#ffffff';
+        ctx.fillRect(rx * tileSize, ry * tileSize, rw * tileSize, rh * tileSize);
+      }
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.strokeRect(rx * tileSize, ry * tileSize, rw * tileSize, rh * tileSize);
@@ -324,6 +357,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     canvasHeight,
     tileSize,
     tileMap,
+    tileImages,
   ]);
 
   useEffect(() => {

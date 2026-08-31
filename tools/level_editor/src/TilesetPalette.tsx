@@ -47,11 +47,39 @@ export const TilesetPalette: React.FC<TilesetPaletteProps> = ({
                 <div
                   className="tile-swatch"
                   style={{
-                    backgroundColor: tile.color,
                     borderColor: isSelected ? '#ffffff' : '#000000',
                   }}
                 >
-                  <span className="tile-ascii">{tile.ascii || '.'}</span>
+                  <img
+                    src={tile.image_url}
+                    alt={tile.label}
+                    width={32}
+                    height={32}
+                    style={{
+                      imageRendering: 'pixelated',
+                      display: 'block',
+                    }}
+                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                      const img = e.currentTarget;
+                      img.style.display = 'none';
+                      const fallback = img.nextElementSibling as HTMLElement | null;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  <div
+                    className="tile-ascii-fallback"
+                    style={{
+                      display: 'none',
+                      width: '32px',
+                      height: '32px',
+                      backgroundColor: tile.color,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '24px',
+                    }}
+                  >
+                    {tile.ascii || '.'}
+                  </div>
                 </div>
                 <div className="tile-info">
                   <span className="tile-name">{tile.label}</span>

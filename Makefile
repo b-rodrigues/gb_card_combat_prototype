@@ -110,7 +110,11 @@ levels:
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
 
-editor:
+# Extract tile images from source PNGs for the web editor (uses same coords as asset_atlas.py)
+extract-tiles:
+	@python3 tools/level_editor/extract_tiles.py
+
+editor: extract-tiles
 	@echo "Starting Game Boy RPG Level Editor..."
 	@cd tools/level_editor && npm install --no-audit --no-fund && npm run dev
 
