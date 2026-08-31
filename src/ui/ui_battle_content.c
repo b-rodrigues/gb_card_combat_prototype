@@ -178,6 +178,39 @@ static const char *battle_card_type_code(uint8_t type)
     return (type < 5) ? (codes + (type * 3)) : (codes + 15);
 }
 
+/* Icon tiles for a card's element rider + weapon glyph (§34.5 reveal and
+ * the battle-hand cards share the same mapping as the inventory list in
+ * item_content_banked.c).  tile_elem is 0 (blank font tile) when the card
+ * carries no on-hit status rider. */
+static void battle_card_icon_tiles(uint8_t status_id, uint8_t type,
+                                   uint8_t is_heal, uint8_t *tile_elem,
+                                   uint8_t *tile_wpn)
+{
+    /* Element icon */
+    if (status_id == STATUS_BURN) {
+        *tile_elem = UI_TILE_CARD_ELEM_FIRE;
+    } else if (status_id == STATUS_POISON) {
+        *tile_elem = UI_TILE_CARD_ELEM_POISON;
+    } else if (status_id == STATUS_FREEZE) {
+        *tile_elem = UI_TILE_CARD_ELEM_ICE;
+    } else {
+        *tile_elem = 0; /* Space glyph */
+    }
+
+    /* Weapon icon */
+    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
+        *tile_wpn = UI_TILE_CARD_RING;
+    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
+        *tile_wpn = UI_TILE_CARD_SHIELD;
+    } else if (type == BATTLE_CARD_TYPE_BOW) {
+        *tile_wpn = UI_TILE_CARD_BOW;
+    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
+        *tile_wpn = UI_TILE_CARD_DAGGER;
+    } else {
+        *tile_wpn = UI_TILE_CARD_SWORD;
+    }
+}
+
 static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
                                 uint8_t status_id, uint8_t is_heal)
 {
@@ -192,29 +225,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     code = battle_card_type_code(type);
 
-    /* Element icon at column x */
-    if (status_id == STATUS_BURN) {
-        tile_elem = UI_TILE_CARD_ELEM_FIRE;
-    } else if (status_id == STATUS_POISON) {
-        tile_elem = UI_TILE_CARD_ELEM_POISON;
-    } else if (status_id == STATUS_FREEZE) {
-        tile_elem = UI_TILE_CARD_ELEM_ICE;
-    } else {
-        tile_elem = 0; /* Space glyph */
-    }
-
-    /* Weapon icon at column x+1 */
-    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
-        tile_wpn = UI_TILE_CARD_RING;
-    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
-        tile_wpn = UI_TILE_CARD_SHIELD;
-    } else if (type == BATTLE_CARD_TYPE_BOW) {
-        tile_wpn = UI_TILE_CARD_BOW;
-    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
-        tile_wpn = UI_TILE_CARD_DAGGER;
-    } else {
-        tile_wpn = UI_TILE_CARD_SWORD;
-    }
+    battle_card_icon_tiles(status_id, type, is_heal, &tile_elem, &tile_wpn);
 
     dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
     VBK_REG = 0;
@@ -523,20 +534,40 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
             /* Loot reveal (docs/loot.md §34.5): a two-line centered
-             * "YOU FOUND:" block over the otherwise-blank rows 11-12,
-             * with the card name colored by its effect. */
-            uint8_t len = 0, x;
-            uint8_t ncolor;
+             * "YOU FOUND:" block over the otherwise-blank rows 11-12.
+             * Row 12 shows the card's [element][weapon] icon tiles ahead
+             * of its identity name, block-centered, all colored by the
+             * card's effect (same mapping as the battle-hand cards). */
+            uint8_t len = 0, x, block;
+            uint8_t ncolor, tile_elem, tile_wpn;
+            volatile uint8_t *dst;
+
             battle_draw_banner_line(11, "YOU FOUND:", 20);
-            battle_draw_banner_line(12, g_card_scratch.name, 20);
             while (len < 20 && g_card_scratch.name[len]) len++;
-            x = (uint8_t)((20 - len) / 2);
+            block = (uint8_t)(3 + len);   /* elem icon, weapon icon, gap, name */
+            x = (uint8_t)((20 - block) / 2);
+
+            battle_draw_text_line(0, 12, NULL, 20);
+            battle_card_icon_tiles(g_card_scratch.status_id,
+                                   g_card_scratch.battle_type,
+                                   (g_card_scratch.battle_type ==
+                                    BATTLE_CARD_TYPE_HEAL) ||
+                                   (g_card_scratch.effect ==
+                                    CARD_EFFECT_HEAL_HP),
+                                   &tile_elem, &tile_wpn);
+            dst = (volatile uint8_t *)(0x9800 + (12u << 5) + x);
+            VBK_REG = 0;
+            battle_vram_sync_write(dst, tile_elem);
+            battle_vram_sync_write(dst + 1, tile_wpn);
+            battle_draw_text_line((uint8_t)(x + 3), 12, g_card_scratch.name,
+                                  (uint8_t)(20 - x - 3));
+
             ncolor = battle_card_color(
                 g_card_scratch.battle_type,
                 g_card_scratch.status_id,
                 (g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL) ||
                 (g_card_scratch.effect == CARD_EFFECT_HEAL_HP));
-            battle_color_span(x, 12, len, ncolor);
+            battle_color_span(x, 12, block, ncolor);
         } else {
             battle_draw_text_line(0, 12,
                 (battle->msg_id == 1) ? "NO ENERGY!" :
