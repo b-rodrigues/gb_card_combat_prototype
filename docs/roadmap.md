@@ -71,7 +71,8 @@ testable, save/load works, and the memory budget is understood.
     (clones of the struck actor; the final boss stands alone), regular
     enemy HP doubled (slimes 10-16, bats 8), boss tuned to 50 HP with a
     SET_ENEMY_HP scenario hook pinning it to 20 for deterministic tests.
-  - Energy pool raised to 6/phase (three cost-2 cards now form a combo);
+  - Energy pool set to 2/phase (`BATTLE_ENERGY_PER_TURN`; was 6 — combo
+    scenarios now select cost-0 cards so a full hand still fits);
     rejected selections flash NO ENERGY! / OUT OF USES! on the battle HUD.
   - COMBO row shows the pending hand tier LIVE while selecting (blanks on
     resolution; executed results announce via the banner).  The Lost

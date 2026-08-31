@@ -16,7 +16,7 @@
  * whose cost exceeds the remaining energy is rejected; the pool refreshes to
  * this value at battle start and at every transition into a decision phase
  * (deck.md Phase 10: check affordability at select, pay at resolve). */
-#define BATTLE_ENERGY_PER_TURN 6
+#define BATTLE_ENERGY_PER_TURN 2
 /* Timer cadence.  The bar is BATTLE_TIMER_BAR_LENGTH cells, each draining one
  * tile every BATTLE_TIMER_BAR_DIVISOR frames (= BATTLE_TIMER_SECONDS), so the
  * whole window is an exact integer number of cells.  The divisor is derived
