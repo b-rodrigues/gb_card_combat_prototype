@@ -1740,8 +1740,13 @@ fixed-bank-free — overflowing `_CODE`/`_HOME` past 0x8000 corrupts bank 2
 and hangs the guest (AGENTS.md §52.18).  Regression:
 `tools/scenarios/tests/loot_drop_victory.json`.
 
-The reveal is a two-line centered "YOU FOUND: / <name>" block drawn on the
-battle victory banner (rows 11-12) when the drop is granted.
+The reveal is a three-line centered block on the otherwise-blank rows 10-12
+of the battle victory banner: row 10 shows "YOU FOUND:", row 11 shows the
+card's `[element][weapon]` icon tiles ahead of its identity name, and
+row 12 shows the full English description (e.g. "WOOD POISON DAGGER").
+All three lines share the card's effect color.  The icon mapping is the
+same as the battle-hand cards and the CARDS-tab list.  Regression:
+`tools/scenarios/tests/loot_reveal_icons.json`.
 
 ## 34.6 Economy (Merchant = Card Merchant)
 
@@ -1768,4 +1773,4 @@ Wood gear needs no purchase: the hero starts with an all-wood deck
   the derived id); net-damage defense; generation roll + profiles; wood
   starter; merchant buy stock; sell via CARDS-tab detail page (§34.6).
 * FOLLOW-UP increments: affix catalogue growth; fire/ice statuses
-  (DONE, see §34.1); HEAL ALL; reveal moment polish.
+  (DONE, see §34.1); HEAL ALL.

@@ -23,7 +23,7 @@ void thanks_screen_render(Game *g)
 
     if (!rc->valid || rc->prev_screen != SCREEN_THANKS) {
         ui_clear_screen();
-        g_bk_call_bank = 2;
+        g_bk_call_bank = 4;
         g_bk_call_target = (uint16_t)&thanks_content_render;
         banked_call_run();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_THANKS, 0, 0, 0);
@@ -46,7 +46,7 @@ void ending_screen_render(Game *g)
     rc = &g->render_cache;
     if (!rc->valid || rc->prev_screen != SCREEN_ENDING) {
         ui_clear_screen();
-        g_bk_call_bank = 2;
+        g_bk_call_bank = 4;
         g_bk_call_target = (uint16_t)&ending_content_render;
         banked_call_run();
         telemetry_emit(EVENT_RENDER_SCREEN, (uint8_t)SCREEN_ENDING, 0, 0, 0);
@@ -82,7 +82,7 @@ void game_over_screen_render(Game *g)
     if (!rc->valid || rc->prev_screen != SCREEN_GAME_OVER ||
         g->game_over_choice != rc->prev_game_over_choice) {
         ui_clear_screen();
-        g_bk_call_bank = 2;
+        g_bk_call_bank = 4;
         g_bk_call_target = (uint16_t)&game_over_content_render;
         g_bk_byte_a = g->game_over_choice;
         banked_call_run();

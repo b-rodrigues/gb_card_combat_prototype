@@ -32,7 +32,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS))
 # Emulator detection
 EMULATOR ?= $(shell command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check clean
 
 all: $(TARGET)
 
@@ -77,6 +77,17 @@ gfx:
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
+
+# Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
+# + the banked .inc data).  Deterministic: rerunning produces byte-identical
+# output.  See docs/assets_atlas.md and tools/asset_atlas.py.
+atlas:
+	@python3 tools/asset_atlas.py
+
+# Drift check: Makefile gfx --tile-coords must match the atlas registry, and
+# the generated artifacts must be in sync with the current source assets.
+atlas-check:
+	@python3 tools/asset_atlas.py --check
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

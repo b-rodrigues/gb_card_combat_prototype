@@ -13,19 +13,50 @@ extern uint8_t ui_font_tile_base;
  * writes; DMG = 0. */
 extern uint8_t g_is_cgb;
 
+/* Weapon, element & UI icon tile indices (VRAM Block 1, 0x8800) */
+#define UI_TILE_CARD_SWORD       104u
+#define UI_TILE_CARD_SHIELD      105u
+#define UI_TILE_CARD_BOW         106u
+#define UI_TILE_CARD_DAGGER      107u
+#define UI_TILE_CARD_RING        108u
+#define UI_TILE_CARD_AMULET      109u
+#define UI_TILE_CARD_ELEM_FIRE   110u
+#define UI_TILE_CARD_ELEM_ICE    111u
+#define UI_TILE_CARD_ELEM_POISON 112u
+#define UI_TILE_HEART            113u
+#define UI_TILE_BOLT             114u
+#define UI_TILE_COIN             115u
+#define UI_TILE_DECK             116u
+
 /* Per-tile background palette indices (CGB VRAM bank-1 attributes):
- * 0 = default grayscale, 1 = fire, 2 = ice, 3 = heal, 4 = poison,
- * 5 = dim (poison grey-out). */
+ * 0 = default grayscale, 1 = fire, 2 = iron (steel blue), 3 = heal / cyan,
+ * 4 = poison (emerald), 5 = wood (brown), 6 = gold (mythril),
+ * 7 = dim (poison grey-out). */
 #define UI_COLOR_NONE   0
 #define UI_COLOR_FIRE   1
+#define UI_COLOR_IRON   2
 #define UI_COLOR_ICE    2
 #define UI_COLOR_HEAL   3
 #define UI_COLOR_POISON 4
-#define UI_COLOR_DIM    5
+#define UI_COLOR_WOOD   5
+#define UI_COLOR_GOLD   6
+#define UI_COLOR_DIM    7
 
 /* Effect color for a card (status_id = on-hit rider element, is_heal =
- * ring/heal role).  Returns a UI_COLOR_* palette index. */
-uint8_t ui_color_class(uint8_t status_id, uint8_t is_heal);
+ * ring/heal role).  Returns a UI_COLOR_* palette index.  status_id uses
+ * the STATUS_* enum values (STATUS_POISON=1, STATUS_BURN=2, STATUS_FREEZE=3)
+ * -- keep in sync with battle_card_color() in ui_battle_content.c. */
+#define ui_color_card(bt, st, ih) ( \
+    ((st) == STATUS_BURN) ? (uint8_t)UI_COLOR_FIRE : \
+    ((st) == STATUS_POISON) ? (uint8_t)UI_COLOR_POISON : \
+    ((st) == STATUS_FREEZE) ? (uint8_t)UI_COLOR_ICE : \
+    (((bt) == 1 /* BATTLE_CARD_TYPE_SHIELD */) || (ih)) ? (uint8_t)UI_COLOR_WOOD : \
+    ((bt) == 0 /* BATTLE_CARD_TYPE_SWORD */) ? (uint8_t)UI_COLOR_IRON : \
+    ((bt) == 2 /* BATTLE_CARD_TYPE_BOW */) ? (uint8_t)UI_COLOR_GOLD : \
+    ((bt) == 4 /* BATTLE_CARD_TYPE_DAGGER */) ? (uint8_t)UI_COLOR_POISON : (uint8_t)UI_COLOR_NONE \
+)
+
+#define ui_color_class(st, ih) ui_color_card(0, (st), (ih))
 
 /* Set the CGB per-tile palette for a horizontal span of background tiles
  * (no-op on DMG; palette 0 resets to grayscale). */

@@ -1,7 +1,8 @@
 {
-  "name": "loot_collection_full",
+  "name": "loot_reveal_icons",
   "test": true,
-  "description": "Loot drop when collection is full (docs/loot.md 34.5, AGENTS.md 52.16): when the 12-slot card collection is capped, victory loot cannot be added -- no LOOT_CARD_ADDED is emitted and the battle result screen does not show 'YOU FOUND:'.",
+  "description": "Loot reveal regression (docs/loot.md 34.5): seed 5002 deterministically yields a WOOD POISON DAGGER (derived id 0x8B = 139). Driving the First Encounter to victory must hold the 3-row reveal on the battle result screen: YOU FOUND: on row 10, icon-prefixed identity name W P DA on row 11, and full English description WOOD POISON DAGGER on row 12.",
+  "scenario_id": "FIRST_ENCOUNTER",
   "initial_state": {
     "scene": "FIELD",
     "player": {
@@ -15,49 +16,20 @@
         "hp": 60,
         "max_hp": 60
       }
-    },
-    "start_battle": true
+    }
   },
   "actions": [
     {
-      "type": "collection_add",
-      "card_id": 128,
-      "quantity": 1
+      "type": "press",
+      "button": "RIGHT"
     },
     {
-      "type": "collection_add",
-      "card_id": 129,
-      "quantity": 1
+      "type": "wait",
+      "frames": 13
     },
     {
-      "type": "collection_add",
-      "card_id": 130,
-      "quantity": 1
-    },
-    {
-      "type": "collection_add",
-      "card_id": 131,
-      "quantity": 1
-    },
-    {
-      "type": "collection_add",
-      "card_id": 132,
-      "quantity": 1
-    },
-    {
-      "type": "collection_add",
-      "card_id": 133,
-      "quantity": 1
-    },
-    {
-      "type": "collection_add",
-      "card_id": 134,
-      "quantity": 1
-    },
-    {
-      "type": "collection_add",
-      "card_id": 135,
-      "quantity": 1
+      "type": "wait",
+      "frames": 5
     },
     {
       "type": "set_enemy_hp",
@@ -80,7 +52,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -88,7 +60,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -96,7 +68,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -104,7 +76,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -112,7 +84,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -120,7 +92,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -128,7 +100,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -136,7 +108,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -144,7 +116,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -152,7 +124,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -160,7 +132,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -168,7 +140,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -176,7 +148,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
     },
     {
       "type": "press",
@@ -184,7 +156,7 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 130
     },
     {
       "type": "press",
@@ -192,7 +164,35 @@
     },
     {
       "type": "wait",
-      "frames": 30
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 55
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 130
+    },
+    {
+      "type": "wait",
+      "frames": 20
     }
   ],
   "assertions": [
@@ -201,17 +201,23 @@
       "expected": "BATTLE"
     },
     {
-      "type": "event_occurred",
-      "event": "BATTLE_WON"
+      "type": "game_state",
+      "expected": "BATTLE"
     },
     {
-      "type": "event_not_occurred",
-      "event": "LOOT_CARD_ADDED"
-    },
-    {
-      "type": "screen_row_not_contains",
+      "type": "screen_row",
       "row": 10,
-      "contains": "YOU FOUND"
+      "contains": "YOU FOUND:"
+    },
+    {
+      "type": "screen_row",
+      "row": 11,
+      "contains": "W P DA"
+    },
+    {
+      "type": "screen_row",
+      "row": 12,
+      "contains": "WOOD POISON DAGGER"
     }
   ]
 }

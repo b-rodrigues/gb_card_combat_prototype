@@ -78,6 +78,7 @@ void shop_screen_update(Game *g)
     if (input_pressed(INPUT_B) || input_pressed(INPUT_START)) {
         g->shop_message = SHOP_MSG_NONE;
         g->item_menu_index = 0;
+        audio_play_sfx(SFX_BACK);
         screen_change(g, SCREEN_OVERWORLD);
     }
 }

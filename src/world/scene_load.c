@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 5
 
 #include "scene.h"
 #include "banked.h"

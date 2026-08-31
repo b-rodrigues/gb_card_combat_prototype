@@ -12,13 +12,15 @@
  * wrapper stages x/y/len/palette through g_bk_ptr_a and dispatches here.
  */
 
-const palette_color_t cgb_bg_palettes[6][4] = {
-    /* 0 gray */   { RGB8(255,255,255), RGB8(170,170,170), RGB8(85,85,85),  RGB8(0,0,0)      },
-    /* 1 fire */   { RGB8(255,255,255), RGB8(255,192,192), RGB8(255,96,96), RGB8(192,0,0)   },
-    /* 2 ice */    { RGB8(255,255,255), RGB8(192,192,255), RGB8(96,96,255), RGB8(0,0,192)   },
-    /* 3 heal */   { RGB8(255,255,255), RGB8(192,255,192), RGB8(96,255,96), RGB8(0,160,0)   },
-    /* 4 poison */ { RGB8(255,255,255), RGB8(224,192,255), RGB8(160,96,255), RGB8(96,0,192) },
-    /* 5 dim */    { RGB8(200,200,200), RGB8(150,150,150), RGB8(90,90,90),   RGB8(40,40,40)   }
+const palette_color_t cgb_bg_palettes[8][4] = {
+    /* 0 gray */     { RGB8(255,255,255), RGB8(170,170,170), RGB8(85,85,85),  RGB8(0,0,0)      },
+    /* 1 fire */     { RGB8(255,255,224), RGB8(255,140,40),  RGB8(220,50,20), RGB8(100,10,0)   },
+    /* 2 iron/ice */ { RGB8(235,242,250), RGB8(140,180,214), RGB8(70,105,138), RGB8(27,43,58) },
+    /* 3 heal */     { RGB8(255,255,255), RGB8(192,255,192), RGB8(96,255,96), RGB8(0,160,0)   },
+    /* 4 poison */   { RGB8(240,255,240), RGB8(100,220,100), RGB8(30,140,50), RGB8(10,50,20) },
+    /* 5 wood */     { RGB8(245,230,210), RGB8(196,138,72),  RGB8(138,82,34), RGB8(61,32,10)  },
+    /* 6 gold */     { RGB8(255,252,224), RGB8(255,215,0),   RGB8(200,140,8), RGB8(90,58,0)   },
+    /* 7 dim */      { RGB8(200,200,200), RGB8(150,150,150), RGB8(90,90,90),   RGB8(40,40,40)   }
 };
 
 /* Self-contained VRAM-sync write (banked code cannot call ui_vram_sync_write).
@@ -27,14 +29,8 @@ const palette_color_t cgb_bg_palettes[6][4] = {
 static void color_vram_sync_write(volatile uint8_t *dst, uint8_t v)
 {
     if (LCDC_REG & 0x80) {
-        __asm
-            di
-        __endasm;
         while (STAT_REG & 0x02);
         *dst = v;
-        __asm
-            ei
-        __endasm;
     } else {
         *dst = v;
     }
@@ -116,7 +112,7 @@ void ui_clear_atts_banked(void)
     dst = (volatile uint8_t *)0x9800;
     VBK_REG = 1;
     for (i = 0; i < 1024; i++) {
-        color_vram_sync_write(&dst[i], 0);
+        dst[i] = 0;
     }
     VBK_REG = 0;
 }

@@ -146,7 +146,14 @@ static void nav_card_select(Battle *b)
 
     if (b->combo_count < BATTLE_HAND_SIZE) {
         b->selected_indices[b->combo_count++] = b->cursor_pos;
-        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+        /* BATTLE_DIRTY_HERO: the deck/AP line (row 7) draws the un-reserved
+         * energy, so it must redraw on every selection/undo or the AP badge
+         * goes stale while the combo is being built. */
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC | BATTLE_DIRTY_HERO);
+        /* Report a successful selection to the fixed wrapper so it can
+         * play the select blip only when a card actually joined the combo
+         * (not on rejections like NO ENERGY / a duplicate). */
+        g_bk_byte_c = 1;
 
         next_pos = b->cursor_pos;
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {
@@ -186,6 +193,7 @@ void battle_nav_banked(void)
         }
         break;
     case NAV_OP_CARD_SELECT:
+        g_bk_byte_c = 0;
         nav_card_select(b);
         break;
     case NAV_OP_IS_CARD_SELECTED:

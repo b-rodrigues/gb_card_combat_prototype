@@ -37,14 +37,8 @@ extern CardDefinition g_card_scratch;
 static void battle_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
-        __asm
-            di
-        __endasm;
         while (STAT_REG & 0x02);
         *dst = tile;
-        __asm
-            ei
-        __endasm;
     } else {
         *dst = tile;
     }
@@ -109,15 +103,18 @@ static void battle_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     battle_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-/* Effect color for a battle card (mirrors ui_color_class; banked code must
- * not call the fixed-bank helper).  status_id = on-hit rider element,
- * is_heal = ring/heal role. */
-static uint8_t battle_color_class(uint8_t status_id, uint8_t is_heal)
+/* Material and effect color for a battle card:
+ * Wood (Shield/Ring) = Brown, Iron (Sword) = Steel Blue, Mythril (Bow) = Gold,
+ * Fire = Red-Orange, Poison = Emerald Green. */
+static uint8_t battle_card_color(uint8_t type, uint8_t status_id, uint8_t is_heal)
 {
-    if (is_heal) return UI_COLOR_HEAL;
     if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
-    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
     if (status_id == STATUS_POISON) return UI_COLOR_POISON;
+    if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
+    if (type == BATTLE_CARD_TYPE_SHIELD || is_heal) return UI_COLOR_WOOD;
+    if (type == BATTLE_CARD_TYPE_SWORD) return UI_COLOR_IRON;
+    if (type == BATTLE_CARD_TYPE_BOW) return UI_COLOR_GOLD;
+    if (type == BATTLE_CARD_TYPE_DAGGER) return UI_COLOR_POISON;
     return UI_COLOR_NONE;
 }
 
@@ -163,12 +160,6 @@ static uint8_t battle_status_color(const StatusSlots *slots)
 
 /* ── Card helpers (inlined from card.c — banked code cannot call fixed). ── */
 
-static const char *battle_card_type_code(uint8_t type)
-{
-    static const char codes[] = "SW\0SH\0BO\0HE\0DA\0??";
-    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
-}
-
 static const char *battle_card_get_description(uint8_t type)
 {
     switch (type) {
@@ -181,19 +172,70 @@ static const char *battle_card_get_description(uint8_t type)
     }
 }
 
-/* ── Battle rendering helpers ─────────────────────────────────────────── */
-
-static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value)
+static const char *battle_card_type_code(uint8_t type)
 {
+    static const char codes[] = "SW\0SH\0BO\0HE\0DA\0??";
+    return (type < 5) ? (codes + (type * 3)) : (codes + 15);
+}
+
+/* Icon tiles for a card's element rider + weapon glyph (§34.5 reveal and
+ * the battle-hand cards share the same mapping as the inventory list in
+ * item_content_banked.c).  tile_elem is 0 (blank font tile) when the card
+ * carries no on-hit status rider. */
+static void battle_card_icon_tiles(uint8_t status_id, uint8_t type,
+                                   uint8_t is_heal, uint8_t *tile_elem,
+                                   uint8_t *tile_wpn)
+{
+    /* Element icon */
+    if (status_id == STATUS_BURN) {
+        *tile_elem = UI_TILE_CARD_ELEM_FIRE;
+    } else if (status_id == STATUS_POISON) {
+        *tile_elem = UI_TILE_CARD_ELEM_POISON;
+    } else if (status_id == STATUS_FREEZE) {
+        *tile_elem = UI_TILE_CARD_ELEM_ICE;
+    } else {
+        *tile_elem = 0; /* Space glyph */
+    }
+
+    /* Weapon icon */
+    if (is_heal || type == BATTLE_CARD_TYPE_HEAL) {
+        *tile_wpn = UI_TILE_CARD_RING;
+    } else if (type == BATTLE_CARD_TYPE_SHIELD) {
+        *tile_wpn = UI_TILE_CARD_SHIELD;
+    } else if (type == BATTLE_CARD_TYPE_BOW) {
+        *tile_wpn = UI_TILE_CARD_BOW;
+    } else if (type == BATTLE_CARD_TYPE_DAGGER) {
+        *tile_wpn = UI_TILE_CARD_DAGGER;
+    } else {
+        *tile_wpn = UI_TILE_CARD_SWORD;
+    }
+}
+
+static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
+                                uint8_t status_id, uint8_t is_heal)
+{
+    uint8_t tile_elem, tile_wpn;
     const char *code;
+    volatile uint8_t *dst;
+
     if (type == BATTLE_CARD_TYPE_EMPTY) {
         battle_draw_text_line(x, y, NULL, 3);
         return;
     }
+
     code = battle_card_type_code(type);
-    battle_put_char(x, y, code[0]);
-    battle_put_char((uint8_t)(x + 1), y, code[1]);
-    battle_put_char((uint8_t)(x + 2), y, (char)('0' + value));
+
+    battle_card_icon_tiles(status_id, type, is_heal, &tile_elem, &tile_wpn);
+
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+    VBK_REG = 0;
+    battle_vram_sync_write(&dst[0], tile_elem);
+    battle_vram_sync_write(&dst[1], tile_wpn);
+    battle_vram_sync_write(&dst[2], (uint8_t)('0' - ' ' + value));
+
+    g_ui_screen_buf[y][x] = code[0];
+    g_ui_screen_buf[y][x + 1] = code[1];
+    g_ui_screen_buf[y][x + 2] = (char)('0' + value);
 }
 
 static void battle_draw_enemy_columns(const volatile Battle *battle)
@@ -233,23 +275,61 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
 
 static void battle_draw_hero_row(const volatile Battle *battle)
 {
+    volatile uint8_t *dst;
+
     battle_draw_text_line(0, 6, "HERO        HP:", 15);
     battle_color_span(0, 6, 4, battle_status_color(&s_battle_status[0]));
     battle_draw_num2(15, 6, battle->player.hp);
     battle_put_char(17, 6, '/');
     battle_draw_num2(18, 6, battle->player.max_hp);
+
+    /* Stream Heart icon at col 11 into VRAM (in front of HP:) */
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)6 << 5) + 11);
+    VBK_REG = 0;
+    battle_vram_sync_write(dst, UI_TILE_HEART);
+    battle_color_span(11, 6, 1, UI_COLOR_FIRE);
 }
 
-/* Draw-pile counter under the hero HP: shows how many cards are still in
- * the deck, so the player can see a reshuffle coming.  Same formula as the
- * harness's battle_draw_remaining semantic.  The pile only changes at deal,
- * turn-start draws and reshuffles -- all sites set BATTLE_DIRTY_ALL, so
- * firing on BATTLE_DIRTY_HERO can never leave this line stale. */
+/* AP shown in the badge during a decision phase: the phase pool minus the
+ * cost already reserved by the pending combo, so the counter ticks down as
+ * the player adds cards (nav_hand_playable gates on the same remainder).
+ * Outside the decision phases the pool has already been paid down at play
+ * time, so show it as-is.  Gating guarantees reserved never exceeds energy. */
+static uint8_t battle_energy_display(const volatile Battle *b)
+{
+    uint8_t i, reserved = 0;
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT ||
+        b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        for (i = 0; i < b->combo_count; i++) {
+            reserved += b->hand[b->selected_indices[i]].cost;
+        }
+    }
+    return (uint8_t)(b->energy - reserved);
+}
+
+/* Draw-pile & Energy/Action-Points counter line (under the hero HP):
+ * Left side: [🎴]DECK: count (with card stack icon at col 0)
+ * Right side (under HP): [⚡]AP: energy/max (with lightning bolt icon at col 11) */
 static void battle_draw_deck_line(const volatile Battle *battle)
 {
-    battle_draw_text_line(13, 7, "DECK:", 5);
-    battle_draw_num2(18, 7,
+    volatile uint8_t *dst;
+
+    battle_draw_text_line(0, 7, " DECK:      AP:", 15);
+    battle_draw_num2(7, 7,
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
+    battle_draw_num2(15, 7, battle_energy_display(battle));
+    battle_put_char(17, 7, '/');
+    battle_draw_num2(18, 7, BATTLE_ENERGY_PER_TURN);
+
+    /* Stream Deck icon at col 0 and Lightning Bolt icon at col 11 into VRAM */
+    VBK_REG = 0;
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 0);
+    battle_vram_sync_write(dst, UI_TILE_DECK);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 11);
+    battle_vram_sync_write(dst, UI_TILE_BOLT);
+
+    battle_color_span(0, 7, 1, UI_COLOR_IRON);
+    battle_color_span(11, 7, 1, UI_COLOR_GOLD);
 }
 
 /* Tier display names (docs/combo-system.md hand table).  Rows live in
@@ -370,13 +450,11 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
                 break;
             }
         }
-        battle_draw_card_at(col, 14, ctype, cvalue);
-        /* Color the code + its selection digit by the card's effect.
+        uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
+        battle_draw_card_at(col, 14, ctype, cvalue, cstat, is_heal);
+        /* Color the icon + power digit by the card's material and elemental effect.
          * Poison grey-out (status.h): greyed player cards render dim. */
-        ccolor = battle_color_class(cstat,
-                                    (cring != 0) ||
-                                    (ctype == BATTLE_CARD_TYPE_HEAL) ||
-                                    (ceffect == CARD_EFFECT_HEAL_HP));
+        ccolor = battle_card_color(ctype, cstat, is_heal);
         if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
             ccolor = UI_COLOR_DIM;
         }
@@ -404,6 +482,47 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 }
 
 /* ── Banked entry point ────────────────────────────────────────────────── */
+
+/* Full English description for a synthesized loot card (§34.5).
+ * Decodes the abbreviated name components into readable words
+ * (e.g. "W P DA" → "WOOD POISON DAGGER").  Stored in a file-static
+ * buffer so bank-3 code never grows the stack under the harness. */
+static char s_reveal_full_name[20];
+
+static void loot_build_full_name(const CardDefinition *card)
+{
+    char *d = s_reveal_full_name;
+    const char *s;
+
+    switch (card->name[0]) {
+        case 'W': s = "WOOD"; break;
+        case 'B': s = "BRONZE"; break;
+        case 'I': s = "IRON"; break;
+        case 'M': s = "MYTHRIL"; break;
+        default:  s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+
+    switch (card->status_id) {
+        case STATUS_POISON: s = " POISON"; break;
+        case STATUS_BURN:   s = " FIRE"; break;
+        case STATUS_FREEZE: s = " ICE"; break;
+        default:            s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+
+    *d++ = ' ';
+    switch (card->battle_type) {
+        case BATTLE_CARD_TYPE_SWORD:   s = "SWORD"; break;
+        case BATTLE_CARD_TYPE_SHIELD:  s = "SHIELD"; break;
+        case BATTLE_CARD_TYPE_BOW:     s = "BOW"; break;
+        case BATTLE_CARD_TYPE_HEAL:    s = "RING"; break;
+        case BATTLE_CARD_TYPE_DAGGER:  s = "DAGGER"; break;
+        default:                       s = ""; break;
+    }
+    while (*s) *d++ = *s++;
+    *d = '\0';
+}
 
 void ui_update_battle_banked(void)
 {
@@ -455,19 +574,50 @@ void ui_update_battle_banked(void)
     if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
-            /* Loot reveal (docs/loot.md §34.5): a two-line centered
-             * "YOU FOUND:" block over the otherwise-blank rows 11-12,
-             * with the card name colored by its effect. */
-            uint8_t len = 0, x;
-            uint8_t ncolor;
-            battle_draw_banner_line(11, "YOU FOUND:", 20);
-            battle_draw_banner_line(12, g_card_scratch.name, 20);
+            /* Loot reveal (docs/loot.md §34.5): three-line centered block
+             * on the otherwise-blank rows 10-12:
+             *   row 10: "YOU FOUND:"
+             *   row 11: [element][weapon] icon tiles + identity name
+             *   row 12: full English description (e.g. "WOOD POISON DAGGER")
+             * All three lines share the card's effect color. */
+            uint8_t len = 0, x, block;
+            uint8_t ncolor, tile_elem, tile_wpn;
+            volatile uint8_t *dst;
+
+            battle_draw_banner_line(10, "YOU FOUND:", 20);
+
+            /* Row 11: icons + abbreviated name */
             while (len < 20 && g_card_scratch.name[len]) len++;
-            x = (uint8_t)((20 - len) / 2);
-            ncolor = battle_color_class(
+            block = (uint8_t)(3 + len);
+            x = (uint8_t)((20 - block) / 2);
+            battle_draw_text_line(0, 11, NULL, 20);
+            battle_card_icon_tiles(g_card_scratch.status_id,
+                                   g_card_scratch.battle_type,
+                                   (g_card_scratch.battle_type ==
+                                    BATTLE_CARD_TYPE_HEAL) ||
+                                   (g_card_scratch.effect ==
+                                    CARD_EFFECT_HEAL_HP),
+                                   &tile_elem, &tile_wpn);
+            dst = (volatile uint8_t *)(0x9800 + (11u << 5) + x);
+            VBK_REG = 0;
+            battle_vram_sync_write(dst, tile_elem);
+            battle_vram_sync_write(dst + 1, tile_wpn);
+            battle_draw_text_line((uint8_t)(x + 3), 11, g_card_scratch.name,
+                                  (uint8_t)(20 - x - 3));
+            ncolor = battle_card_color(
+                g_card_scratch.battle_type,
                 g_card_scratch.status_id,
                 (g_card_scratch.battle_type == BATTLE_CARD_TYPE_HEAL) ||
                 (g_card_scratch.effect == CARD_EFFECT_HEAL_HP));
+            battle_color_span(x, 11, block, ncolor);
+
+            /* Row 12: full English description, centered */
+            loot_build_full_name(&g_card_scratch);
+            len = 0;
+            while (len < 20 && s_reveal_full_name[len]) len++;
+            x = (uint8_t)((20 - len) / 2);
+            battle_draw_text_line(x, 12, s_reveal_full_name,
+                                  (uint8_t)(20 - x));
             battle_color_span(x, 12, len, ncolor);
         } else {
             battle_draw_text_line(0, 12,

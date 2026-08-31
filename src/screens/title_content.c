@@ -1,4 +1,4 @@
-#pragma bank 2
+#pragma bank 4
 #pragma disable_warning 110
 
 #include "ui.h"
@@ -25,14 +25,8 @@ extern uint8_t g_sound_enabled;
 static void title_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
-        __asm
-            di
-        __endasm;
         while (STAT_REG & 0x02);
         *dst = tile;
-        __asm
-            ei
-        __endasm;
     } else {
         *dst = tile;
     }
