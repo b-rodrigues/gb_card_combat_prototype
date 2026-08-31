@@ -19,7 +19,10 @@ void battle_card_undo_banked(void)
 
     if (b->combo_count > 0) {
         b->cursor_pos = b->selected_indices[--b->combo_count];
-        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+        /* BATTLE_DIRTY_HERO: the deck/AP line (row 7) shows the un-reserved
+         * energy, so unselecting a card must redraw it too, or the AP badge
+         * stays stale while the combo is being built. */
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC | BATTLE_DIRTY_HERO);
     } else if (b->phase == BATTLE_PHASE_PLAYER_SELECT) {
         b->result = BATTLE_RESULT_FLED;
         b->phase = BATTLE_PHASE_RESULT;

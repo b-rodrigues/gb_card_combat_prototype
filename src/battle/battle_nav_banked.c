@@ -146,7 +146,10 @@ static void nav_card_select(Battle *b)
 
     if (b->combo_count < BATTLE_HAND_SIZE) {
         b->selected_indices[b->combo_count++] = b->cursor_pos;
-        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC);
+        /* BATTLE_DIRTY_HERO: the deck/AP line (row 7) draws the un-reserved
+         * energy, so it must redraw on every selection/undo or the AP badge
+         * goes stale while the combo is being built. */
+        b->dirty |= (BATTLE_DIRTY_COMBO | BATTLE_DIRTY_HAND | BATTLE_DIRTY_DESC | BATTLE_DIRTY_HERO);
 
         next_pos = b->cursor_pos;
         for (step = 1; step < BATTLE_HAND_SIZE; step++) {

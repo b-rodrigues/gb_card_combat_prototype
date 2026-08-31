@@ -279,6 +279,23 @@ static void battle_draw_hero_row(const volatile Battle *battle)
     battle_color_span(11, 6, 1, UI_COLOR_FIRE);
 }
 
+/* AP shown in the badge during a decision phase: the phase pool minus the
+ * cost already reserved by the pending combo, so the counter ticks down as
+ * the player adds cards (nav_hand_playable gates on the same remainder).
+ * Outside the decision phases the pool has already been paid down at play
+ * time, so show it as-is.  Gating guarantees reserved never exceeds energy. */
+static uint8_t battle_energy_display(const volatile Battle *b)
+{
+    uint8_t i, reserved = 0;
+    if (b->phase == BATTLE_PHASE_PLAYER_SELECT ||
+        b->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        for (i = 0; i < b->combo_count; i++) {
+            reserved += b->hand[b->selected_indices[i]].cost;
+        }
+    }
+    return (uint8_t)(b->energy - reserved);
+}
+
 /* Draw-pile & Energy/Action-Points counter line (under the hero HP):
  * Left side: [🎴]DECK: count (with card stack icon at col 0)
  * Right side (under HP): [⚡]AP: energy/max (with lightning bolt icon at col 11) */
@@ -289,7 +306,7 @@ static void battle_draw_deck_line(const volatile Battle *battle)
     battle_draw_text_line(0, 7, " DECK:      AP:", 15);
     battle_draw_num2(7, 7,
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
-    battle_draw_num2(15, 7, battle->energy);
+    battle_draw_num2(15, 7, battle_energy_display(battle));
     battle_put_char(17, 7, '/');
     battle_draw_num2(18, 7, BATTLE_ENERGY_PER_TURN);
 
