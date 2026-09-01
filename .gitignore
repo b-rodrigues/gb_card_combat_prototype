@@ -13,3 +13,4 @@ build/*
 *.cdb
 __pycache__/
 *.pyc
+generated/

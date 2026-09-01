@@ -73,9 +73,50 @@
             platforms = platforms.linux;
           };
         };
+        hugetracker = pkgs.stdenv.mkDerivation rec {
+          pname = "hugetracker";
+          version = "1.0.11";
+
+          src = pkgs.fetchzip {
+            url = "https://github.com/SuperDisk/hUGETracker/releases/download/v${version}/hUGETracker-${version}-linux.zip";
+            sha256 = "0nbgm80nwy78hz9hy3z181h39ahj4swgqcpx9317361pvvj58dl9";
+            stripRoot = false;
+          };
+
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = with pkgs; [
+            stdenv.cc.cc.lib
+            fontconfig
+            pango
+            cairo
+            atk
+            gtk2-x11
+            gdk-pixbuf
+            glib
+            libx11
+            SDL2
+          ];
+
+          installPhase = ''
+            mkdir -p $out/bin $out/share/hugetracker
+            cp -r * $out/share/hugetracker/
+            ln -s $out/share/hugetracker/hUGETracker $out/bin/hUGETracker
+            ln -s $out/share/hugetracker/hUGETracker $out/bin/hugetracker
+            ln -s $out/share/hugetracker/uge2source $out/bin/uge2source
+            ln -s $out/share/hugetracker/rgbasm $out/bin/rgbasm-huge
+          '';
+
+          meta = with pkgs.lib; {
+            description = "A music tracker for the Nintendo Game Boy";
+            homepage = "https://github.com/SuperDisk/hUGETracker";
+            license = licenses.gpl3Only;
+            platforms = platforms.linux;
+          };
+        };
       in
       {
         packages.gbdk = gbdk;
+        packages.hugetracker = hugetracker;
 
         devShells.default = pkgs.mkShell {
           name = "gb-dev-shell";
@@ -85,6 +126,7 @@
 
           buildInputs = [
             gbdk
+            hugetracker
             pkgs.rgbds
             pkgs.sameboy
             pkgs.mgba

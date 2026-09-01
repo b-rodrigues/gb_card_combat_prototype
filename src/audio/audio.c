@@ -1,5 +1,7 @@
 #include "audio.h"
 #include "telemetry.h"
+#include "huge_music.h"
+#include "huge_music_data.h"
 
 MusicTrack g_audio_current_track = MUSIC_NONE;
 uint8_t g_sound_enabled = 1;
@@ -7,13 +9,13 @@ static uint8_t step_counter = 0;
 static uint8_t note_index = 0;
 
 /* ── SFX layer ──────────────────────────────────────────────────────
- * Music runs on channel 1 (see play_note / audio_update below).  Effect
- * sounds use channels 2 and 4 so they never collide with the music
- * channel.  CH2 (NR21-NR24) carries the menu blips and the block thump;
- * CH4 (NR41-NR44) is the hardware white-noise generator, used for the
- * attack/hit swishes (a clearly distinct voice, needs no wave RAM).
- * A tiny one-entry sequencer steps the armed sound to silence over the
- * ISR timer clock. */
+ * Music runs on channel 1 (see play_note / audio_update below) or via
+ * hUGEDriver.  Effect sounds use channels 2 and 4 so they never collide
+ * with the CH1 music voice.  CH2 (NR21-NR24) carries the menu blips and
+ * the block thump; CH4 (NR41-NR44) is the hardware white-noise generator,
+ * used for the attack/hit swishes (a clearly distinct voice, needs no
+ * wave RAM).  When hUGEDriver music is active, channels 2 and 4 are muted
+ * during SFX playback and unmuted once the SFX envelope concludes. */
 #define SFX_ENVELOPE_ON 0xF4
 #define SFX_ENVELOPE_OFF 0x00
 static uint8_t sfx_active = 0;
@@ -27,6 +29,7 @@ void audio_play_sfx(uint8_t s)
      * volume decay envelope.  SFX_ATTACK (player slash) is a slightly
      * longer, rougher burst than SFX_HIT (enemy strikes the player). */
     if (s == SFX_ATTACK || s == SFX_HIT) {
+        huge_music_mute_channel(HT_CH4, HT_CH_MUTE);
         NR41_REG = 0x0F;
         NR42_REG = (s == SFX_ATTACK) ? 0xF2 : 0xE2;
         NR43_REG = (s == SFX_ATTACK) ? 0x58 : 0x6C;
@@ -51,6 +54,7 @@ void audio_play_sfx(uint8_t s)
         case SFX_CONFIRM: pitch = 0x45; break;
         default:         pitch = 0x64; break;
         }
+        huge_music_mute_channel(HT_CH2, HT_CH_MUTE);
         NR21_REG = 0x80;
         NR22_REG = SFX_ENVELOPE_ON;
         NR23_REG = pitch;
@@ -91,7 +95,7 @@ static const uint8_t lacrimosa_notes[32] = {
     5, 4, 3, 4,  3, 1, 1, 0
 };
 
-/* Battle: Vivaldi's "Summer" Presto (Four Seasons, RV 315 3rd mvt.) */
+/* Battle: Vivaldi's "Summer" Presto (Four Seasons, RV 315 3rd mvt.) - legacy fallback */
 static const uint8_t summer_notes[32] = {
     5, 5, 7, 7,  8, 8, 9, 9,
     9, 10, 11, 8, 12, 8, 6, 6,
@@ -159,6 +163,7 @@ void audio_init(void)
     g_audio_current_track = MUSIC_NONE;
     step_counter = 0;
     note_index = 0;
+    huge_music_init();
 
     TAC_REG = 0x00;
     TMA_REG = 0x00;
@@ -180,10 +185,14 @@ void audio_play_music(MusicTrack track)
     g_audio_current_track = MUSIC_NONE;
     step_counter = 0;
     note_index = 0;
+    huge_music_stop();
+    play_note(0);
+
     g_audio_current_track = track;
-    if (track == MUSIC_NONE) {
-        play_note(0);
+    if (track == MUSIC_BATTLE) {
+        huge_music_play(&song_battle);
     }
+
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
      * the track actually changes, so callers never forget it. */
     telemetry_emit(EVENT_MUSIC_CHANGED, track, 0, 0, 0);
@@ -225,8 +234,10 @@ void audio_update(void)
         if (sfx_ticks == 0) {
             if (sfx_active == 2) {
                 NR42_REG = 0x00;
+                huge_music_mute_channel(HT_CH4, HT_CH_PLAY);
             } else {
                 NR22_REG = SFX_ENVELOPE_OFF;
+                huge_music_mute_channel(HT_CH2, HT_CH_PLAY);
             }
             sfx_active = 0;
         } else {
@@ -235,6 +246,11 @@ void audio_update(void)
     }
 
     if (g_audio_current_track == MUSIC_NONE) return;
+
+    if (huge_music_is_playing()) {
+        huge_music_update();
+        return;
+    }
 
     notes = s_track_notes[g_audio_current_track];
     if (!notes) return;
