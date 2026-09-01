@@ -1329,6 +1329,23 @@ after boot init.
 
 Audio transitions must emit telemetry.
 
+## 35.1 Tracker Music Architecture (hUGEDriver in Bank 6)
+
+Soundtrack tracks authored in **hUGETracker** (`.uge`, e.g. `assets/music/Battle BGM.uge`) are compiled to C via `uge2source` into `generated/music/` and driven by **hUGEDriver**:
+
+* **ROM Bank 6 Isolation**:
+  * Both the driver assembly (`lib/hUGEDriver/src/hUGEDriver.asm` via `tools/rgb2sdas.py -b 6`) and converted track data (`#pragma bank 6`) live strictly in **ROM Bank 6**.
+  * This keeps the fixed Bank 0/1 memory budget (`_CODE`/`_HOME`) clean and prevents ROM0 overflow.
+* **Tick Division (64 Hz from 256 Hz Timer)**:
+  * The hardware timer ISR (`src/crt0.s`) calls `audio_update()` at **256 Hz**.
+  * `huge_music_update()` divides this rate by 4 (`++divider >= 4`), stepping `hUGE_dosound()` at a steady **64 Hz** tracker clock.
+* **Bank-Switch & Interrupt Safety**:
+  * User-space APIs (`huge_music_play`, `huge_music_mute_channel`, `huge_music_stop`) are wrapped in `__critical` (`di`/`ei`).
+  * When switching to Bank 6 (`*(volatile uint8_t *)0x2000 = 6`), they always restore the architectural home bank (`*(volatile uint8_t *)0x2000 = 1`) before leaving.
+* **SFX Coexistence (Channel Muting)**:
+  * Sound effects (CH2 tone pulses, CH4 noise bursts) call `huge_music_mute_channel(HT_CH2 / HT_CH4, HT_CH_MUTE)` on playback start.
+  * When the SFX completes, `audio_update()` restores the channel with `HT_CH_PLAY` so the tracker music continues seamlessly without channel clicks.
+
 ---
 
 # 36. Targeted Redrawing
