@@ -11,3 +11,9 @@ Source
 - https://gumpyfunction.itch.io/game-boy-rpg-fantasy-tileset-free/download/eyJpZCI6MTQ2MjI1MiwiZXhwaXJlcyI6MTc4Njg2NTAzNn0%3d%2eFqIDWjIVQyOBNEQhUrHXk0R6soc%3d 
 - https://opengameart.org/content/8x8-icons-and-symbols
 - https://opengameart.org/content/intrepid-monochrome-8-bit-font
+
+Assets made by Putosaure are licensed under the CC BY-NC-ND 4.0:
+
+- desolate_landscape.png
+- assets/music/Battle BGM.uge
+- assets/music/desolate_landscape.uge
