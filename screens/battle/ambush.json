@@ -1,0 +1,25 @@
+{
+  "$schema": "./schema/battle.schema.json",
+  "id": "ambush",
+  "label": "Ambush Battle (3 enemies spread)",
+  "max_enemies": 3,
+  "allowed_categories": ["minion", "elite"],
+  "enemy_positions": [
+    {"x": 0, "y": 2},
+    {"x": 1, "y": 3},
+    {"x": 2, "y": 2}
+  ],
+  "timer_config": {
+    "overworld_ticks": 43,
+    "battle_ticks": 17
+  },
+  "hud_layout": {
+    "enemy_row_start": 2,
+    "enemy_row_step": 1,
+    "deck_row": 7,
+    "combo_row_start": 13,
+    "combo_row_step": 1,
+    "timer_row": 15,
+    "caret_x": 3
+  }
+}

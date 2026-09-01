@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema/enemy_type.schema.json",
+  "id": "slime_lord",
+  "label": "Lord of Slimes",
+  "category": "boss",
+  "sprite": "battle.slime_lord",
+  "name": "LORD OF SLIMES",
+  "hp": 50,
+  "max_hp": 50,
+  "battle_id": "BATTLE_SLIME_LORD",
+  "ai_types": ["AI_NONE"],
+  "gold_reward": 50,
+  "reward_currency": "CURRENCY_ID_GOLD"
+}

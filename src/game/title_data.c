@@ -24,9 +24,9 @@ uint8_t const g_title_prompt_x = 5;
 uint8_t const g_title_prompt_y = 16;
 
 const char g_title_menu_options[4][20+1] = {
-"> NEW GAME          "
-"> CONTINUE          "
-"> SOUND             "
+"> NEW GAME          ",
+"> CONTINUE          ",
+"> SOUND             ",
 "> TUTORIAL          "
 };
 

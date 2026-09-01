@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "screens/schema/enemy_type.schema.json",
+  "title": "Enemy Type Definition",
+  "description": "Semantic source of truth for an enemy type. The web enemy type editor and the JSON->C compiler both read this; it must not be edited by hand except through the editor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "label", "category", "sprite", "name", "hp", "max_hp", "battle_id", "gold_reward", "reward_currency"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z_]+$",
+      "description": "Unique identifier for this enemy type (lowercase, underscores only)."
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "Human-readable label for the editor."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["minion", "elite", "boss"],
+      "description": "Enemy category for battle screen filtering."
+    },
+    "sprite": {
+      "type": "string",
+      "description": "Tile ID for battle rendering (tileset.tile_id format, e.g., 'battle.slime')."
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "Display name shown in battle UI (e.g., 'SLIME')."
+    },
+    "hp": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255,
+      "description": "Base HP for this enemy type."
+    },
+    "max_hp": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255,
+      "description": "Base maximum HP for this enemy type."
+    },
+    "battle_id": {
+      "type": "string",
+      "pattern": "^BATTLE_[A-Z_]+$",
+      "description": "Engine battle ID constant (e.g., BATTLE_SLIME, BATTLE_BOSS)."
+    },
+    "ai_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["AI_NONE", "AI_PATROL_CROSS", "AI_PATROL_CIRCLE"]
+      },
+      "description": "Valid AI types for this enemy type."
+    },
+    "gold_reward": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255,
+      "description": "Gold granted on defeat."
+    },
+    "reward_currency": {
+      "type": "string",
+      "pattern": "^CURRENCY_ID_[A-Z_]+$",
+      "description": "Currency ID granted on defeat (e.g., CURRENCY_ID_GOLD)."
+    }
+  }
+}

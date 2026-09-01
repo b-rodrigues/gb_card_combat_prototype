@@ -1,102 +1,63 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "screens/schema/battle.schema.json",
-  "title": "Battle Screen Content",
-  "description": "Semantic source of truth for the Game Boy battle screen. The web battle editor and the JSON->C compiler both read this; it must not be edited by hand except through the editor.",
+  "title": "Battle Screen Definition",
+  "description": "Semantic source of truth for a battle screen layout. The web battle editor and the JSON->C compiler both read this; it must not be edited by hand except through the editor.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["title", "grid_width", "grid_height", "enemies", "player_hp", "player_max_hp", "deck_size", "deck_cards", "combo_options", "timer_config", "hud_layout"],
+  "required": ["id", "label", "max_enemies", "allowed_categories", "enemy_positions", "timer_config", "hud_layout"],
   "properties": {
-    "title": {
+    "id": {
       "type": "string",
-      "description": "Game/project title, used for identification and the web editor header."
+      "pattern": "^[a-z_]+$",
+      "description": "Unique identifier for this battle screen (lowercase, underscores only)."
     },
-    "grid_width": {
+    "label": {
+      "type": "string",
+      "maxLength": 30,
+      "description": "Human-readable label for the editor."
+    },
+    "max_enemies": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 20,
-      "description": "Battle char-grid width in characters (the ROM renders a 20-wide ASCII grid)."
+      "maximum": 3,
+      "description": "Maximum number of enemies in this battle screen (1-3)."
     },
-    "grid_height": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 18,
-      "description": "Battle char-grid height in rows (the ROM renders an 18-tall ASCII grid)."
+    "allowed_categories": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["minion", "elite", "boss"]
+      },
+      "description": "Enemy categories allowed in this battle screen."
     },
-    "enemies": {
+    "enemy_positions": {
       "type": "array",
       "minItems": 1,
       "maxItems": 3,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["label", "hp", "max_hp", "x", "y"],
+        "required": ["x", "y"],
         "properties": {
-          "label": {
-            "type": "string",
-            "maxLength": 20,
-            "description": "Enemy name displayed above the HP bar."
-          },
-          "hp": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Current enemy HP display value."
-          },
-          "max_hp": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Maximum enemy HP display value."
-          },
           "x": {
             "type": "integer",
             "minimum": 0,
             "maximum": 19,
-            "description": "X position column on the battle grid."
+            "description": "X position column on the battle grid (0-19)."
           },
           "y": {
             "type": "integer",
             "minimum": 0,
             "maximum": 17,
-            "description": "Y position row on the battle grid (enemy HP bars are at rows 2-4)."
+            "description": "Y position row on the battle grid (0-17)."
           }
         }
-      }
-    },
-    "player_hp": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "Player HP display value."
-    },
-    "player_max_hp": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Player maximum HP display value."
-    },
-    "deck_size": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 7,
-      "description": "Number of cards in the player's deck display."
-    },
-    "deck_cards": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 7,
-      "items": {
-        "type": "string",
-        "maxLength": 20,
-        "description": "Card name displayed in the deck counter at row 7."
-      }
-    },
-    "combo_options": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 3,
-      "items": {
-        "type": "string",
-        "maxLength": 20,
-        "description": "Combo name displayed at rows 13-17 (PAIR, FLUSH, STRAIGHT)."
-      }
+      },
+      "description": "Positions for each enemy slot (must match max_enemies count)."
     },
     "timer_config": {
       "type": "object",
@@ -106,11 +67,13 @@
         "overworld_ticks": {
           "type": "integer",
           "minimum": 1,
+          "maximum": 255,
           "description": "Timer ticks per note in overworld mode (e.g., 43)."
         },
         "battle_ticks": {
           "type": "integer",
           "minimum": 1,
+          "maximum": 255,
           "description": "Timer ticks per note in battle mode (e.g., 17)."
         }
       }

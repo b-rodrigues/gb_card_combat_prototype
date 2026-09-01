@@ -8,8 +8,8 @@
 #include <stdint.h>
 
 const char g_battle_enemies[3][15+1] = {
- "SLIME          "
- "SLIME          "
+ "SLIME          ",
+ "SLIME          ",
  "SLIME          "
  };
 

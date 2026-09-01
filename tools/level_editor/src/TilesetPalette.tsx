@@ -6,6 +6,7 @@ interface TilesetPaletteProps {
   selectedTileId: string;
   onSelectTileset: (tilesetId: string) => void;
   onSelectTile: (tileId: string) => void;
+  categoryFilter?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'all';
 }
 
 export const TilesetPalette: React.FC<TilesetPaletteProps> = ({
@@ -13,8 +14,14 @@ export const TilesetPalette: React.FC<TilesetPaletteProps> = ({
   selectedTileId,
   onSelectTileset,
   onSelectTile,
+  categoryFilter = 'all',
 }) => {
   const currentTileset: TilesetDefinition = BUILTIN_TILESETS[tilesetId] || BUILTIN_TILESETS.forest;
+
+  const filteredTiles = currentTileset.tiles.filter((tile: TileDefinition) => {
+    if (categoryFilter === 'all') return true;
+    return tile.category === categoryFilter;
+  });
 
   return (
     <div className="panel tileset-panel">
@@ -35,7 +42,7 @@ export const TilesetPalette: React.FC<TilesetPaletteProps> = ({
 
       <div className="panel-body">
         <div className="tiles-grid">
-          {currentTileset.tiles.map((tile: TileDefinition) => {
+          {filteredTiles.map((tile: TileDefinition) => {
             const isSelected = selectedTileId === tile.id;
             return (
               <button

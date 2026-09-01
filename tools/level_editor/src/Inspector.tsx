@@ -520,11 +520,13 @@ export const Inspector: React.FC<InspectorProps> = ({
                       }
                     >
                       <option value="">-- None --</option>
-                      {allTiles.map((tile) => (
-                        <option key={tile.id} value={`${tile.id}`}>
-                          {tile.label} ({tile.gb_constant})
-                        </option>
-                      ))}
+                      {allTiles
+                        .filter((tile) => tile.category === 'enemy')
+                        .map((tile) => (
+                          <option key={tile.id} value={`${tile.id}`}>
+                            {tile.label} ({tile.gb_constant})
+                          </option>
+                        ))}
                     </select>
                   </div>
 

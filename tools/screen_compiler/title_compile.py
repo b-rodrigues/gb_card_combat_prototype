@@ -23,7 +23,7 @@ import json
 import argparse
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -257,8 +257,7 @@ def build_title_c_output(data: dict) -> str:
     lines.append("")
     # --- Menu ---
     lines.append("const char g_title_menu_options[%d][%d+1] = {" % (menu_count := len(menu_options), grid_w))
-    for pl in menu_label_parts:
-        lines.append(pl)
+    lines.append(",\n".join(menu_label_parts))
     lines.append("};")
     lines.append("")
     # Menu position
