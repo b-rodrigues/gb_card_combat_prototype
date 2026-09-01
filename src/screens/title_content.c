@@ -22,6 +22,14 @@ extern char g_ui_screen_buf[18][21];
 extern uint8_t ui_font_tile_base;
 extern uint8_t g_sound_enabled;
 
+/* Generated title screen data (bank 4, read directly by the renderer) */
+extern const char g_title_logo[5][21];
+extern uint8_t g_title_logo_x, g_title_logo_y, g_title_logo_count;
+extern const char g_title_prompt_text[21];
+extern uint8_t g_title_prompt_x, g_title_prompt_y;
+extern const char g_title_menu_options[4][21];
+extern uint8_t g_title_menu_x, g_title_menu_caret_x, g_title_menu_first_row, g_title_menu_row_step, g_title_menu_count;
+
 static void title_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
     if (LCDC_REG & 0x80) {
@@ -87,8 +95,8 @@ static const char s_logo[5][20] = {
 static void title_draw_logo(void)
 {
     uint8_t i;
-    for (i = 0; i < 5; i++) {
-        title_draw_text(0, (uint8_t)(i + 1), s_logo[i], 19);
+    for (i = 0; i < g_title_logo_count; i++) {
+        title_draw_text(0, (uint8_t)(i + 1), g_title_logo[i], 19);
     }
 }
 
@@ -112,7 +120,7 @@ void title_content_render(void)
     title_draw_logo();
 
     if (!showing) {
-        title_draw_text(5, 16, "PRESS START", 13);
+        title_draw_text(g_title_prompt_x, g_title_prompt_y, g_title_prompt_text, 13);
     } else {
         title_draw_menu(index);
     }

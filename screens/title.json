@@ -1,0 +1,34 @@
+{
+  "$schema": "./schema/title.schema.json",
+  "title": "Giausar",
+  "grid_width": 20,
+  "grid_height": 18,
+  "logo": {
+    "x": 0,
+    "y": 1,
+    "lines": [
+      "   G I A U S A R",
+      "------------------",
+      "The Waking Whale",
+      " and the Closed",
+      "       Sky"
+    ]
+  },
+  "prompt": {
+    "x": 5,
+    "y": 16,
+    "text": "PRESS START"
+  },
+  "menu": {
+    "x": 3,
+    "caret_x": 3,
+    "first_row": 10,
+    "row_step": 2,
+    "options": [
+      "> NEW GAME",
+      "> CONTINUE",
+      "> SOUND",
+      "> TUTORIAL"
+    ]
+  }
+}
