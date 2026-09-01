@@ -16,7 +16,12 @@ JOBS ?= auto
 GB_LITE = $(BUILD_DIR)/gb_lite.lib
 SM83_LITE = $(BUILD_DIR)/sm83_lite.lib
 
-INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game
+GENERATED_MUSIC_DIR = generated/music
+RGBASM_HUGE ?= $(shell command -v rgbasm-huge 2>/dev/null || echo rgbasm)
+RGB2SDAS = python3 tools/rgb2sdas.py
+UGE2SOURCE = uge2source
+
+INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR)
 
 SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 
@@ -26,13 +31,20 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS))
-OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS))
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c
+MUSIC_OBJS = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/music/%.o,$(MUSIC_SRCS))
+MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/music/%.o,$(MUSIC_SRCS))
+
+HUGEDRIVER_OBJ = $(BUILD_DIR)/lib/hUGEDriver.o
+HUGEDRIVER_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver.o
+
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(HUGEDRIVER_OBJ)
+OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
 
 # Emulator detection
 EMULATOR ?= $(shell command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music clean
 
 all: $(TARGET)
 
@@ -132,6 +144,32 @@ $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
+music: $(MUSIC_SRCS)
+
+$(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge | $(GENERATED_MUSIC_DIR)
+	$(UGE2SOURCE) "$<" -b 6 song_battle "$@"
+
+$(GENERATED_MUSIC_DIR):
+	mkdir -p $(GENERATED_MUSIC_DIR)
+
+$(BUILD_DIR)/music/%.o: $(GENERATED_MUSIC_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c $(INCLUDES) -o $@ $<
+
+$(BUILD_DIR)/debug/music/%.o: $(GENERATED_MUSIC_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
+
+$(HUGEDRIVER_OBJ): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/lib/hUGEDriver.obj $<
+	$(RGB2SDAS) -b 6 -o $@ $(BUILD_DIR)/lib/hUGEDriver.obj
+
+$(HUGEDRIVER_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/debug/lib/hUGEDriver.obj $<
+	$(RGB2SDAS) -b 6 -o $@ $(BUILD_DIR)/debug/lib/hUGEDriver.obj
+
 $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)
 
@@ -142,12 +180,12 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
@@ -265,4 +303,4 @@ memmap: debug
 	@python3 tools/memmap.py $(BUILD_DIR)/rpg_card_proto_debug.map
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(GENERATED_MUSIC_DIR)
