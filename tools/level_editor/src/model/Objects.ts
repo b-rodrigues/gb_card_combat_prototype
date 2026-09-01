@@ -17,6 +17,10 @@ export interface LevelObject {
     y: number;
   };
   properties?: Record<string, any>;
+  // Sprite/tile configuration for cross-context reuse (overworld + battle)
+  overworld_sprite?: string;  // tileset.tile_name for overworld rendering
+  battle_sprite?: string;     // tileset.tile_name for battle rendering
+  battle_name?: string;       // name shown in battle UI (overrides display_name)
 }
 
 export interface ObjectTemplate {
@@ -37,7 +41,10 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
     icon: '👤',
     defaultProps: {
       display_name: 'VILLAGER',
-      dialogue: 'DIALOGUE_ID_MAYOR_GREETING'
+      dialogue: 'DIALOGUE_ID_MAYOR_GREETING',
+      overworld_sprite: 'interior.villager',
+      battle_sprite: '',
+      battle_name: 'VILLAGER'
     }
   },
   {
@@ -49,7 +56,10 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
     defaultProps: {
       display_name: 'SLIME',
       battle: 'BATTLE_SLIME',
-      ai: 'AI_PATROL_CROSS'
+      ai: 'AI_PATROL_CROSS',
+      overworld_sprite: 'exterior.slime',
+      battle_sprite: 'battle.slime',
+      battle_name: 'SLIME'
     }
   },
   {

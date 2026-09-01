@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer } from './LayerPanel';
+import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 
 interface InspectorProps {
   level: EditorLevel;
@@ -39,6 +40,9 @@ export const Inspector: React.FC<InspectorProps> = ({
   onDeleteRegion,
 }) => {
   const [tab, setTab] = useState<'context' | 'map'>('context');
+
+  // Collect all tiles from all tilesets for the tile selector
+  const allTiles: TileDefinition[] = Object.values(BUILTIN_TILESETS).flatMap(ts => ts.tiles);
 
   const selectedExit = activeLayer === 'exits' && selectedEntityIndex !== null ? level.exits[selectedEntityIndex] : null;
   const selectedObject = activeLayer === 'objects' && selectedEntityIndex !== null ? level.objects[selectedEntityIndex] : null;
@@ -463,6 +467,130 @@ export const Inspector: React.FC<InspectorProps> = ({
                     </select>
                   </div>
                 )}
+
+                {selectedObject.type === 'npc' && (
+                  <div className="form-group">
+                    <label>Dialogue ID</label>
+                    <input
+                      type="text"
+                      value={selectedObject.properties?.dialogue || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          properties: { ...selectedObject.properties, dialogue: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                )}
+
+                {/* Sprite/Tile Configuration */}
+                <div className="inspector-section">
+                  <h5>🎨 Sprite/Tile Configuration</h5>
+                  
+                  <div className="form-group">
+                    <label>Overworld Sprite</label>
+                    <select
+                      value={selectedObject.overworld_sprite || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          overworld_sprite: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">-- None --</option>
+                      {allTiles.map((tile) => (
+                        <option key={tile.id} value={`${tile.id}`}>
+                          {tile.label} ({tile.gb_constant})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Battle Sprite</label>
+                    <select
+                      value={selectedObject.battle_sprite || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          battle_sprite: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">-- None --</option>
+                      {allTiles.map((tile) => (
+                        <option key={tile.id} value={`${tile.id}`}>
+                          {tile.label} ({tile.gb_constant})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Battle Name</label>
+                    <input
+                      type="text"
+                      value={selectedObject.battle_name || selectedObject.properties?.display_name || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          battle_name: e.target.value,
+                        })
+                      }
+                      placeholder="Name shown in battle UI"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Sprite Width (tiles)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="4"
+                        value={selectedObject.properties?.sprite_width || 1}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            properties: { ...selectedObject.properties, sprite_width: parseInt(e.target.value) || 1 },
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Sprite Height (tiles)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="4"
+                        value={selectedObject.properties?.sprite_height || 1}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            properties: { ...selectedObject.properties, sprite_height: parseInt(e.target.value) || 1 },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Battle ID</label>
+                    <input
+                      type="text"
+                      value={selectedObject.properties?.battle || ''}
+                      onChange={(e) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          properties: { ...selectedObject.properties, battle: e.target.value },
+                        })
+                      }
+                      placeholder="e.g., BATTLE_SLIME, BATTLE_BOSS"
+                    />
+                  </div>
+                </div>
 
                 {selectedObject.type === 'npc' && (
                   <div className="form-group">

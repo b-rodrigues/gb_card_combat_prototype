@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "screens/schema/battle.schema.json",
+  "title": "Battle Screen Content",
+  "description": "Semantic source of truth for the Game Boy battle screen. The web battle editor and the JSON->C compiler both read this; it must not be edited by hand except through the editor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "grid_width", "grid_height", "enemies", "player_hp", "player_max_hp", "deck_size", "deck_cards", "combo_options", "timer_config", "hud_layout"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Game/project title, used for identification and the web editor header."
+    },
+    "grid_width": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Battle char-grid width in characters (the ROM renders a 20-wide ASCII grid)."
+    },
+    "grid_height": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 18,
+      "description": "Battle char-grid height in rows (the ROM renders an 18-tall ASCII grid)."
+    },
+    "enemies": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "hp", "max_hp", "x", "y"],
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Enemy name displayed above the HP bar."
+          },
+          "hp": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Current enemy HP display value."
+          },
+          "max_hp": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum enemy HP display value."
+          },
+          "x": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 19,
+            "description": "X position column on the battle grid."
+          },
+          "y": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 17,
+            "description": "Y position row on the battle grid (enemy HP bars are at rows 2-4)."
+          }
+        }
+      }
+    },
+    "player_hp": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Player HP display value."
+    },
+    "player_max_hp": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Player maximum HP display value."
+    },
+    "deck_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 7,
+      "description": "Number of cards in the player's deck display."
+    },
+    "deck_cards": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "items": {
+        "type": "string",
+        "maxLength": 20,
+        "description": "Card name displayed in the deck counter at row 7."
+      }
+    },
+    "combo_options": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "maxLength": 20,
+        "description": "Combo name displayed at rows 13-17 (PAIR, FLUSH, STRAIGHT)."
+      }
+    },
+    "timer_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overworld_ticks", "battle_ticks"],
+      "properties": {
+        "overworld_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Timer ticks per note in overworld mode (e.g., 43)."
+        },
+        "battle_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Timer ticks per note in battle mode (e.g., 17)."
+        }
+      }
+    },
+    "hud_layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enemy_row_start", "enemy_row_step", "deck_row", "combo_row_start", "combo_row_step", "timer_row", "caret_x"],
+      "properties": {
+        "enemy_row_start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17,
+          "description": "First enemy HP bar row (default: 2)."
+        },
+        "enemy_row_step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Row step between enemy HP bars (default: 1)."
+        },
+        "deck_row": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17,
+          "description": "Player deck counter row (default: 7)."
+        },
+        "combo_row_start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17,
+          "description": "First combo indicator row (default: 13)."
+        },
+        "combo_row_step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Row step between combo indicators (default: 1)."
+        },
+        "timer_row": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17,
+          "description": "Timer bar row (default: 15)."
+        },
+        "caret_x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 19,
+          "description": "Caret column for menu navigation (default: 3)."
+        }
+      }
+    }
+  }
+}

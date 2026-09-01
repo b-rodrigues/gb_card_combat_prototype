@@ -301,6 +301,7 @@ body {
 
 .panel-body {
   padding: 10px 12px;
+  overflow-y: auto;
 }
 
 /* Layer Panel */
