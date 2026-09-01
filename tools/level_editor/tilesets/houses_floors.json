@@ -1,0 +1,20 @@
+{
+  "id": "houses_floors",
+  "label": "Houses - Floors",
+  "tiles": [
+    { "id": "houses_floor_00", "label": "House Floor 00", "gb_constant": "TILE_HOUSES_FLOOR_00", "gb_tile_index": 0, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_00.png" },
+    { "id": "houses_floor_01", "label": "House Floor 01", "gb_constant": "TILE_HOUSES_FLOOR_01", "gb_tile_index": 1, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_01.png" },
+    { "id": "houses_floor_02", "label": "House Floor 02", "gb_constant": "TILE_HOUSES_FLOOR_02", "gb_tile_index": 2, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_02.png" },
+    { "id": "houses_floor_03", "label": "House Floor 03", "gb_constant": "TILE_HOUSES_FLOOR_03", "gb_tile_index": 3, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_03.png" },
+    { "id": "houses_floor_04", "label": "House Floor 04", "gb_constant": "TILE_HOUSES_FLOOR_04", "gb_tile_index": 4, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_04.png" },
+    { "id": "houses_floor_05", "label": "House Floor 05", "gb_constant": "TILE_HOUSES_FLOOR_05", "gb_tile_index": 5, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_05.png" },
+    { "id": "houses_floor_06", "label": "House Floor 06", "gb_constant": "TILE_HOUSES_FLOOR_06", "gb_tile_index": 6, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_06.png" },
+    { "id": "houses_floor_07", "label": "House Floor 07", "gb_constant": "TILE_HOUSES_FLOOR_07", "gb_tile_index": 7, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_07.png" },
+    { "id": "houses_floor_08", "label": "House Floor 08", "gb_constant": "TILE_HOUSES_FLOOR_08", "gb_tile_index": 8, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_08.png" },
+    { "id": "houses_floor_09", "label": "House Floor 09", "gb_constant": "TILE_HOUSES_FLOOR_09", "gb_tile_index": 9, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_09.png" },
+    { "id": "houses_floor_10", "label": "House Floor 10", "gb_constant": "TILE_HOUSES_FLOOR_10", "gb_tile_index": 10, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_10.png" },
+    { "id": "houses_floor_11", "label": "House Floor 11", "gb_constant": "TILE_HOUSES_FLOOR_11", "gb_tile_index": 11, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_11.png" },
+    { "id": "houses_floor_12", "label": "House Floor 12", "gb_constant": "TILE_HOUSES_FLOOR_12", "gb_tile_index": 12, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_12.png" },
+    { "id": "houses_floor_13", "label": "House Floor 13", "gb_constant": "TILE_HOUSES_FLOOR_13", "gb_tile_index": 13, "walkable": true, "color": "#88c070", "ascii": ".", "image_url": "/tiles/houses_floors/houses_floor_13.png" }
+  ]
+}

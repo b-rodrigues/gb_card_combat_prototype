@@ -1,0 +1,14 @@
+{
+  "id": "structures_fences",
+  "label": "Structures - Fences",
+  "tiles": [
+    { "id": "struct_fence_00", "label": "Structure Fence 00", "gb_constant": "TILE_STRUCT_FENCE_00", "gb_tile_index": 0, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_00.png" },
+    { "id": "struct_fence_01", "label": "Structure Fence 01", "gb_constant": "TILE_STRUCT_FENCE_01", "gb_tile_index": 1, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_01.png" },
+    { "id": "struct_fence_02", "label": "Structure Fence 02", "gb_constant": "TILE_STRUCT_FENCE_02", "gb_tile_index": 2, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_02.png" },
+    { "id": "struct_fence_03", "label": "Structure Fence 03", "gb_constant": "TILE_STRUCT_FENCE_03", "gb_tile_index": 3, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_03.png" },
+    { "id": "struct_fence_04", "label": "Structure Fence 04", "gb_constant": "TILE_STRUCT_FENCE_04", "gb_tile_index": 4, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_04.png" },
+    { "id": "struct_fence_05", "label": "Structure Fence 05", "gb_constant": "TILE_STRUCT_FENCE_05", "gb_tile_index": 5, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_05.png" },
+    { "id": "struct_fence_06", "label": "Structure Fence 06", "gb_constant": "TILE_STRUCT_FENCE_06", "gb_tile_index": 6, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_06.png" },
+    { "id": "struct_fence_07", "label": "Structure Fence 07", "gb_constant": "TILE_STRUCT_FENCE_07", "gb_tile_index": 7, "walkable": false, "color": "#704820", "ascii": "#", "image_url": "/tiles/structures_fences/struct_fence_07.png" }
+  ]
+}

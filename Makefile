@@ -84,6 +84,36 @@ gfx:
 	@python3 tools/png2gb.py assets/DungeonTileset.png --name rpg_dungeon_tiles \
 		--palette gb_green \
 		--raw -o $(GFX_OUT_DIR)/rpg_dungeon_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_walls_tiles \
+		--palette gb_green --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 16,0 17,0 18,0 19,0 20,0 21,0 22,0 23,0 24,0 25,0 26,0 27,0" \
+		--raw -o $(GFX_OUT_DIR)/rpg_houses_walls_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_roofs_tiles \
+		--palette gb_green --tile-coords "64,0 65,0 66,0 67,0 68,0 69,0 70,0 71,0 72,0 73,0 74,0 75,0 76,0 77,0" \
+		--raw -o $(GFX_OUT_DIR)/rpg_houses_roofs_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_floors_tiles \
+		--palette gb_green --tile-coords "0,16 1,16 2,16 3,16 4,16 5,16 6,16 7,16 8,16 9,16 10,16 11,16 12,16 13,16" \
+		--raw -o $(GFX_OUT_DIR)/rpg_houses_floors_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_doors_tiles \
+		--palette gb_green --tile-coords "64,16 65,16 66,16 67,16 68,16 69,16" \
+		--raw -o $(GFX_OUT_DIR)/rpg_houses_doors_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_windows_tiles \
+		--palette gb_green --tile-coords "96,16 97,16 98,16 99,16 100,16 101,16" \
+		--raw -o $(GFX_OUT_DIR)/rpg_houses_windows_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_nature_ground_tiles \
+		--palette gb_green --tile-coords "0,32 1,32 2,32 3,32 4,32 5,32 6,32 7,32 8,32 9,32 10,32 11,32 12,32 13,32" \
+		--raw -o $(GFX_OUT_DIR)/rpg_nature_ground_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_nature_vegetation_tiles \
+		--palette gb_green --tile-coords "64,32 65,32 66,32 67,32 68,32 69,32 70,32 71,32 72,32 73,32 74,32 75,32 76,32 77,32" \
+		--raw -o $(GFX_OUT_DIR)/rpg_nature_vegetation_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_objects_furniture_tiles \
+		--palette gb_green --tile-coords "0,48 1,48 2,48 3,48 4,48 5,48 6,48 7,48 8,48 9,48 10,48 11,48 12,48 13,48" \
+		--raw -o $(GFX_OUT_DIR)/rpg_objects_furniture_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_structures_fences_tiles \
+		--palette gb_green --tile-coords "64,48 65,48 66,48 67,48 68,48 69,48 70,48 71,48" \
+		--raw -o $(GFX_OUT_DIR)/rpg_structures_fences_tiles.inc
+	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_structures_props_tiles \
+		--palette gb_green --tile-coords "0,64 1,64 2,64 3,64 4,64 5,64 6,64 7,64" \
+		--raw -o $(GFX_OUT_DIR)/rpg_structures_props_tiles.inc
 	@python3 tools/png2gb.py assets/RPG_forest_tiles.png --name rpg_forest_tiles \
 		--palette gb_green --tile-coords "1,9 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc 2>/dev/null || \

@@ -1628,6 +1628,29 @@ or:
 make run
 ```
 
+## Step 6b — Level-editor-only changes skip the ROM harness
+
+`make test-harness` boots the debug ROM and runs every gameplay scenario.  It
+is only necessary when the ROM's C (or headers, or generated `.inc` tile data)
+changed in a way that could affect gameplay.  Changes confined to the host-side
+level editor — `tools/level_editor/**` (TypeScript, JSON tileset definitions,
+extracted `public/tiles/**` PNGs), `tools/asset_atlas.py`, JSON compilation, or
+`tools/level_editor/extract_tiles.py` — do **not** exercise the ROM:
+`make test-harness` adds no signal and can take many minutes, so skip it.
+
+For host-side-only work the proportional validation is:
+
+* the TypeScript/JSON changes build (`npm run build` in `tools/level_editor/`);
+* any source asset / coordinate mapping is consistent (`make atlas`, and where
+  relevant `python3 tools/asset_atlas.py --check`);
+* if new tileset definitions were added, verify they load in the editor.
+
+If a change *also* regenerates ROM-included tile data (a `make gfx` output such
+as `src/gfx/rpg_*_tiles.inc` linked into the ROM), then `make test` +
+`make memmap` (fixed-bank / memory budget, §55.5) plus the sentinel scenarios
+(§52.19) are the right gate — not the full 174-scenario suite.  Reserve the
+full `make test-harness` for genuine ROM gameplay changes.
+
 ---
 
 # 42. Scenario-Driven Development

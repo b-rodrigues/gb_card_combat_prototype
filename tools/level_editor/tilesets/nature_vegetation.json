@@ -1,0 +1,20 @@
+{
+  "id": "nature_vegetation",
+  "label": "Nature - Vegetation",
+  "tiles": [
+    { "id": "nature_veg_00", "label": "Nature Vegetation 00", "gb_constant": "TILE_NATURE_VEG_00", "gb_tile_index": 0, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_00.png" },
+    { "id": "nature_veg_01", "label": "Nature Vegetation 01", "gb_constant": "TILE_NATURE_VEG_01", "gb_tile_index": 1, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_01.png" },
+    { "id": "nature_veg_02", "label": "Nature Vegetation 02", "gb_constant": "TILE_NATURE_VEG_02", "gb_tile_index": 2, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_02.png" },
+    { "id": "nature_veg_03", "label": "Nature Vegetation 03", "gb_constant": "TILE_NATURE_VEG_03", "gb_tile_index": 3, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_03.png" },
+    { "id": "nature_veg_04", "label": "Nature Vegetation 04", "gb_constant": "TILE_NATURE_VEG_04", "gb_tile_index": 4, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_04.png" },
+    { "id": "nature_veg_05", "label": "Nature Vegetation 05", "gb_constant": "TILE_NATURE_VEG_05", "gb_tile_index": 5, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_05.png" },
+    { "id": "nature_veg_06", "label": "Nature Vegetation 06", "gb_constant": "TILE_NATURE_VEG_06", "gb_tile_index": 6, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_06.png" },
+    { "id": "nature_veg_07", "label": "Nature Vegetation 07", "gb_constant": "TILE_NATURE_VEG_07", "gb_tile_index": 7, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_07.png" },
+    { "id": "nature_veg_08", "label": "Nature Vegetation 08", "gb_constant": "TILE_NATURE_VEG_08", "gb_tile_index": 8, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_08.png" },
+    { "id": "nature_veg_09", "label": "Nature Vegetation 09", "gb_constant": "TILE_NATURE_VEG_09", "gb_tile_index": 9, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_09.png" },
+    { "id": "nature_veg_10", "label": "Nature Vegetation 10", "gb_constant": "TILE_NATURE_VEG_10", "gb_tile_index": 10, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_10.png" },
+    { "id": "nature_veg_11", "label": "Nature Vegetation 11", "gb_constant": "TILE_NATURE_VEG_11", "gb_tile_index": 11, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_11.png" },
+    { "id": "nature_veg_12", "label": "Nature Vegetation 12", "gb_constant": "TILE_NATURE_VEG_12", "gb_tile_index": 12, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_12.png" },
+    { "id": "nature_veg_13", "label": "Nature Vegetation 13", "gb_constant": "TILE_NATURE_VEG_13", "gb_tile_index": 13, "walkable": false, "color": "#205838", "ascii": "#", "image_url": "/tiles/nature_vegetation/nature_veg_13.png" }
+  ]
+}

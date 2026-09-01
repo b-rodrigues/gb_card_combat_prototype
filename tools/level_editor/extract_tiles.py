@@ -35,6 +35,18 @@ TILESET_ID_MAP = {
     "DungeonTileset.png": {
         **{k.lower(): "dungeon" for k in TILESETS["DungeonTileset.png"].keys()},
     },
+    "Houses_and_various_things.png": {
+        **{k.lower(): "houses_walls" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_WALL")},
+        **{k.lower(): "houses_roofs" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_ROOF")},
+        **{k.lower(): "houses_floors" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_FLOOR")},
+        **{k.lower(): "houses_doors" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_DOOR")},
+        **{k.lower(): "houses_windows" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_WINDOW")},
+        **{k.lower(): "nature_ground" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("NATURE_GROUND")},
+        **{k.lower(): "nature_vegetation" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("NATURE_VEG")},
+        **{k.lower(): "objects_furniture" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("OBJECTS_FURN")},
+        **{k.lower(): "structures_fences" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_FENCE")},
+        **{k.lower(): "structures_props" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_PROP")},
+    },
 }
 
 COORDS_MAP = {
@@ -47,6 +59,9 @@ COORDS_MAP = {
     },
     "DungeonTileset.png": {
         **{k.lower(): v for k, v in TILESETS["DungeonTileset.png"].items()},
+    },
+    "Houses_and_various_things.png": {
+        **{k.lower(): v for k, v in TILESETS["Houses_and_various_things.png"].items()},
     },
 }
 
@@ -70,7 +85,7 @@ def upscale_nearest(tile, factor=UPSCALE):
 def main():
     assets_dir = Path(__file__).resolve().parent.parent.parent / "assets"
 
-    for png_name in ["RPG_exterior.png", "RPG_interior.png", "DungeonTileset.png"]:
+    for png_name in ["RPG_exterior.png", "RPG_interior.png", "DungeonTileset.png", "Houses_and_various_things.png"]:
         png_path = assets_dir / png_name
         if not png_path.exists():
             print(f"Missing source: {png_path}", file=sys.stderr)

@@ -4447,6 +4447,11 @@
    "png": "DungeonTileset.png",
    "row": 3
   },
+  "DUNGEON_SOLID_08": {
+   "col": 12,
+   "png": "DungeonTileset.png",
+   "row": 3
+  },
   "DUNGEON_SOLID_09": {
    "col": 11,
    "png": "DungeonTileset.png",
@@ -6347,6 +6352,346 @@
    "png": "intrepid.png",
    "row": 5
   },
+  "HOUSES_DOOR_00": {
+   "col": 64,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_DOOR_01": {
+   "col": 65,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_DOOR_02": {
+   "col": 66,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_DOOR_03": {
+   "col": 67,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_DOOR_04": {
+   "col": 68,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_DOOR_05": {
+   "col": 69,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_00": {
+   "col": 0,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_01": {
+   "col": 1,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_02": {
+   "col": 2,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_03": {
+   "col": 3,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_04": {
+   "col": 4,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_05": {
+   "col": 5,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_06": {
+   "col": 6,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_07": {
+   "col": 7,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_08": {
+   "col": 8,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_09": {
+   "col": 9,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_10": {
+   "col": 10,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_11": {
+   "col": 11,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_12": {
+   "col": 12,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_FLOOR_13": {
+   "col": 13,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_ROOF_00": {
+   "col": 64,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_01": {
+   "col": 65,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_02": {
+   "col": 66,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_03": {
+   "col": 67,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_04": {
+   "col": 68,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_05": {
+   "col": 69,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_06": {
+   "col": 70,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_07": {
+   "col": 71,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_08": {
+   "col": 72,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_09": {
+   "col": 73,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_10": {
+   "col": 74,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_11": {
+   "col": 75,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_12": {
+   "col": 76,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_ROOF_13": {
+   "col": 77,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_00": {
+   "col": 0,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_01": {
+   "col": 1,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_02": {
+   "col": 2,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_03": {
+   "col": 3,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_04": {
+   "col": 4,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_05": {
+   "col": 5,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_06": {
+   "col": 6,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_07": {
+   "col": 7,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_08": {
+   "col": 8,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_09": {
+   "col": 9,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_10": {
+   "col": 10,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_11": {
+   "col": 11,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_12": {
+   "col": 12,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_13": {
+   "col": 13,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_14": {
+   "col": 14,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_15": {
+   "col": 15,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_16": {
+   "col": 16,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_17": {
+   "col": 17,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_18": {
+   "col": 18,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_19": {
+   "col": 19,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_20": {
+   "col": 20,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_21": {
+   "col": 21,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_22": {
+   "col": 22,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_23": {
+   "col": 23,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_24": {
+   "col": 24,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_25": {
+   "col": 25,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_26": {
+   "col": 26,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WALL_27": {
+   "col": 27,
+   "png": "Houses_and_various_things.png",
+   "row": 0
+  },
+  "HOUSES_WINDOW_00": {
+   "col": 96,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_WINDOW_01": {
+   "col": 97,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_WINDOW_02": {
+   "col": 98,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_WINDOW_03": {
+   "col": 99,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_WINDOW_04": {
+   "col": 100,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
+  "HOUSES_WINDOW_05": {
+   "col": 101,
+   "png": "Houses_and_various_things.png",
+   "row": 16
+  },
   "INTERIOR_DOOR": {
    "col": 8,
    "png": "RPG_interior.png",
@@ -6367,10 +6712,300 @@
    "png": "RPG_interior.png",
    "row": 0
   },
+  "NATURE_GROUND_00": {
+   "col": 0,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_01": {
+   "col": 1,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_02": {
+   "col": 2,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_03": {
+   "col": 3,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_04": {
+   "col": 4,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_05": {
+   "col": 5,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_06": {
+   "col": 6,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_07": {
+   "col": 7,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_08": {
+   "col": 8,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_09": {
+   "col": 9,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_10": {
+   "col": 10,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_11": {
+   "col": 11,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_12": {
+   "col": 12,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_GROUND_13": {
+   "col": 13,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_00": {
+   "col": 64,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_01": {
+   "col": 65,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_02": {
+   "col": 66,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_03": {
+   "col": 67,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_04": {
+   "col": 68,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_05": {
+   "col": 69,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_06": {
+   "col": 70,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_07": {
+   "col": 71,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_08": {
+   "col": 72,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_09": {
+   "col": 73,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_10": {
+   "col": 74,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_11": {
+   "col": 75,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_12": {
+   "col": 76,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "NATURE_VEG_13": {
+   "col": 77,
+   "png": "Houses_and_various_things.png",
+   "row": 32
+  },
+  "OBJECTS_FURN_00": {
+   "col": 0,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_01": {
+   "col": 1,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_02": {
+   "col": 2,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_03": {
+   "col": 3,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_04": {
+   "col": 4,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_05": {
+   "col": 5,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_06": {
+   "col": 6,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_07": {
+   "col": 7,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_08": {
+   "col": 8,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_09": {
+   "col": 9,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_10": {
+   "col": 10,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_11": {
+   "col": 11,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_12": {
+   "col": 12,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "OBJECTS_FURN_13": {
+   "col": 13,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
   "PLAYER": {
    "col": 0,
    "png": "player_demo.png",
    "row": 0
+  },
+  "STRUCT_FENCE_00": {
+   "col": 64,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_01": {
+   "col": 65,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_02": {
+   "col": 66,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_03": {
+   "col": 67,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_04": {
+   "col": 68,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_05": {
+   "col": 69,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_06": {
+   "col": 70,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_FENCE_07": {
+   "col": 71,
+   "png": "Houses_and_various_things.png",
+   "row": 48
+  },
+  "STRUCT_PROP_00": {
+   "col": 0,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_01": {
+   "col": 1,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_02": {
+   "col": 2,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_03": {
+   "col": 3,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_04": {
+   "col": 4,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_05": {
+   "col": 5,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_06": {
+   "col": 6,
+   "png": "Houses_and_various_things.png",
+   "row": 64
+  },
+  "STRUCT_PROP_07": {
+   "col": 7,
+   "png": "Houses_and_various_things.png",
+   "row": 64
   },
   "SYM_C03_R02": {
    "col": 3,
