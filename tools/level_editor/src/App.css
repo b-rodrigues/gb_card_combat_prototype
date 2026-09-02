@@ -60,33 +60,50 @@ body {
   font-size: 20px;
 }
 
-.header-presets {
+.header-levels {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.preset-btn {
+.header-levels-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.level-select {
   background: var(--bg-tertiary);
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.preset-btn:hover {
+.level-select:hover,
+.level-select:focus {
   background: #30363d;
   color: #ffffff;
-  border-color: #8b949e;
+  border-color: #58a6ff;
 }
 
-.preset-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
+.level-select optgroup {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.level-select option {
+  background: var(--bg-tertiary);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 400;
 }
 
 /* App Layout */

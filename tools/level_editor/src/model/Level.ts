@@ -76,10 +76,13 @@ export interface EditorLevel {
 
 export function createEmptyEditorLevel(id: string = 'new_scene', tilesetId: string = 'forest', width: number = 20, height: number = 18): EditorLevel {
   const grid: string[][] = [];
+  const tileset = getTileset(tilesetId);
+  const defaultFloor = tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
+
   for (let y = 0; y < height; y++) {
     const row: string[] = [];
     for (let x = 0; x < width; x++) {
-      row.push('floor');
+      row.push(defaultFloor);
     }
     grid.push(row);
   }
@@ -105,7 +108,7 @@ export function levelDataToEditor(data: LevelData): EditorLevel {
   const h = data.map.height;
   const tilesetId = data.map.tileset || 'forest';
   const tileset = getTileset(tilesetId);
-  const defaultFloor = 'floor';
+  const defaultFloor = tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
 
   const grid: string[][] = [];
   for (let y = 0; y < h; y++) {

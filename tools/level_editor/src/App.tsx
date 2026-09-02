@@ -11,24 +11,32 @@ import { downloadLevelJson } from './io/saveLevel';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS } from './model/Tileset';
 
-// Built-in presets matching repository levels
+// Built-in levels from repository
 import forestData from '../../../levels/forest.json';
-import townData from '../../../levels/town.json';
 import fieldData from '../../../levels/field.json';
+import southFieldData from '../../../levels/south_field.json';
+import townData from '../../../levels/town.json';
 import mountainPassData from '../../../levels/mountain_pass.json';
 import castleData from '../../../levels/castle.json';
 
-const PRESETS: Record<string, any> = {
-  forest: forestData,
-  town: townData,
-  field: fieldData,
-  mountain_pass: mountainPassData,
-  castle: castleData,
-};
+interface ExistingLevelItem {
+  id: string;
+  name: string;
+  data: any;
+}
+
+const EXISTING_LEVELS: ExistingLevelItem[] = [
+  { id: 'forest', name: forestData.name || 'Forest', data: forestData },
+  { id: 'field', name: fieldData.name || 'Field', data: fieldData },
+  { id: 'south_field', name: southFieldData.name || 'Desolate South Field', data: southFieldData },
+  { id: 'town', name: townData.name || 'Town', data: townData },
+  { id: 'mountain_pass', name: mountainPassData.name || 'Mountain Pass', data: mountainPassData },
+  { id: 'castle', name: castleData.name || 'Castle', data: castleData },
+];
 
 export const App: React.FC = () => {
   const [level, setLevel] = useState<EditorLevel>(() => levelDataToEditor(forestData as any));
-  const [activePreset, setActivePreset] = useState<string>('forest');
+  const [currentLevelId, setCurrentLevelId] = useState<string>('forest');
 
   // Tool & Layer State
   const [activeTool, setActiveTool] = useState<ToolType>('brush');
@@ -117,14 +125,32 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [level, history, redoStack]);
 
-  // Load Preset
-  const handleLoadPreset = (key: string) => {
-    if (PRESETS[key]) {
-      const parsed = levelDataToEditor(PRESETS[key]);
+  // Select level from dropdown
+  const handleSelectLevel = (selectedId: string) => {
+    if (selectedId === '__new__') {
+      handleCreateNewLevel();
+      return;
+    }
+
+    const found = EXISTING_LEVELS.find((l) => l.id === selectedId);
+    if (found) {
+      const parsed = levelDataToEditor(found.data);
       pushState(parsed);
-      setActivePreset(key);
+      setCurrentLevelId(selectedId);
       setSelectedEntityIndex(null);
     }
+  };
+
+  // Create new level
+  const handleCreateNewLevel = () => {
+    const id = prompt('Enter new level ID (e.g. desert_ruins):', 'new_level');
+    if (!id) return;
+    const cleanId = id.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'new_level';
+    const empty = createEmptyEditorLevel(cleanId, 'forest', 20, 18);
+    empty.name = cleanId.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    pushState(empty);
+    setCurrentLevelId(cleanId);
+    setSelectedEntityIndex(null);
   };
 
   // Drawing Actions
@@ -404,17 +430,34 @@ export const App: React.FC = () => {
           <span className="brand-icon">🎮</span>
           <span>Game Boy RPG Level Editor</span>
         </div>
-        <div className="header-presets">
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Presets:</span>
-          {Object.keys(PRESETS).map((key) => (
-            <button
-              key={key}
-              className={`preset-btn ${activePreset === key ? 'active' : ''}`}
-              onClick={() => handleLoadPreset(key)}
-            >
-              {key.replace(/_/g, ' ').toUpperCase()}
-            </button>
-          ))}
+        <div className="header-levels">
+          <label htmlFor="level-select-dropdown" className="header-levels-label">
+            Level:
+          </label>
+          <select
+            id="level-select-dropdown"
+            className="level-select"
+            value={currentLevelId}
+            onChange={(e) => handleSelectLevel(e.target.value)}
+          >
+            <optgroup label="Existing Levels">
+              {EXISTING_LEVELS.map((lvl) => (
+                <option key={lvl.id} value={lvl.id}>
+                  {lvl.name} ({lvl.id}.json)
+                </option>
+              ))}
+            </optgroup>
+            {!EXISTING_LEVELS.some((l) => l.id === currentLevelId) && (
+              <optgroup label="Current Level">
+                <option value={currentLevelId}>
+                  {level.name || currentLevelId} ({currentLevelId}.json)
+                </option>
+              </optgroup>
+            )}
+            <optgroup label="Actions">
+              <option value="__new__">➕ + New Level...</option>
+            </optgroup>
+          </select>
         </div>
       </header>
 
@@ -438,18 +481,14 @@ export const App: React.FC = () => {
             try {
               const res = await promptLoadLevelFile();
               pushState(res.level);
-              setActivePreset('');
+              setCurrentLevelId(res.level.id);
             } catch (err) {
               alert(`Failed to load level: ${err}`);
             }
           }}
           onValidate={() => setShowValidateModal(true)}
           onDescribe={() => setShowDescribeModal(true)}
-          onNew={() => {
-            const empty = createEmptyEditorLevel('new_scene', 'forest', 20, 18);
-            pushState(empty);
-            setActivePreset('');
-          }}
+          onNew={handleCreateNewLevel}
         />
 
         <div className="main-content">
