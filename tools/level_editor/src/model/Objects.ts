@@ -23,6 +23,10 @@ export interface LevelObject {
   animation_speed?: number;   // Animation ticks per frame (default 16 or 250ms)
   battle_sprite?: string;     // tileset.tile_name for battle rendering
   battle_name?: string;       // name shown in battle UI (overrides display_name)
+  sprite_width?: number;      // Width in tiles (e.g. 9 for a 9x9 boss meta-tile)
+  sprite_height?: number;     // Height in tiles (e.g. 9 for a 9x9 boss meta-tile)
+  is_boss?: boolean;          // Flag indicating this is a boss
+  meta_tiles?: string[][];    // 2D grid of tile identifiers (e.g. 9x9 tiles)
 }
 
 export interface ObjectTemplate {
@@ -62,6 +66,24 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
       overworld_sprite: 'exterior.slime',
       battle_sprite: 'battle.slime',
       battle_name: 'SLIME'
+    }
+  },
+  {
+    type: 'enemy',
+    label: 'Boss Enemy (9x9 Meta-Tile)',
+    defaultId: 'enemy_boss',
+    color: '#8e44ad',
+    icon: '👑',
+    defaultProps: {
+      display_name: 'LORD GIAUSAR',
+      battle: 'BATTLE_BOSS',
+      ai: 'AI_NONE',
+      is_boss: true,
+      sprite_width: 9,
+      sprite_height: 9,
+      overworld_sprite: 'dungeon.wall',
+      battle_sprite: 'boss.giausar',
+      battle_name: 'LORD GIAUSAR'
     }
   },
   {

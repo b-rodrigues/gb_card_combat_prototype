@@ -38,5 +38,26 @@
     "combo_row_start": 9,
     "combo_row_step": 1,
     "caret_x": 3
+  },
+  "boss_meta_tile": {
+    "enabled": true,
+    "width": 9,
+    "height": 9,
+    "x": 5,
+    "y": 1,
+    "name": "LORD GIAUSAR",
+    "hp": 100,
+    "max_hp": 100,
+    "tiles": [
+      ["dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.stairs_down", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall"],
+      ["dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall"],
+      ["dungeon.floor", "dungeon.floor", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.floor", "dungeon.floor"],
+      ["dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.floor"],
+      ["dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down"],
+      ["dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor"],
+      ["dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor"],
+      ["dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall"],
+      ["dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.wall", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall"]
+    ]
   }
 }

@@ -109,6 +109,28 @@
         "combo_row_step": { "type": "integer", "minimum": 1 },
         "caret_x": { "type": "integer", "minimum": 0, "maximum": 19 }
       }
+    },
+    "boss_meta_tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Whether this battle features a 9x9 boss meta-tile." },
+        "width": { "type": "integer", "minimum": 1, "maximum": 12, "description": "Meta-tile width in tiles (default 9)." },
+        "height": { "type": "integer", "minimum": 1, "maximum": 12, "description": "Meta-tile height in tiles (default 9)." },
+        "x": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Col position on battle screen (default 5)." },
+        "y": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Row position on battle screen (default 1)." },
+        "name": { "type": "string", "maxLength": 30, "description": "Boss display name." },
+        "hp": { "type": "integer", "minimum": 1, "description": "Boss initial HP." },
+        "max_hp": { "type": "integer", "minimum": 1, "description": "Boss maximum HP." },
+        "tiles": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "2D array of tile identifiers or ASCII characters for the boss meta-tile."
+        }
+      }
     }
   }
 }

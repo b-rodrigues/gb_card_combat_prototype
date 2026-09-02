@@ -295,62 +295,147 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         bannerRow * tileSize + tileSize * 0.5
       );
 
-      // 4. Enemy Roster (Rows 1–4)
-      const enemyCols = [
-        layout.enemy_col_start ?? 1,
-        (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7),
-        (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7) * 2,
-      ];
-      const enemyHps = ['10/10', '10/10', '02/10'];
+      // 4. Enemy Roster OR 9x9 Boss Meta-Tile
+      const isBossBattle = !!(
+        level.bossMetaTile?.enabled ||
+        level.id === 'boss' ||
+        level.id.includes('boss') ||
+        level.originalScreenData?.allowed_categories?.includes('boss')
+      );
 
-      enemyCols.forEach((colX, idx) => {
-        const cx = (colX + 1.5) * tileSize;
-        // Enemy HP Text above sprite
-        ctx.fillStyle = '#593c28';
-        ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.65))}px monospace`;
+      if (isBossBattle) {
+        const boss = level.bossMetaTile || {};
+        const bw = (boss.width || 9) * tileSize;
+        const bh = (boss.height || 9) * tileSize;
+        const bx = (boss.x ?? 5) * tileSize;
+        const by = (boss.y ?? 1) * tileSize;
+        const wobble = animTick % 2 === 0 ? 1 : 0;
+
+        // Boss Header (HP & Name)
+        ctx.fillStyle = '#8e44ad';
+        ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.7))}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
+        ctx.fillText(
+          `👑 ${boss.name || 'LORD GIAUSAR'} [HP: ${boss.hp || 100}/${boss.max_hp || 100}]`,
+          canvasWidth / 2,
+          Math.max(12, by - tileSize * 0.2 + wobble)
+        );
 
-        // Slime Sprite (Rows 2–3)
-        const sx = (colX + 0.3) * tileSize;
-        const sy = (enemySpriteRow + 0.1) * tileSize;
-        const sw = 2.4 * tileSize;
-        const sh = 1.8 * tileSize;
+        // Ominous Boss Aura / Shadow
+        ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
+        ctx.fillRect(bx - 4, by - 2 + wobble, bw + 8, bh + 4);
 
-        // Wobble on animTick
-        const wobble = (animTick % 2 === idx % 2) ? 1 : 0;
+        // 9x9 Boss Meta-Tile Grid Base
+        ctx.fillStyle = '#1e1b4b';
+        ctx.fillRect(bx, by + wobble, bw, bh);
 
-        // Slime body
-        ctx.fillStyle = '#72b847';
-        ctx.beginPath();
-        ctx.ellipse(cx, sy + sh * 0.55 + wobble, sw * 0.48, sh * 0.44, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#4e852d';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        // Render each tile in the 9x9 meta-tile matrix
+        const tiles = boss.tiles;
+        const tileDim = tileSize;
+        for (let r = 0; r < (boss.height || 9); r++) {
+          for (let c = 0; c < (boss.width || 9); c++) {
+            const cellX = bx + c * tileDim;
+            const cellY = by + r * tileDim + wobble;
 
-        // Eyes
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(cx - sw * 0.22, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
-        ctx.fillRect(cx + sw * 0.12, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+            let cellTileKey: string | null = null;
+            if (tiles && tiles[r] && tiles[r][c]) {
+              cellTileKey = tiles[r][c];
+            }
 
-        // Pupils
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(cx - sw * 0.18, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
-        ctx.fillRect(cx + sw * 0.16, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+            if (cellTileKey) {
+              const spriteId = cellTileKey.includes('.') ? cellTileKey.split('.')[1] : cellTileKey;
+              const img = tileImages.get(spriteId);
+              if (img && img.complete && img.naturalWidth > 0) {
+                ctx.drawImage(img, cellX, cellY, tileDim, tileDim);
+              } else {
+                ctx.fillStyle = (r + c) % 2 === 0 ? '#450a0a' : '#7f1d1d';
+                ctx.fillRect(cellX, cellY, tileDim, tileDim);
+                ctx.font = `bold ${Math.max(7, Math.floor(tileDim * 0.45))}px monospace`;
+                ctx.fillStyle = '#fca5a5';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cellTileKey.slice(0, 2), cellX + tileDim / 2, cellY + tileDim / 2);
+              }
+            } else {
+              ctx.fillStyle = (r + c) % 2 === 0 ? '#312e81' : '#1e1b4b';
+              ctx.fillRect(cellX, cellY, tileDim, tileDim);
+            }
 
-        // Open mouth
-        ctx.fillStyle = '#1c1c1c';
-        ctx.beginPath();
-        ctx.ellipse(cx, sy + sh * 0.65 + wobble, sw * 0.18, sh * 0.12, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
+            // Inner subtle cell border
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.2)';
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(cellX, cellY, tileDim, tileDim);
+          }
+        }
 
-      // Target arrow under enemy 1 (middle)
-      ctx.fillStyle = '#593c28';
-      ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+        // Meta-tile outer frame
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bx, by + wobble, bw, bh);
+
+        // Target arrow under boss
+        ctx.fillStyle = '#dc2626';
+        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⬆', canvasWidth / 2, by + bh + tileSize * 0.45);
+      } else {
+        const enemyCols = [
+          layout.enemy_col_start ?? 1,
+          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7),
+          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7) * 2,
+        ];
+        const enemyHps = ['10/10', '10/10', '02/10'];
+
+        enemyCols.forEach((colX, idx) => {
+          const cx = (colX + 1.5) * tileSize;
+          // Enemy HP Text above sprite
+          ctx.fillStyle = '#593c28';
+          ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.65))}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
+
+          // Slime Sprite (Rows 2–3)
+          const sx = (colX + 0.3) * tileSize;
+          const sy = (enemySpriteRow + 0.1) * tileSize;
+          const sw = 2.4 * tileSize;
+          const sh = 1.8 * tileSize;
+
+          // Wobble on animTick
+          const wobble = animTick % 2 === idx % 2 ? 1 : 0;
+
+          // Slime body
+          ctx.fillStyle = '#72b847';
+          ctx.beginPath();
+          ctx.ellipse(cx, sy + sh * 0.55 + wobble, sw * 0.48, sh * 0.44, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#4e852d';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Eyes
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx - sw * 0.22, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+          ctx.fillRect(cx + sw * 0.12, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+
+          // Pupils
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(cx - sw * 0.18, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+          ctx.fillRect(cx + sw * 0.16, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+
+          // Open mouth
+          ctx.fillStyle = '#1c1c1c';
+          ctx.beginPath();
+          ctx.ellipse(cx, sy + sh * 0.65 + wobble, sw * 0.18, sh * 0.12, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Target arrow under enemy 1 (middle)
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+      }
 
       // 5. Dual-Column Hero & Status Panel (Rows 6 & 7)
       ctx.font = `bold ${fontScale}px monospace`;
@@ -615,47 +700,109 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       });
     }
 
-    // 7. Render Objects / NPCs / Enemies
+    // 7. Render Objects / NPCs / Enemies (supporting 9x9 Boss Meta-Tiles)
     if (showObjects && level.objects) {
       level.objects.forEach((obj, idx) => {
         const isSelected = activeLayer === 'objects' && selectedEntityIndex === idx;
         const px = obj.position.x * tileSize;
         const py = obj.position.y * tileSize;
+        const wTiles = obj.sprite_width || (obj.is_boss ? 9 : 1);
+        const hTiles = obj.sprite_height || (obj.is_boss ? 9 : 1);
+        const objW = wTiles * tileSize;
+        const objH = hTiles * tileSize;
 
         const tmpl = OBJECT_TEMPLATES.find((t) => t.type === obj.type);
-        const color = tmpl ? tmpl.color : '#9b59b6';
+        const color = obj.is_boss ? '#8e44ad' : tmpl ? tmpl.color : '#9b59b6';
 
-        // Draw entity circle / box
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(px + tileSize / 2, py + tileSize / 2, Math.max(1.5, tileSize * 0.38), 0, Math.PI * 2);
-        ctx.fill();
+        if (wTiles > 1 || hTiles > 1 || obj.is_boss) {
+          // ── RENDER 9x9 / LARGE BOSS META-TILE ──
+          ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
+          ctx.fillRect(px, py, objW, objH);
 
-        ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = isSelected ? 2 : 1;
-        ctx.stroke();
+          if (obj.meta_tiles && obj.meta_tiles.length > 0) {
+            for (let r = 0; r < Math.min(hTiles, obj.meta_tiles.length); r++) {
+              for (let c = 0; c < Math.min(wTiles, (obj.meta_tiles[r] || []).length); c++) {
+                const cellTileKey = obj.meta_tiles[r][c];
+                const cellX = px + c * tileSize;
+                const cellY = py + r * tileSize;
+                if (cellTileKey) {
+                  const spriteId = cellTileKey.includes('.') ? cellTileKey.split('.')[1] : cellTileKey;
+                  const img = tileImages.get(spriteId);
+                  if (img && img.complete && img.naturalWidth > 0) {
+                    ctx.drawImage(img, cellX, cellY, tileSize, tileSize);
+                  } else {
+                    ctx.fillStyle = (r + c) % 2 === 0 ? '#4a1d96' : '#6b21a8';
+                    ctx.fillRect(cellX, cellY, tileSize, tileSize);
+                  }
+                }
+                ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(cellX, cellY, tileSize, tileSize);
+              }
+            }
+          } else {
+            let spriteId: string | null = null;
+            if (obj.animation_frames && obj.animation_frames.length > 0) {
+              const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
+              spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+            } else if (obj.overworld_sprite) {
+              spriteId = obj.overworld_sprite.includes('.')
+                ? obj.overworld_sprite.split('.')[1]
+                : obj.overworld_sprite;
+            }
 
-        // Sprite image (animated or static) or fallback icon
-        if (tileSize >= 16) {
-          let spriteId: string | null = null;
-          if (obj.animation_frames && obj.animation_frames.length > 0) {
-            const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
-            spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
-          } else if (obj.overworld_sprite) {
-            spriteId = obj.overworld_sprite.includes('.')
-              ? obj.overworld_sprite.split('.')[1]
-              : obj.overworld_sprite;
+            const spriteImg = spriteId ? tileImages.get(spriteId) : null;
+            if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+              ctx.drawImage(spriteImg, px + 4, py + 4, objW - 8, objH - 8);
+            }
           }
 
-          const spriteImg = spriteId ? tileImages.get(spriteId) : null;
-          if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(spriteImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
-          } else {
-            ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+          // Boss Frame
+          ctx.strokeStyle = isSelected ? '#f59e0b' : '#a855f7';
+          ctx.lineWidth = isSelected ? 3 : 2;
+          ctx.strokeRect(px, py, objW, objH);
+
+          // Header badge
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fillRect(px, py, Math.min(objW, 140), Math.min(objH, 20));
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.45))}px monospace`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`👑 ${wTiles}×${hTiles} ${obj.properties?.display_name || obj.id}`, px + 4, py + 10);
+        } else {
+          // Standard 1x1 object
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(px + tileSize / 2, py + tileSize / 2, Math.max(1.5, tileSize * 0.38), 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(0,0,0,0.5)';
+          ctx.lineWidth = isSelected ? 2 : 1;
+          ctx.stroke();
+
+          // Sprite image (animated or static) or fallback icon
+          if (tileSize >= 16) {
+            let spriteId: string | null = null;
+            if (obj.animation_frames && obj.animation_frames.length > 0) {
+              const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
+              spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+            } else if (obj.overworld_sprite) {
+              spriteId = obj.overworld_sprite.includes('.')
+                ? obj.overworld_sprite.split('.')[1]
+                : obj.overworld_sprite;
+            }
+
+            const spriteImg = spriteId ? tileImages.get(spriteId) : null;
+            if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(spriteImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
+            } else {
+              ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+            }
           }
         }
       });
@@ -750,10 +897,17 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
     // Select / Move Mode
     if (activeTool === 'select' || activeLayer === 'objects' || activeLayer === 'exits') {
-      // Check if clicked an object
-      const objIndex = level.objects.findIndex(
-        (o) => o.position.x === coords.x && o.position.y === coords.y
-      );
+      // Check if clicked an object (supporting 9x9 and multi-tile boss bounds)
+      const objIndex = level.objects.findIndex((o) => {
+        const ow = o.sprite_width || (o.is_boss ? 9 : 1);
+        const oh = o.sprite_height || (o.is_boss ? 9 : 1);
+        return (
+          coords.x >= o.position.x &&
+          coords.x < o.position.x + ow &&
+          coords.y >= o.position.y &&
+          coords.y < o.position.y + oh
+        );
+      });
       if (objIndex !== -1) {
         onSelectEntityIndex(objIndex);
         setDraggingEntity({ type: 'object', index: objIndex });

@@ -4,6 +4,51 @@ import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 
+const BOSS_9X9_TEMPLATES: Record<string, { name: string; tiles: string[][] }> = {
+  dragon: {
+    name: 'COLOSSAL DRAGON',
+    tiles: [
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor'],
+      ['dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor'],
+      ['dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down'],
+      ['dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor'],
+      ['dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
+    ]
+  },
+  demon: {
+    name: 'DEMON OVERLORD',
+    tiles: [
+      ['dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall'],
+      ['dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall'],
+      ['dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor'],
+      ['dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
+    ]
+  },
+  titan: {
+    name: 'OBSIDIAN TITAN',
+    tiles: [
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
+      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
+    ]
+  }
+};
+
 interface InspectorProps {
   level: EditorLevel;
   activeLayer: EditLayer;
@@ -256,6 +301,245 @@ export const Inspector: React.FC<InspectorProps> = ({
                   })
                 }
               />
+            </div>
+
+            {/* 👑 Boss 9x9 Meta-Tile Configuration */}
+            <div className="form-group" style={{ background: 'rgba(142, 68, 173, 0.15)', border: '1px solid #8e44ad', borderRadius: 6, padding: 8, margin: '8px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>👑 Boss 9×9 Meta-Tile</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <input
+                    type="checkbox"
+                    checked={level.bossMetaTile?.enabled ?? (level.id === 'boss' || level.id.includes('boss'))}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        bossMetaTile: {
+                          ...(level.bossMetaTile || { width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', hp: 100, max_hp: 100, tiles: BOSS_9X9_TEMPLATES.dragon.tiles }),
+                          enabled: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  Enable Boss Meta-Tile
+                </label>
+              </div>
+
+              {(level.bossMetaTile?.enabled ?? (level.id === 'boss' || level.id.includes('boss'))) && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6 }}>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Boss Name</label>
+                      <input
+                        type="text"
+                        value={level.bossMetaTile?.name ?? 'LORD GIAUSAR'}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, hp: 100, max_hp: 100 }),
+                              name: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>HP</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={level.bossMetaTile?.hp ?? 100}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', max_hp: 100 }),
+                              hp: parseInt(e.target.value) || 100,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Max HP</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={level.bossMetaTile?.max_hp ?? 100}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', hp: 100 }),
+                              max_hp: parseInt(e.target.value) || 100,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, margin: '6px 0' }}>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Col X</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={19}
+                        value={level.bossMetaTile?.x ?? 5}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, y: 1 }),
+                              x: parseInt(e.target.value) || 0,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Row Y</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={17}
+                        value={level.bossMetaTile?.y ?? 1}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5 }),
+                              y: parseInt(e.target.value) || 0,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Width</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={level.bossMetaTile?.width ?? 9}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, height: 9, x: 5, y: 1 }),
+                              width: parseInt(e.target.value) || 9,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Height</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={level.bossMetaTile?.height ?? 9}
+                        onChange={(e) =>
+                          onUpdateLevelMeta({
+                            bossMetaTile: {
+                              ...(level.bossMetaTile || { enabled: true, width: 9, x: 5, y: 1 }),
+                              height: parseInt(e.target.value) || 9,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* 9x9 Quick Templates */}
+                  <div style={{ margin: '6px 0' }}>
+                    <label style={{ fontSize: 10, color: '#cbd5e1' }}>9×9 Boss Presets:</label>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                      {Object.entries(BOSS_9X9_TEMPLATES).map(([key, tmpl]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          className="btn btn-sm"
+                          style={{ fontSize: 10, padding: '2px 6px' }}
+                          onClick={() =>
+                            onUpdateLevelMeta({
+                              bossMetaTile: {
+                                ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1 }),
+                                name: tmpl.name,
+                                tiles: JSON.parse(JSON.stringify(tmpl.tiles)),
+                              },
+                            })
+                          }
+                        >
+                          👑 {tmpl.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 9x9 Tile Matrix Visual Editor */}
+                  <label style={{ fontSize: 11 }}>9×9 Meta-Tile Matrix Grid (Click cell to cycle tile):</label>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${level.bossMetaTile?.width || 9}, 18px)`,
+                      gap: 2,
+                      background: '#090d16',
+                      padding: 6,
+                      borderRadius: 4,
+                      justifyContent: 'center',
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {Array.from({ length: level.bossMetaTile?.height || 9 }).map((_, r) =>
+                      Array.from({ length: level.bossMetaTile?.width || 9 }).map((_, c) => {
+                        const curTile = level.bossMetaTile?.tiles?.[r]?.[c] || 'dungeon.floor';
+                        const tDef = allTilesWithScope.find((t) => t.scopedId === curTile || t.id === curTile);
+                        return (
+                          <div
+                            key={`${r}-${c}`}
+                            title={`[${r},${c}] ${curTile}`}
+                            onClick={() => {
+                              const newTiles = level.bossMetaTile?.tiles
+                                ? JSON.parse(JSON.stringify(level.bossMetaTile.tiles))
+                                : Array.from({ length: 9 }, () => Array(9).fill('dungeon.floor'));
+                              while (newTiles.length <= r) newTiles.push(Array(9).fill('dungeon.floor'));
+                              while (newTiles[r].length <= c) newTiles[r].push('dungeon.floor');
+                              newTiles[r][c] =
+                                curTile === 'dungeon.wall'
+                                  ? 'dungeon.stairs_down'
+                                  : curTile === 'dungeon.stairs_down'
+                                  ? 'dungeon.floor'
+                                  : 'dungeon.wall';
+                              onUpdateLevelMeta({
+                                bossMetaTile: {
+                                  ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1 }),
+                                  tiles: newTiles,
+                                },
+                              });
+                            }}
+                            style={{
+                              width: 18,
+                              height: 18,
+                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                              borderRadius: 2,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: curTile.includes('wall') ? '#450a0a' : curTile.includes('stairs') ? '#7f1d1d' : '#1e1b4b',
+                            }}
+                          >
+                            {tDef?.image_url ? (
+                              <img src={tDef.image_url} alt="" style={{ width: 14, height: 14, imageRendering: 'pixelated' }} />
+                            ) : (
+                              <span style={{ fontSize: 8, color: '#fca5a5' }}>{curTile.slice(0, 2)}</span>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Enemy Roster Layout */}
@@ -1603,6 +1887,174 @@ export const Inspector: React.FC<InspectorProps> = ({
                       })
                     }
                   />
+                </div>
+
+                {/* 👑 Boss Meta-Tile (e.g. 9x9 Boss) */}
+                <div className="form-group" style={{ background: 'rgba(142, 68, 173, 0.15)', border: '1px solid #8e44ad', borderRadius: 6, padding: 8, margin: '8px 0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>👑 Boss Meta-Tile</label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedObject.is_boss ?? (selectedObject.sprite_width === 9)}
+                        onChange={(e) => {
+                          const isBoss = e.target.checked;
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            is_boss: isBoss,
+                            sprite_width: isBoss ? 9 : 1,
+                            sprite_height: isBoss ? 9 : 1,
+                            meta_tiles: isBoss ? (selectedObject.meta_tiles || BOSS_9X9_TEMPLATES.dragon.tiles) : undefined,
+                          });
+                        }}
+                      />
+                      Is Boss
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 6, marginTop: 6, alignItems: 'flex-end' }}>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Width (Tiles)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={selectedObject.sprite_width ?? (selectedObject.is_boss ? 9 : 1)}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            sprite_width: parseInt(e.target.value) || 1,
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11 }}>Height (Tiles)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={selectedObject.sprite_height ?? (selectedObject.is_boss ? 9 : 1)}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            sprite_height: parseInt(e.target.value) || 1,
+                          })
+                        }
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      style={{ height: 32, fontSize: 11 }}
+                      title="Set to 9x9 Colossal Boss Meta-Tile"
+                      onClick={() =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          is_boss: true,
+                          sprite_width: 9,
+                          sprite_height: 9,
+                          meta_tiles: BOSS_9X9_TEMPLATES.dragon.tiles,
+                        })
+                      }
+                    >
+                      👑 9×9 Boss
+                    </button>
+                  </div>
+
+                  {/* Quick Presets if Boss or multi-tile */}
+                  {(selectedObject.is_boss || (selectedObject.sprite_width && selectedObject.sprite_width >= 3)) && (
+                    <div style={{ marginTop: 8 }}>
+                      <label style={{ fontSize: 10, color: '#cbd5e1' }}>9×9 Meta-Tile Presets:</label>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', margin: '4px 0' }}>
+                        {Object.entries(BOSS_9X9_TEMPLATES).map(([key, tmpl]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            className="btn btn-sm"
+                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            onClick={() =>
+                              onUpdateObject(selectedEntityIndex, {
+                                ...selectedObject,
+                                is_boss: true,
+                                sprite_width: 9,
+                                sprite_height: 9,
+                                meta_tiles: JSON.parse(JSON.stringify(tmpl.tiles)),
+                                properties: {
+                                  ...(selectedObject.properties || {}),
+                                  display_name: tmpl.name,
+                                },
+                              })
+                            }
+                          >
+                            👑 {tmpl.name}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* 9x9 Visual Grid */}
+                      <label style={{ fontSize: 11 }}>9×9 Meta-Tile Grid (Click cell to cycle tile):</label>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${selectedObject.sprite_width || 9}, 18px)`,
+                          gap: 2,
+                          background: '#090d16',
+                          padding: 6,
+                          borderRadius: 4,
+                          justifyContent: 'center',
+                          overflowX: 'auto',
+                        }}
+                      >
+                        {Array.from({ length: selectedObject.sprite_height || 9 }).map((_, r) =>
+                          Array.from({ length: selectedObject.sprite_width || 9 }).map((_, c) => {
+                            const curTile = selectedObject.meta_tiles?.[r]?.[c] || 'dungeon.floor';
+                            const tDef = allTilesWithScope.find((t) => t.scopedId === curTile || t.id === curTile);
+                            return (
+                              <div
+                                key={`${r}-${c}`}
+                                title={`[${r},${c}] ${curTile}`}
+                                onClick={() => {
+                                  const newTiles = selectedObject.meta_tiles
+                                    ? JSON.parse(JSON.stringify(selectedObject.meta_tiles))
+                                    : Array.from({ length: 9 }, () => Array(9).fill('dungeon.floor'));
+                                  while (newTiles.length <= r) newTiles.push(Array(9).fill('dungeon.floor'));
+                                  while (newTiles[r].length <= c) newTiles[r].push('dungeon.floor');
+                                  newTiles[r][c] =
+                                    curTile === 'dungeon.wall'
+                                      ? 'dungeon.stairs_down'
+                                      : curTile === 'dungeon.stairs_down'
+                                      ? 'dungeon.floor'
+                                      : 'dungeon.wall';
+                                  onUpdateObject(selectedEntityIndex, {
+                                    ...selectedObject,
+                                    meta_tiles: newTiles,
+                                  });
+                                }}
+                                style={{
+                                  width: 18,
+                                  height: 18,
+                                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                                  borderRadius: 2,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: curTile.includes('wall') ? '#450a0a' : curTile.includes('stairs') ? '#7f1d1d' : '#1e1b4b',
+                                }}
+                              >
+                                {tDef?.image_url ? (
+                                  <img src={tDef.image_url} alt="" style={{ width: 14, height: 14, imageRendering: 'pixelated' }} />
+                                ) : (
+                                  <span style={{ fontSize: 8, color: '#fca5a5' }}>{curTile.slice(0, 2)}</span>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {selectedObject.type === 'enemy' && (
