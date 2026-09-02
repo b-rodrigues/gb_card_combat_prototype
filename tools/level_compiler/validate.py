@@ -30,7 +30,8 @@ KNOWN_SCENES = {
     "town": "SCENE_TOWN",
     "forest": "SCENE_FOREST",
     "mountain_pass": "SCENE_MOUNTAIN_PASS",
-    "castle": "SCENE_CASTLE"
+    "castle": "SCENE_CASTLE",
+    "south_field": "SCENE_SOUTH_FIELD"
 }
 
 KNOWN_MAP_IDS = {
@@ -38,7 +39,8 @@ KNOWN_MAP_IDS = {
     "MAP_TOWN": 1,
     "MAP_FOREST": 2,
     "MAP_MOUNTAIN_PASS": 3,
-    "MAP_CASTLE": 4
+    "MAP_CASTLE": 4,
+    "MAP_SOUTH_FIELD": 5
 }
 
 

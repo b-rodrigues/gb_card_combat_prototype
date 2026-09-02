@@ -35,7 +35,8 @@ typedef enum {
     SCENE_TOWN          = 1,
     SCENE_FOREST        = 2,
     SCENE_MOUNTAIN_PASS = 3,
-    SCENE_CASTLE        = 4
+    SCENE_CASTLE        = 4,
+    SCENE_SOUTH_FIELD   = 5
 } SceneId;
 
 /* ── Screen manager ─────────────────────────────────────────────── */

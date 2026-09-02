@@ -1,0 +1,72 @@
+{
+  "id": "south_field",
+  "name": "Southern Meadow",
+  "map": {
+    "width": 20,
+    "height": 18,
+    "tileset": "exterior",
+    "music": "MUSIC_OVERWORLD",
+    "map_id": "MAP_SOUTH_FIELD"
+  },
+  "layers": {
+    "terrain": [
+      { "x": 4, "y": 4, "width": 2, "height": 2, "tile": "exterior.wall" },
+      { "x": 15, "y": 4, "width": 2, "height": 2, "tile": "exterior.wall" },
+      { "x": 5, "y": 12, "width": 3, "height": 2, "tile": "exterior.wall" },
+      { "x": 14, "y": 12, "width": 3, "height": 2, "tile": "exterior.wall" }
+    ]
+  },
+  "player": {
+    "spawn": {
+      "x": 12,
+      "y": 1,
+      "facing": "DOWN"
+    }
+  },
+  "exits": [
+    {
+      "x": 12,
+      "y": 0,
+      "target_scene": "field",
+      "target_x": 12,
+      "target_y": 16,
+      "direction": "NORTH",
+      "tile_char": "<"
+    }
+  ],
+  "objects": [
+    {
+      "id": "south_slime",
+      "type": "enemy",
+      "position": { "x": 8, "y": 8 },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME",
+        "display_name": "SLIME",
+        "battle": "BATTLE_SLIME",
+        "ai": "AI_PATROL_CROSS"
+      }
+    },
+    {
+      "id": "south_bat",
+      "type": "enemy",
+      "position": { "x": 14, "y": 10 },
+      "properties": {
+        "entity_id": "ENTITY_ID_BAT",
+        "display_name": "BAT",
+        "battle": "BATTLE_BAT",
+        "ai": "AI_PATROL_CIRCLE"
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "southern_wilds",
+      "bounds": { "x": 2, "y": 2, "width": 16, "height": 14 },
+      "description": "Wild plains south of the starting area teeming with roaming monsters.",
+      "gameplay": {
+        "purpose": "combat_exploration",
+        "difficulty": 1
+      }
+    }
+  ]
+}

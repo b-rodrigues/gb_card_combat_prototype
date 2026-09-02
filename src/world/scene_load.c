@@ -20,7 +20,7 @@ void scene_load_tiles_banked(void)
     uint8_t i, x, y;
 
     if (!w) return;
-    if (map_id > MAP_CASTLE) return;
+    if (map_id > MAP_SOUTH_FIELD) return;
     def = &g_scenes[map_id];
 
     for (y = 0; y < w->height; y++) {

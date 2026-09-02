@@ -8,7 +8,7 @@
  */
 
 extern const WorldActorTable g_actor_tables[];
-#define GAME_ACTOR_TABLE_COUNT 5
+#define GAME_ACTOR_TABLE_COUNT 6
 
 void game_actors_register(void)
 {

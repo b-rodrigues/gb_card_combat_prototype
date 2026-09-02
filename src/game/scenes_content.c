@@ -6,12 +6,14 @@
 const SceneExit g_all_exits[] = {
     { 31,  7,  2,  7, SCENE_TOWN,          '>' },
     { 12,  0, 12, 10, SCENE_FOREST,        '>' },
+    { 12, 17, 12,  1, SCENE_SOUTH_FIELD,   '>' },
     {  1,  7, 17,  7, SCENE_FIELD,         '<' },
     { 12, 11, 12,  1, SCENE_FIELD,         '<' },
     { 12,  0, 12, 10, SCENE_MOUNTAIN_PASS, '>' },
     { 12, 11, 12,  1, SCENE_FOREST,        '<' },
     { 12,  0, 10, 10, SCENE_CASTLE,        '>' },
-    { 12, 11, 12,  1, SCENE_MOUNTAIN_PASS, '<' }
+    { 12, 11, 12,  1, SCENE_MOUNTAIN_PASS, '<' },
+    { 12,  0, 12, 16, SCENE_FIELD,         '<' }
 };
 
 static const SceneTerrainBlock s_town_terrain[] = {
@@ -56,10 +58,19 @@ static const SceneTerrainBlock s_castle_terrain[] = {
     { 0, 0, 0, 0, 0 }
 };
 
+static const SceneTerrainBlock s_south_field_terrain[] = {
+    { 4, 4, 2, 2, TILE_WALL },
+    { 15, 4, 2, 2, TILE_WALL },
+    { 5, 12, 3, 2, TILE_WALL },
+    { 14, 12, 3, 2, TILE_WALL },
+    { 0, 0, 0, 0, 0 }
+};
+
 const SceneDefinition g_scenes[] = {
-    { MAP_FIELD,           MUSIC_OVERWORLD,   32, 18, &g_all_exits[0],     2, WORLD_TILESET_EXTERIOR,  0 },
-    { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[2],     1, WORLD_TILESET_EXTERIOR,  s_town_terrain },
-    { MAP_FOREST,          MUSIC_OVERWORLD,   20, 18, &g_all_exits[3],     2, WORLD_TILESET_FOREST,    s_forest_terrain },
-    { MAP_MOUNTAIN_PASS,   MUSIC_OVERWORLD,   20, 18, &g_all_exits[5],     2, WORLD_TILESET_EXTERIOR,  s_mountain_pass_terrain },
-    { MAP_CASTLE,          MUSIC_DUNGEON,     20, 18, &g_all_exits[7],     1, WORLD_TILESET_INTERIOR,  s_castle_terrain }
+    { MAP_FIELD,           MUSIC_OVERWORLD,   32, 18, &g_all_exits[0],     3, WORLD_TILESET_EXTERIOR,  0 },
+    { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[3],     1, WORLD_TILESET_EXTERIOR,  s_town_terrain },
+    { MAP_FOREST,          MUSIC_OVERWORLD,   20, 18, &g_all_exits[4],     2, WORLD_TILESET_FOREST,    s_forest_terrain },
+    { MAP_MOUNTAIN_PASS,   MUSIC_OVERWORLD,   20, 18, &g_all_exits[6],     2, WORLD_TILESET_EXTERIOR,  s_mountain_pass_terrain },
+    { MAP_CASTLE,          MUSIC_DUNGEON,     20, 18, &g_all_exits[8],     1, WORLD_TILESET_INTERIOR,  s_castle_terrain },
+    { MAP_SOUTH_FIELD,     MUSIC_OVERWORLD,   20, 18, &g_all_exits[9],     1, WORLD_TILESET_EXTERIOR,  s_south_field_terrain }
 };

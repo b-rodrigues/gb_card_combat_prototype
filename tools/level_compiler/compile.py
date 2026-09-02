@@ -29,14 +29,15 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from validate import validate_level, load_tilesets
 
 # Canonical scene order matching MapId enum in src/world/world.h
-SCENE_ORDER = ["field", "town", "forest", "mountain_pass", "castle"]
+SCENE_ORDER = ["field", "town", "forest", "mountain_pass", "castle", "south_field"]
 
 MAP_ENUM_MAP = {
     "field": "MAP_FIELD",
     "town": "MAP_TOWN",
     "forest": "MAP_FOREST",
     "mountain_pass": "MAP_MOUNTAIN_PASS",
-    "castle": "MAP_CASTLE"
+    "castle": "MAP_CASTLE",
+    "south_field": "MAP_SOUTH_FIELD"
 }
 
 SCENE_ENUM_MAP = {
@@ -44,7 +45,8 @@ SCENE_ENUM_MAP = {
     "town": "SCENE_TOWN",
     "forest": "SCENE_FOREST",
     "mountain_pass": "SCENE_MOUNTAIN_PASS",
-    "castle": "SCENE_CASTLE"
+    "castle": "SCENE_CASTLE",
+    "south_field": "SCENE_SOUTH_FIELD"
 }
 
 TILESET_KIND_MAP = {

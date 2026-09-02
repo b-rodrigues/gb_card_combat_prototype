@@ -55,7 +55,8 @@ typedef enum {
     MAP_TOWN          = 1,
     MAP_FOREST        = 2,
     MAP_MOUNTAIN_PASS = 3,
-    MAP_CASTLE        = 4
+    MAP_CASTLE        = 4,
+    MAP_SOUTH_FIELD   = 5
 } MapId;
 
 /* A single generic exit tile type; the scene definition owns the

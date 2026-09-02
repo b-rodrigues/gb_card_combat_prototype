@@ -12,7 +12,7 @@ static SceneExit s_exit_scratch;
 
 const SceneDefinition *scene_definition_for_map(MapId map_id)
 {
-    if (map_id > MAP_CASTLE) return NULL;
+    if (map_id > MAP_SOUTH_FIELD) return NULL;
     banked_copy(5, &s_scene_scratch, &g_scenes[map_id], sizeof(SceneDefinition));
     return &s_scene_scratch;
 }

@@ -1,0 +1,56 @@
+{
+  "name": "gate_to_south_field",
+  "test": true,
+  "description": "Walk south on Field into the south exit gate to transition to South Field",
+  "scenario_id": "NEW_GAME",
+  "actions": [
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    }
+  ],
+  "assertions": [
+    {
+      "type": "scene",
+      "expected": "SOUTH_FIELD"
+    },
+    {
+      "type": "screen",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "game_state",
+      "expected": "OVERWORLD"
+    },
+    {
+      "type": "player_position",
+      "expected_x": 12,
+      "expected_y": 1
+    },
+    {
+      "type": "event_occurred",
+      "event": "MAP_CHANGED"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 12,
+      "y": 15,
+      "facing": "DOWN"
+    },
+    "seed": 42
+  }
+}
