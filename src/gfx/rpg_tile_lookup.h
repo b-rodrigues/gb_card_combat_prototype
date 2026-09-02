@@ -22,30 +22,38 @@
 #define FOREST_TILE_STUMP_BR         6u
 #define FOREST_TILE_STUMP_MINI       7u
 
+#define RPG_TILE_BASE_WORLD          128u
 #define RPG_TILE_BASE_EXTERIOR       128u
-#define RPG_TILE_BASE_INTERIOR       132u
-#define RPG_TILE_BASE_FOREST         136u
-#define RPG_TILE_BASE_DESOLATE       144
+#define RPG_TILE_BASE_INTERIOR       128u
+#define RPG_TILE_BASE_FOREST         128u
+#define RPG_TILE_BASE_DESOLATE       128u
 
-extern const uint8_t g_rpg_world_tiles[1024];
+extern const uint8_t g_tileset_exterior[64];
+extern const uint8_t g_tileset_interior[64];
+extern const uint8_t g_tileset_forest[128];
+extern const uint8_t g_tileset_desolate[768];
 extern const uint8_t g_intrepid_font_tiles[1536];
 
 static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
 {
     if (tileset_kind == 14 /* WORLD_TILESET_DESOLATE */) {
-        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 0);
-        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 1);
-        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 2);
-        if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 3);
+        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
+        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
+        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
+        if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_WORLD + 3);
         return 0;
     }
-    if (glyph == '.') return (uint8_t)(128 + (tileset_kind << 2) + 0);
-    if (glyph == '#') return (uint8_t)(128 + (tileset_kind << 2) + 1);
-    if (glyph == '>' || glyph == '<') return (uint8_t)(128 + (tileset_kind << 2) + 2);
-    if (glyph == 'B') return (uint8_t)(128 + (tileset_kind << 2) + 3);
-    if (tileset_kind == 2 && glyph >= '1' && glyph <= '4') {
-        return (uint8_t)(139 + (glyph - '1'));
+    if (tileset_kind == 2 /* WORLD_TILESET_FOREST */) {
+        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
+        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
+        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
+        if (glyph >= '1' && glyph <= '4') return (uint8_t)(RPG_TILE_BASE_WORLD + 3 + (glyph - '1'));
+        return 0;
     }
+    if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
+    if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
+    if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
+    if (glyph == 'B') return (uint8_t)(RPG_TILE_BASE_WORLD + 3);
     return 0;
 }
 

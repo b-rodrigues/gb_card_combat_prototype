@@ -92,6 +92,7 @@ void ui_clear_screen(void);
 void ui_lcd_off(void);
 void ui_lcd_on(void);
 
+void ui_load_tileset(uint8_t tileset);
 void ui_draw_world_map(const World *world);
 void ui_draw_world_full(const World *world);
 void ui_draw_actors_sprites(const World *world);

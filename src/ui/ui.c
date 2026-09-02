@@ -29,6 +29,7 @@ uint8_t g_tilemap_mirror[32 * 32];
 extern uint8_t console_mode;
 
 static void ui_put_char(uint8_t x, uint8_t y, char ch);
+static int8_t s_loaded_tileset = -1;
 
 /* First VRAM tile the font occupies.  Tile 0 is space (0x20), so the tile
  * for char `ch` is base + (ch - ' ').  Also read by the banked battle
@@ -128,12 +129,8 @@ void ui_init(void)
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
     }
 
-    /* Load world background tiles from Bank 5 (64 tiles = 1024 bytes) */
-    for (p = 0; p < 64; p += 3) {
-        uint8_t count = (uint8_t)((p + 3 <= 64) ? 3 : (64 - p));
-        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), (uint16_t)count << 4);
-        set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), count, (const uint8_t *)g_ui_screen_buf);
-    }
+    /* Reset tileset cache; active scene will load its tileset dynamically */
+    s_loaded_tileset = -1;
 
     /* Disable GBDK console auto-scroll.  When putchar() advances the cursor
      * past the bottom-right tile, the console normally scrolls the whole
@@ -449,6 +446,47 @@ void ui_format_int(int16_t value, char *out)
     banked_call_run();
 }
 
+void ui_load_tileset(uint8_t tileset)
+{
+    uint8_t p;
+    const uint8_t *src = 0;
+    uint8_t tile_count = 0;
+
+    if (s_loaded_tileset == (int8_t)tileset) return;
+    s_loaded_tileset = (int8_t)tileset;
+
+    switch (tileset) {
+        case WORLD_TILESET_EXTERIOR:
+            src = g_tileset_exterior;
+            tile_count = 4;
+            break;
+        case WORLD_TILESET_INTERIOR:
+            src = g_tileset_interior;
+            tile_count = 4;
+            break;
+        case WORLD_TILESET_FOREST:
+            src = g_tileset_forest;
+            tile_count = 8;
+            break;
+        case WORLD_TILESET_DESOLATE:
+            src = g_tileset_desolate;
+            tile_count = 48;
+            break;
+        default:
+            src = g_tileset_exterior;
+            tile_count = 4;
+            break;
+    }
+
+    if (src && tile_count > 0) {
+        for (p = 0; p < tile_count; p += 3) {
+            uint8_t count = (uint8_t)((p + 3 <= tile_count) ? 3 : (tile_count - p));
+            banked_copy(5, g_ui_screen_buf, src + ((uint16_t)p << 4), (uint16_t)count << 4);
+            set_bkg_data((uint8_t)(RPG_TILE_BASE_WORLD + p), count, (const uint8_t *)g_ui_screen_buf);
+        }
+    }
+}
+
 static char ui_get_world_tile_glyph(uint8_t t)
 {
     if (t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
@@ -610,6 +648,9 @@ void ui_draw_world_map(const World *world)
 {
     uint8_t y;
     if (!world) return;
+
+    /* Ensure active scene's tileset is loaded into VRAM Block 1 (slots 128..255) */
+    ui_load_tileset((uint8_t)scene_get_tileset(world->map_id));
 
     /* Populate the entire 32-column x 18-row background ring during LCD-safe
      * full map redraw. Field: all 32 x 18 cells. Smaller maps: col 20..31 are
