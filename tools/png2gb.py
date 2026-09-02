@@ -51,7 +51,11 @@ class Png2GbError(Exception):
         super().__init__(f"{asset}: [{rule}] {detail}")
 
 
-def load_and_validate(path, max_colors=MAX_COLORS):
+def lum(c):
+    return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]
+
+
+def load_and_validate(path, max_colors=MAX_COLORS, allow_per_tile=False):
     """Load a PNG and validate it against the GB tile constraints.
     Returns (PIL.Image in RGB, tiles_x, tiles_y)."""
     asset = str(path)
@@ -69,6 +73,21 @@ def load_and_validate(path, max_colors=MAX_COLORS):
             f"{w}x{h} is not a multiple of {TILE_SIZE}x{TILE_SIZE} "
             f"(GB tiles are {TILE_SIZE}x{TILE_SIZE} pixels)"
         )
+
+    if allow_per_tile:
+        # Validate that each 8x8 tile has at most 4 colors
+        px = img.load()
+        tiles_x, tiles_y = w // TILE_SIZE, h // TILE_SIZE
+        for ty in range(tiles_y):
+            for tx in range(tiles_x):
+                ox, oy = tx * TILE_SIZE, ty * TILE_SIZE
+                t_cols = {px[ox + x, oy + y] for y in range(TILE_SIZE) for x in range(TILE_SIZE)}
+                if len(t_cols) > 4:
+                    raise Png2GbError(
+                        asset, "palette-limit",
+                        f"tile ({tx},{ty}) uses {len(t_cols)} colors; max is 4 (2bpp)"
+                    )
+        return img, tiles_x, tiles_y
 
     colors = img.getcolors(maxcolors=256)
     if colors is None or len(colors) > max_colors:
@@ -99,9 +118,25 @@ def build_shade_map(img, asset, palette_name="canonical"):
     return shade_map
 
 
+def get_tile_shade_map(img, tile_x, tile_y):
+    px = img.load()
+    ox, oy = tile_x * TILE_SIZE, tile_y * TILE_SIZE
+    colors = sorted(list({px[ox + col, oy + row] for row in range(TILE_SIZE) for col in range(TILE_SIZE)}), key=lum, reverse=True)
+    if len(colors) <= 1:
+        return {colors[0]: 0}
+    elif len(colors) == 2:
+        return {colors[0]: 0, colors[1]: 3}
+    elif len(colors) == 3:
+        return {colors[0]: 0, colors[1]: 2, colors[2]: 3}
+    else:
+        return {colors[0]: 0, colors[1]: 1, colors[2]: 2, colors[3]: 3}
+
+
 def encode_tile(img, tile_x, tile_y, shade_map):
     """Encode one 8x8 tile block starting at (tile_x*8, tile_y*8) into
     16 bytes of GB 2bpp tile data."""
+    if shade_map is None:
+        shade_map = get_tile_shade_map(img, tile_x, tile_y)
     px = img.load()
     out = bytearray()
     ox, oy = tile_x * TILE_SIZE, tile_y * TILE_SIZE
@@ -155,8 +190,9 @@ def format_c_array(name, all_tile_bytes, tile_count, raw_inc=False):
 
 
 def convert(path, name, palette_name="canonical", tile_coords=None, raw_inc=False):
-    img, tiles_x, tiles_y = load_and_validate(path, max_colors=MAX_COLORS)
-    shade_map = build_shade_map(img, str(path), palette_name=palette_name)
+    is_auto = (palette_name == "auto")
+    img, tiles_x, tiles_y = load_and_validate(path, max_colors=MAX_COLORS, allow_per_tile=is_auto)
+    shade_map = None if is_auto else build_shade_map(img, str(path), palette_name=palette_name)
 
     all_bytes = bytearray()
     if tile_coords:
@@ -180,7 +216,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("png", type=Path, help="source PNG")
     ap.add_argument("--name", default="tile_data", help="C array name")
-    ap.add_argument("--palette", default="canonical", choices=["canonical", "gb_green"], help="palette mapping")
+    ap.add_argument("--palette", default="canonical", choices=["canonical", "gb_green", "auto"], help="palette mapping")
     ap.add_argument("--tile-coords", default=None, help="space-separated x,y tile coordinates (e.g. '1,2 8,1 8,2 0,5')")
     ap.add_argument("--raw", action="store_true", help="output raw comma-separated byte lines suitable for #include inside an array initializer")
     ap.add_argument("-o", "--out", type=Path, help="write generated C snippet here (default: stdout)")

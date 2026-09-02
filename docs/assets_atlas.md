@@ -355,6 +355,47 @@ tile, not a source sheet.
 | `ASSET_STRUCT_PROP_05` | `Houses_and_various_things.png` | 5 | 64 |  |
 | `ASSET_STRUCT_PROP_06` | `Houses_and_various_things.png` | 6 | 64 |  |
 | `ASSET_STRUCT_PROP_07` | `Houses_and_various_things.png` | 7 | 64 |  |
+| `ASSET_DESOLATE_WALL_00` | `desolate_landscape.png` | 0 | 0 |  |
+| `ASSET_DESOLATE_WALL_01` | `desolate_landscape.png` | 1 | 0 |  |
+| `ASSET_DESOLATE_WALL_02` | `desolate_landscape.png` | 2 | 0 |  |
+| `ASSET_DESOLATE_WALL_03` | `desolate_landscape.png` | 3 | 0 |  |
+| `ASSET_DESOLATE_WALL_04` | `desolate_landscape.png` | 4 | 0 |  |
+| `ASSET_DESOLATE_WALL_05` | `desolate_landscape.png` | 5 | 0 |  |
+| `ASSET_DESOLATE_WALL_06` | `desolate_landscape.png` | 6 | 0 |  |
+| `ASSET_DESOLATE_WALL_07` | `desolate_landscape.png` | 7 | 0 |  |
+| `ASSET_DESOLATE_WALL_08` | `desolate_landscape.png` | 8 | 0 |  |
+| `ASSET_DESOLATE_WALL_09` | `desolate_landscape.png` | 9 | 0 |  |
+| `ASSET_DESOLATE_WALL_10` | `desolate_landscape.png` | 10 | 0 |  |
+| `ASSET_DESOLATE_WALL_11` | `desolate_landscape.png` | 11 | 0 |  |
+| `ASSET_DESOLATE_TREE_TL` | `desolate_landscape.png` | 12 | 0 |  |
+| `ASSET_DESOLATE_TREE_TR` | `desolate_landscape.png` | 13 | 0 |  |
+| `ASSET_DESOLATE_ROCK_TL` | `desolate_landscape.png` | 14 | 0 |  |
+| `ASSET_DESOLATE_ROCK_TR` | `desolate_landscape.png` | 15 | 0 |  |
+| `ASSET_DESOLATE_WALL_12` | `desolate_landscape.png` | 0 | 1 |  |
+| `ASSET_DESOLATE_WALL_13` | `desolate_landscape.png` | 1 | 1 |  |
+| `ASSET_DESOLATE_WALL_14` | `desolate_landscape.png` | 2 | 1 |  |
+| `ASSET_DESOLATE_WALL_15` | `desolate_landscape.png` | 3 | 1 |  |
+| `ASSET_DESOLATE_WALL_16` | `desolate_landscape.png` | 4 | 1 |  |
+| `ASSET_DESOLATE_WALL_17` | `desolate_landscape.png` | 5 | 1 |  |
+| `ASSET_DESOLATE_FLOOR_00` | `desolate_landscape.png` | 6 | 1 |  |
+| `ASSET_DESOLATE_FLOOR_01` | `desolate_landscape.png` | 7 | 1 |  |
+| `ASSET_DESOLATE_FLOOR_02` | `desolate_landscape.png` | 8 | 1 |  |
+| `ASSET_DESOLATE_FLOOR_03` | `desolate_landscape.png` | 9 | 1 |  |
+| `ASSET_DESOLATE_WALL_18` | `desolate_landscape.png` | 10 | 1 |  |
+| `ASSET_DESOLATE_WALL_19` | `desolate_landscape.png` | 11 | 1 |  |
+| `ASSET_DESOLATE_TREE_BL` | `desolate_landscape.png` | 12 | 1 |  |
+| `ASSET_DESOLATE_TREE_BR` | `desolate_landscape.png` | 13 | 1 |  |
+| `ASSET_DESOLATE_ROCK_BL` | `desolate_landscape.png` | 14 | 1 |  |
+| `ASSET_DESOLATE_ROCK_BR` | `desolate_landscape.png` | 15 | 1 |  |
+| `ASSET_DESOLATE_FLOOR_PLAIN` | `desolate_landscape.png` | 0 | 2 |  |
+| `ASSET_DESOLATE_HERO_01` | `desolate_landscape.png` | 1 | 2 |  |
+| `ASSET_DESOLATE_HERO_02` | `desolate_landscape.png` | 2 | 2 |  |
+| `ASSET_DESOLATE_KOBOLD_01` | `desolate_landscape.png` | 3 | 2 |  |
+| `ASSET_DESOLATE_KOBOLD_02` | `desolate_landscape.png` | 4 | 2 |  |
+| `ASSET_DESOLATE_FIRE_01` | `desolate_landscape.png` | 5 | 2 |  |
+| `ASSET_DESOLATE_FIRE_02` | `desolate_landscape.png` | 6 | 2 |  |
+| `ASSET_DESOLATE_MERCHANT` | `desolate_landscape.png` | 7 | 2 |  |
+| `ASSET_DESOLATE_STAIRCASE` | `desolate_landscape.png` | 8 | 2 |  |
 | `ASSET_PLAYER` | `player_demo.png` | 0 | 0 | player sprite tile |
 | `ASSET_WORLD_C0_R0` | `world_tiles.png` | 0 | 0 | unused grayscale test tile |
 | `ASSET_WORLD_C0_R1` | `world_tiles.png` | 0 | 1 | unused grayscale test tile |

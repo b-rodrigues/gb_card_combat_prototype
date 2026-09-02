@@ -40,7 +40,8 @@ typedef enum {
     WORLD_TILESET_NATURE_VEGETATION = 10,
     WORLD_TILESET_OBJECTS_FURNITURE = 11,
     WORLD_TILESET_STRUCTURES_FENCES = 12,
-    WORLD_TILESET_STRUCTURES_PROPS  = 13
+    WORLD_TILESET_STRUCTURES_PROPS  = 13,
+    WORLD_TILESET_DESOLATE          = 14
 } WorldTilesetKind;
 
 /* Data-driven scene definition.  Terrain generation is driven by banked

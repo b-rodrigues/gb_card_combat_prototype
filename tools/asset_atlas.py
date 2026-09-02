@@ -391,6 +391,49 @@ TILESETS = {
         "STRUCT_PROP_06": (6, 64),
         "STRUCT_PROP_07": (7, 64),
     },
+    "desolate_landscape.png": {
+        "DESOLATE_WALL_00": (0, 0),
+        "DESOLATE_WALL_01": (1, 0),
+        "DESOLATE_WALL_02": (2, 0),
+        "DESOLATE_WALL_03": (3, 0),
+        "DESOLATE_WALL_04": (4, 0),
+        "DESOLATE_WALL_05": (5, 0),
+        "DESOLATE_WALL_06": (6, 0),
+        "DESOLATE_WALL_07": (7, 0),
+        "DESOLATE_WALL_08": (8, 0),
+        "DESOLATE_WALL_09": (9, 0),
+        "DESOLATE_WALL_10": (10, 0),
+        "DESOLATE_WALL_11": (11, 0),
+        "DESOLATE_TREE_TL": (12, 0),
+        "DESOLATE_TREE_TR": (13, 0),
+        "DESOLATE_ROCK_TL": (14, 0),
+        "DESOLATE_ROCK_TR": (15, 0),
+        "DESOLATE_WALL_12": (0, 1),
+        "DESOLATE_WALL_13": (1, 1),
+        "DESOLATE_WALL_14": (2, 1),
+        "DESOLATE_WALL_15": (3, 1),
+        "DESOLATE_WALL_16": (4, 1),
+        "DESOLATE_WALL_17": (5, 1),
+        "DESOLATE_FLOOR_00": (6, 1),
+        "DESOLATE_FLOOR_01": (7, 1),
+        "DESOLATE_FLOOR_02": (8, 1),
+        "DESOLATE_FLOOR_03": (9, 1),
+        "DESOLATE_WALL_18": (10, 1),
+        "DESOLATE_WALL_19": (11, 1),
+        "DESOLATE_TREE_BL": (12, 1),
+        "DESOLATE_TREE_BR": (13, 1),
+        "DESOLATE_ROCK_BL": (14, 1),
+        "DESOLATE_ROCK_BR": (15, 1),
+        "DESOLATE_FLOOR_PLAIN": (0, 2),
+        "DESOLATE_HERO_01": (1, 2),
+        "DESOLATE_HERO_02": (2, 2),
+        "DESOLATE_KOBOLD_01": (3, 2),
+        "DESOLATE_KOBOLD_02": (4, 2),
+        "DESOLATE_FIRE_01": (5, 2),
+        "DESOLATE_FIRE_02": (6, 2),
+        "DESOLATE_MERCHANT": (7, 2),
+        "DESOLATE_STAIRCASE": (8, 2),
+    },
 }
 # Forest tiles live in RPG_exterior.png at independent coordinates.
 FOREST_COORDS = {
@@ -741,6 +784,48 @@ SEMANTIC_ORDER = [
     ("Houses_and_various_things.png", "STRUCT_PROP_05"),
     ("Houses_and_various_things.png", "STRUCT_PROP_06"),
     ("Houses_and_various_things.png", "STRUCT_PROP_07"),
+    # Desolate landscape
+    ("desolate_landscape.png", "DESOLATE_WALL_00"),
+    ("desolate_landscape.png", "DESOLATE_WALL_01"),
+    ("desolate_landscape.png", "DESOLATE_WALL_02"),
+    ("desolate_landscape.png", "DESOLATE_WALL_03"),
+    ("desolate_landscape.png", "DESOLATE_WALL_04"),
+    ("desolate_landscape.png", "DESOLATE_WALL_05"),
+    ("desolate_landscape.png", "DESOLATE_WALL_06"),
+    ("desolate_landscape.png", "DESOLATE_WALL_07"),
+    ("desolate_landscape.png", "DESOLATE_WALL_08"),
+    ("desolate_landscape.png", "DESOLATE_WALL_09"),
+    ("desolate_landscape.png", "DESOLATE_WALL_10"),
+    ("desolate_landscape.png", "DESOLATE_WALL_11"),
+    ("desolate_landscape.png", "DESOLATE_TREE_TL"),
+    ("desolate_landscape.png", "DESOLATE_TREE_TR"),
+    ("desolate_landscape.png", "DESOLATE_ROCK_TL"),
+    ("desolate_landscape.png", "DESOLATE_ROCK_TR"),
+    ("desolate_landscape.png", "DESOLATE_WALL_12"),
+    ("desolate_landscape.png", "DESOLATE_WALL_13"),
+    ("desolate_landscape.png", "DESOLATE_WALL_14"),
+    ("desolate_landscape.png", "DESOLATE_WALL_15"),
+    ("desolate_landscape.png", "DESOLATE_WALL_16"),
+    ("desolate_landscape.png", "DESOLATE_WALL_17"),
+    ("desolate_landscape.png", "DESOLATE_FLOOR_00"),
+    ("desolate_landscape.png", "DESOLATE_FLOOR_01"),
+    ("desolate_landscape.png", "DESOLATE_FLOOR_02"),
+    ("desolate_landscape.png", "DESOLATE_FLOOR_03"),
+    ("desolate_landscape.png", "DESOLATE_WALL_18"),
+    ("desolate_landscape.png", "DESOLATE_WALL_19"),
+    ("desolate_landscape.png", "DESOLATE_TREE_BL"),
+    ("desolate_landscape.png", "DESOLATE_TREE_BR"),
+    ("desolate_landscape.png", "DESOLATE_ROCK_BL"),
+    ("desolate_landscape.png", "DESOLATE_ROCK_BR"),
+    ("desolate_landscape.png", "DESOLATE_FLOOR_PLAIN"),
+    ("desolate_landscape.png", "DESOLATE_HERO_01"),
+    ("desolate_landscape.png", "DESOLATE_HERO_02"),
+    ("desolate_landscape.png", "DESOLATE_KOBOLD_01"),
+    ("desolate_landscape.png", "DESOLATE_KOBOLD_02"),
+    ("desolate_landscape.png", "DESOLATE_FIRE_01"),
+    ("desolate_landscape.png", "DESOLATE_FIRE_02"),
+    ("desolate_landscape.png", "DESOLATE_MERCHANT"),
+    ("desolate_landscape.png", "DESOLATE_STAIRCASE"),
     ("player_demo.png", "PLAYER"),
     ("world_tiles.png", "WORLD_C0_R0"),
     ("world_tiles.png", "WORLD_C0_R1"),
@@ -753,6 +838,7 @@ SRC_CONST = {
     "RPG_interior.png": "ASSET_SOURCE_INTERIOR",
     "DungeonTileset.png": "ASSET_SOURCE_DUNGEON",
     "Houses_and_various_things.png": "ASSET_SOURCE_HOUSES",
+    "desolate_landscape.png": "ASSET_SOURCE_DESOLATE",
     "intrepid.png": "ASSET_SOURCE_FONT",
     "player_demo.png": "ASSET_SOURCE_PLAYER",
     "world_tiles.png": "ASSET_SOURCE_WORLD",
@@ -1020,6 +1106,9 @@ def main_build():
         elif name in TILESETS["Houses_and_various_things.png"]:
             c, r = TILESETS["Houses_and_various_things.png"][name]
             src_png = "Houses_and_various_things.png"
+        elif name in TILESETS["desolate_landscape.png"]:
+            c, r = TILESETS["desolate_landscape.png"][name]
+            src_png = "desolate_landscape.png"
         elif name == "PLAYER":
             c, r = 0, 0
             src_png = "player_demo.png"
@@ -1056,6 +1145,7 @@ def emit_header(catalog, asset_order):
         "    ASSET_SOURCE_INTERIOR,",
         "    ASSET_SOURCE_DUNGEON,",
         "    ASSET_SOURCE_HOUSES,",
+        "    ASSET_SOURCE_DESOLATE,",
         "    ASSET_SOURCE_FONT,",
         "    ASSET_SOURCE_PLAYER,",
         "    ASSET_SOURCE_WORLD,",
@@ -1120,7 +1210,7 @@ def emit_header(catalog, asset_order):
 
 def emit_entries_inc(catalog, named, asset_order):
     colormap = {"RPG_exterior.png": 4, "RPG_interior.png": 4, "DungeonTileset.png": 4,
-                "Houses_and_various_things.png": 4, "intrepid.png": 2,
+                "Houses_and_various_things.png": 4, "desolate_landscape.png": 4, "intrepid.png": 2,
                 "player_demo.png": 2, "world_tiles.png": 4}
     with open(ENTRIES_INC, "w") as f:
         f.write("/* Generated by tools/asset_atlas.py. AssetAtlasEntry rows. */\n")
@@ -1323,16 +1413,23 @@ def check_makefile_parity(catalog, named):
                 ("DungeonTileset.png",
                  sorted(TILESETS["DungeonTileset.png"].values())),
                 ("Houses_and_various_things.png",
-                 sorted(TILESETS["Houses_and_various_things.png"].values()))]
+                 sorted(TILESETS["Houses_and_various_things.png"].values())),
+                ("desolate_landscape.png",
+                 sorted(TILESETS["desolate_landscape.png"].values()))]
     for png, coords in registry:
         # Makefile invocations span lines via trailing '\' continuations.
         # Collect every --tile-coords whose invocation tags this source PNG.
         collected = []
         for png_cap in re.split(r"(?=\n\s*@python3 tools/png2gb\.py )", text):
             if png in png_cap:
-                for m in re.finditer(r"--tile-coords \"([^\"]+)\"", png_cap):
-                    for pair in m.group(1).split():
-                        collected.append(tuple(int(x) for x in pair.split(",")))
+                matches = list(re.finditer(r"--tile-coords \"([^\"]+)\"", png_cap))
+                if matches:
+                    for m in matches:
+                        for pair in m.group(1).split():
+                            collected.append(tuple(int(x) for x in pair.split(",")))
+                else:
+                    # Full sheet conversion without explicit --tile-coords
+                    collected.extend(coords)
         mk = sorted(set(collected))
         if mk != sorted(set(coords)):
             problems.append("%s: Makefile coords %s != atlas registry %s"

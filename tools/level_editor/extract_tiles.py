@@ -47,6 +47,9 @@ TILESET_ID_MAP = {
         **{k.lower(): "structures_fences" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_FENCE")},
         **{k.lower(): "structures_props" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_PROP")},
     },
+    "desolate_landscape.png": {
+        **{k.lower(): "desolate_landscape" for k in TILESETS["desolate_landscape.png"].keys()},
+    },
 }
 
 COORDS_MAP = {
@@ -62,6 +65,9 @@ COORDS_MAP = {
     },
     "Houses_and_various_things.png": {
         **{k.lower(): v for k, v in TILESETS["Houses_and_various_things.png"].items()},
+    },
+    "desolate_landscape.png": {
+        **{k.lower(): v for k, v in TILESETS["desolate_landscape.png"].items()},
     },
 }
 
@@ -85,7 +91,7 @@ def upscale_nearest(tile, factor=UPSCALE):
 def main():
     assets_dir = Path(__file__).resolve().parent.parent.parent / "assets"
 
-    for png_name in ["RPG_exterior.png", "RPG_interior.png", "DungeonTileset.png", "Houses_and_various_things.png"]:
+    for png_name in ["RPG_exterior.png", "RPG_interior.png", "DungeonTileset.png", "Houses_and_various_things.png", "desolate_landscape.png"]:
         png_path = assets_dir / png_name
         if not png_path.exists():
             print(f"Missing source: {png_path}", file=sys.stderr)
