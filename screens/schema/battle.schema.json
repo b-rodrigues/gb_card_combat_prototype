@@ -80,49 +80,34 @@
     },
     "hud_layout": {
       "type": "object",
-      "additionalProperties": false,
-      "required": ["enemy_row_start", "enemy_row_step", "deck_row", "combo_row_start", "combo_row_step", "timer_row", "caret_x"],
+      "additionalProperties": true,
       "properties": {
-        "enemy_row_start": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 17,
-          "description": "First enemy HP bar row (default: 2)."
-        },
-        "enemy_row_step": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Row step between enemy HP bars (default: 1)."
-        },
-        "deck_row": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 17,
-          "description": "Player deck counter row (default: 7)."
-        },
-        "combo_row_start": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 17,
-          "description": "First combo indicator row (default: 13)."
-        },
-        "combo_row_step": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Row step between combo indicators (default: 1)."
-        },
-        "timer_row": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 17,
-          "description": "Timer bar row (default: 15)."
-        },
-        "caret_x": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 19,
-          "description": "Caret column for menu navigation (default: 3)."
-        }
+        "turn_banner_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Row for TURN banner (default: 0)." },
+        "enemy_hp_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Row for enemy HP counters (default: 1)." },
+        "enemy_sprite_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Row for enemy sprites (default: 2)." },
+        "enemy_cursor_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Row for enemy target cursor arrow (default: 4)." },
+        "enemy_col_start": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Starting column for enemy columns (default: 1)." },
+        "enemy_col_step": { "type": "integer", "minimum": 1, "maximum": 19, "description": "Column step between enemies (default: 7)." },
+        "hero_label_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Hero label row (default: 6)." },
+        "hero_label_col": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Hero label col (default: 1)." },
+        "hero_hp_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Hero HP row (default: 6)." },
+        "hero_hp_col": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Hero HP col (default: 13)." },
+        "deck_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Deck counter row (default: 7)." },
+        "deck_col": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Deck counter col (default: 1)." },
+        "ap_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "AP/Energy row (default: 7)." },
+        "ap_col": { "type": "integer", "minimum": 0, "maximum": 19, "description": "AP/Energy col (default: 13)." },
+        "combo_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Combo preview row (default: 9)." },
+        "cards_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Hand cards row start (default: 10)." },
+        "card_cursor_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Hand cursor row (default: 14)." },
+        "card_desc_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Card description row (default: 15)." },
+        "timer_row": { "type": "integer", "minimum": 0, "maximum": 17, "description": "Timer bar row (default: 16)." },
+        "timer_col": { "type": "integer", "minimum": 0, "maximum": 19, "description": "Timer bar starting col (default: 0)." },
+        "timer_width": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Timer bar width in tiles (default: 20)." },
+        "enemy_row_start": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "enemy_row_step": { "type": "integer", "minimum": 1 },
+        "combo_row_start": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "combo_row_step": { "type": "integer", "minimum": 1 },
+        "caret_x": { "type": "integer", "minimum": 0, "maximum": 19 }
       }
     }
   }

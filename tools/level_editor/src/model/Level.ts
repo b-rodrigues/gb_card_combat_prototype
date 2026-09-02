@@ -30,6 +30,8 @@ export interface PlayerSpawn {
   x: number;
   y: number;
   facing?: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | string;
+  animation_frames?: string[];
+  animation_speed?: number;
 }
 
 export interface MapMetadata {
@@ -73,6 +75,29 @@ export interface EditorLevel {
   objects: LevelObject[];
   regions: LevelRegion[];
   isScreen?: boolean;
+  battleHudLayout?: {
+    turn_banner_row?: number;
+    enemy_hp_row?: number;
+    enemy_sprite_row?: number;
+    enemy_cursor_row?: number;
+    enemy_col_start?: number;
+    enemy_col_step?: number;
+    hero_label_row?: number;
+    hero_label_col?: number;
+    hero_hp_row?: number;
+    hero_hp_col?: number;
+    deck_row?: number;
+    deck_col?: number;
+    ap_row?: number;
+    ap_col?: number;
+    combo_row?: number;
+    cards_row?: number;
+    card_cursor_row?: number;
+    card_desc_row?: number;
+    timer_row?: number;
+    timer_col?: number;
+    timer_width?: number;
+  };
   originalScreenData?: any;
 }
 
@@ -241,6 +266,29 @@ export function battleScreenToEditor(data: any): EditorLevel {
     objects,
     regions,
     isScreen: true,
+    battleHudLayout: {
+      turn_banner_row: data.hud_layout?.turn_banner_row ?? 0,
+      enemy_hp_row: data.hud_layout?.enemy_hp_row ?? 1,
+      enemy_sprite_row: data.hud_layout?.enemy_sprite_row ?? 2,
+      enemy_cursor_row: data.hud_layout?.enemy_cursor_row ?? 4,
+      enemy_col_start: data.hud_layout?.enemy_col_start ?? 0,
+      enemy_col_step: data.hud_layout?.enemy_col_step ?? 7,
+      hero_label_row: data.hud_layout?.hero_label_row ?? 6,
+      hero_label_col: data.hud_layout?.hero_label_col ?? 1,
+      hero_hp_row: data.hud_layout?.hero_hp_row ?? 6,
+      hero_hp_col: data.hud_layout?.hero_hp_col ?? 13,
+      deck_row: data.hud_layout?.deck_row ?? 7,
+      deck_col: data.hud_layout?.deck_col ?? 1,
+      ap_row: data.hud_layout?.ap_row ?? 7,
+      ap_col: data.hud_layout?.ap_col ?? 13,
+      combo_row: data.hud_layout?.combo_row ?? 9,
+      cards_row: data.hud_layout?.cards_row ?? 10,
+      card_cursor_row: data.hud_layout?.card_cursor_row ?? 14,
+      card_desc_row: data.hud_layout?.card_desc_row ?? 15,
+      timer_row: data.hud_layout?.timer_row ?? 16,
+      timer_col: data.hud_layout?.timer_col ?? 0,
+      timer_width: data.hud_layout?.timer_width ?? 20,
+    },
     originalScreenData: data
   };
 }
@@ -345,6 +393,17 @@ export function editorToLevelData(lvl: EditorLevel): any {
     if (lvl.id === 'title') {
       const match = lvl.name.match(/^Title Screen \((.*)\)$/);
       if (match) screenData.title = match[1];
+    } else {
+      if (lvl.battleHudLayout) {
+        screenData.hud_layout = {
+          ...(screenData.hud_layout || {}),
+          ...lvl.battleHudLayout,
+        };
+      }
+      const enemyObjs = (lvl.objects || []).filter((o) => o.type === 'enemy');
+      if (enemyObjs.length > 0 && Array.isArray(screenData.enemy_positions)) {
+        screenData.enemy_positions = enemyObjs.map((e) => ({ x: e.position.x, y: e.position.y }));
+      }
     }
     return screenData;
   }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
+import React, { useState, useEffect } from 'react';
+import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
@@ -19,7 +19,7 @@ interface InspectorProps {
   selectedEntityIndex: number | null;
   onSelectEntityIndex: (index: number | null) => void;
   onUpdateLevelMeta: (updates: Partial<EditorLevel>) => void;
-  onUpdateSpawn: (spawn: { x: number; y: number; facing: string }) => void;
+  onUpdateSpawn: (spawn: PlayerSpawn) => void;
   onAddExit: (exit: LevelExit) => void;
   onUpdateExit: (index: number, exit: LevelExit) => void;
   onDeleteExit: (index: number) => void;
@@ -57,7 +57,21 @@ export const Inspector: React.FC<InspectorProps> = ({
   onUpdateRegion,
   onDeleteRegion,
 }) => {
-  const [tab, setTab] = useState<'context' | 'layers' | 'map'>('context');
+  const isBattleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle')));
+  const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'battle'>('context');
+
+  useEffect(() => {
+    if (isBattleScreen) {
+      setTab('battle');
+    }
+  }, [level.id, isBattleScreen]);
+  const [previewTick, setPreviewTick] = useState<number>(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPreviewTick((t) => (t + 1) % 60);
+    }, 250);
+    return () => clearInterval(timer);
+  }, []);
 
   // Collect all tiles from all tilesets with scoped IDs
   const allTilesWithScope = Object.values(BUILTIN_TILESETS).flatMap((ts) =>
@@ -105,6 +119,15 @@ export const Inspector: React.FC<InspectorProps> = ({
         >
           ⚙️ Map Info
         </button>
+        {isBattleScreen && (
+          <button
+            className={`tab-btn ${tab === 'battle' ? 'active' : ''}`}
+            onClick={() => setTab('battle')}
+            title="Battle HUD Layout and Coordinates"
+          >
+            ⚔️ Battle HUD
+          </button>
+        )}
       </div>
 
       <div className="panel-body inspector-content">
@@ -197,6 +220,332 @@ export const Inspector: React.FC<InspectorProps> = ({
           </div>
         )}
 
+        {tab === 'battle' && (
+          <div className="inspector-section">
+            <h4>⚔️ Battle Screen HUD Layout</h4>
+            <p className="hint-text">
+              Configure row and column coordinates for every battle screen HUD element (matches <code>assets/battle_screen_mockup.jpg</code>).
+            </p>
+
+            {/* Turn Banner */}
+            <div className="form-group">
+              <label>Turn Banner Row (0-17)</label>
+              <input
+                type="number"
+                min={0}
+                max={17}
+                value={level.battleHudLayout?.turn_banner_row ?? 0}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    battleHudLayout: {
+                      ...(level.battleHudLayout || {}),
+                      turn_banner_row: parseInt(e.target.value) || 0,
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {/* Enemy Roster Layout */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>👾 Enemy Roster Layout</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>HP Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.enemy_hp_row ?? 1}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          enemy_hp_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Sprite Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.enemy_sprite_row ?? 2}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          enemy_sprite_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Target Arrow Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.enemy_cursor_row ?? 4}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          enemy_cursor_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Column Step</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={level.battleHudLayout?.enemy_col_step ?? 7}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          enemy_col_step: parseInt(e.target.value) || 7,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dual-Column Status Panel */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>👤 Hero & Status Panel (Rows 6 & 7)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Hero Label Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.hero_label_row ?? 6}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          hero_label_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Heart HP Row / Col</label>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      max={17}
+                      value={level.battleHudLayout?.hero_hp_row ?? 6}
+                      onChange={(e) =>
+                        onUpdateLevelMeta({
+                          battleHudLayout: {
+                            ...(level.battleHudLayout || {}),
+                            hero_hp_row: parseInt(e.target.value) || 0,
+                          },
+                        })
+                      }
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={19}
+                      value={level.battleHudLayout?.hero_hp_col ?? 13}
+                      onChange={(e) =>
+                        onUpdateLevelMeta({
+                          battleHudLayout: {
+                            ...(level.battleHudLayout || {}),
+                            hero_hp_col: parseInt(e.target.value) || 0,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Deck Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.deck_row ?? 7}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          deck_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Battery AP Row / Col</label>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      max={17}
+                      value={level.battleHudLayout?.ap_row ?? 7}
+                      onChange={(e) =>
+                        onUpdateLevelMeta({
+                          battleHudLayout: {
+                            ...(level.battleHudLayout || {}),
+                            ap_row: parseInt(e.target.value) || 0,
+                          },
+                        })
+                      }
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={19}
+                      value={level.battleHudLayout?.ap_col ?? 13}
+                      onChange={(e) =>
+                        onUpdateLevelMeta({
+                          battleHudLayout: {
+                            ...(level.battleHudLayout || {}),
+                            ap_col: parseInt(e.target.value) || 0,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hand Cards & Description */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>🎴 Framed Cards Hand (Rows 10–15)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Combo Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.combo_row ?? 9}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          combo_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Cards Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.cards_row ?? 10}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          cards_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Card Cursor Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.card_cursor_row ?? 14}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          card_cursor_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Description Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.card_desc_row ?? 15}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          card_desc_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Turn Timer Bar */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>⏱️ Turn Timer Bar</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Timer Row</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.battleHudLayout?.timer_row ?? 16}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          timer_row: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Timer Width (tiles)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={level.battleHudLayout?.timer_width ?? 11}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        battleHudLayout: {
+                          ...(level.battleHudLayout || {}),
+                          timer_width: parseInt(e.target.value) || 11,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'context' && activeLayer === 'spawn' && (
           <div className="inspector-section">
             <h4>Player Spawn Position</h4>
@@ -238,6 +587,231 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="LEFT">LEFT / West</option>
                 <option value="RIGHT">RIGHT / East</option>
               </select>
+            </div>
+
+            {/* Hero Animation Frames */}
+            <div className="form-group animation-frames-group" style={{ marginTop: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <label style={{ margin: 0, fontWeight: 600 }}>🎞️ Hero Animation Frames</label>
+                <button
+                  type="button"
+                  className="btn-tiny"
+                  title="Quick-set Hero Frames 1 & 2"
+                  onClick={() => {
+                    onUpdateSpawn({
+                      ...level.spawn,
+                      animation_frames: [
+                        'desolate_landscape.desolate_hero_01',
+                        'desolate_landscape.desolate_hero_02',
+                      ],
+                    });
+                  }}
+                >
+                  🧙 Hero (2 frames)
+                </button>
+              </div>
+
+              {level.spawn.animation_frames && level.spawn.animation_frames.length > 0 ? (
+                <>
+                  {/* Live Preview */}
+                  <div className="anim-preview-box">
+                    {(() => {
+                      const curKey = level.spawn.animation_frames[previewTick % level.spawn.animation_frames.length];
+                      const t = allTilesWithScope.find((tile) => tile.scopedId === curKey || tile.id === curKey);
+                      return (
+                        <>
+                          {t?.image_url ? (
+                            <img src={t.image_url} alt="" style={{ width: 28, height: 28, imageRendering: 'pixelated' }} />
+                          ) : (
+                            <span style={{ fontSize: 22 }}>🧙</span>
+                          )}
+                          <span style={{ fontSize: 12, color: '#e6edf3' }}>
+                            Playing frame {(previewTick % level.spawn.animation_frames.length) + 1} of {level.spawn.animation_frames.length} ({t?.label || curKey})
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="frames-list" style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                    {level.spawn.animation_frames.map((frameId, fIdx) => {
+                      const t = allTilesWithScope.find((tile) => tile.scopedId === frameId || tile.id === frameId);
+                      return (
+                        <div
+                          key={fIdx}
+                          className="frame-row"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            background: '#1c2430',
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            border: '1px solid #2d3848',
+                          }}
+                        >
+                          <span style={{ fontSize: 11, color: '#a0aec0', width: 45 }}>#{fIdx + 1}</span>
+                          {t?.image_url && (
+                            <img src={t.image_url} alt="" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
+                          )}
+                          <span style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {t?.label || frameId}
+                          </span>
+                          {fIdx > 0 && (
+                            <button
+                              type="button"
+                              className="btn-icon-tiny"
+                              title="Move Up"
+                              onClick={() => {
+                                const frames = [...level.spawn.animation_frames!];
+                                const tmp = frames[fIdx - 1];
+                                frames[fIdx - 1] = frames[fIdx];
+                                frames[fIdx] = tmp;
+                                onUpdateSpawn({ ...level.spawn, animation_frames: frames });
+                              }}
+                            >
+                              ⬆️
+                            </button>
+                          )}
+                          {level.spawn.animation_frames && fIdx < level.spawn.animation_frames.length - 1 && (
+                            <button
+                              type="button"
+                              className="btn-icon-tiny"
+                              title="Move Down"
+                              onClick={() => {
+                                const frames = [...level.spawn.animation_frames!];
+                                const tmp = frames[fIdx + 1];
+                                frames[fIdx + 1] = frames[fIdx];
+                                frames[fIdx] = tmp;
+                                onUpdateSpawn({ ...level.spawn, animation_frames: frames });
+                              }}
+                            >
+                              ⬇️
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn-icon-tiny"
+                            title="Remove Frame"
+                            onClick={() => {
+                              const frames = level.spawn.animation_frames!.filter((_, i) => i !== fIdx);
+                              onUpdateSpawn({
+                                ...level.spawn,
+                                animation_frames: frames.length > 0 ? frames : undefined,
+                              });
+                            }}
+                          >
+                            ❌
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 12, color: '#718096', marginBottom: 8, fontStyle: 'italic' }}>
+                  No animation frames set (using default hero sprite).
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <select id="new-spawn-frame-select" style={{ flex: 1 }} defaultValue="">
+                  <option value="" disabled>-- Select tile to add as hero frame --</option>
+                  {Object.values(BUILTIN_TILESETS).map((ts) => (
+                    <optgroup key={ts.id} label={ts.label}>
+                      {ts.tiles.map((tile) => (
+                        <option key={`${ts.id}.${tile.id}`} value={`${ts.id}.${tile.id}`}>
+                          {tile.label} ({tile.gb_constant})
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  onClick={() => {
+                    const sel = document.getElementById('new-spawn-frame-select') as HTMLSelectElement;
+                    if (!sel || !sel.value) return;
+                    const chosen = sel.value;
+                    const current = level.spawn.animation_frames || [];
+                    onUpdateSpawn({
+                      ...level.spawn,
+                      animation_frames: [...current, chosen],
+                    });
+                  }}
+                >
+                  ➕ Add Frame
+                </button>
+              </div>
+
+              {/* Visual Quick-Picker Palette */}
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <label style={{ fontSize: 11, color: '#a0aec0', margin: 0 }}>
+                    Quick Visual Tile Picker (Click to append):
+                  </label>
+                  {level.spawn.animation_frames && level.spawn.animation_frames.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-tiny"
+                      style={{ color: '#f85149' }}
+                      title="Clear animation frames and revert to default sprite"
+                      onClick={() => onUpdateSpawn({ ...level.spawn, animation_frames: undefined })}
+                    >
+                      🗑️ Clear
+                    </button>
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))',
+                    gap: 4,
+                    maxHeight: 110,
+                    overflowY: 'auto',
+                    background: '#141a22',
+                    padding: 4,
+                    borderRadius: 4,
+                    border: '1px solid #2d3848',
+                  }}
+                >
+                  {allTilesWithScope
+                    .filter((t) => t.category === 'npc' || t.category === 'enemy' || t.tilesetId === level.tileset)
+                    .map((tile) => (
+                      <button
+                        key={tile.scopedId}
+                        type="button"
+                        title={`Click to add ${tile.label}`}
+                        style={{
+                          background: '#1c2430',
+                          border: '1px solid #2d3848',
+                          borderRadius: 4,
+                          padding: 2,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onClick={() => {
+                          const current = level.spawn.animation_frames || [];
+                          onUpdateSpawn({
+                            ...level.spawn,
+                            animation_frames: [...current, tile.scopedId],
+                          });
+                        }}
+                      >
+                        <img
+                          src={tile.image_url}
+                          alt={tile.label}
+                          width={26}
+                          height={26}
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      </button>
+                    ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -582,6 +1156,309 @@ export const Inspector: React.FC<InspectorProps> = ({
                         </select>
                       );
                     })()}
+                  </div>
+
+                  {/* Animation Frames (Multi-frame Sequence) */}
+                  <div className="form-group animation-frames-group" style={{ marginTop: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <label style={{ margin: 0, fontWeight: 600 }}>🎞️ Animation Frames</label>
+                      <div className="preset-buttons" style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          type="button"
+                          className="btn-tiny"
+                          title="Set Fireplace Animation (2 frames)"
+                          onClick={() => {
+                            const newFrames = [
+                              'desolate_landscape.desolate_fire_01',
+                              'desolate_landscape.desolate_fire_02',
+                            ];
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              animation_frames: newFrames,
+                              overworld_sprite: newFrames[0],
+                            });
+                          }}
+                        >
+                          🔥 Fire
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-tiny"
+                          title="Set Kobold Animation (2 frames)"
+                          onClick={() => {
+                            const newFrames = [
+                              'desolate_landscape.desolate_kobold_01',
+                              'desolate_landscape.desolate_kobold_02',
+                            ];
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              animation_frames: newFrames,
+                              overworld_sprite: newFrames[0],
+                            });
+                          }}
+                        >
+                          👾 Kobold
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-tiny"
+                          title="Set Hero Animation (2 frames)"
+                          onClick={() => {
+                            const newFrames = [
+                              'desolate_landscape.desolate_hero_01',
+                              'desolate_landscape.desolate_hero_02',
+                            ];
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              animation_frames: newFrames,
+                              overworld_sprite: newFrames[0],
+                            });
+                          }}
+                        >
+                          🧙 Hero
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live Preview Box */}
+                    {selectedObject.animation_frames && selectedObject.animation_frames.length > 0 && (
+                      <div className="anim-preview-box">
+                        {(() => {
+                          const curKey = selectedObject.animation_frames[previewTick % selectedObject.animation_frames.length];
+                          const t = allTilesWithScope.find((tile) => tile.scopedId === curKey || tile.id === curKey);
+                          return (
+                            <>
+                              {t?.image_url ? (
+                                <img src={t.image_url} alt="" style={{ width: 28, height: 28, imageRendering: 'pixelated' }} />
+                              ) : (
+                                <span style={{ fontSize: 22 }}>👾</span>
+                              )}
+                              <span style={{ fontSize: 12, color: '#e6edf3' }}>
+                                Playing frame {(previewTick % selectedObject.animation_frames.length) + 1} of {selectedObject.animation_frames.length} ({t?.label || curKey})
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Frames list */}
+                    {selectedObject.animation_frames && selectedObject.animation_frames.length > 0 ? (
+                      <div className="frames-list" style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                        {selectedObject.animation_frames.map((frameId, fIdx) => {
+                          const t = allTilesWithScope.find((tile) => tile.scopedId === frameId || tile.id === frameId);
+                          return (
+                            <div
+                              key={fIdx}
+                              className="frame-row"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                background: '#1c2430',
+                                padding: '4px 8px',
+                                borderRadius: 4,
+                                border: '1px solid #2d3848',
+                              }}
+                            >
+                              <span style={{ fontSize: 11, color: '#a0aec0', width: 45 }}>
+                                #{fIdx + 1}
+                              </span>
+                              {t?.image_url && (
+                                <img
+                                  src={t.image_url}
+                                  alt=""
+                                  style={{ width: 20, height: 20, imageRendering: 'pixelated' }}
+                                />
+                              )}
+                              <span style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {t?.label || frameId}
+                              </span>
+                              {fIdx > 0 && (
+                                <button
+                                  type="button"
+                                  className="btn-icon-tiny"
+                                  title="Move Up"
+                                  onClick={() => {
+                                    const frames = [...selectedObject.animation_frames!];
+                                    const tmp = frames[fIdx - 1];
+                                    frames[fIdx - 1] = frames[fIdx];
+                                    frames[fIdx] = tmp;
+                                    onUpdateObject(selectedEntityIndex, {
+                                      ...selectedObject,
+                                      animation_frames: frames,
+                                      overworld_sprite: frames[0],
+                                    });
+                                  }}
+                                >
+                                  ⬆️
+                                </button>
+                              )}
+                              {selectedObject.animation_frames && fIdx < selectedObject.animation_frames.length - 1 && (
+                                <button
+                                  type="button"
+                                  className="btn-icon-tiny"
+                                  title="Move Down"
+                                  onClick={() => {
+                                    const frames = [...selectedObject.animation_frames!];
+                                    const tmp = frames[fIdx + 1];
+                                    frames[fIdx + 1] = frames[fIdx];
+                                    frames[fIdx] = tmp;
+                                    onUpdateObject(selectedEntityIndex, {
+                                      ...selectedObject,
+                                      animation_frames: frames,
+                                      overworld_sprite: frames[0],
+                                    });
+                                  }}
+                                >
+                                  ⬇️
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="btn-icon-tiny"
+                                title="Remove Frame"
+                                onClick={() => {
+                                  const frames = selectedObject.animation_frames!.filter((_, i) => i !== fIdx);
+                                  onUpdateObject(selectedEntityIndex, {
+                                    ...selectedObject,
+                                    animation_frames: frames.length > 0 ? frames : undefined,
+                                    overworld_sprite: frames.length > 0 ? frames[0] : selectedObject.overworld_sprite,
+                                  });
+                                }}
+                              >
+                                ❌
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#718096', marginBottom: 8, fontStyle: 'italic' }}>
+                        No animation frames set (using static overworld sprite).
+                      </div>
+                    )}
+
+                    {/* Add frame selector */}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <select
+                        id="new-object-frame-select"
+                        style={{ flex: 1 }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>-- Select tile to add as frame --</option>
+                        {Object.values(BUILTIN_TILESETS).map((ts) => (
+                          <optgroup key={ts.id} label={ts.label}>
+                            {ts.tiles.map((tile) => (
+                              <option key={`${ts.id}.${tile.id}`} value={`${ts.id}.${tile.id}`}>
+                                {tile.label} ({tile.gb_constant})
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn-secondary btn-sm"
+                        onClick={() => {
+                          const sel = document.getElementById('new-object-frame-select') as HTMLSelectElement;
+                          if (!sel || !sel.value) return;
+                          const chosen = sel.value;
+                          const current = selectedObject.animation_frames || (selectedObject.overworld_sprite ? [selectedObject.overworld_sprite] : []);
+                          const newFrames = [...current, chosen];
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            animation_frames: newFrames,
+                            overworld_sprite: newFrames[0],
+                          });
+                        }}
+                      >
+                        ➕ Add Frame
+                      </button>
+                    </div>
+
+                    {/* Visual Quick-Picker Palette */}
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <label style={{ fontSize: 11, color: '#a0aec0', margin: 0 }}>
+                          Quick Visual Tile Picker (Click to append):
+                        </label>
+                        {selectedObject.animation_frames && selectedObject.animation_frames.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-tiny"
+                            style={{ color: '#f85149' }}
+                            title="Clear animation frames and revert to static sprite"
+                            onClick={() =>
+                              onUpdateObject(selectedEntityIndex, {
+                                ...selectedObject,
+                                animation_frames: undefined,
+                              })
+                            }
+                          >
+                            🗑️ Clear
+                          </button>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))',
+                          gap: 4,
+                          maxHeight: 120,
+                          overflowY: 'auto',
+                          background: '#141a22',
+                          padding: 4,
+                          borderRadius: 4,
+                          border: '1px solid #2d3848',
+                        }}
+                      >
+                        {allTilesWithScope
+                          .filter(
+                            (t) =>
+                              t.category === 'npc' ||
+                              t.category === 'enemy' ||
+                              t.category === 'object' ||
+                              t.tilesetId === level.tileset
+                          )
+                          .map((tile) => (
+                            <button
+                              key={tile.scopedId}
+                              type="button"
+                              title={`Click to add ${tile.label}`}
+                              style={{
+                                background: '#1c2430',
+                                border: '1px solid #2d3848',
+                                borderRadius: 4,
+                                padding: 2,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                              onClick={() => {
+                                const current =
+                                  selectedObject.animation_frames ||
+                                  (selectedObject.overworld_sprite ? [selectedObject.overworld_sprite] : []);
+                                const newFrames = [...current, tile.scopedId];
+                                onUpdateObject(selectedEntityIndex, {
+                                  ...selectedObject,
+                                  animation_frames: newFrames,
+                                  overworld_sprite: newFrames[0],
+                                });
+                              }}
+                            >
+                              <img
+                                src={tile.image_url}
+                                alt={tile.label}
+                                width={26}
+                                height={26}
+                                style={{ imageRendering: 'pixelated' }}
+                              />
+                            </button>
+                          ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="form-group">

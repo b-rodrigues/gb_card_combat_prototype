@@ -412,7 +412,11 @@
     "spawn": {
       "x": 12,
       "y": 1,
-      "facing": "DOWN"
+      "facing": "DOWN",
+      "animation_frames": [
+        "desolate_landscape.desolate_hero_01",
+        "desolate_landscape.desolate_hero_02"
+      ]
     }
   },
   "exits": [
@@ -440,6 +444,10 @@
       "id": "south_slime",
       "type": "enemy",
       "overworld_sprite": "desolate_landscape.desolate_kobold_01",
+      "animation_frames": [
+        "desolate_landscape.desolate_kobold_01",
+        "desolate_landscape.desolate_kobold_02"
+      ],
       "position": {
         "x": 8,
         "y": 8
@@ -469,6 +477,10 @@
       "id": "south_campfire",
       "type": "npc",
       "overworld_sprite": "desolate_landscape.desolate_fire_01",
+      "animation_frames": [
+        "desolate_landscape.desolate_fire_01",
+        "desolate_landscape.desolate_fire_02"
+      ],
       "position": {
         "x": 17,
         "y": 11

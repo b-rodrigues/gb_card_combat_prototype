@@ -62,6 +62,7 @@ static const palette_color_t cgb_sprite_palette_orange[4] = {
  * (make gfx); see docs/graphics.md.  The array is included verbatim. */
 #include "gfx/player_sprite_tile.h"
 #include "gfx/kobold_sprite_tile.h"
+#include "gfx/hero_desolate_sprite_tile.h"
 #include "gfx/rpg_tile_lookup.h"
 #include "gfx/asset_atlas.h"
 #include "game_ids.h"
@@ -69,7 +70,8 @@ static const palette_color_t cgb_sprite_palette_orange[4] = {
 
 #define PLAYER_SPRITE_NUM 0
 #define PLAYER_SPRITE_TILE_ID 102
-#define KOBOLD_SPRITE_TILE_ID 103
+#define KOBOLD_SPRITE_TILE_ID 96
+#define HERO_DESOLATE_SPRITE_TILE_ID 98
 
 static const uint16_t s_card_icon_uids[13] = {
     29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
@@ -126,10 +128,11 @@ void ui_init(void)
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
     }
 
-    /* Load world background tiles from Bank 5 (20 tiles = 320 bytes) */
-    for (p = 0; p < 20; p += 4) {
-        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 64);
-        set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), 4, (const uint8_t *)g_ui_screen_buf);
+    /* Load world background tiles from Bank 5 (21 tiles = 336 bytes) */
+    for (p = 0; p < 21; p += 3) {
+        uint8_t count = (uint8_t)((p + 3 <= 21) ? 3 : (21 - p));
+        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), (uint16_t)count << 4);
+        set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), count, (const uint8_t *)g_ui_screen_buf);
     }
 
     /* Disable GBDK console auto-scroll.  When putchar() advances the cursor
@@ -190,7 +193,8 @@ void ui_init(void)
 void ui_sprite_init(void)
 {
     set_sprite_data(PLAYER_SPRITE_TILE_ID, 1, player_sprite_tile);
-    set_sprite_data(KOBOLD_SPRITE_TILE_ID, 1, kobold_sprite_tile);
+    set_sprite_data(KOBOLD_SPRITE_TILE_ID, 2, kobold_sprite_tile);
+    set_sprite_data(HERO_DESOLATE_SPRITE_TILE_ID, 2, hero_desolate_sprite_tile);
     shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
     shadow_OAM[PLAYER_SPRITE_NUM].y = 0;
     SPRITES_8x8;
@@ -487,12 +491,29 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     }
 }
 
+static uint8_t s_anim_counter = 0;
+
 void ui_draw_actors_sprites(const World *world)
 {
     uint8_t slot;
     const WorldActorRuntime *a;
+    uint8_t anim_step;
 
     if (!world) return;
+
+    s_anim_counter++;
+    anim_step = (uint8_t)((s_anim_counter >> 4) & 1);
+
+    if (world->map_id == MAP_SOUTH_FIELD) {
+        shadow_OAM[PLAYER_SPRITE_NUM].tile = (uint8_t)(HERO_DESOLATE_SPRITE_TILE_ID + anim_step);
+        shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
+
+        /* Animate campfire tile at (17, 11) in background tilemap */
+        ((volatile uint8_t *)0x9800)[(11 & 31) * 32 + (17 & 31)] = (uint8_t)(RPG_TILE_BASE_DESOLATE + 3 + anim_step);
+    } else {
+        shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
+        shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
+    }
 
     for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
         uint8_t spr = (uint8_t)(1 + slot);
@@ -504,7 +525,7 @@ void ui_draw_actors_sprites(const World *world)
                 shadow_OAM[spr].y = (uint8_t)(py + 16);
                 shadow_OAM[spr].x = (uint8_t)(px + 8);
                 if (world->map_id == MAP_SOUTH_FIELD && (a->visual == 'S' || a->visual == 'E' || a->id == ENTITY_ID_SLIME)) {
-                    shadow_OAM[spr].tile = KOBOLD_SPRITE_TILE_ID;
+                    shadow_OAM[spr].tile = (uint8_t)(KOBOLD_SPRITE_TILE_ID + anim_step);
                     shadow_OAM[spr].prop = 1;
                 } else {
                     shadow_OAM[spr].tile = (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' '));

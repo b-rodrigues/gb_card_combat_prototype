@@ -71,30 +71,41 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const canvasWidth = level.width * tileSize;
   const canvasHeight = level.height * tileSize;
 
-  // Pre-load tile images
+  // Real-time animation clock for animated actors / objects (4 fps)
+  const [animTick, setAnimTick] = useState<number>(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAnimTick((t) => (t + 1) % 120);
+    }, 250);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Pre-load tile images for all tiles across all tilesets
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
   useEffect(() => {
     const imgMap = new Map<string, HTMLImageElement>();
+    const allTiles = Object.values(BUILTIN_TILESETS).flatMap((ts) => ts.tiles);
     let loadedCount = 0;
-    tileset.tiles.forEach((t) => {
+    allTiles.forEach((t) => {
       const img = new Image();
       img.src = t.image_url;
       img.onload = () => {
         loadedCount++;
-        if (loadedCount === tileset.tiles.length) {
-          imgMap.set(t.id, img);
+        imgMap.set(t.id, img);
+        if (loadedCount === allTiles.length) {
           setTileImages(new Map(imgMap));
         }
       };
       img.onerror = () => {
         loadedCount++;
-        if (loadedCount === tileset.tiles.length) {
+        if (loadedCount === allTiles.length) {
           setTileImages(new Map(imgMap));
         }
       };
       imgMap.set(t.id, img);
     });
-  }, [tileset]);
+    setTileImages(new Map(imgMap));
+  }, []);
 
   // Convert mouse pixel coordinates to tile coordinates
   const getTileCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
@@ -123,6 +134,219 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     // Clear canvas
     ctx.fillStyle = '#0f141c';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // ── BATTLE SCREEN AUTHENTIC RENDERER (matching assets/battle_screen_mockup.jpg) ──
+    if (level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle'))) {
+      const layout = level.battleHudLayout || {};
+      const bannerRow = layout.turn_banner_row ?? 0;
+      const enemyHpRow = layout.enemy_hp_row ?? 1;
+      const enemySpriteRow = layout.enemy_sprite_row ?? 2;
+      const enemyCursorRow = layout.enemy_cursor_row ?? 4;
+      const heroLabelRow = layout.hero_label_row ?? 6;
+      const heroLabelCol = layout.hero_label_col ?? 1;
+      const heroHpRow = layout.hero_hp_row ?? 6;
+      const heroHpCol = layout.hero_hp_col ?? 13;
+      const deckRow = layout.deck_row ?? 7;
+      const deckCol = layout.deck_col ?? 1;
+      const apRow = layout.ap_row ?? 7;
+      const apCol = layout.ap_col ?? 13;
+      const comboRow = layout.combo_row ?? 9;
+      const cardsRow = layout.cards_row ?? 10;
+      const cardCursorRow = layout.card_cursor_row ?? 14;
+      const cardDescRow = layout.card_desc_row ?? 15;
+      const timerRow = layout.timer_row ?? 16;
+
+      // 1. Crisp white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // 2. Mockup Cyan Grid lines
+      if (showGrid && tileSize >= 6) {
+        ctx.strokeStyle = 'rgba(74, 185, 209, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= level.width; x++) {
+          ctx.moveTo(x * tileSize, 0);
+          ctx.lineTo(x * tileSize, canvasHeight);
+        }
+        for (let y = 0; y <= level.height; y++) {
+          ctx.moveTo(0, y * tileSize);
+          ctx.lineTo(canvasWidth, y * tileSize);
+        }
+        ctx.stroke();
+      }
+
+      const fontScale = Math.max(10, Math.floor(tileSize * 0.72));
+      ctx.font = `bold ${fontScale}px monospace`;
+      ctx.fillStyle = '#593c28';
+
+      // 3. Row 0: Top Banner "PLAYER TURN"
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(
+        'PLAYER TURN',
+        canvasWidth / 2,
+        bannerRow * tileSize + tileSize * 0.5
+      );
+
+      // 4. Enemy Roster (Rows 1–4)
+      const enemyCols = [
+        layout.enemy_col_start ?? 1,
+        (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7),
+        (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7) * 2,
+      ];
+      const enemyHps = ['10/10', '10/10', '02/10'];
+
+      enemyCols.forEach((colX, idx) => {
+        const cx = (colX + 1.5) * tileSize;
+        // Enemy HP Text above sprite
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.65))}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
+
+        // Slime Sprite (Rows 2–3)
+        const sx = (colX + 0.3) * tileSize;
+        const sy = (enemySpriteRow + 0.1) * tileSize;
+        const sw = 2.4 * tileSize;
+        const sh = 1.8 * tileSize;
+
+        // Wobble on animTick
+        const wobble = (animTick % 2 === idx % 2) ? 1 : 0;
+
+        // Slime body
+        ctx.fillStyle = '#72b847';
+        ctx.beginPath();
+        ctx.ellipse(cx, sy + sh * 0.55 + wobble, sw * 0.48, sh * 0.44, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#4e852d';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Eyes
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - sw * 0.22, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+        ctx.fillRect(cx + sw * 0.12, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+
+        // Pupils
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(cx - sw * 0.18, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+        ctx.fillRect(cx + sw * 0.16, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+
+        // Open mouth
+        ctx.fillStyle = '#1c1c1c';
+        ctx.beginPath();
+        ctx.ellipse(cx, sy + sh * 0.65 + wobble, sw * 0.18, sh * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Target arrow under enemy 1 (middle)
+      ctx.fillStyle = '#593c28';
+      ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+
+      // 5. Dual-Column Hero & Status Panel (Rows 6 & 7)
+      ctx.font = `bold ${fontScale}px monospace`;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#593c28';
+
+      // Row 6: Left "HERO" + Icon | Right "[♥] : 10/10"
+      ctx.fillText('HERO 🧙', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
+      ctx.fillStyle = '#c0392b';
+      ctx.fillText('♥', heroHpCol * tileSize, (heroHpRow + 0.5) * tileSize);
+      ctx.fillStyle = '#593c28';
+      ctx.fillText(' : 10/10', (heroHpCol + 0.8) * tileSize, (heroHpRow + 0.5) * tileSize);
+
+      // Row 7: Left "DECK:  7 [🎴]" | Right "[🔋] :  6 :  6"
+      ctx.fillText('DECK:  7 🎴', deckCol * tileSize, (deckRow + 0.5) * tileSize);
+      ctx.fillText('🔋 :  6 :  6', apCol * tileSize, (apRow + 0.5) * tileSize);
+
+      // 6. Row 9: Combo Header "COMBO"
+      ctx.fillText('COMBO', 1 * tileSize, (comboRow + 0.5) * tileSize);
+
+      // 7. Rows 10–13: 5 Framed Multi-Tile Cards
+      const cardCols = [1, 5, 8, 12, 16];
+      const cardDefs = [
+        { icon: '🗡️', val: 3, rider: null },
+        { icon: '🏹', val: 2, rider: '🟣' },
+        { icon: '🛡️', val: 2, rider: null },
+        { icon: '🛡️', val: 2, rider: null },
+        { icon: '🗡️', val: 4, rider: '🔥' },
+      ];
+
+      cardCols.forEach((cx, idx) => {
+        const cDef = cardDefs[idx];
+        const cardX = cx * tileSize;
+        const cardY = cardsRow * tileSize;
+        const cardW = 2.8 * tileSize;
+        const cardH = 3.8 * tileSize;
+
+        // Outer border
+        ctx.fillStyle = '#b78e58';
+        ctx.fillRect(cardX, cardY, cardW, cardH);
+
+        // Inner parchment face
+        ctx.fillStyle = '#deb580';
+        ctx.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4);
+
+        // Inset border line
+        ctx.strokeStyle = '#cd9e64';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8);
+
+        // Element rider in top right corner
+        if (cDef.rider) {
+          ctx.font = `${Math.max(8, Math.floor(tileSize * 0.55))}px sans-serif`;
+          ctx.textAlign = 'right';
+          ctx.fillText(cDef.rider, cardX + cardW - 5, cardY + tileSize * 0.7);
+        }
+
+        // Weapon icon in center
+        ctx.font = `${Math.max(12, Math.floor(tileSize * 0.85))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(cDef.icon, cardX + cardW / 2, cardY + cardH * 0.42);
+
+        // Card number value underneath weapon
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
+        ctx.fillText(String(cDef.val), cardX + cardW / 2, cardY + cardH * 0.78);
+      });
+
+      // 8. Row 14: Card Cursor
+      ctx.fillStyle = '#593c28';
+      ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('⬆', (cardCols[0] + 1.4) * tileSize, (cardCursorRow + 0.5) * tileSize);
+
+      // 9. Row 15: Card Description "Sword: physical"
+      ctx.fillStyle = '#593c28';
+      ctx.font = `bold ${fontScale}px monospace`;
+      ctx.textAlign = 'left';
+      ctx.fillText('Sword: physical', 1 * tileSize, (cardDescRow + 0.5) * tileSize);
+
+      // 10. Rows 16–17: Turn Timer Bar
+      const timerWidthCols = layout.timer_width ?? 11;
+      const barX = (layout.timer_col ?? 0) * tileSize;
+      const barY = timerRow * tileSize;
+      const barW = timerWidthCols * tileSize;
+      const barH = 1.9 * tileSize;
+
+      ctx.fillStyle = '#d59f63';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.strokeStyle = '#b78e58';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(barX, barY, barW, barH);
+
+      // Hover cursor
+      if (hoverTile) {
+        ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hoverTile.x * tileSize, hoverTile.y * tileSize, tileSize, tileSize);
+      }
+
+      return;
+    }
 
     // 1. Render Terrain Tiles
     if (showTerrain) {
@@ -305,13 +529,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.lineWidth = isSelected ? 2 : 1;
         ctx.stroke();
 
-        // Sprite image or fallback icon
+        // Sprite image (animated or static) or fallback icon
         if (tileSize >= 16) {
-          const spriteId = obj.overworld_sprite
-            ? obj.overworld_sprite.includes('.')
+          let spriteId: string | null = null;
+          if (obj.animation_frames && obj.animation_frames.length > 0) {
+            const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
+            spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+          } else if (obj.overworld_sprite) {
+            spriteId = obj.overworld_sprite.includes('.')
               ? obj.overworld_sprite.split('.')[1]
-              : obj.overworld_sprite
-            : null;
+              : obj.overworld_sprite;
+          }
+
           const spriteImg = spriteId ? tileImages.get(spriteId) : null;
           if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
             ctx.imageSmoothingEnabled = false;
@@ -343,11 +572,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.stroke();
 
       if (tileSize >= 16) {
-        ctx.font = `bold ${Math.floor(tileSize * 0.45)}px sans-serif`;
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🧙', px + tileSize / 2, py + tileSize / 2);
+        let heroSpriteId: string | null = null;
+        if (sp.animation_frames && sp.animation_frames.length > 0) {
+          const frameKey = sp.animation_frames[animTick % sp.animation_frames.length];
+          heroSpriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+        }
+        const heroImg = heroSpriteId ? tileImages.get(heroSpriteId) : null;
+        if (heroImg && heroImg.complete && heroImg.naturalWidth > 0) {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(heroImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
+        } else {
+          ctx.font = `bold ${Math.floor(tileSize * 0.45)}px sans-serif`;
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🧙', px + tileSize / 2, py + tileSize / 2);
+        }
       }
     }
 
@@ -381,6 +621,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     tileSize,
     tileMap,
     tileImages,
+    animTick,
   ]);
 
   useEffect(() => {

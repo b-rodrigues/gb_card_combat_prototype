@@ -19,6 +19,8 @@ export interface LevelObject {
   properties?: Record<string, any>;
   // Sprite/tile configuration for cross-context reuse (overworld + battle)
   overworld_sprite?: string;  // tileset.tile_name for overworld rendering
+  animation_frames?: string[]; // Array of tileset.tile_name frames for animation
+  animation_speed?: number;   // Animation ticks per frame (default 16 or 250ms)
   battle_sprite?: string;     // tileset.tile_name for battle rendering
   battle_name?: string;       // name shown in battle UI (overrides display_name)
 }

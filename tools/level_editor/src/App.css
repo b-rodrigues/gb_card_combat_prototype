@@ -868,3 +868,54 @@ body {
 .val-item.passed { color: #56d364; }
 .val-item.failed { color: #f85149; }
 .val-item.warning { color: #d29922; }
+
+/* Animation Frames Editor */
+.btn-tiny {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: #e6edf3;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-tiny:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.btn-icon-tiny {
+  background: none;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.btn-icon-tiny:hover {
+  opacity: 1;
+}
+
+.frame-row {
+  transition: background 0.15s;
+}
+
+.frame-row:hover {
+  background: #232d3d !important;
+}
+
+.anim-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #141a22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+
