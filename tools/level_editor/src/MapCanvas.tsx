@@ -63,6 +63,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [draggingEntity, setDraggingEntity] = useState<{ type: 'object' | 'exit' | 'spawn'; index: number } | null>(null);
 
   const tileset: TilesetDefinition = BUILTIN_TILESETS[level.tileset] || BUILTIN_TILESETS.forest;
+  const defaultFloorTile = tileset.tiles.find((t) => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
   const tileMap = new Map<string, TileDefinition>();
   tileset.tiles.forEach((t) => tileMap.set(t.id, t));
 
@@ -127,8 +128,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (showTerrain) {
       for (let y = 0; y < level.height; y++) {
         for (let x = 0; x < level.width; x++) {
-          const tileId = level.grid[y]?.[x] || 'floor';
-          const tDef = tileMap.get(tileId) || tileMap.get('floor');
+          const tileId = level.grid[y]?.[x] || defaultFloorTile;
+          const tDef = tileMap.get(tileId) || tileMap.get(defaultFloorTile);
 
           const px = x * tileSize;
           const py = y * tileSize;
@@ -184,7 +185,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (showCollision) {
       for (let y = 0; y < level.height; y++) {
         for (let x = 0; x < level.width; x++) {
-          const tileId = level.grid[y]?.[x] || 'floor';
+          const tileId = level.grid[y]?.[x] || defaultFloorTile;
           const tDef = tileMap.get(tileId);
           const isPerimeter = x === 0 || x === level.width - 1 || y === 0 || y === level.height - 1;
           const isBlocked = isPerimeter || (tDef ? !tDef.walkable : false);
@@ -447,11 +448,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       if (activeTool === 'brush') {
         onTilePainted(coords.x, coords.y, selectedTileId);
       } else if (activeTool === 'eraser') {
-        onTilePainted(coords.x, coords.y, 'floor');
+        onTilePainted(coords.x, coords.y, defaultFloorTile);
       } else if (activeTool === 'fill') {
         onFill(coords.x, coords.y, selectedTileId);
       } else if (activeTool === 'eyedropper') {
-        const picked = level.grid[coords.y]?.[coords.x] || 'floor';
+        const picked = level.grid[coords.y]?.[coords.x] || defaultFloorTile;
         onTilePicked(picked);
       }
     }
@@ -480,7 +481,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       if (activeTool === 'brush') {
         onTilePainted(coords.x, coords.y, selectedTileId);
       } else if (activeTool === 'eraser') {
-        onTilePainted(coords.x, coords.y, 'floor');
+        onTilePainted(coords.x, coords.y, defaultFloorTile);
       }
     }
   };
@@ -522,7 +523,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           Cursor: {hoverTile ? `(${hoverTile.x}, ${hoverTile.y})` : '—'}
         </span>
         <span>
-          Tile: {hoverTile ? level.grid[hoverTile.y]?.[hoverTile.x] || 'floor' : '—'}
+          Tile: {hoverTile ? level.grid[hoverTile.y]?.[hoverTile.x] || defaultFloorTile : '—'}
         </span>
         <span>
           Dimensions: {level.width} × {level.height}

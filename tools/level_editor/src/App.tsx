@@ -9,7 +9,7 @@ import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson } from './io/saveLevel';
 import { promptLoadLevelFile } from './io/loadLevel';
-import { BUILTIN_TILESETS } from './model/Tileset';
+import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 
 // Built-in levels from repository
 import forestData from '../../../levels/forest.json';
@@ -281,11 +281,13 @@ export const App: React.FC = () => {
     const newH = updates.height !== undefined ? updates.height : level.height;
 
     if (newW !== level.width || newH !== level.height) {
+      const ts = getTileset(level.tileset);
+      const defaultFloor = ts.tiles.find((t: TileDefinition) => t.walkable)?.id || ts.tiles[0]?.id || 'floor';
       newGrid = [];
       for (let y = 0; y < newH; y++) {
         const row: string[] = [];
         for (let x = 0; x < newW; x++) {
-          row.push(level.grid[y]?.[x] || 'floor');
+          row.push(level.grid[y]?.[x] || defaultFloor);
         }
         newGrid.push(row);
       }

@@ -356,17 +356,6 @@
       "category": "terrain"
     },
     {
-      "id": "floor",
-      "label": "Plain Gray Floor",
-      "gb_constant": "TILE_FLOOR",
-      "gb_tile_index": 32,
-      "walkable": true,
-      "color": "#88c070",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_floor_plain.png",
-      "category": "terrain"
-    },
-    {
       "id": "desolate_floor_plain",
       "label": "Desolate Floor Plain",
       "gb_constant": "TILE_DESOLATE_FLOOR_PLAIN",
