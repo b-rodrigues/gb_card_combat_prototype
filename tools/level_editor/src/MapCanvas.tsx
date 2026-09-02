@@ -91,10 +91,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
   useEffect(() => {
     const imgMap = new Map<string, HTMLImageElement>();
-    const tilesWithScope: { scopedId: string; id: string; url: string }[] = [];
+    const tilesWithScope: { scopedId: string; url: string }[] = [];
     Object.entries(BUILTIN_TILESETS).forEach(([tsId, ts]) => {
       ts.tiles.forEach((t) => {
-        tilesWithScope.push({ scopedId: `${tsId}.${t.id}`, id: t.id, url: t.image_url });
+        tilesWithScope.push({ scopedId: `${tsId}.${t.id}`, url: t.image_url });
       });
     });
 
@@ -104,7 +104,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       img.src = item.url;
       img.onload = () => {
         loadedCount++;
-        imgMap.set(item.id, img);
         imgMap.set(item.scopedId, img);
         if (loadedCount === tilesWithScope.length) {
           setTileImages(new Map(imgMap));
@@ -116,7 +115,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           setTileImages(new Map(imgMap));
         }
       };
-      imgMap.set(item.id, img);
       imgMap.set(item.scopedId, img);
     });
     setTileImages(new Map(imgMap));
@@ -358,7 +356,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             }
 
             if (cellTileKey) {
-              const spriteId = cellTileKey.includes('.') ? cellTileKey.split('.')[1] : cellTileKey;
+              const spriteId = cellTileKey;
               const img = tileImages.get(spriteId);
               if (img && img.complete && img.naturalWidth > 0) {
                 ctx.drawImage(img, cellX, cellY, tileDim, tileDim);
@@ -625,7 +623,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           const py = y * tileSize;
 
           // Draw tile image if loaded, fallback to colored rect
-          const img = tileImages.get(tileId);
+          const img = tileImages.get(`${level.tileset}.${tileId}`);
           if (img && img.complete && img.naturalWidth > 0) {
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(img, px, py, tileSize, tileSize);
@@ -652,7 +650,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       const rh = Math.abs(dragStartTile.y - hoverTile.y) + 1;
 
       const tDef = tileMap.get(selectedTileId);
-      const img = tileImages.get(selectedTileId);
+      const img = tileImages.get(`${level.tileset}.${selectedTileId}`);
       ctx.globalAlpha = 0.6;
       if (img && img.complete && img.naturalWidth > 0) {
         ctx.imageSmoothingEnabled = false;
@@ -716,7 +714,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           const ty = sy + py;
           if (tx >= level.width || ty >= level.height) continue;
 
-          const img = tileImages.get(tId);
+          const img = tileImages.get(`${level.tileset}.${tId}`);
           const tDef = tileMap.get(tId);
           if (img && img.complete && img.naturalWidth > 0) {
             ctx.drawImage(img, tx * tileSize, ty * tileSize, tileSize, tileSize);
@@ -875,7 +873,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 const cellX = px + c * tileSize;
                 const cellY = py + r * tileSize;
                 if (cellTileKey) {
-                  const spriteId = cellTileKey.includes('.') ? cellTileKey.split('.')[1] : cellTileKey;
+                  const spriteId = cellTileKey;
                   const img = tileImages.get(spriteId);
                   if (img && img.complete && img.naturalWidth > 0) {
                     ctx.drawImage(img, cellX, cellY, tileSize, tileSize);
@@ -893,11 +891,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             let spriteId: string | null = null;
             if (obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
-              spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+              spriteId = frameKey;
             } else if (obj.overworld_sprite) {
-              spriteId = obj.overworld_sprite.includes('.')
-                ? obj.overworld_sprite.split('.')[1]
-                : obj.overworld_sprite;
+              spriteId = obj.overworld_sprite;
             }
 
             const spriteImg = spriteId ? tileImages.get(spriteId) : null;
@@ -935,11 +931,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             let spriteId: string | null = null;
             if (obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
-              spriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+              spriteId = frameKey;
             } else if (obj.overworld_sprite) {
-              spriteId = obj.overworld_sprite.includes('.')
-                ? obj.overworld_sprite.split('.')[1]
-                : obj.overworld_sprite;
+              spriteId = obj.overworld_sprite;
             }
 
             const spriteImg = spriteId ? tileImages.get(spriteId) : null;
@@ -977,7 +971,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         let heroSpriteId: string | null = null;
         if (sp.animation_frames && sp.animation_frames.length > 0) {
           const frameKey = sp.animation_frames[animTick % sp.animation_frames.length];
-          heroSpriteId = frameKey.includes('.') ? frameKey.split('.')[1] : frameKey;
+          heroSpriteId = frameKey;
         }
         const heroImg = heroSpriteId ? tileImages.get(heroSpriteId) : null;
         if (heroImg && heroImg.complete && heroImg.naturalWidth > 0) {
