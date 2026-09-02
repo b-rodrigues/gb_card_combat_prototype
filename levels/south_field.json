@@ -12,25 +12,25 @@
     "terrain": [
       [
         "desolate_landscape.desolate_wall_00",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_01",
+        "desolate_landscape.desolate_wall_01",
         "desolate_landscape.desolate_wall_04",
         "desolate_landscape.desolate_wall_04",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
+        "desolate_landscape.desolate_wall_03",
+        "desolate_landscape.desolate_wall_03",
         "desolate_landscape.desolate_wall_05",
         "desolate_landscape.desolate_wall_04",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_05",
-        "desolate_landscape.desolate_wall_02"
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_02",
+        "desolate_landscape.desolate_wall_03",
+        "desolate_landscape.desolate_wall_01",
+        "desolate_landscape.desolate_wall_03",
+        "desolate_landscape.desolate_wall_01",
+        "desolate_landscape.desolate_wall_05"
       ],
       [
         "desolate_landscape.desolate_wall_11",
@@ -49,7 +49,7 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
+        "desolate_landscape.floor",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_wall_07"
@@ -91,7 +91,7 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
+        "desolate_landscape.floor",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
@@ -184,7 +184,7 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_wall_04"
+        "desolate_landscape.desolate_wall_06"
       ],
       [
         "desolate_landscape.desolate_wall_19",
@@ -206,7 +206,7 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_wall_17"
+        "desolate_landscape.desolate_wall_06"
       ],
       [
         "desolate_landscape.desolate_wall_11",
@@ -228,16 +228,16 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_wall_07"
+        "desolate_landscape.desolate_wall_06"
       ],
       [
         "desolate_landscape.desolate_wall_19",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
+        "desolate_landscape.desolate_floor_01",
+        "desolate_landscape.desolate_floor_02",
+        "desolate_landscape.desolate_floor_01",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
@@ -258,7 +258,7 @@
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
-        "desolate_landscape.desolate_floor_plain",
+        "desolate_landscape.desolate_floor_02",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
         "desolate_landscape.desolate_floor_plain",
