@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "desolate_landscape",
-    "music": "MUSIC_DESOLATE",
+    "music": "MUSIC_DESOLATE_LANDSCAPE",
     "map_id": "MAP_SOUTH_FIELD"
   },
   "layers": {

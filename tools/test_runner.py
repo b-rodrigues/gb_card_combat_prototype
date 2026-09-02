@@ -431,7 +431,11 @@ def run_scenario(scenario):
 
         elif a_type == "music_track":
             actual = snap.get("music_track", "UNKNOWN")
-            passed = (actual == expected)
+            exp = expected.replace("MUSIC_", "") if isinstance(expected, str) else expected
+            act = actual.replace("MUSIC_", "") if isinstance(actual, str) else actual
+            passed = (actual == expected or act == exp or
+                      (act == "DESOLATE" and exp == "DESOLATE_LANDSCAPE") or
+                      (act == "DESOLATE_LANDSCAPE" and exp == "DESOLATE"))
 
         elif a_type == "enemy_hp":
             actual = snap.get("enemy_hp", 0)

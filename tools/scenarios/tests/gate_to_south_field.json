@@ -42,6 +42,10 @@
     {
       "type": "event_occurred",
       "event": "MAP_CHANGED"
+    },
+    {
+      "type": "music_track",
+      "expected": "DESOLATE"
     }
   ],
   "initial_state": {

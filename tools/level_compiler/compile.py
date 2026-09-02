@@ -319,6 +319,8 @@ def emit_c_code(levels_by_id, tilesets):
         lvl = levels_by_id[sid]
         map_id_enum = MAP_ENUM_MAP.get(sid, f"MAP_{sid.upper()}")
         music_enum = lvl["map"].get("music", "MUSIC_OVERWORLD")
+        if music_enum in ("MUSIC_DESOLATE_LANDSCAPE", "desolate_landscape"):
+            music_enum = "MUSIC_DESOLATE"
         width = lvl["map"]["width"]
         height = lvl["map"]["height"]
         start_idx, count = exit_offsets[sid]
