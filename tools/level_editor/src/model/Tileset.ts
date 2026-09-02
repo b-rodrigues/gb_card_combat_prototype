@@ -97,3 +97,46 @@ export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 export function getTileset(id: string): TilesetDefinition {
   return BUILTIN_TILESETS[id] || BUILTIN_TILESETS.exterior;
 }
+
+export function updateTilesetInMemory(tileset: TilesetDefinition): void {
+  BUILTIN_TILESETS[tileset.id] = tileset;
+}
+
+export async function saveTilesetToServer(
+  tileset: TilesetDefinition,
+  images?: Record<string, string>
+): Promise<{ success: boolean; path?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/save-tileset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: tileset.id,
+        data: {
+          id: tileset.id,
+          label: tileset.label,
+          gb_tileset_kind: tileset.gb_tileset_kind,
+          tiles: tileset.tiles.map((t) => ({
+            id: t.id,
+            label: t.label,
+            gb_constant: t.gb_constant,
+            walkable: t.walkable,
+            color: t.color,
+            ascii: t.ascii,
+            image_url: t.image_url,
+            category: t.category,
+          })),
+        },
+        images,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `Server returned status ${res.status}`);
+    }
+    updateTilesetInMemory(tileset);
+    return data;
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

@@ -10,6 +10,7 @@ import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
+import { TilesetReviewer } from './TilesetReviewer';
 
 // Built-in levels from repository
 import forestData from '../../../levels/forest.json';
@@ -74,6 +75,7 @@ export const App: React.FC = () => {
   // Modals
   const [showValidateModal, setShowValidateModal] = useState<boolean>(false);
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
+  const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
   // Compilation & Run State
@@ -643,6 +645,7 @@ export const App: React.FC = () => {
             setClonePattern(null);
             setNotification({ message: 'Clone buffer cleared. Drag a box to copy tiles.', type: 'info' });
           }}
+          onOpenTilesetReviewer={() => setShowTilesetReviewer(true)}
         />
 
         {/* Notification Toast */}
@@ -857,6 +860,22 @@ export const App: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tileset & Asset Property Reviewer Modal */}
+      {showTilesetReviewer && (
+        <TilesetReviewer
+          initialTilesetId={level.tileset}
+          onClose={() => setShowTilesetReviewer(false)}
+          onTilesetUpdated={(updatedTs) => {
+            // Trigger state change so canvas immediately applies new walkability/properties
+            pushState({ ...level });
+            setNotification({
+              message: `Tileset "${updatedTs.label}" updated! Canvas & collision updated.`,
+              type: 'success',
+            });
+          }}
+        />
       )}
     </div>
   );

@@ -37,6 +37,40 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        if (req.method === 'POST' && req.url === '/api/save-tileset') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, data, images } = JSON.parse(body);
+              const targetPath = path.join(repoRoot, 'tools', 'level_editor', 'tilesets', `${id}.json`);
+              fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
+
+              if (images && typeof images === 'object') {
+                const tilesDir = path.join(repoRoot, 'tools', 'level_editor', 'public', 'tiles', id);
+                fs.mkdirSync(tilesDir, { recursive: true });
+                for (const [tileId, base64Data] of Object.entries(images)) {
+                  if (typeof base64Data === 'string' && base64Data.startsWith('data:image/')) {
+                    const base64Content = base64Data.split(',')[1];
+                    if (base64Content) {
+                      const imgBuffer = Buffer.from(base64Content, 'base64');
+                      fs.writeFileSync(path.join(tilesDir, `${tileId}.png`), imgBuffer);
+                    }
+                  }
+                }
+              }
+
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         function getNixBin(): string | null {
           const candidates = ['nix', '/run/current-system/sw/bin/nix', '/usr/bin/nix', '/bin/nix'];
           for (const c of candidates) {

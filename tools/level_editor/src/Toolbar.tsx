@@ -27,6 +27,7 @@ interface ToolbarProps {
   onValidate: () => void;
   onDescribe: () => void;
   onNew: () => void;
+  onOpenTilesetReviewer?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -54,6 +55,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onNew,
   clonePattern,
   onClearClone,
+  onOpenTilesetReviewer,
 }) => {
   return (
     <div className="toolbar">
@@ -94,6 +96,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <button className="btn" onClick={onDownload} title="Export / Download JSON file">
           ⬇️ Export
         </button>
+        {onOpenTilesetReviewer && (
+          <button
+            className="btn"
+            style={{ background: '#8e44ad', color: '#ffffff', fontWeight: 'bold' }}
+            onClick={onOpenTilesetReviewer}
+            title="Review and edit tile asset properties or import a new tileset PNG"
+          >
+            🎨 Import/Review Tiles
+          </button>
+        )}
       </div>
 
       <div className="divider" />
