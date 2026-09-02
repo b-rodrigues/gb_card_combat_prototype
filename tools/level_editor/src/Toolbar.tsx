@@ -141,11 +141,36 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <div className="divider" />
 
       <div className="tool-group zoom-group">
-        <button className="btn-icon" onClick={() => onZoomChange(Math.max(1, zoom - 1))} title="Zoom Out">
+        <button
+          className="btn-icon"
+          onClick={() => {
+            const ZOOM_LEVELS = [0.25, 0.5, 1, 2, 3, 4, 5];
+            const prev = [...ZOOM_LEVELS].reverse().find((z) => z < zoom - 0.001);
+            if (prev !== undefined) onZoomChange(prev);
+          }}
+          disabled={zoom <= 0.25}
+          title="Zoom Out (Down to 25%)"
+        >
           ➖
         </button>
-        <span className="zoom-text">{zoom * 100}%</span>
-        <button className="btn-icon" onClick={() => onZoomChange(Math.min(5, zoom + 1))} title="Zoom In">
+        <span
+          className="zoom-text"
+          onClick={() => onZoomChange(1)}
+          title="Click to reset zoom to 100%"
+          style={{ cursor: 'pointer' }}
+        >
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          className="btn-icon"
+          onClick={() => {
+            const ZOOM_LEVELS = [0.25, 0.5, 1, 2, 3, 4, 5];
+            const next = ZOOM_LEVELS.find((z) => z > zoom + 0.001);
+            if (next !== undefined) onZoomChange(next);
+          }}
+          disabled={zoom >= 5}
+          title="Zoom In (Up to 500%)"
+        >
           ➕
         </button>
       </div>

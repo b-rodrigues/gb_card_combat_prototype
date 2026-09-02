@@ -245,11 +245,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.setLineDash([]);
 
         // Region label
-        ctx.fillStyle = '#3498db';
-        ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.4))}px Inter, sans-serif`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`🏷️ ${reg.id}`, rx + 4, ry + 4);
+        if (tileSize >= 16) {
+          ctx.fillStyle = '#3498db';
+          ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.4))}px Inter, sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(`🏷️ ${reg.id}`, rx + 4, ry + 4);
+        }
       });
     }
 
@@ -260,20 +262,25 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         const px = ex.x * tileSize;
         const py = ex.y * tileSize;
 
+        const m = tileSize >= 16 ? 2 : (tileSize >= 8 ? 1 : 0);
+        const s = Math.max(2, tileSize - m * 2);
+
         ctx.fillStyle = isSelected ? '#f39c12' : '#e67e22';
-        ctx.fillRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
+        ctx.fillRect(px + m, py + m, s, s);
 
         ctx.strokeStyle = isSelected ? '#ffffff' : '#d35400';
         ctx.lineWidth = isSelected ? 2 : 1;
-        ctx.strokeRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
+        ctx.strokeRect(px + m, py + m, s, s);
 
         // Exit target label / arrow
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.floor(tileSize * 0.55)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const glyph = ex.direction === 'NORTH' ? '⬆️' : ex.direction === 'SOUTH' ? '⬇️' : ex.direction === 'WEST' ? '⬅️' : '➡️';
-        ctx.fillText(glyph, px + tileSize / 2, py + tileSize / 2);
+        if (tileSize >= 16) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.floor(tileSize * 0.55)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const glyph = ex.direction === 'NORTH' ? '⬆️' : ex.direction === 'SOUTH' ? '⬇️' : ex.direction === 'WEST' ? '⬅️' : '➡️';
+          ctx.fillText(glyph, px + tileSize / 2, py + tileSize / 2);
+        }
       });
     }
 
@@ -290,28 +297,30 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         // Draw entity circle / box
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(px + tileSize / 2, py + tileSize / 2, tileSize * 0.38, 0, Math.PI * 2);
+        ctx.arc(px + tileSize / 2, py + tileSize / 2, Math.max(1.5, tileSize * 0.38), 0, Math.PI * 2);
         ctx.fill();
 
         ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.lineWidth = isSelected ? 2 : 1;
         ctx.stroke();
 
         // Sprite image or fallback icon
-        const spriteId = obj.overworld_sprite
-          ? obj.overworld_sprite.includes('.')
-            ? obj.overworld_sprite.split('.')[1]
-            : obj.overworld_sprite
-          : null;
-        const spriteImg = spriteId ? tileImages.get(spriteId) : null;
-        if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
-          ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(spriteImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
-        } else {
-          ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+        if (tileSize >= 16) {
+          const spriteId = obj.overworld_sprite
+            ? obj.overworld_sprite.includes('.')
+              ? obj.overworld_sprite.split('.')[1]
+              : obj.overworld_sprite
+            : null;
+          const spriteImg = spriteId ? tileImages.get(spriteId) : null;
+          if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(spriteImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
+          } else {
+            ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+          }
         }
       });
     }
@@ -325,18 +334,20 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       ctx.fillStyle = '#2ecc71';
       ctx.beginPath();
-      ctx.arc(px + tileSize / 2, py + tileSize / 2, tileSize * 0.42, 0, Math.PI * 2);
+      ctx.arc(px + tileSize / 2, py + tileSize / 2, Math.max(2, tileSize * 0.42), 0, Math.PI * 2);
       ctx.fill();
 
       ctx.strokeStyle = isSelected ? '#ffffff' : '#27ae60';
-      ctx.lineWidth = isSelected ? 2.5 : 1.5;
+      ctx.lineWidth = isSelected ? 2 : 1;
       ctx.stroke();
 
-      ctx.font = `bold ${Math.floor(tileSize * 0.45)}px sans-serif`;
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🧙', px + tileSize / 2, py + tileSize / 2);
+      if (tileSize >= 16) {
+        ctx.font = `bold ${Math.floor(tileSize * 0.45)}px sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🧙', px + tileSize / 2, py + tileSize / 2);
+      }
     }
 
     // 9. Render Hover Cursor
@@ -517,7 +528,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           Dimensions: {level.width} × {level.height}
         </span>
         <span>
-          Zoom: {zoom * 100}%
+          Zoom: {Math.round(zoom * 100)}%
         </span>
       </div>
     </div>
