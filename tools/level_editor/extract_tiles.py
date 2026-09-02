@@ -1,124 +1,285 @@
 #!/usr/bin/env python3
-"""Extract individual 8x8 tiles from source PNGs for the web editor.
+"""Import and slice ONLY the official tilesets:
+- castle-tile.png (72x24 -> 9x3 = 27 tiles)
+- combat-tile.png (128x24 -> 16x3 = 48 tiles)
+- forest-tile.png (128x24 -> 16x3 = 48 tiles)
+- overworld-tile.png (128x24 -> 16x3 = 48 tiles)
+- intrepid.png (128x48 -> 16x6 = 96 tiles)
 
-Reads tile coordinates from asset_atlas.py (TILESETS + FOREST_COORDS),
-extracts each 8x8 tile, upscales 4x via nearest-neighbor (32x32),
-and saves to tools/level_editor/public/tiles/{tileset}/{tile_id}.png
-
-This ensures the web editor shows the EXACT same tiles the Game Boy renders.
+Removes all old testing tilesets from public/tiles/ and tilesets/.
 """
 
-import sys
+import json
 import os
+import shutil
 from pathlib import Path
+from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from tools.asset_atlas import TILESETS, FOREST_COORDS
-
-try:
-    from PIL import Image
-except ImportError:
-    sys.exit("extract_tiles.py: requires Pillow (`pip install Pillow`)")
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+ASSETS_DIR = REPO_ROOT / "assets"
+EDITOR_DIR = REPO_ROOT / "tools" / "level_editor"
+PUBLIC_TILES_DIR = EDITOR_DIR / "public" / "tiles"
+TILESETS_JSON_DIR = EDITOR_DIR / "tilesets"
 
 TILE_SIZE = 8
-UPSCALE = 4  # 32x32 output
-OUTPUT_DIR = Path(__file__).resolve().parent / "public" / "tiles"
+UPSCALE = 4  # 32x32 nearest-neighbor
 
-TILESET_ID_MAP = {
-    "RPG_exterior.png": {
-        **{k.lower(): "exterior" for k in TILESETS["RPG_exterior.png"].keys()},
-        **{k.lower(): "forest" for k in FOREST_COORDS.keys()},
+TARGET_SHEETS = [
+    {
+        "id": "castle",
+        "label": "Castle & Bastion",
+        "file": "castle-tile.png",
+        "gb_tileset_kind": "WORLD_TILESET_CASTLE",
+        "cols": 9,
+        "rows": 3,
+        "default_floor": (0, 2),  # (col 0, row 2) is plain gray floor
     },
-    "RPG_interior.png": {
-        **{k.lower(): "interior" for k in TILESETS["RPG_interior.png"].keys()},
+    {
+        "id": "combat",
+        "label": "Combat & Battle HUD",
+        "file": "combat-tile.png",
+        "gb_tileset_kind": "WORLD_TILESET_COMBAT",
+        "cols": 16,
+        "rows": 3,
+        "default_floor": None,
+        "category": "ui",
     },
-    "DungeonTileset.png": {
-        **{k.lower(): "dungeon" for k in TILESETS["DungeonTileset.png"].keys()},
+    {
+        "id": "forest",
+        "label": "Whispering Forest",
+        "file": "forest-tile.png",
+        "gb_tileset_kind": "WORLD_TILESET_FOREST",
+        "cols": 16,
+        "rows": 3,
+        "default_floor": (0, 2),  # (col 0, row 2) is solid green grass floor
     },
-    "Houses_and_various_things.png": {
-        **{k.lower(): "houses_walls" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_WALL")},
-        **{k.lower(): "houses_roofs" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_ROOF")},
-        **{k.lower(): "houses_floors" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_FLOOR")},
-        **{k.lower(): "houses_doors" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_DOOR")},
-        **{k.lower(): "houses_windows" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("HOUSES_WINDOW")},
-        **{k.lower(): "nature_ground" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("NATURE_GROUND")},
-        **{k.lower(): "nature_vegetation" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("NATURE_VEG")},
-        **{k.lower(): "objects_furniture" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("OBJECTS_FURN")},
-        **{k.lower(): "structures_fences" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_FENCE")},
-        **{k.lower(): "structures_props" for k in TILESETS["Houses_and_various_things.png"].keys() if k.startswith("STRUCT_PROP")},
+    {
+        "id": "overworld",
+        "label": "Overworld Realm",
+        "file": "overworld-tile.png",
+        "gb_tileset_kind": "WORLD_TILESET_OVERWORLD",
+        "cols": 16,
+        "rows": 3,
+        "default_floor": (0, 2),  # (col 0, row 2) is solid green grass floor
     },
-    "desolate_landscape.png": {
-        **{k.lower(): "desolate_landscape" for k in TILESETS["desolate_landscape.png"].keys()},
+    {
+        "id": "intrepid",
+        "label": "Intrepid Font & Glyphs",
+        "file": "intrepid.png",
+        "gb_tileset_kind": "WORLD_TILESET_INTREPID",
+        "cols": 16,
+        "rows": 6,
+        "default_floor": None,
+        "category": "ui",
     },
-}
+]
 
-COORDS_MAP = {
-    "RPG_exterior.png": {
-        **{k.lower(): v for k, v in TILESETS["RPG_exterior.png"].items()},
-        **{k.lower(): v for k, v in FOREST_COORDS.items()},
-    },
-    "RPG_interior.png": {
-        **{k.lower(): v for k, v in TILESETS["RPG_interior.png"].items()},
-    },
-    "DungeonTileset.png": {
-        **{k.lower(): v for k, v in TILESETS["DungeonTileset.png"].items()},
-    },
-    "Houses_and_various_things.png": {
-        **{k.lower(): v for k, v in TILESETS["Houses_and_various_things.png"].items()},
-    },
-    "desolate_landscape.png": {
-        **{k.lower(): v for k, v in TILESETS["desolate_landscape.png"].items()},
-    },
-}
+
+def rgb_to_hex(rgb):
+    return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
-def extract_tile(png_path, col, row):
-    """Extract a single 8x8 tile from the PNG at (col, row)."""
+def get_dominant_color(img_rgba):
+    colors = img_rgba.getcolors(maxcolors=256)
+    if not colors:
+        return "#88c070"
+    # Find most common non-transparent color
+    colors.sort(key=lambda x: x[0], reverse=True)
+    for count, col in colors:
+        if len(col) == 4 and col[3] < 128:
+            continue
+        return rgb_to_hex(col[:3])
+    return "#88c070"
+
+
+def clean_old_tilesets():
+    print("--- Cleaning old testing tilesets ---")
+    active_ids = {s["id"] for s in TARGET_SHEETS}
+
+    # 1. Clean public/tiles/
+    if PUBLIC_TILES_DIR.exists():
+        for d in PUBLIC_TILES_DIR.iterdir():
+            if d.is_dir() and d.name not in active_ids:
+                print(f"Removing old tile directory: {d.name}/")
+                shutil.rmtree(d)
+
+    # 2. Clean tilesets/*.json
+    if TILESETS_JSON_DIR.exists():
+        for f in TILESETS_JSON_DIR.glob("*.json"):
+            if f.stem not in active_ids:
+                print(f"Removing old tileset JSON: {f.name}")
+                f.unlink()
+
+
+def process_sheet(sheet):
+    sheet_id = sheet["id"]
+    png_path = ASSETS_DIR / sheet["file"]
+    if not png_path.exists():
+        raise FileNotFoundError(f"Missing required sheet: {png_path}")
+
     img = Image.open(png_path).convert("RGBA")
-    ox, oy = col * TILE_SIZE, row * TILE_SIZE
-    tile = img.crop((ox, oy, ox + TILE_SIZE, oy + TILE_SIZE))
-    return tile
+    out_tile_dir = PUBLIC_TILES_DIR / sheet_id
+    out_tile_dir.mkdir(parents=True, exist_ok=True)
 
+    cols, rows = sheet["cols"], sheet["rows"]
+    tiles_list = []
 
-def upscale_nearest(tile, factor=UPSCALE):
-    """Upscale tile using nearest-neighbor (crisp pixel art)."""
-    return tile.resize(
-        (TILE_SIZE * factor, TILE_SIZE * factor),
-        Image.NEAREST
-    )
+    print(f"\nProcessing {sheet_id} from {sheet['file']} ({cols}x{rows} = {cols*rows} tiles)...")
+
+    # If sheet has a default floor coordinate
+    default_floor_coord = sheet.get("default_floor")
+
+    # Slicing tiles
+    for r in range(rows):
+        for c in range(cols):
+            ox = c * TILE_SIZE
+            oy = r * TILE_SIZE
+            tile_8x8 = img.crop((ox, oy, ox + TILE_SIZE, oy + TILE_SIZE))
+            tile_upscaled = tile_8x8.resize(
+                (TILE_SIZE * UPSCALE, TILE_SIZE * UPSCALE),
+                Image.NEAREST
+            )
+
+            tile_id = f"tile_{r}_{c}"
+            # Also save canonical castle_r_c for castle
+            if sheet_id == "castle":
+                canonical_name = f"castle_{r}_{c}"
+            else:
+                canonical_name = tile_id
+
+            out_path = out_tile_dir / f"{canonical_name}.png"
+            tile_upscaled.save(out_path)
+
+            # If tile_id differs from canonical_name, save both
+            if canonical_name != tile_id:
+                tile_upscaled.save(out_tile_dir / f"{tile_id}.png")
+
+            is_floor = (default_floor_coord is not None and c == default_floor_coord[0] and r == default_floor_coord[1])
+            is_walkable = is_floor
+
+            dom_color = get_dominant_color(tile_8x8)
+            category = sheet.get("category", "terrain")
+
+            label = f"{sheet['label']} ({c},{r})"
+            if is_floor:
+                label = f"{sheet['label']} Floor"
+
+            tile_entry = {
+                "id": canonical_name,
+                "label": label,
+                "gb_constant": f"TILE_{sheet_id.upper()}_{r}_{c}",
+                "walkable": is_walkable,
+                "color": dom_color,
+                "ascii": "." if is_walkable else "#",
+                "image_url": f"/tiles/{sheet_id}/{canonical_name}.png",
+                "category": category,
+            }
+            tiles_list.append(tile_entry)
+
+    # Convenience aliases for standard maps:
+    # 1. Plain floor alias
+    if default_floor_coord is not None:
+        fc, fr = default_floor_coord
+        floor_crop = img.crop((fc * TILE_SIZE, fr * TILE_SIZE, (fc + 1) * TILE_SIZE, (fr + 1) * TILE_SIZE)).resize(
+            (TILE_SIZE * UPSCALE, TILE_SIZE * UPSCALE), Image.NEAREST
+        )
+        floor_crop.save(out_tile_dir / "floor.png")
+        # Prepend 'floor' entry
+        tiles_list.insert(0, {
+            "id": "floor",
+            "label": "Floor (Solid Walkable)",
+            "gb_constant": "TILE_FLOOR",
+            "walkable": True,
+            "color": get_dominant_color(img.crop((fc * TILE_SIZE, fr * TILE_SIZE, (fc + 1) * TILE_SIZE, (fr + 1) * TILE_SIZE))),
+            "ascii": ".",
+            "image_url": f"/tiles/{sheet_id}/floor.png",
+            "category": "terrain",
+        })
+
+    # 2. Forest map compatibility aliases (tree, gate, stump_*)
+    if sheet_id == "forest":
+        # Copy tree (1, 0)
+        tree_crop = img.crop((8, 0, 16, 8)).resize((32, 32), Image.NEAREST)
+        tree_crop.save(out_tile_dir / "tree.png")
+        tiles_list.insert(1, {
+            "id": "tree",
+            "label": "Forest Tree",
+            "gb_constant": "TILE_WALL",
+            "walkable": False,
+            "color": "#205838",
+            "ascii": "#",
+            "image_url": "/tiles/forest/tree.png",
+            "category": "nature",
+        })
+        # gate (2, 0)
+        gate_crop = img.crop((16, 0, 24, 8)).resize((32, 32), Image.NEAREST)
+        gate_crop.save(out_tile_dir / "gate.png")
+        tiles_list.insert(2, {
+            "id": "gate",
+            "label": "Forest Gate",
+            "gb_constant": "TILE_EXIT",
+            "walkable": True,
+            "color": "#e0f8d0",
+            "ascii": ">",
+            "image_url": "/tiles/forest/gate.png",
+            "category": "terrain",
+        })
+        # Stumps (tl, tr, bl, br)
+        stumps = [
+            ("stump_tl", (3, 0), "p"),
+            ("stump_tr", (4, 0), "q"),
+            ("stump_bl", (3, 1), "b"),
+            ("stump_br", (4, 1), "d"),
+        ]
+        for s_id, (sc, sr), ascii_char in stumps:
+            stump_crop = img.crop((sc * 8, sr * 8, (sc + 1) * 8, (sr + 1) * 8)).resize((32, 32), Image.NEAREST)
+            stump_crop.save(out_tile_dir / f"{s_id}.png")
+            tiles_list.append({
+                "id": s_id,
+                "label": f"Stump {s_id[-2:].upper()}",
+                "gb_constant": f"TILE_{s_id.upper()}",
+                "walkable": False,
+                "color": "#704820",
+                "ascii": ascii_char,
+                "image_url": f"/tiles/forest/{s_id}.png",
+                "category": "nature",
+            })
+
+    # 3. Castle compatibility aliases (wall)
+    if sheet_id == "castle":
+        wall_crop = img.crop((8, 8, 16, 16)).resize((32, 32), Image.NEAREST)
+        wall_crop.save(out_tile_dir / "wall.png")
+        tiles_list.insert(1, {
+            "id": "wall",
+            "label": "Castle Wall",
+            "gb_constant": "TILE_WALL",
+            "walkable": False,
+            "color": "#7f8c8d",
+            "ascii": "#",
+            "image_url": "/tiles/castle/wall.png",
+            "category": "wall",
+        })
+
+    # Save JSON definition
+    tileset_json_data = {
+        "id": sheet_id,
+        "label": sheet["label"],
+        "gb_tileset_kind": sheet["gb_tileset_kind"],
+        "tiles": tiles_list,
+    }
+    json_path = TILESETS_JSON_DIR / f"{sheet_id}.json"
+    TILESETS_JSON_DIR.mkdir(parents=True, exist_ok=True)
+    with open(json_path, "w", encoding="utf-8") as fp:
+        json.dump(tileset_json_data, fp, indent=2)
+
+    print(f"Saved {json_path} ({len(tiles_list)} tiles)")
 
 
 def main():
-    assets_dir = Path(__file__).resolve().parent.parent.parent / "assets"
-
-    for png_name in ["RPG_exterior.png", "RPG_interior.png", "DungeonTileset.png", "Houses_and_various_things.png", "desolate_landscape.png"]:
-        png_path = assets_dir / png_name
-        if not png_path.exists():
-            print(f"Missing source: {png_path}", file=sys.stderr)
-            sys.exit(1)
-
-        coords = COORDS_MAP[png_name]
-        tileset_map = TILESET_ID_MAP[png_name]
-
-        for tile_name, (col, row) in coords.items():
-            tileset_id = tileset_map[tile_name.lower()]
-
-            tile = extract_tile(png_path, col, row)
-            upscaled = upscale_nearest(tile)
-
-            out_dir = OUTPUT_DIR / tileset_id
-            out_dir.mkdir(parents=True, exist_ok=True)
-
-            # Convert semantic name to tile_id (e.g., FOREST_TREE -> tree)
-            tile_id = tile_name.lower().replace("forest_", "").replace("exterior_", "").replace("interior_", "")
-            out_path = out_dir / f"{tile_id}.png"
-
-            upscaled.save(out_path)
-            if tile_id == "grass" and tileset_id == "exterior":
-                upscaled.save(out_dir / "floor.png")
-            print(f"  {tileset_id}/{tile_id}.png <- {png_name} ({col},{row})")
-
-    print(f"\nDone! Extracted tiles to {OUTPUT_DIR}")
+    clean_old_tilesets()
+    for sheet in TARGET_SHEETS:
+        process_sheet(sheet)
+    print("\nAll 5 target tilesets successfully processed and imported!")
 
 
 if __name__ == "__main__":

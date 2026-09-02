@@ -1,559 +1,557 @@
 {
   "id": "forest",
-  "label": "Forest",
+  "label": "Whispering Forest",
   "gb_tileset_kind": "WORLD_TILESET_FOREST",
   "tiles": [
     {
       "id": "floor",
-      "label": "Floor",
+      "label": "Floor (Solid Walkable)",
       "gb_constant": "TILE_FLOOR",
-      "gb_tile_index": 0,
       "walkable": true,
-      "color": "#88c070",
-      "ascii": "."
+      "color": "#7bb660",
+      "ascii": ".",
+      "image_url": "/tiles/forest/floor.png",
+      "category": "terrain"
     },
     {
       "id": "tree",
-      "label": "Tree",
+      "label": "Forest Tree",
       "gb_constant": "TILE_WALL",
-      "gb_tile_index": 1,
       "walkable": false,
       "color": "#205838",
-      "ascii": "#"
+      "ascii": "#",
+      "image_url": "/tiles/forest/tree.png",
+      "category": "nature"
     },
     {
       "id": "gate",
-      "label": "Gate",
+      "label": "Forest Gate",
       "gb_constant": "TILE_EXIT",
-      "gb_tile_index": 2,
       "walkable": true,
       "color": "#e0f8d0",
-      "ascii": ">"
+      "ascii": ">",
+      "image_url": "/tiles/forest/gate.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_0",
+      "label": "Whispering Forest (0,0)",
+      "gb_constant": "TILE_FOREST_0_0",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_1",
+      "label": "Whispering Forest (1,0)",
+      "gb_constant": "TILE_FOREST_0_1",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_2",
+      "label": "Whispering Forest (2,0)",
+      "gb_constant": "TILE_FOREST_0_2",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_3",
+      "label": "Whispering Forest (3,0)",
+      "gb_constant": "TILE_FOREST_0_3",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_4",
+      "label": "Whispering Forest (4,0)",
+      "gb_constant": "TILE_FOREST_0_4",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_5",
+      "label": "Whispering Forest (5,0)",
+      "gb_constant": "TILE_FOREST_0_5",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_6",
+      "label": "Whispering Forest (6,0)",
+      "gb_constant": "TILE_FOREST_0_6",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_7",
+      "label": "Whispering Forest (7,0)",
+      "gb_constant": "TILE_FOREST_0_7",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_8",
+      "label": "Whispering Forest (8,0)",
+      "gb_constant": "TILE_FOREST_0_8",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_8.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_9",
+      "label": "Whispering Forest (9,0)",
+      "gb_constant": "TILE_FOREST_0_9",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_9.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_10",
+      "label": "Whispering Forest (10,0)",
+      "gb_constant": "TILE_FOREST_0_10",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_10.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_11",
+      "label": "Whispering Forest (11,0)",
+      "gb_constant": "TILE_FOREST_0_11",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_11.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_12",
+      "label": "Whispering Forest (12,0)",
+      "gb_constant": "TILE_FOREST_0_12",
+      "walkable": false,
+      "color": "#2a4f1a",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_12.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_13",
+      "label": "Whispering Forest (13,0)",
+      "gb_constant": "TILE_FOREST_0_13",
+      "walkable": false,
+      "color": "#2a4f1a",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_13.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_14",
+      "label": "Whispering Forest (14,0)",
+      "gb_constant": "TILE_FOREST_0_14",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_14.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_0_15",
+      "label": "Whispering Forest (15,0)",
+      "gb_constant": "TILE_FOREST_0_15",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_0_15.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_0",
+      "label": "Whispering Forest (0,1)",
+      "gb_constant": "TILE_FOREST_1_0",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_1",
+      "label": "Whispering Forest (1,1)",
+      "gb_constant": "TILE_FOREST_1_1",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_2",
+      "label": "Whispering Forest (2,1)",
+      "gb_constant": "TILE_FOREST_1_2",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_3",
+      "label": "Whispering Forest (3,1)",
+      "gb_constant": "TILE_FOREST_1_3",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_4",
+      "label": "Whispering Forest (4,1)",
+      "gb_constant": "TILE_FOREST_1_4",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_5",
+      "label": "Whispering Forest (5,1)",
+      "gb_constant": "TILE_FOREST_1_5",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_6",
+      "label": "Whispering Forest (6,1)",
+      "gb_constant": "TILE_FOREST_1_6",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_7",
+      "label": "Whispering Forest (7,1)",
+      "gb_constant": "TILE_FOREST_1_7",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_8",
+      "label": "Whispering Forest (8,1)",
+      "gb_constant": "TILE_FOREST_1_8",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_8.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_9",
+      "label": "Whispering Forest (9,1)",
+      "gb_constant": "TILE_FOREST_1_9",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_9.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_10",
+      "label": "Whispering Forest (10,1)",
+      "gb_constant": "TILE_FOREST_1_10",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_10.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_11",
+      "label": "Whispering Forest (11,1)",
+      "gb_constant": "TILE_FOREST_1_11",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_11.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_12",
+      "label": "Whispering Forest (12,1)",
+      "gb_constant": "TILE_FOREST_1_12",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_12.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_13",
+      "label": "Whispering Forest (13,1)",
+      "gb_constant": "TILE_FOREST_1_13",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_13.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_14",
+      "label": "Whispering Forest (14,1)",
+      "gb_constant": "TILE_FOREST_1_14",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_14.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_1_15",
+      "label": "Whispering Forest (15,1)",
+      "gb_constant": "TILE_FOREST_1_15",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_1_15.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_0",
+      "label": "Whispering Forest Floor",
+      "gb_constant": "TILE_FOREST_2_0",
+      "walkable": true,
+      "color": "#7bb660",
+      "ascii": ".",
+      "image_url": "/tiles/forest/tile_2_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_1",
+      "label": "Whispering Forest (1,2)",
+      "gb_constant": "TILE_FOREST_2_1",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_2",
+      "label": "Whispering Forest (2,2)",
+      "gb_constant": "TILE_FOREST_2_2",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_3",
+      "label": "Whispering Forest (3,2)",
+      "gb_constant": "TILE_FOREST_2_3",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_4",
+      "label": "Whispering Forest (4,2)",
+      "gb_constant": "TILE_FOREST_2_4",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_5",
+      "label": "Whispering Forest (5,2)",
+      "gb_constant": "TILE_FOREST_2_5",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_6",
+      "label": "Whispering Forest (6,2)",
+      "gb_constant": "TILE_FOREST_2_6",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_7",
+      "label": "Whispering Forest (7,2)",
+      "gb_constant": "TILE_FOREST_2_7",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_8",
+      "label": "Whispering Forest (8,2)",
+      "gb_constant": "TILE_FOREST_2_8",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_8.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_9",
+      "label": "Whispering Forest (9,2)",
+      "gb_constant": "TILE_FOREST_2_9",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_9.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_10",
+      "label": "Whispering Forest (10,2)",
+      "gb_constant": "TILE_FOREST_2_10",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_10.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_11",
+      "label": "Whispering Forest (11,2)",
+      "gb_constant": "TILE_FOREST_2_11",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_11.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_12",
+      "label": "Whispering Forest (12,2)",
+      "gb_constant": "TILE_FOREST_2_12",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_12.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_13",
+      "label": "Whispering Forest (13,2)",
+      "gb_constant": "TILE_FOREST_2_13",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_13.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_14",
+      "label": "Whispering Forest (14,2)",
+      "gb_constant": "TILE_FOREST_2_14",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_14.png",
+      "category": "terrain"
+    },
+    {
+      "id": "tile_2_15",
+      "label": "Whispering Forest (15,2)",
+      "gb_constant": "TILE_FOREST_2_15",
+      "walkable": false,
+      "color": "#7bb660",
+      "ascii": "#",
+      "image_url": "/tiles/forest/tile_2_15.png",
+      "category": "terrain"
     },
     {
       "id": "stump_tl",
       "label": "Stump TL",
       "gb_constant": "TILE_STUMP_TL",
-      "gb_tile_index": 3,
       "walkable": false,
       "color": "#704820",
-      "ascii": "p"
+      "ascii": "p",
+      "image_url": "/tiles/forest/stump_tl.png",
+      "category": "nature"
     },
     {
       "id": "stump_tr",
       "label": "Stump TR",
       "gb_constant": "TILE_STUMP_TR",
-      "gb_tile_index": 4,
       "walkable": false,
       "color": "#704820",
-      "ascii": "q"
+      "ascii": "q",
+      "image_url": "/tiles/forest/stump_tr.png",
+      "category": "nature"
     },
     {
       "id": "stump_bl",
       "label": "Stump BL",
       "gb_constant": "TILE_STUMP_BL",
-      "gb_tile_index": 5,
       "walkable": false,
       "color": "#704820",
-      "ascii": "b"
+      "ascii": "b",
+      "image_url": "/tiles/forest/stump_bl.png",
+      "category": "nature"
     },
     {
       "id": "stump_br",
       "label": "Stump BR",
       "gb_constant": "TILE_STUMP_BR",
-      "gb_tile_index": 6,
       "walkable": false,
       "color": "#704820",
-      "ascii": "d"
-    },
-    {
-      "id": "mini_stump",
-      "label": "Mini Stump",
-      "gb_constant": "TILE_WALL",
-      "gb_tile_index": 7,
-      "walkable": false,
-      "color": "#704820",
-      "ascii": "o"
-    },
-    {
-      "id": "wild_0_0",
-      "label": "Dense Foliage (0,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_0",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_0.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_1",
-      "label": "Dense Foliage (1,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_1",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_1.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_2",
-      "label": "Dense Foliage (2,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_2",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_2.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_3",
-      "label": "Dense Foliage (3,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_3",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_3.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_4",
-      "label": "Dense Foliage (4,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_4",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_4.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_5",
-      "label": "Dense Foliage (5,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_5",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_5.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_6",
-      "label": "Dense Foliage (6,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_6",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_6.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_7",
-      "label": "Dense Foliage (7,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_7",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_7.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_8",
-      "label": "Dense Foliage (8,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_8",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_8.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_9",
-      "label": "Dense Foliage (9,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_9",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_9.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_10",
-      "label": "Dense Foliage (10,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_10",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_10.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_11",
-      "label": "Dense Foliage (11,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_11",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_11.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_12",
-      "label": "Dense Foliage (12,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_12",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_12.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_13",
-      "label": "Dense Foliage (13,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_13",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_13.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_14",
-      "label": "Dense Foliage (14,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_14",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_14.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_0_15",
-      "label": "Dense Foliage (15,0)",
-      "gb_constant": "TILE_FOREST_WILD_0_15",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_0_15.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_0",
-      "label": "Dense Foliage (0,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_0",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_0.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_1",
-      "label": "Forest Path (1,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_1",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_1.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_2",
-      "label": "Forest Path (2,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_2",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_2.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_3",
-      "label": "Forest Path (3,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_3",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_3.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_4",
-      "label": "Dense Foliage (4,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_4",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_4.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_5",
-      "label": "Dense Foliage (5,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_5",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_5.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_6",
-      "label": "Forest Path (6,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_6",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_6.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_7",
-      "label": "Forest Path (7,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_7",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_7.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_8",
-      "label": "Dense Foliage (8,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_8",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_8.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_9",
-      "label": "Dense Foliage (9,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_9",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_9.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_10",
-      "label": "Forest Path (10,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_10",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_10.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_11",
-      "label": "Forest Path (11,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_11",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_1_11.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_12",
-      "label": "Dense Foliage (12,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_12",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_12.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_13",
-      "label": "Dense Foliage (13,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_13",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_13.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_14",
-      "label": "Dense Foliage (14,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_14",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_14.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_1_15",
-      "label": "Dense Foliage (15,1)",
-      "gb_constant": "TILE_FOREST_WILD_1_15",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_1_15.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_0",
-      "label": "Forest Path (0,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_0",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_0.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_1",
-      "label": "Dense Foliage (1,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_1",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_1.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_2",
-      "label": "Dense Foliage (2,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_2",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_2.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_3",
-      "label": "Dense Foliage (3,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_3",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_3.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_4",
-      "label": "Dense Foliage (4,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_4",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_4.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_5",
-      "label": "Forest Path (5,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_5",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_5.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_6",
-      "label": "Forest Path (6,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_6",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_6.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_7",
-      "label": "Dense Foliage (7,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_7",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_7.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_8",
-      "label": "Dense Foliage (8,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_8",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_8.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_9",
-      "label": "Dense Foliage (9,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_9",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_9.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_10",
-      "label": "Dense Foliage (10,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_10",
-      "walkable": false,
-      "color": "#196f3d",
-      "ascii": "T",
-      "image_url": "/tiles/forest/wild_2_10.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_11",
-      "label": "Forest Path (11,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_11",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_11.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_12",
-      "label": "Forest Path (12,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_12",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_12.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_13",
-      "label": "Forest Path (13,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_13",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_13.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_14",
-      "label": "Forest Path (14,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_14",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_14.png",
-      "category": "terrain"
-    },
-    {
-      "id": "wild_2_15",
-      "label": "Forest Path (15,2)",
-      "gb_constant": "TILE_FOREST_WILD_2_15",
-      "walkable": true,
-      "color": "#27ae60",
-      "ascii": ".",
-      "image_url": "/tiles/forest/wild_2_15.png",
-      "category": "terrain"
+      "ascii": "d",
+      "image_url": "/tiles/forest/stump_br.png",
+      "category": "nature"
     }
   ]
 }
