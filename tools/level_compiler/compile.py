@@ -121,6 +121,22 @@ def derive_collision(level_data, tileset):
     return grid
 
 
+def map_base_tile_const(gb_const, t_info):
+    if gb_const in ("TILE_FLOOR", "TILE_WALL", "TILE_EXIT", "TILE_BUILDING",
+                    "TILE_STUMP_TL", "TILE_STUMP_TR", "TILE_STUMP_BL", "TILE_STUMP_BR"):
+        return gb_const
+    ascii_char = t_info.get("ascii", "#")
+    if ascii_char == ".":
+        return "TILE_FLOOR"
+    elif ascii_char == "#":
+        return "TILE_WALL"
+    elif ascii_char in (">", "<"):
+        return "TILE_EXIT"
+    elif ascii_char == "B":
+        return "TILE_BUILDING"
+    return "TILE_FLOOR" if t_info.get("walkable", True) else "TILE_WALL"
+
+
 def optimize_terrain(level_data, tileset):
     """
     Extract minimal list of SceneTerrainBlock rects.
@@ -135,7 +151,7 @@ def optimize_terrain(level_data, tileset):
         for b in terrain:
             t_id = b.get("tile", "").split(".")[-1]
             t_info = tile_dict.get(t_id, {})
-            gb_const = t_info.get("gb_constant", "TILE_WALL")
+            gb_const = map_base_tile_const(t_info.get("gb_constant", "TILE_WALL"), t_info)
             # If it's TILE_FLOOR and it's the default background, skip unless needed
             if gb_const == "TILE_FLOOR":
                 continue
@@ -161,7 +177,7 @@ def optimize_terrain(level_data, tileset):
                     continue
                 t_id = terrain[y][x].split(".")[-1]
                 t_info = tile_dict.get(t_id, {})
-                gb_const = t_info.get("gb_constant", "TILE_FLOOR")
+                gb_const = map_base_tile_const(t_info.get("gb_constant", "TILE_FLOOR"), t_info)
 
                 # Default background is TILE_FLOOR, and perimeter is TILE_WALL
                 if gb_const == "TILE_FLOOR":
@@ -172,7 +188,8 @@ def optimize_terrain(level_data, tileset):
                 bw = 1
                 while x + bw < width and not visited[y][x + bw]:
                     next_tid = terrain[y][x + bw].split(".")[-1]
-                    next_const = tile_dict.get(next_tid, {}).get("gb_constant", "TILE_FLOOR")
+                    next_info = tile_dict.get(next_tid, {})
+                    next_const = map_base_tile_const(next_info.get("gb_constant", "TILE_FLOOR"), next_info)
                     if next_const != gb_const:
                         break
                     bw += 1
@@ -186,7 +203,8 @@ def optimize_terrain(level_data, tileset):
                             row_ok = False
                             break
                         row_tid = terrain[y + bh][cx].split(".")[-1]
-                        row_const = tile_dict.get(row_tid, {}).get("gb_constant", "TILE_FLOOR")
+                        row_info = tile_dict.get(row_tid, {})
+                        row_const = map_base_tile_const(row_info.get("gb_constant", "TILE_FLOOR"), row_info)
                         if row_const != gb_const:
                             row_ok = False
                             break

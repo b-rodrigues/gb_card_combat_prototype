@@ -23,6 +23,10 @@
       "expected_y": 1
     },
     {
+      "type": "music_track",
+      "expected": "DESOLATE"
+    },
+    {
       "type": "actor_at",
       "entity": "SLIME",
       "x": 8,

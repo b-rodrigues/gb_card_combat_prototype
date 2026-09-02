@@ -19,8 +19,8 @@ const SceneDefinition *scene_definition_for_map(MapId map_id)
 
 WorldTilesetKind scene_get_tileset(MapId map_id)
 {
-    if (map_id == MAP_CASTLE) return WORLD_TILESET_INTERIOR;
-    if (map_id == MAP_FOREST) return WORLD_TILESET_FOREST;
+    const SceneDefinition *def = scene_definition_for_map(map_id);
+    if (def) return def->tileset;
     return WORLD_TILESET_EXTERIOR;
 }
 

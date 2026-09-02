@@ -25,12 +25,20 @@
 #define RPG_TILE_BASE_EXTERIOR       128u
 #define RPG_TILE_BASE_INTERIOR       132u
 #define RPG_TILE_BASE_FOREST         136u
+#define RPG_TILE_BASE_DESOLATE       144
 
-extern const uint8_t g_rpg_world_tiles[256];
+extern const uint8_t g_rpg_world_tiles[320];
 extern const uint8_t g_intrepid_font_tiles[1536];
 
 static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
 {
+    if (tileset_kind == 14 /* WORLD_TILESET_DESOLATE */) {
+        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 0);
+        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 1);
+        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 2);
+        if (glyph == 'B') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 3);
+        return 0;
+    }
     if (glyph == '.') return (uint8_t)(128 + (tileset_kind << 2) + 0);
     if (glyph == '#') return (uint8_t)(128 + (tileset_kind << 2) + 1);
     if (glyph == '>' || glyph == '<') return (uint8_t)(128 + (tileset_kind << 2) + 2);

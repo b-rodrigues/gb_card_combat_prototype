@@ -72,5 +72,5 @@ const SceneDefinition g_scenes[] = {
     { MAP_FOREST,          MUSIC_OVERWORLD,   20, 18, &g_all_exits[4],     2, WORLD_TILESET_FOREST,    s_forest_terrain },
     { MAP_MOUNTAIN_PASS,   MUSIC_OVERWORLD,   20, 18, &g_all_exits[6],     2, WORLD_TILESET_EXTERIOR,  s_mountain_pass_terrain },
     { MAP_CASTLE,          MUSIC_DUNGEON,     20, 18, &g_all_exits[8],     1, WORLD_TILESET_INTERIOR,  s_castle_terrain },
-    { MAP_SOUTH_FIELD,     MUSIC_OVERWORLD,   20, 18, &g_all_exits[9],     1, WORLD_TILESET_EXTERIOR,  s_south_field_terrain }
+    { MAP_SOUTH_FIELD,     MUSIC_DESOLATE,    20, 18, &g_all_exits[9],     1, WORLD_TILESET_DESOLATE,  s_south_field_terrain }
 };

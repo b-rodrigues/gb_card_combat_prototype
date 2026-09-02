@@ -125,6 +125,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="MUSIC_TOWN">MUSIC_TOWN</option>
                 <option value="MUSIC_DUNGEON">MUSIC_DUNGEON</option>
                 <option value="MUSIC_BATTLE">MUSIC_BATTLE</option>
+                <option value="MUSIC_DESOLATE">MUSIC_DESOLATE</option>
               </select>
             </div>
             <div className="form-group">

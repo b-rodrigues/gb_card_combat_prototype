@@ -31,7 +31,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c
 MUSIC_OBJS = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/music/%.o,$(MUSIC_SRCS))
 MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/music/%.o,$(MUSIC_SRCS))
 
@@ -125,6 +125,9 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
 		--palette auto --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
+	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
+		--palette auto --tile-coords "6,1 0,0 8,2 14,0" \
+		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical
@@ -202,8 +205,11 @@ $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 
 music: $(MUSIC_SRCS)
 
-$(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge | $(GENERATED_MUSIC_DIR)
-	$(UGE2SOURCE) "$<" -b 6 song_battle "$@"
+$(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+	python3 tools/compile_music.py "$<" 6 song_battle "$@"
+
+$(GENERATED_MUSIC_DIR)/desolate_landscape.c: assets/music/desolate_landscape.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+	python3 tools/compile_music.py "$<" 6 song_desolate_landscape "$@"
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)

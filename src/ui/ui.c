@@ -115,10 +115,10 @@ void ui_init(void)
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
     }
 
-    /* Load world background tiles from Bank 5 (16 tiles = 256 bytes) */
-    for (p = 0; p < 16; p += 8) {
-        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 128);
-        set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), 8, (const uint8_t *)g_ui_screen_buf);
+    /* Load world background tiles from Bank 5 (20 tiles = 320 bytes) */
+    for (p = 0; p < 20; p += 4) {
+        banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), 64);
+        set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), 4, (const uint8_t *)g_ui_screen_buf);
     }
 
     /* Disable GBDK console auto-scroll.  When putchar() advances the cursor

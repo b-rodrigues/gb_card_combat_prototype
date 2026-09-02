@@ -1,19 +1,19 @@
 {
   "id": "south_field",
-  "name": "Southern Meadow",
+  "name": "Desolate South Field",
   "map": {
     "width": 20,
     "height": 18,
-    "tileset": "exterior",
-    "music": "MUSIC_OVERWORLD",
+    "tileset": "desolate_landscape",
+    "music": "MUSIC_DESOLATE",
     "map_id": "MAP_SOUTH_FIELD"
   },
   "layers": {
     "terrain": [
-      { "x": 4, "y": 4, "width": 2, "height": 2, "tile": "exterior.wall" },
-      { "x": 15, "y": 4, "width": 2, "height": 2, "tile": "exterior.wall" },
-      { "x": 5, "y": 12, "width": 3, "height": 2, "tile": "exterior.wall" },
-      { "x": 14, "y": 12, "width": 3, "height": 2, "tile": "exterior.wall" }
+      { "x": 4, "y": 4, "width": 2, "height": 2, "tile": "desolate_landscape.desolate_wall_00" },
+      { "x": 15, "y": 4, "width": 2, "height": 2, "tile": "desolate_landscape.desolate_wall_00" },
+      { "x": 5, "y": 12, "width": 3, "height": 2, "tile": "desolate_landscape.desolate_wall_00" },
+      { "x": 14, "y": 12, "width": 3, "height": 2, "tile": "desolate_landscape.desolate_wall_00" }
     ]
   },
   "player": {

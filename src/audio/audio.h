@@ -12,7 +12,8 @@ typedef enum {
     MUSIC_TITLE,     /* title screen theme (loops) */
     MUSIC_TOWN,      /* town / hub theme (loops) */
     MUSIC_DUNGEON,   /* castle / dungeon theme (loops) */
-    MUSIC_BOSS       /* final-boss theme (loops) */
+    MUSIC_BOSS,      /* final-boss theme (loops) */
+    MUSIC_DESOLATE   /* desolate landscape theme (loops) */
 } MusicTrack;
 
 /* Master sound enable (title menu SOUND ON/OFF).  Gates both music and
