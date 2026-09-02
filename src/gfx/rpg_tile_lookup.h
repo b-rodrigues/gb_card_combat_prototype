@@ -37,24 +37,20 @@ extern const uint8_t g_intrepid_font_tiles[1536];
 
 static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
 {
-    if (tileset_kind == 14 /* WORLD_TILESET_DESOLATE */) {
-        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
-        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
-        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
-        if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_WORLD + 3);
+    if (tileset_kind == 15 /* WORLD_TILESET_CASTLE */) {
+        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 23); /* Stone floor */
+        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 10); /* Castle wall */
+        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 13); /* Archway gate */
+        if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_WORLD + 16); /* Torch / prop */
         return 0;
     }
-    if (tileset_kind == 2 /* WORLD_TILESET_FOREST */) {
-        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
-        if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
-        if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
-        if (glyph >= '1' && glyph <= '4') return (uint8_t)(RPG_TILE_BASE_WORLD + 3 + (glyph - '1'));
-        return 0;
+    if (tileset_kind == 2 /* WORLD_TILESET_FOREST */ && glyph >= '1' && glyph <= '4') {
+        return (uint8_t)(RPG_TILE_BASE_WORLD + 3 + (glyph - '1'));
     }
     if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 0);
     if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 1);
     if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 2);
-    if (glyph == 'B') return (uint8_t)(RPG_TILE_BASE_WORLD + 3);
+    if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_WORLD + 3);
     return 0;
 }
 
