@@ -19,9 +19,27 @@ uint8_t const g_title_logo_x = 0;
 uint8_t const g_title_logo_y = 1;
 uint8_t const g_title_logo_count = 5;
 
+const char g_title_graphic[5][20+1] = {
+"  /\\____/\\          ",
+" (  o  o  )         ",
+" (  ==0== )         ",
+"  )      (          ",
+" (________)         "
+};
+
+uint8_t const g_title_graphic_x = 2;
+uint8_t const g_title_graphic_y = 7;
+uint8_t const g_title_graphic_count = 5;
+uint8_t const g_title_graphic_enabled = 1;
+
 const char g_title_prompt_text[21] = "PRESS START         ";
-uint8_t const g_title_prompt_x = 5;
-uint8_t const g_title_prompt_y = 16;
+uint8_t const g_title_prompt_x = 4;
+uint8_t const g_title_prompt_y = 14;
+
+const char g_title_credits_text[21] = "GAME BY BRODRIGUES  ";
+uint8_t const g_title_credits_x = 2;
+uint8_t const g_title_credits_y = 17;
+uint8_t const g_title_credits_enabled = 1;
 
 const char g_title_menu_options[4][20+1] = {
 "> NEW GAME          ",

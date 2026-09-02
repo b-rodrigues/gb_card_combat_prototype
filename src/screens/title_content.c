@@ -25,8 +25,12 @@ extern uint8_t g_sound_enabled;
 /* Generated title screen data (bank 4, read directly by the renderer) */
 extern const char g_title_logo[5][21];
 extern uint8_t g_title_logo_x, g_title_logo_y, g_title_logo_count;
+extern const char g_title_graphic[5][21];
+extern uint8_t const g_title_graphic_x, g_title_graphic_y, g_title_graphic_count, g_title_graphic_enabled;
 extern const char g_title_prompt_text[21];
 extern uint8_t g_title_prompt_x, g_title_prompt_y;
+extern const char g_title_credits_text[21];
+extern uint8_t const g_title_credits_x, g_title_credits_y, g_title_credits_enabled;
 extern const char g_title_menu_options[4][21];
 extern uint8_t g_title_menu_x, g_title_menu_caret_x, g_title_menu_first_row, g_title_menu_row_step, g_title_menu_count;
 
@@ -100,6 +104,15 @@ static void title_draw_logo(void)
     }
 }
 
+static void title_draw_graphic(void)
+{
+    uint8_t i;
+    if (!g_title_graphic_enabled) return;
+    for (i = 0; i < g_title_graphic_count; i++) {
+        title_draw_text(g_title_graphic_x, (uint8_t)(g_title_graphic_y + i), g_title_graphic[i], 20);
+    }
+}
+
 static void title_draw_menu(uint8_t index)
 {
     title_draw_text(3, 10, index == 0 ? "> NEW GAME" : "  NEW GAME", 11);
@@ -120,9 +133,16 @@ void title_content_render(void)
     title_draw_logo();
 
     if (!showing) {
-        title_draw_text(g_title_prompt_x, g_title_prompt_y, g_title_prompt_text, 13);
+        title_draw_graphic();
+        title_draw_text(g_title_prompt_x, g_title_prompt_y, g_title_prompt_text, 20);
+        if (g_title_credits_enabled) {
+            title_draw_text(g_title_credits_x, g_title_credits_y, g_title_credits_text, 20);
+        }
     } else {
         title_draw_menu(index);
+        if (g_title_credits_enabled && g_title_credits_y > 16) {
+            title_draw_text(g_title_credits_x, g_title_credits_y, g_title_credits_text, 20);
+        }
     }
 }
 

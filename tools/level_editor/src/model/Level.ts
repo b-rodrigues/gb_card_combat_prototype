@@ -98,6 +98,14 @@ export interface EditorLevel {
     timer_col?: number;
     timer_width?: number;
   };
+  titleLayout?: {
+    title?: string;
+    logo?: { x: number; y: number; lines: string[] };
+    graphic?: { enabled: boolean; x: number; y: number; width: number; height: number; lines: string[] };
+    prompt?: { text: string; x: number; y: number; align?: 'left' | 'center' | 'right' };
+    credits?: { enabled: boolean; text: string; x: number; y: number; align?: 'left' | 'center' | 'right' };
+    menu?: { x: number; caret_x: number; first_row: number; row_step: number; options: string[] };
+  };
   originalScreenData?: any;
 }
 
@@ -184,6 +192,14 @@ export function titleScreenToEditor(data: any): EditorLevel {
     objects,
     regions,
     isScreen: true,
+    titleLayout: {
+      title: data.title || 'Giausar',
+      logo: data.logo ? JSON.parse(JSON.stringify(data.logo)) : { x: 0, y: 1, lines: [] },
+      graphic: data.graphic ? JSON.parse(JSON.stringify(data.graphic)) : { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] },
+      prompt: data.prompt ? JSON.parse(JSON.stringify(data.prompt)) : { text: 'PRESS START', x: 4, y: 14, align: 'center' },
+      credits: data.credits ? JSON.parse(JSON.stringify(data.credits)) : { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' },
+      menu: data.menu ? JSON.parse(JSON.stringify(data.menu)) : { x: 3, caret_x: 3, first_row: 10, row_step: 2, options: [] },
+    },
     originalScreenData: data
   };
 }
@@ -393,6 +409,14 @@ export function editorToLevelData(lvl: EditorLevel): any {
     if (lvl.id === 'title') {
       const match = lvl.name.match(/^Title Screen \((.*)\)$/);
       if (match) screenData.title = match[1];
+      if (lvl.titleLayout) {
+        if (lvl.titleLayout.title) screenData.title = lvl.titleLayout.title;
+        if (lvl.titleLayout.logo) screenData.logo = lvl.titleLayout.logo;
+        if (lvl.titleLayout.graphic) screenData.graphic = lvl.titleLayout.graphic;
+        if (lvl.titleLayout.prompt) screenData.prompt = lvl.titleLayout.prompt;
+        if (lvl.titleLayout.credits) screenData.credits = lvl.titleLayout.credits;
+        if (lvl.titleLayout.menu) screenData.menu = lvl.titleLayout.menu;
+      }
     } else {
       if (lvl.battleHudLayout) {
         screenData.hud_layout = {

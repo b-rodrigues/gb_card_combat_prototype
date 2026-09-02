@@ -15,9 +15,31 @@
     ]
   },
   "prompt": {
-    "x": 5,
-    "y": 16,
-    "text": "PRESS START"
+    "x": 4,
+    "y": 14,
+    "text": "PRESS START",
+    "align": "center"
+  },
+  "graphic": {
+    "enabled": true,
+    "x": 2,
+    "y": 7,
+    "width": 16,
+    "height": 5,
+    "lines": [
+      "  /\\____/\\    ",
+      " (  o  o  )   ",
+      " (  ==0== )   ",
+      "  )      (    ",
+      " (________)   "
+    ]
+  },
+  "credits": {
+    "enabled": true,
+    "x": 1,
+    "y": 17,
+    "text": "GAME BY BRODRIGUES",
+    "align": "right"
   },
   "menu": {
     "x": 3,

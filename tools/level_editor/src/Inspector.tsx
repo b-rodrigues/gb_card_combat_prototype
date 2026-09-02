@@ -58,13 +58,16 @@ export const Inspector: React.FC<InspectorProps> = ({
   onDeleteRegion,
 }) => {
   const isBattleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle')));
-  const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'battle'>('context');
+  const isTitleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title'));
+  const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'battle' | 'title'>('context');
 
   useEffect(() => {
     if (isBattleScreen) {
       setTab('battle');
+    } else if (isTitleScreen) {
+      setTab('title');
     }
-  }, [level.id, isBattleScreen]);
+  }, [level.id, isBattleScreen, isTitleScreen]);
   const [previewTick, setPreviewTick] = useState<number>(0);
   useEffect(() => {
     const timer = setInterval(() => {
@@ -126,6 +129,15 @@ export const Inspector: React.FC<InspectorProps> = ({
             title="Battle HUD Layout and Coordinates"
           >
             ⚔️ Battle HUD
+          </button>
+        )}
+        {isTitleScreen && (
+          <button
+            className={`tab-btn ${tab === 'title' ? 'active' : ''}`}
+            onClick={() => setTab('title')}
+            title="Title Screen Layout, Big Image, Prompt & Credits"
+          >
+            👑 Title Studio
           </button>
         )}
       </div>
@@ -542,6 +554,517 @@ export const Inspector: React.FC<InspectorProps> = ({
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'title' && (
+          <div className="inspector-section">
+            <h4>👑 Title Screen Studio</h4>
+            <p className="hint-text">
+              Completely data-driven Title Screen: customize the Big Title Graphic, Game Title, Centered &ldquo;PRESS START&rdquo;, and Bottom-Row Credits.
+            </p>
+
+            {/* Game Title & Subtitle */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>🏷️ Game Title & Subtitle Lines</label>
+              <input
+                type="text"
+                placeholder="Game Title"
+                value={level.titleLayout?.title ?? 'Giausar'}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    titleLayout: {
+                      ...(level.titleLayout || {}),
+                      title: e.target.value,
+                    },
+                  })
+                }
+              />
+              <label style={{ fontSize: 11, marginTop: 4 }}>Banner & Subtitle Lines (Row 1-5)</label>
+              <textarea
+                rows={5}
+                style={{ fontFamily: 'monospace', fontSize: 11, width: '100%' }}
+                value={(level.titleLayout?.logo?.lines ?? []).join('\n')}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    titleLayout: {
+                      ...(level.titleLayout || {}),
+                      logo: {
+                        ...(level.titleLayout?.logo || { x: 0, y: 1 }),
+                        lines: e.target.value.split('\n'),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {/* Big Title Graphic / Tile Image */}
+            <div className="form-group" style={{ background: 'rgba(30, 41, 59, 0.4)', padding: 8, borderRadius: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ fontWeight: 600 }}>🖼️ Big Title Graphic / Multi-Tile Artwork</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <input
+                    type="checkbox"
+                    checked={level.titleLayout?.graphic?.enabled ?? true}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { x: 2, y: 7, width: 16, height: 5, lines: [] }),
+                            enabled: e.target.checked,
+                          },
+                        },
+                      })
+                    }
+                  />
+                  Enabled
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, margin: '6px 0' }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Col X</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={19}
+                    value={level.titleLayout?.graphic?.x ?? 2}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, y: 7, width: 16, height: 5, lines: [] }),
+                            x: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row Y</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.graphic?.y ?? 7}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, width: 16, height: 5, lines: [] }),
+                            y: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Width</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={level.titleLayout?.graphic?.width ?? 16}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, height: 5, lines: [] }),
+                            width: parseInt(e.target.value) || 16,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Height</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={18}
+                    value={level.titleLayout?.graphic?.height ?? 5}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, lines: [] }),
+                            height: parseInt(e.target.value) || 5,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Quick Graphic Templates */}
+              <div style={{ margin: '4px 0 6px' }}>
+                <label style={{ fontSize: 10, color: '#94a3b8' }}>Quick Templates:</label>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 10, padding: '2px 6px' }}
+                    onClick={() =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5 }),
+                            lines: [
+                              '  /\\____/\\    ',
+                              ' (  o  o  )   ',
+                              ' (  ==0== )   ',
+                              '  )      (    ',
+                              ' (________)   ',
+                            ],
+                          },
+                        },
+                      })
+                    }
+                  >
+                    🐉 Dragon / Beast
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 10, padding: '2px 6px' }}
+                    onClick={() =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5 }),
+                            lines: [
+                              '    /\\    /\\    ',
+                              '   /  \\  /  \\   ',
+                              '  <====><====>  ',
+                              '   \\  /  \\  /   ',
+                              '    \\/    \\/    ',
+                            ],
+                          },
+                        },
+                      })
+                    }
+                  >
+                    ⚔️ Cross Blades
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 10, padding: '2px 6px' }}
+                    onClick={() =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5 }),
+                            lines: [
+                              '   |#|  |#|   ',
+                              '  _|_|__|_|_  ',
+                              ' |  _    _  | ',
+                              ' | | |  | | | ',
+                              ' |___|__|___| ',
+                            ],
+                          },
+                        },
+                      })
+                    }
+                  >
+                    🏰 Citadel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ fontSize: 10, padding: '2px 6px' }}
+                    onClick={() =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          graphic: {
+                            ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5 }),
+                            lines: [
+                              '      .---.     ',
+                              '     /   . \\    ',
+                              '    |  (o)  |___',
+                              '  ~/         /  ',
+                              '   \\________/   ',
+                            ],
+                          },
+                        },
+                      })
+                    }
+                  >
+                    🐋 Whale Sigil
+                  </button>
+                </div>
+              </div>
+
+              <label style={{ fontSize: 11 }}>Tile / ASCII Artwork Lines</label>
+              <textarea
+                rows={5}
+                style={{ fontFamily: 'monospace', fontSize: 11, width: '100%' }}
+                value={(level.titleLayout?.graphic?.lines ?? []).join('\n')}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    titleLayout: {
+                      ...(level.titleLayout || {}),
+                      graphic: {
+                        ...(level.titleLayout?.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5 }),
+                        lines: e.target.value.split('\n'),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {/* PRESS START Prompt */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>🕹️ &ldquo;PRESS START&rdquo; Prompt</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Text</label>
+                  <input
+                    type="text"
+                    value={level.titleLayout?.prompt?.text ?? 'PRESS START'}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          prompt: {
+                            ...(level.titleLayout?.prompt || { x: 4, y: 14, align: 'center' }),
+                            text: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row (Y)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.prompt?.y ?? 14}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          prompt: {
+                            ...(level.titleLayout?.prompt || { text: 'PRESS START', x: 4, align: 'center' }),
+                            y: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Align</label>
+                  <select
+                    value={level.titleLayout?.prompt?.align ?? 'center'}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          prompt: {
+                            ...(level.titleLayout?.prompt || { text: 'PRESS START', x: 4, y: 14 }),
+                            align: e.target.value as any,
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <option value="center">Center</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Row Credits / Author Info */}
+            <div className="form-group" style={{ background: 'rgba(30, 41, 59, 0.4)', padding: 8, borderRadius: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ fontWeight: 600 }}>✍️ Bottom Row Credits / Author Attribution</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <input
+                    type="checkbox"
+                    checked={level.titleLayout?.credits?.enabled ?? true}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          credits: {
+                            ...(level.titleLayout?.credits || { text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' }),
+                            enabled: e.target.checked,
+                          },
+                        },
+                      })
+                    }
+                  />
+                  Enabled
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6, marginTop: 4 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Credits Text</label>
+                  <input
+                    type="text"
+                    value={level.titleLayout?.credits?.text ?? 'GAME BY BRODRIGUES'}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          credits: {
+                            ...(level.titleLayout?.credits || { enabled: true, x: 2, y: 17, align: 'right' }),
+                            text: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row (Y)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.credits?.y ?? 17}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          credits: {
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, align: 'right' }),
+                            y: parseInt(e.target.value) || 17,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Align</label>
+                  <select
+                    value={level.titleLayout?.credits?.align ?? 'right'}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          credits: {
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17 }),
+                            align: e.target.value as any,
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <option value="right">Right</option>
+                    <option value="center">Center</option>
+                    <option value="left">Left</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Options */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>📋 Menu Options (When Menu Opens)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 6 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Menu Col (X)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={19}
+                    value={level.titleLayout?.menu?.x ?? 3}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          menu: {
+                            ...(level.titleLayout?.menu || { caret_x: 3, first_row: 10, row_step: 2, options: [] }),
+                            x: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>First Row (Y)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.menu?.first_row ?? 10}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          menu: {
+                            ...(level.titleLayout?.menu || { x: 3, caret_x: 3, row_step: 2, options: [] }),
+                            first_row: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row Step</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={level.titleLayout?.menu?.row_step ?? 2}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          menu: {
+                            ...(level.titleLayout?.menu || { x: 3, caret_x: 3, first_row: 10, options: [] }),
+                            row_step: parseInt(e.target.value) || 1,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <label style={{ fontSize: 11 }}>Menu Option Labels</label>
+              <textarea
+                rows={4}
+                style={{ fontFamily: 'monospace', fontSize: 11, width: '100%' }}
+                value={(level.titleLayout?.menu?.options ?? []).join('\n')}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    titleLayout: {
+                      ...(level.titleLayout || {}),
+                      menu: {
+                        ...(level.titleLayout?.menu || { x: 3, caret_x: 3, first_row: 10, row_step: 2 }),
+                        options: e.target.value.split('\n'),
+                      },
+                    },
+                  })
+                }
+              />
             </div>
           </div>
         )}

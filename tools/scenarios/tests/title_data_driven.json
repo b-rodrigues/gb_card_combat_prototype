@@ -1,0 +1,43 @@
+{
+  "name": "title_data_driven",
+  "test": true,
+  "description": "Title screen renders data-driven logo, big title graphic, centered PRESS START prompt, and bottom-row credits",
+  "scenario_id": "TITLE_BOOT",
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 4,
+      "y": 4,
+      "facing": "DOWN"
+    },
+    "seed": 7010,
+    "screen": "TITLE"
+  },
+  "actions": [
+    {
+      "type": "wait",
+      "frames": 2
+    }
+  ],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "TITLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 1,
+      "contains": "G I A U S A R"
+    },
+    {
+      "type": "screen_row",
+      "row": 14,
+      "contains": "PRESS START"
+    },
+    {
+      "type": "screen_row",
+      "row": 17,
+      "contains": "BRODRIGUES"
+    }
+  ]
+}

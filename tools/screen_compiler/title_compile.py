@@ -215,8 +215,57 @@ def build_title_c_output(data: dict) -> str:
 
     # Prompt text padded to 20 chars
     prompt_text = data["prompt"]["text"]
+    prompt_align = data["prompt"].get("align")
+    if prompt_align == "center":
+        prompt_x = max(0, (20 - len(prompt_text.strip())) // 2)
+    elif prompt_align == "right":
+        prompt_x = max(0, 20 - len(prompt_text.strip()))
+    elif prompt_align == "left":
+        prompt_x = 0
+    else:
+        prompt_x = data["prompt"].get("x", 5)
+    prompt_y = data["prompt"].get("y", 16)
+
     prompt_padded = prompt_text + " " * (20 - len(prompt_text))
     escaped_prompt = prompt_padded.replace('\\', '\\\\').replace('"', '\\"')
+
+    # Graphic / Multi-tile Image data
+    graphic_data = data.get("graphic", {})
+    graphic_enabled = 1 if graphic_data.get("enabled", False) else 0
+    graphic_x = graphic_data.get("x", 0)
+    graphic_y = graphic_data.get("y", 7)
+    graphic_rows = graphic_data.get("lines", [])
+    if not graphic_rows:
+        graphic_rows = [""]
+    n_graphic = len(graphic_rows)
+    graphic_padded = []
+    for line in graphic_rows:
+        if len(line) >= grid_w:
+            graphic_padded.append(line[:grid_w])
+        else:
+            graphic_padded.append(line + " " * (grid_w - len(line)))
+    graphic_init_parts = []
+    for row in graphic_padded:
+        escaped = row.replace('\\', '\\\\').replace('"', '\\"')
+        graphic_init_parts.append('"%s"' % escaped)
+    graphic_init = ",\n".join(graphic_init_parts)
+
+    # Credits data
+    credits_data = data.get("credits", {})
+    credits_enabled = 1 if credits_data.get("enabled", False) else 0
+    credits_text = credits_data.get("text", "")
+    credits_align = credits_data.get("align", "right")
+    if credits_align == "right":
+        credits_x = max(0, 20 - len(credits_text.strip()))
+    elif credits_align == "center":
+        credits_x = max(0, (20 - len(credits_text.strip())) // 2)
+    elif credits_align == "left":
+        credits_x = 0
+    else:
+        credits_x = credits_data.get("x", 0)
+    credits_y = credits_data.get("y", 17)
+    credits_padded = credits_text + " " * (20 - len(credits_text))
+    escaped_credits = credits_padded.replace('\\', '\\\\').replace('"', '\\"')
 
     # Menu labels padded to grid_w
     menu_options = data["menu"]["options"]
@@ -250,10 +299,26 @@ def build_title_c_output(data: dict) -> str:
     lines.append("uint8_t const g_title_logo_y = %d;" % data["logo"]["y"])
     lines.append("uint8_t const g_title_logo_count = %d;" % n_logo)
     lines.append("")
+    # --- Graphic / Multi-tile Image ---
+    lines.append("const char g_title_graphic[%d][%d+1] = {" % (n_graphic, grid_w))
+    lines.append(graphic_init)
+    lines.append("};")
+    lines.append("")
+    lines.append("uint8_t const g_title_graphic_x = %d;" % graphic_x)
+    lines.append("uint8_t const g_title_graphic_y = %d;" % graphic_y)
+    lines.append("uint8_t const g_title_graphic_count = %d;" % n_graphic)
+    lines.append("uint8_t const g_title_graphic_enabled = %d;" % graphic_enabled)
+    lines.append("")
     # --- Prompt ---
     lines.append("const char g_title_prompt_text[21] = \"%s\";" % escaped_prompt)
-    lines.append("uint8_t const g_title_prompt_x = %d;" % data["prompt"]["x"])
-    lines.append("uint8_t const g_title_prompt_y = %d;" % data["prompt"]["y"])
+    lines.append("uint8_t const g_title_prompt_x = %d;" % prompt_x)
+    lines.append("uint8_t const g_title_prompt_y = %d;" % prompt_y)
+    lines.append("")
+    # --- Credits ---
+    lines.append("const char g_title_credits_text[21] = \"%s\";" % escaped_credits)
+    lines.append("uint8_t const g_title_credits_x = %d;" % credits_x)
+    lines.append("uint8_t const g_title_credits_y = %d;" % credits_y)
+    lines.append("uint8_t const g_title_credits_enabled = %d;" % credits_enabled)
     lines.append("")
     # --- Menu ---
     lines.append("const char g_title_menu_options[%d][%d+1] = {" % (menu_count := len(menu_options), grid_w))

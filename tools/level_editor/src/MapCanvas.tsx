@@ -135,6 +135,112 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     ctx.fillStyle = '#0f141c';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+    // ── TITLE SCREEN AUTHENTIC RENDERER ──
+    if (level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title')) {
+      const titleLayout = level.titleLayout || {};
+      const logo = titleLayout.logo || { x: 0, y: 1, lines: [] };
+      const graphic = titleLayout.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] };
+      const prompt = titleLayout.prompt || { text: 'PRESS START', x: 4, y: 14, align: 'center' };
+      const credits = titleLayout.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' };
+
+      // 1. Dark fantasy / classic Game Boy title screen background
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // 2. Cyan grid lines if enabled
+      if (showGrid && tileSize >= 6) {
+        ctx.strokeStyle = 'rgba(74, 185, 209, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= level.width; x++) {
+          ctx.moveTo(x * tileSize, 0);
+          ctx.lineTo(x * tileSize, canvasHeight);
+        }
+        for (let y = 0; y <= level.height; y++) {
+          ctx.moveTo(0, y * tileSize);
+          ctx.lineTo(canvasWidth, y * tileSize);
+        }
+        ctx.stroke();
+      }
+
+      // 3. Logo Lines (rows logo.y + idx)
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (logo.lines && logo.lines.length > 0) {
+        logo.lines.forEach((line: string, idx: number) => {
+          const rowY = (logo.y + idx) * tileSize + tileSize * 0.5;
+          if (idx === 0) {
+            ctx.fillStyle = '#f6d365';
+            ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.85))}px monospace`;
+            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
+          } else if (idx === 1) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.7))}px monospace`;
+            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
+          } else {
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = `${Math.max(10, Math.floor(tileSize * 0.65))}px monospace`;
+            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
+          }
+        });
+      }
+
+      // 4. Big Title Graphic / Artwork (rows graphic.y + idx)
+      if (graphic.enabled && graphic.lines && graphic.lines.length > 0) {
+        const gx = graphic.x * tileSize;
+        const gy = graphic.y * tileSize;
+        const gw = (graphic.width || 16) * tileSize;
+        const gh = (graphic.height || graphic.lines.length) * tileSize;
+
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(gx, gy, gw, gh);
+        ctx.strokeRect(gx, gy, gw, gh);
+
+        ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.65))}px monospace`;
+        ctx.fillStyle = '#38bdf8';
+        ctx.textAlign = 'left';
+        graphic.lines.forEach((line: string, idx: number) => {
+          const lineY = gy + (idx + 0.5) * tileSize;
+          ctx.fillText(line, gx + tileSize * 0.5, lineY);
+        });
+      }
+
+      // 5. Centered "PRESS START" Prompt
+      if (prompt.text) {
+        const promptY = (prompt.y ?? 14) * tileSize + tileSize * 0.5;
+        const isBlink = animTick % 2 === 0;
+        ctx.fillStyle = isBlink ? '#ffffff' : '#94a3b8';
+        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.75))}px monospace`;
+        ctx.textAlign = prompt.align === 'left' ? 'left' : prompt.align === 'right' ? 'right' : 'center';
+        const promptX =
+          prompt.align === 'left'
+            ? (prompt.x ?? 2) * tileSize
+            : prompt.align === 'right'
+            ? ((prompt.x ?? 18) + 1) * tileSize
+            : canvasWidth / 2;
+        ctx.fillText(prompt.text, promptX, promptY);
+      }
+
+      // 6. Bottom Row Credits (e.g. Row 17, right-aligned)
+      if (credits.enabled && credits.text) {
+        const credY = (credits.y ?? 17) * tileSize + tileSize * 0.5;
+        ctx.fillStyle = '#64748b';
+        ctx.font = `bold ${Math.max(8, Math.floor(tileSize * 0.55))}px monospace`;
+        ctx.textAlign = credits.align === 'left' ? 'left' : credits.align === 'center' ? 'center' : 'right';
+        const credX =
+          credits.align === 'left'
+            ? (credits.x ?? 0) * tileSize + tileSize * 0.2
+            : credits.align === 'center'
+            ? canvasWidth / 2
+            : canvasWidth - tileSize * 0.5;
+        ctx.fillText(credits.text, credX, credY);
+      }
+
+      return;
+    }
+
     // ── BATTLE SCREEN AUTHENTIC RENDERER (matching assets/battle_screen_mockup.jpg) ──
     if (level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle'))) {
       const layout = level.battleHudLayout || {};

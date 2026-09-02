@@ -47,7 +47,36 @@
       "properties": {
         "x": { "type": "integer", "minimum": 0, "maximum": 19 },
         "y": { "type": "integer", "minimum": 0, "maximum": 17 },
-        "text": { "type": "string", "maxLength": 20 }
+        "text": { "type": "string", "maxLength": 20 },
+        "align": { "type": "string", "enum": ["left", "center", "right"] }
+      }
+    },
+    "graphic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "x", "y", "width", "height", "lines"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "x": { "type": "integer", "minimum": 0, "maximum": 19 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 18 },
+        "lines": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 20 }
+        }
+      }
+    },
+    "credits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "text", "y"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "text": { "type": "string", "maxLength": 20 },
+        "x": { "type": "integer", "minimum": 0, "maximum": 19 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "align": { "type": "string", "enum": ["left", "center", "right"] }
       }
     },
     "menu": {
