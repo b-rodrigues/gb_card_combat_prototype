@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
-import { EditLayer } from './LayerPanel';
+import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 
 interface InspectorProps {
   level: EditorLevel;
   activeLayer: EditLayer;
+  onSelectLayer: (layer: EditLayer) => void;
+  showTerrain: boolean;
+  onToggleShowTerrain: () => void;
+  showExits: boolean;
+  onToggleShowExits: () => void;
+  showObjects: boolean;
+  onToggleShowObjects: () => void;
+  showRegions: boolean;
+  onToggleShowRegions: () => void;
   selectedEntityIndex: number | null;
   onSelectEntityIndex: (index: number | null) => void;
   onUpdateLevelMeta: (updates: Partial<EditorLevel>) => void;
@@ -25,6 +34,15 @@ interface InspectorProps {
 export const Inspector: React.FC<InspectorProps> = ({
   level,
   activeLayer,
+  onSelectLayer,
+  showTerrain,
+  onToggleShowTerrain,
+  showExits,
+  onToggleShowExits,
+  showObjects,
+  onToggleShowObjects,
+  showRegions,
+  onToggleShowRegions,
   selectedEntityIndex,
   onSelectEntityIndex,
   onUpdateLevelMeta,
@@ -39,7 +57,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onUpdateRegion,
   onDeleteRegion,
 }) => {
-  const [tab, setTab] = useState<'context' | 'map'>('context');
+  const [tab, setTab] = useState<'context' | 'layers' | 'map'>('context');
 
   // Collect all tiles from all tilesets for the tile selector
   const allTiles: TileDefinition[] = Object.values(BUILTIN_TILESETS).flatMap(ts => ts.tiles);
@@ -54,6 +72,7 @@ export const Inspector: React.FC<InspectorProps> = ({
         <button
           className={`tab-btn ${tab === 'context' ? 'active' : ''}`}
           onClick={() => setTab('context')}
+          title="Current layer properties and entity details"
         >
           {activeLayer === 'terrain'
             ? '🎨 Terrain'
@@ -66,14 +85,43 @@ export const Inspector: React.FC<InspectorProps> = ({
             : '🏷️ Regions'}
         </button>
         <button
+          className={`tab-btn ${tab === 'layers' ? 'active' : ''}`}
+          onClick={() => setTab('layers')}
+          title="Layers and edit modes"
+        >
+          📑 Layers
+        </button>
+        <button
           className={`tab-btn ${tab === 'map' ? 'active' : ''}`}
           onClick={() => setTab('map')}
+          title="Map metadata and settings"
         >
           ⚙️ Map Info
         </button>
       </div>
 
       <div className="panel-body inspector-content">
+        {tab === 'layers' && (
+          <div className="inspector-section">
+            <LayerPanel
+              activeLayer={activeLayer}
+              onSelectLayer={onSelectLayer}
+              showTerrain={showTerrain}
+              onToggleShowTerrain={onToggleShowTerrain}
+              showExits={showExits}
+              onToggleShowExits={onToggleShowExits}
+              showObjects={showObjects}
+              onToggleShowObjects={onToggleShowObjects}
+              showRegions={showRegions}
+              onToggleShowRegions={onToggleShowRegions}
+              exitCount={level.exits.length}
+              objectCount={level.objects.length}
+              regionCount={level.regions.length}
+              embedded={true}
+            />
+          </div>
+        )}
+
         {tab === 'map' && (
           <div className="inspector-section">
             <h4>Map Configuration</h4>

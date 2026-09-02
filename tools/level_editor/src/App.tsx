@@ -3,7 +3,7 @@ import './App.css';
 import { EditorLevel, LevelExit, LevelRegion, createEmptyEditorLevel, levelDataToEditor } from './model/Level';
 import { LevelObject } from './model/Objects';
 import { Toolbar, ToolType } from './Toolbar';
-import { LayerPanel, EditLayer } from './LayerPanel';
+import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
@@ -512,21 +512,6 @@ export const App: React.FC = () => {
               onSelectTileset={(ts) => pushState({ ...level, tileset: ts })}
               onSelectTile={setSelectedTileId}
             />
-            <LayerPanel
-              activeLayer={activeLayer}
-              onSelectLayer={setActiveLayer}
-              showTerrain={showTerrain}
-              onToggleShowTerrain={() => setShowTerrain(!showTerrain)}
-              showExits={showExits}
-              onToggleShowExits={() => setShowExits(!showExits)}
-              showObjects={showObjects}
-              onToggleShowObjects={() => setShowObjects(!showObjects)}
-              showRegions={showRegions}
-              onToggleShowRegions={() => setShowRegions(!showRegions)}
-              exitCount={level.exits.length}
-              objectCount={level.objects.length}
-              regionCount={level.regions.length}
-            />
           </aside>
 
           {/* Canvas Work Area */}
@@ -582,6 +567,15 @@ export const App: React.FC = () => {
             <Inspector
               level={level}
               activeLayer={activeLayer}
+              onSelectLayer={setActiveLayer}
+              showTerrain={showTerrain}
+              onToggleShowTerrain={() => setShowTerrain(!showTerrain)}
+              showExits={showExits}
+              onToggleShowExits={() => setShowExits(!showExits)}
+              showObjects={showObjects}
+              onToggleShowObjects={() => setShowObjects(!showObjects)}
+              showRegions={showRegions}
+              onToggleShowRegions={() => setShowRegions(!showRegions)}
               selectedEntityIndex={selectedEntityIndex}
               onSelectEntityIndex={setSelectedEntityIndex}
               onUpdateLevelMeta={handleUpdateLevelMeta}
