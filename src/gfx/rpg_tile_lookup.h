@@ -36,7 +36,7 @@ static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
         if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 0);
         if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 1);
         if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 2);
-        if (glyph == 'B') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 3);
+        if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_DESOLATE + 3);
         return 0;
     }
     if (glyph == '.') return (uint8_t)(128 + (tileset_kind << 2) + 0);

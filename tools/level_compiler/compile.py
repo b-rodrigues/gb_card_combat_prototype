@@ -132,7 +132,7 @@ def map_base_tile_const(gb_const, t_info):
         return "TILE_WALL"
     elif ascii_char in (">", "<"):
         return "TILE_EXIT"
-    elif ascii_char == "B":
+    elif ascii_char == "B" or ascii_char == "*":
         return "TILE_BUILDING"
     return "TILE_FLOOR" if t_info.get("walkable", True) else "TILE_WALL"
 

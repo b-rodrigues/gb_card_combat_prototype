@@ -394,7 +394,7 @@
       "gb_constant": "TILE_DESOLATE_KOBOLD_01",
       "gb_tile_index": 35,
       "walkable": false,
-      "color": "#a03020",
+      "color": "#e06810",
       "ascii": "E",
       "image_url": "/tiles/desolate_landscape/desolate_kobold_01.png",
       "category": "enemy"
@@ -405,7 +405,7 @@
       "gb_constant": "TILE_DESOLATE_KOBOLD_02",
       "gb_tile_index": 36,
       "walkable": false,
-      "color": "#a03020",
+      "color": "#e06810",
       "ascii": "E",
       "image_url": "/tiles/desolate_landscape/desolate_kobold_02.png",
       "category": "enemy"
