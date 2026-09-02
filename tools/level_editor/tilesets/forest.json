@@ -35,327 +35,327 @@
     },
     {
       "id": "tile_0_0",
-      "label": "Whispering Forest (0,0)",
+      "label": "Top Left Corner Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_0",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_0.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_1",
-      "label": "Whispering Forest (1,0)",
+      "label": "Top Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_1",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_1.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_2",
-      "label": "Whispering Forest (2,0)",
+      "label": "Top Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_2",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_2.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_3",
-      "label": "Whispering Forest (3,0)",
+      "label": "Top Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_3",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_3.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_4",
-      "label": "Whispering Forest (4,0)",
+      "label": "Top Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_4",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_4.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_5",
-      "label": "Whispering Forest (5,0)",
+      "label": "Top Right Corner Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_5",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_5.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_6",
-      "label": "Whispering Forest (6,0)",
+      "label": "Right Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_6",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_6.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_7",
-      "label": "Whispering Forest (7,0)",
+      "label": "Right Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_7",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_7.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_8",
-      "label": "Whispering Forest (8,0)",
+      "label": "Right Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_8",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_8.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_9",
-      "label": "Whispering Forest (9,0)",
+      "label": "Left Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_9",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_9.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_10",
-      "label": "Whispering Forest (10,0)",
+      "label": "Left Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_10",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_10.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_11",
-      "label": "Whispering Forest (11,0)",
+      "label": "Left Wall (Solid)",
       "gb_constant": "TILE_FOREST_0_11",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_11.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_0_12",
-      "label": "Whispering Forest (12,0)",
+      "label": "Top Left Treetop (Solid)",
       "gb_constant": "TILE_FOREST_0_12",
       "walkable": false,
       "color": "#2a4f1a",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_12.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_0_13",
-      "label": "Whispering Forest (13,0)",
+      "label": "Top Right Tree Top (Solid)",
       "gb_constant": "TILE_FOREST_0_13",
       "walkable": false,
       "color": "#2a4f1a",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_13.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_0_14",
-      "label": "Whispering Forest (14,0)",
+      "label": "Top Left Tree Stump (Solid)",
       "gb_constant": "TILE_FOREST_0_14",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_14.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_0_15",
-      "label": "Whispering Forest (15,0)",
+      "label": "Top Right Tree Stump (Solid)",
       "gb_constant": "TILE_FOREST_0_15",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_0_15.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_1_0",
-      "label": "Whispering Forest (0,1)",
+      "label": "Bottom Left Corner Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_0",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_0.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_1",
-      "label": "Whispering Forest (1,1)",
+      "label": "Bottom Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_1",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_1.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_2",
-      "label": "Whispering Forest (2,1)",
+      "label": "Bottom Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_2",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_2.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_3",
-      "label": "Whispering Forest (3,1)",
+      "label": "Bottom Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_3",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_3.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_4",
-      "label": "Whispering Forest (4,1)",
+      "label": "Bottom Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_4",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_4.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_5",
-      "label": "Whispering Forest (5,1)",
+      "label": "Floor With Stuff Walkable",
       "gb_constant": "TILE_FOREST_1_5",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_1_5.png",
       "category": "terrain"
     },
     {
       "id": "tile_1_6",
-      "label": "Whispering Forest (6,1)",
+      "label": "Floor With Stuff Walkable",
       "gb_constant": "TILE_FOREST_1_6",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_1_6.png",
       "category": "terrain"
     },
     {
       "id": "tile_1_7",
-      "label": "Whispering Forest (7,1)",
+      "label": "Floor With Stuff Walkable",
       "gb_constant": "TILE_FOREST_1_7",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_1_7.png",
       "category": "terrain"
     },
     {
       "id": "tile_1_8",
-      "label": "Whispering Forest (8,1)",
+      "label": "Floor With Stuff Walkable",
       "gb_constant": "TILE_FOREST_1_8",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_1_8.png",
       "category": "terrain"
     },
     {
       "id": "tile_1_9",
-      "label": "Whispering Forest (9,1)",
+      "label": "Right Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_9",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_9.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_10",
-      "label": "Whispering Forest (10,1)",
+      "label": "Bottom Right Corner Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_10",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_10.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_11",
-      "label": "Whispering Forest (11,1)",
+      "label": "Left Wall (Solid)",
       "gb_constant": "TILE_FOREST_1_11",
       "walkable": false,
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_11.png",
-      "category": "terrain"
+      "category": "wall"
     },
     {
       "id": "tile_1_12",
-      "label": "Whispering Forest (12,1)",
+      "label": "Bottom Left Treetrunk (Solid)",
       "gb_constant": "TILE_FOREST_1_12",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_12.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_1_13",
-      "label": "Whispering Forest (13,1)",
+      "label": "Bottom Right Tree Trunk (Solid)",
       "gb_constant": "TILE_FOREST_1_13",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_13.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_1_14",
-      "label": "Whispering Forest (14,1)",
+      "label": "Bottom Left Tree Stump (Solid)",
       "gb_constant": "TILE_FOREST_1_14",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_14.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_1_15",
-      "label": "Whispering Forest (15,1)",
+      "label": "Bottom Right Tree Stump (Solid)",
       "gb_constant": "TILE_FOREST_1_15",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_1_15.png",
-      "category": "terrain"
+      "category": "nature"
     },
     {
       "id": "tile_2_0",
-      "label": "Whispering Forest Floor",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_0",
       "walkable": true,
       "color": "#7bb660",
@@ -365,37 +365,37 @@
     },
     {
       "id": "tile_2_1",
-      "label": "Whispering Forest (1,2)",
+      "label": "Hero_frame_1 With Green Forest Background",
       "gb_constant": "TILE_FOREST_2_1",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_1.png",
-      "category": "terrain"
+      "category": "object"
     },
     {
       "id": "tile_2_2",
-      "label": "Whispering Forest (2,2)",
+      "label": "Hero_frame_2 With Green Forest Background",
       "gb_constant": "TILE_FOREST_2_2",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_2.png",
-      "category": "terrain"
+      "category": "object"
     },
     {
       "id": "tile_2_3",
-      "label": "Whispering Forest (3,2)",
+      "label": "Enemy Kobold Frame 1",
       "gb_constant": "TILE_FOREST_2_3",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_3.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "tile_2_4",
-      "label": "Whispering Forest (4,2)",
+      "label": "Enemy Kobold Frame 2",
       "gb_constant": "TILE_FOREST_2_4",
       "walkable": false,
       "color": "#7bb660",
@@ -405,111 +405,111 @@
     },
     {
       "id": "tile_2_5",
-      "label": "Whispering Forest (5,2)",
+      "label": "Fire Frame 1",
       "gb_constant": "TILE_FOREST_2_5",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_5.png",
-      "category": "terrain"
+      "category": "object"
     },
     {
       "id": "tile_2_6",
-      "label": "Whispering Forest (6,2)",
+      "label": "Fire Frame 2",
       "gb_constant": "TILE_FOREST_2_6",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_6.png",
-      "category": "terrain"
+      "category": "object"
     },
     {
       "id": "tile_2_7",
-      "label": "Whispering Forest (7,2)",
+      "label": "Merchant-forest",
       "gb_constant": "TILE_FOREST_2_7",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_7.png",
-      "category": "terrain"
+      "category": "npc"
     },
     {
       "id": "tile_2_8",
-      "label": "Whispering Forest (8,2)",
+      "label": "Exit Forest (Walkable)",
       "gb_constant": "TILE_FOREST_2_8",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_8.png",
       "category": "terrain"
     },
     {
       "id": "tile_2_9",
-      "label": "Whispering Forest (9,2)",
+      "label": "Enemy Bats Frame 1",
       "gb_constant": "TILE_FOREST_2_9",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_9.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "tile_2_10",
-      "label": "Whispering Forest (10,2)",
+      "label": "Enemy Bats Frame 2",
       "gb_constant": "TILE_FOREST_2_10",
       "walkable": false,
       "color": "#7bb660",
       "ascii": "#",
       "image_url": "/tiles/forest/tile_2_10.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "tile_2_11",
-      "label": "Whispering Forest (11,2)",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_11",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_11.png",
       "category": "terrain"
     },
     {
       "id": "tile_2_12",
-      "label": "Whispering Forest (12,2)",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_12",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_12.png",
       "category": "terrain"
     },
     {
       "id": "tile_2_13",
-      "label": "Whispering Forest (13,2)",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_13",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_13.png",
       "category": "terrain"
     },
     {
       "id": "tile_2_14",
-      "label": "Whispering Forest (14,2)",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_14",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_14.png",
       "category": "terrain"
     },
     {
       "id": "tile_2_15",
-      "label": "Whispering Forest (15,2)",
+      "label": "Plain Floor (Walkable)",
       "gb_constant": "TILE_FOREST_2_15",
-      "walkable": false,
+      "walkable": true,
       "color": "#7bb660",
-      "ascii": "#",
+      "ascii": ".",
       "image_url": "/tiles/forest/tile_2_15.png",
       "category": "terrain"
     },

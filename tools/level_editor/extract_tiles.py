@@ -129,6 +129,15 @@ def process_sheet(sheet):
     # If sheet has a default floor coordinate
     default_floor_coord = sheet.get("default_floor")
 
+    # Load CSV description if forest
+    csv_rows = None
+    if sheet_id == "forest":
+        csv_path = ASSETS_DIR / "forest-tileset-description.csv"
+        if csv_path.exists():
+            import csv
+            with open(csv_path, "r", encoding="utf-8") as f:
+                csv_rows = [row for row in csv.reader(f) if row]
+
     # Slicing tiles
     for r in range(rows):
         for c in range(cols):
@@ -163,6 +172,33 @@ def process_sheet(sheet):
             label = f"{sheet['label']} ({c},{r})"
             if is_floor:
                 label = f"{sheet['label']} Floor"
+
+            # Use CSV descriptions if available (for forest)
+            if csv_rows and r < len(csv_rows) and c < len(csv_rows[r]):
+                desc = csv_rows[r][c].strip()
+                d_low = desc.lower()
+                is_walkable = ("plain floor" in d_low or "walkable" in d_low or "exit" in d_low)
+                if "corner" in d_low or "wall" in d_low:
+                    category = "wall"
+                elif "tree" in d_low or "stump" in d_low:
+                    category = "nature"
+                elif "enemy" in d_low:
+                    category = "enemy"
+                elif "hero" in d_low:
+                    category = "object"
+                elif "merchant" in d_low:
+                    category = "npc"
+                elif "fire" in d_low:
+                    category = "object"
+                elif "exit" in d_low or "floor" in d_low:
+                    category = "terrain"
+
+                cleaned_desc = desc.replace("florr", "floor").replace("enemay", "enemy").replace("three stump", "tree stump")
+                label = " ".join(word.capitalize() for word in cleaned_desc.split())
+                if is_walkable and "walkable" not in label.lower():
+                    label += " (Walkable)"
+                elif not is_walkable and category in ("wall", "nature"):
+                    label += " (Solid)"
 
             tile_entry = {
                 "id": canonical_name,
