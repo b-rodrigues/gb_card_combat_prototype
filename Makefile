@@ -31,7 +31,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c
 MUSIC_OBJS = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/music/%.o,$(MUSIC_SRCS))
 MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/music/%.o,$(MUSIC_SRCS))
 
@@ -213,6 +213,9 @@ $(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge tools/compile_musi
 
 $(GENERATED_MUSIC_DIR)/desolate_landscape.c: assets/music/desolate_landscape.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
 	python3 tools/compile_music.py "$<" 6 song_desolate_landscape "$@"
+
+$(GENERATED_MUSIC_DIR)/forest.c: assets/music/Forest.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+	python3 tools/compile_music.py "$<" 6 song_forest "$@"
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)

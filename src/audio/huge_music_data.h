@@ -5,5 +5,6 @@
 
 extern const hUGESong_t song_battle;
 extern const hUGESong_t song_desolate_landscape;
+extern const hUGESong_t song_forest;
 
 #endif /* HUGE_MUSIC_DATA_H */

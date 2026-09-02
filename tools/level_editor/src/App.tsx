@@ -18,20 +18,25 @@ import southFieldData from '../../../levels/south_field.json';
 import townData from '../../../levels/town.json';
 import mountainPassData from '../../../levels/mountain_pass.json';
 import castleData from '../../../levels/castle.json';
+import titleData from '../../../screens/title.json';
+import battleData from '../../../screens/battle.json';
 
 interface ExistingLevelItem {
   id: string;
   name: string;
   data: any;
+  category?: 'levels' | 'screens';
 }
 
 const EXISTING_LEVELS: ExistingLevelItem[] = [
-  { id: 'forest', name: forestData.name || 'Forest', data: forestData },
-  { id: 'field', name: fieldData.name || 'Field', data: fieldData },
-  { id: 'south_field', name: southFieldData.name || 'Desolate South Field', data: southFieldData },
-  { id: 'town', name: townData.name || 'Town', data: townData },
-  { id: 'mountain_pass', name: mountainPassData.name || 'Mountain Pass', data: mountainPassData },
-  { id: 'castle', name: castleData.name || 'Castle', data: castleData },
+  { id: 'forest', name: forestData.name || 'Forest', data: forestData, category: 'levels' },
+  { id: 'field', name: fieldData.name || 'Field', data: fieldData, category: 'levels' },
+  { id: 'south_field', name: southFieldData.name || 'Desolate South Field', data: southFieldData, category: 'levels' },
+  { id: 'town', name: townData.name || 'Town', data: townData, category: 'levels' },
+  { id: 'mountain_pass', name: mountainPassData.name || 'Mountain Pass', data: mountainPassData, category: 'levels' },
+  { id: 'castle', name: castleData.name || 'Castle', data: castleData, category: 'levels' },
+  { id: 'title', name: 'Title Screen', data: titleData, category: 'screens' },
+  { id: 'battle', name: 'Battle Screen', data: battleData, category: 'screens' },
 ];
 
 export const App: React.FC = () => {
@@ -440,10 +445,17 @@ export const App: React.FC = () => {
             value={currentLevelId}
             onChange={(e) => handleSelectLevel(e.target.value)}
           >
-            <optgroup label="Existing Levels">
-              {EXISTING_LEVELS.map((lvl) => (
+            <optgroup label="Overworld Levels">
+              {EXISTING_LEVELS.filter((l) => l.category === 'levels').map((lvl) => (
                 <option key={lvl.id} value={lvl.id}>
                   {lvl.name} ({lvl.id}.json)
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Screens">
+              {EXISTING_LEVELS.filter((l) => l.category === 'screens').map((lvl) => (
+                <option key={lvl.id} value={lvl.id}>
+                  {lvl.name} (screens/{lvl.id}.json)
                 </option>
               ))}
             </optgroup>

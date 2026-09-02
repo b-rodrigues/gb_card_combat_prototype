@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "exterior",
-    "music": "MUSIC_OVERWORLD",
+    "music": "MUSIC_DESOLATE_LANDSCAPE",
     "map_id": "MAP_MOUNTAIN_PASS"
   },
   "layers": {
@@ -29,9 +29,9 @@
     {
       "x": 12,
       "y": 11,
-      "target_scene": "forest",
+      "target_scene": "south_field",
       "target_x": 12,
-      "target_y": 1,
+      "target_y": 12,
       "direction": "SOUTH",
       "tile_char": "<"
     },

@@ -424,6 +424,15 @@
       "target_y": 16,
       "direction": "NORTH",
       "tile_char": "<"
+    },
+    {
+      "x": 12,
+      "y": 11,
+      "target_scene": "mountain_pass",
+      "target_x": 12,
+      "target_y": 10,
+      "direction": "SOUTH",
+      "tile_char": ">"
     }
   ],
   "objects": [

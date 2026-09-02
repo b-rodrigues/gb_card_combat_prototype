@@ -193,6 +193,8 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_battle);
     } else if (track == MUSIC_DESOLATE) {
         huge_music_play(&song_desolate_landscape);
+    } else if (track == MUSIC_FOREST) {
+        huge_music_play(&song_forest);
     }
 
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
@@ -209,15 +211,15 @@ MusicTrack audio_get_current_track(void)
  * here in the fixed bank because the timer ISR calls audio_update()
  * directly.  len is the note count; loops wrap via mask/compare,
  * VICTORY (one_shot) falls silent after its last note. */
-static const uint8_t *const s_track_notes[MUSIC_DESOLATE + 1] = {
+static const uint8_t *const s_track_notes[MUSIC_FOREST + 1] = {
     0, lacrimosa_notes, summer_notes, victory_notes,
-    title_notes, town_notes, dungeon_notes, boss_notes, 0
+    title_notes, town_notes, dungeon_notes, boss_notes, 0, 0
 };
-static const uint8_t s_track_len[MUSIC_DESOLATE + 1] = {
-    0, 32, 32, VICTORY_NOTE_COUNT, 16, 24, 24, 32, 0
+static const uint8_t s_track_len[MUSIC_FOREST + 1] = {
+    0, 32, 32, VICTORY_NOTE_COUNT, 16, 24, 24, 32, 0, 0
 };
-static const uint8_t s_track_ticks[MUSIC_DESOLATE + 1] = {
-    0, 43, 17, VICTORY_TICKS_PER_NOTE, 60, 40, 30, 12, 0
+static const uint8_t s_track_ticks[MUSIC_FOREST + 1] = {
+    0, 43, 17, VICTORY_TICKS_PER_NOTE, 60, 40, 30, 12, 0, 0
 };
 
 void audio_update(void)

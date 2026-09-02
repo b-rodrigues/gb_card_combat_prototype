@@ -1,7 +1,7 @@
 {
   "name": "gate_to_castle",
   "test": true,
-  "description": "Walk the overworld gate path from Field to Castle and reach the Bat",
+  "description": "Walk the overworld gate path from Field through South Field and Mountain Pass to Castle",
   "scenario_id": "NEW_GAME",
   "actions": [
     {
@@ -70,7 +70,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -78,7 +78,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -86,7 +86,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -94,7 +94,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -102,7 +102,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -110,7 +110,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -118,7 +118,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -126,7 +126,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -134,7 +134,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -142,7 +142,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -150,7 +150,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -158,7 +158,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -166,7 +166,7 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -174,7 +174,79 @@
     },
     {
       "type": "press",
-      "button": "UP"
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
+    },
+    {
+      "type": "wait",
+      "frames": 8
+    },
+    {
+      "type": "press",
+      "button": "DOWN"
     },
     {
       "type": "wait",
@@ -268,7 +340,7 @@
     },
     {
       "type": "music_track",
-      "expected": "DUNGEON"
+      "expected": "DESOLATE"
     },
     {
       "type": "player_position",

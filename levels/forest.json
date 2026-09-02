@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "forest",
-    "music": "MUSIC_OVERWORLD",
+    "music": "MUSIC_FOREST",
     "map_id": "MAP_FOREST"
   },
   "layers": {
@@ -44,15 +44,6 @@
       "target_y": 1,
       "direction": "SOUTH",
       "tile_char": "<"
-    },
-    {
-      "x": 12,
-      "y": 0,
-      "target_scene": "mountain_pass",
-      "target_x": 12,
-      "target_y": 10,
-      "direction": "NORTH",
-      "tile_char": ">"
     }
   ],
   "objects": [
