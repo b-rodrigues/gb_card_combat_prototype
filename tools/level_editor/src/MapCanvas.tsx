@@ -84,25 +84,33 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
   useEffect(() => {
     const imgMap = new Map<string, HTMLImageElement>();
-    const allTiles = Object.values(BUILTIN_TILESETS).flatMap((ts) => ts.tiles);
+    const tilesWithScope: { scopedId: string; id: string; url: string }[] = [];
+    Object.entries(BUILTIN_TILESETS).forEach(([tsId, ts]) => {
+      ts.tiles.forEach((t) => {
+        tilesWithScope.push({ scopedId: `${tsId}.${t.id}`, id: t.id, url: t.image_url });
+      });
+    });
+
     let loadedCount = 0;
-    allTiles.forEach((t) => {
+    tilesWithScope.forEach((item) => {
       const img = new Image();
-      img.src = t.image_url;
+      img.src = item.url;
       img.onload = () => {
         loadedCount++;
-        imgMap.set(t.id, img);
-        if (loadedCount === allTiles.length) {
+        imgMap.set(item.id, img);
+        imgMap.set(item.scopedId, img);
+        if (loadedCount === tilesWithScope.length) {
           setTileImages(new Map(imgMap));
         }
       };
       img.onerror = () => {
         loadedCount++;
-        if (loadedCount === allTiles.length) {
+        if (loadedCount === tilesWithScope.length) {
           setTileImages(new Map(imgMap));
         }
       };
-      imgMap.set(t.id, img);
+      imgMap.set(item.id, img);
+      imgMap.set(item.scopedId, img);
     });
     setTileImages(new Map(imgMap));
   }, []);
@@ -395,46 +403,57 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           ctx.textAlign = 'center';
           ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
 
-          // Slime Sprite (Rows 2–3)
-          const sx = (colX + 0.3) * tileSize;
-          const sy = (enemySpriteRow + 0.1) * tileSize;
-          const sw = 2.4 * tileSize;
-          const sh = 1.8 * tileSize;
-
-          // Wobble on animTick
+          // Slime Sprite (Rows 2–3, 3x2 meta-tile)
           const wobble = animTick % 2 === idx % 2 ? 1 : 0;
+          const slimeTop0 = tileImages.get('combat.slime_top_left');
+          const slimeTop1 = tileImages.get('combat.slime_top_mid');
+          const slimeTop2 = tileImages.get('combat.slime_top_right');
+          const slimeBot0 = wobble ? tileImages.get('combat.slime_anim_left') : tileImages.get('combat.slime_bottom_left');
+          const slimeBot1 = wobble ? tileImages.get('combat.slime_anim_mid') : tileImages.get('combat.slime_bottom_mid');
+          const slimeBot2 = wobble ? tileImages.get('combat.slime_anim_right') : tileImages.get('combat.slime_bottom_right');
 
-          // Slime body
-          ctx.fillStyle = '#72b847';
-          ctx.beginPath();
-          ctx.ellipse(cx, sy + sh * 0.55 + wobble, sw * 0.48, sh * 0.44, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#4e852d';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          if (slimeTop0 && slimeBot0) {
+            const startX = colX * tileSize;
+            const startY = enemySpriteRow * tileSize;
+            ctx.drawImage(slimeTop0, startX, startY, tileSize, tileSize);
+            if (slimeTop1) ctx.drawImage(slimeTop1, startX + tileSize, startY, tileSize, tileSize);
+            if (slimeTop2) ctx.drawImage(slimeTop2, startX + tileSize * 2, startY, tileSize, tileSize);
+            ctx.drawImage(slimeBot0, startX, startY + tileSize, tileSize, tileSize);
+            if (slimeBot1) ctx.drawImage(slimeBot1, startX + tileSize, startY + tileSize, tileSize, tileSize);
+            if (slimeBot2) ctx.drawImage(slimeBot2, startX + tileSize * 2, startY + tileSize, tileSize, tileSize);
+          } else {
+            const sx = (colX + 0.3) * tileSize;
+            const sy = (enemySpriteRow + 0.1) * tileSize;
+            const sw = 2.4 * tileSize;
+            const sh = 1.8 * tileSize;
+            ctx.fillStyle = '#72b847';
+            ctx.beginPath();
+            ctx.ellipse(cx, sy + sh * 0.55 + wobble, sw * 0.48, sh * 0.44, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#4e852d';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
 
-          // Eyes
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(cx - sw * 0.22, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
-          ctx.fillRect(cx + sw * 0.12, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cx - sw * 0.22, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
+            ctx.fillRect(cx + sw * 0.12, sy + sh * 0.35 + wobble, Math.max(3, tileSize * 0.22), Math.max(3, tileSize * 0.22));
 
-          // Pupils
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(cx - sw * 0.18, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
-          ctx.fillRect(cx + sw * 0.16, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
-
-          // Open mouth
-          ctx.fillStyle = '#1c1c1c';
-          ctx.beginPath();
-          ctx.ellipse(cx, sy + sh * 0.65 + wobble, sw * 0.18, sh * 0.12, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(cx - sw * 0.18, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+            ctx.fillRect(cx + sw * 0.16, sy + sh * 0.38 + wobble, Math.max(2, tileSize * 0.12), Math.max(2, tileSize * 0.12));
+          }
         });
 
         // Target arrow under enemy 1 (middle)
-        ctx.fillStyle = '#593c28';
-        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+        const arrowImg = tileImages.get('combat.arrow_up');
+        if (arrowImg) {
+          ctx.drawImage(arrowImg, (enemyCols[1] + 1) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
+        } else {
+          ctx.fillStyle = '#593c28';
+          ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+        }
       }
 
       // 5. Dual-Column Hero & Status Panel (Rows 6 & 7)
@@ -443,15 +462,44 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.fillStyle = '#593c28';
 
       // Row 6: Left "HERO" + Icon | Right "[♥] : 10/10"
-      ctx.fillText('HERO 🧙', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
-      ctx.fillStyle = '#c0392b';
-      ctx.fillText('♥', heroHpCol * tileSize, (heroHpRow + 0.5) * tileSize);
-      ctx.fillStyle = '#593c28';
-      ctx.fillText(' : 10/10', (heroHpCol + 0.8) * tileSize, (heroHpRow + 0.5) * tileSize);
+      const heroSprite = tileImages.get('combat.hero');
+      const heartImg = tileImages.get('combat.heart_hp');
+      const batteryImg = tileImages.get('combat.battery_ap');
+      const deckImg = tileImages.get('combat.deck_cards');
+
+      ctx.fillText('HERO', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
+      if (heroSprite) {
+        ctx.drawImage(heroSprite, (heroLabelCol + 2.6) * tileSize, (heroLabelRow - 0.2) * tileSize, tileSize, tileSize);
+      } else {
+        ctx.fillText('🧙', (heroLabelCol + 2.6) * tileSize, (heroLabelRow + 0.5) * tileSize);
+      }
+
+      if (heartImg) {
+        ctx.drawImage(heartImg, heroHpCol * tileSize, (heroHpRow - 0.2) * tileSize, tileSize, tileSize);
+        ctx.fillStyle = '#593c28';
+        ctx.fillText(': 10/10', (heroHpCol + 1.2) * tileSize, (heroHpRow + 0.5) * tileSize);
+      } else {
+        ctx.fillStyle = '#c0392b';
+        ctx.fillText('♥', heroHpCol * tileSize, (heroHpRow + 0.5) * tileSize);
+        ctx.fillStyle = '#593c28';
+        ctx.fillText(' : 10/10', (heroHpCol + 0.8) * tileSize, (heroHpRow + 0.5) * tileSize);
+      }
 
       // Row 7: Left "DECK:  7 [🎴]" | Right "[🔋] :  6 :  6"
-      ctx.fillText('DECK:  7 🎴', deckCol * tileSize, (deckRow + 0.5) * tileSize);
-      ctx.fillText('🔋 :  6 :  6', apCol * tileSize, (apRow + 0.5) * tileSize);
+      ctx.fillText('DECK:  7', deckCol * tileSize, (deckRow + 0.5) * tileSize);
+      if (deckImg) {
+        ctx.drawImage(deckImg, (deckCol + 4.2) * tileSize, (deckRow - 0.2) * tileSize, tileSize, tileSize);
+      } else {
+        ctx.fillText('🎴', (deckCol + 4.2) * tileSize, (deckRow + 0.5) * tileSize);
+      }
+
+      if (batteryImg) {
+        ctx.drawImage(batteryImg, apCol * tileSize, (apRow - 0.2) * tileSize, tileSize, tileSize);
+        ctx.fillStyle = '#593c28';
+        ctx.fillText(':  6 :  6', (apCol + 1.2) * tileSize, (apRow + 0.5) * tileSize);
+      } else {
+        ctx.fillText('🔋 :  6 :  6', apCol * tileSize, (apRow + 0.5) * tileSize);
+      }
 
       // 6. Row 9: Combo Header "COMBO"
       ctx.fillText('COMBO', 1 * tileSize, (comboRow + 0.5) * tileSize);
@@ -459,11 +507,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // 7. Rows 10–13: 5 Framed Multi-Tile Cards
       const cardCols = [1, 5, 8, 12, 16];
       const cardDefs = [
-        { icon: '🗡️', val: 3, rider: null },
-        { icon: '🏹', val: 2, rider: '🟣' },
-        { icon: '🛡️', val: 2, rider: null },
-        { icon: '🛡️', val: 2, rider: null },
-        { icon: '🗡️', val: 4, rider: '🔥' },
+        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_3', val: 3, riderKey: null },
+        { iconKey: 'combat.icon_bow', fallback: '🏹', valKey: 'combat.digit_2', val: 2, riderKey: 'combat.status_poison' },
+        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
+        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
+        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_4', val: 4, riderKey: 'combat.status_fire' },
       ];
 
       cardCols.forEach((cx, idx) => {
@@ -486,29 +534,49 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.lineWidth = 1;
         ctx.strokeRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8);
 
-        // Element rider in top right corner
-        if (cDef.rider) {
-          ctx.font = `${Math.max(8, Math.floor(tileSize * 0.55))}px sans-serif`;
-          ctx.textAlign = 'right';
-          ctx.fillText(cDef.rider, cardX + cardW - 5, cardY + tileSize * 0.7);
+        // Element rider in top right corner (fire/poison status)
+        if (cDef.riderKey) {
+          const riderImg = tileImages.get(cDef.riderKey);
+          if (riderImg) {
+            ctx.drawImage(riderImg, cardX + cardW - tileSize * 0.9, cardY + 3, tileSize * 0.8, tileSize * 0.8);
+          } else {
+            ctx.font = `${Math.max(8, Math.floor(tileSize * 0.55))}px sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.fillText(cDef.riderKey.includes('fire') ? '🔥' : '🟣', cardX + cardW - 5, cardY + tileSize * 0.7);
+          }
         }
 
         // Weapon icon in center
-        ctx.font = `${Math.max(12, Math.floor(tileSize * 0.85))}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText(cDef.icon, cardX + cardW / 2, cardY + cardH * 0.42);
+        const weaponImg = tileImages.get(cDef.iconKey);
+        if (weaponImg) {
+          ctx.drawImage(weaponImg, cardX + (cardW - tileSize * 1.2) / 2, cardY + tileSize * 0.5, tileSize * 1.2, tileSize * 1.2);
+        } else {
+          ctx.font = `${Math.max(12, Math.floor(tileSize * 0.85))}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(cDef.fallback, cardX + cardW / 2, cardY + cardH * 0.42);
+        }
 
         // Card number value underneath weapon
-        ctx.fillStyle = '#593c28';
-        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
-        ctx.fillText(String(cDef.val), cardX + cardW / 2, cardY + cardH * 0.78);
+        const digitImg = tileImages.get(cDef.valKey);
+        if (digitImg) {
+          ctx.drawImage(digitImg, cardX + (cardW - tileSize * 0.9) / 2, cardY + cardH - tileSize * 1.1, tileSize * 0.9, tileSize * 0.9);
+        } else {
+          ctx.fillStyle = '#593c28';
+          ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
+          ctx.fillText(String(cDef.val), cardX + cardW / 2, cardY + cardH * 0.78);
+        }
       });
 
       // 8. Row 14: Card Cursor
-      ctx.fillStyle = '#593c28';
-      ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('⬆', (cardCols[0] + 1.4) * tileSize, (cardCursorRow + 0.5) * tileSize);
+      const cardArrow = tileImages.get('combat.arrow_up');
+      if (cardArrow) {
+        ctx.drawImage(cardArrow, (cardCols[0] + 0.9) * tileSize, cardCursorRow * tileSize, tileSize, tileSize);
+      } else {
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('⬆', (cardCols[0] + 1.4) * tileSize, (cardCursorRow + 0.5) * tileSize);
+      }
 
       // 9. Row 15: Card Description "Sword: physical"
       ctx.fillStyle = '#593c28';

@@ -5,6 +5,20 @@ import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 
 const BOSS_9X9_TEMPLATES: Record<string, { name: string; tiles: string[][] }> = {
+  giausar: {
+    name: 'LORD GIAUSAR',
+    tiles: [
+      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
+      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
+      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
+      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
+      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
+      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
+      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right'],
+      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right'],
+      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right']
+    ]
+  },
   dragon: {
     name: 'COLOSSAL DRAGON',
     tiles: [
@@ -264,6 +278,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="MUSIC_DESOLATE">MUSIC_DESOLATE</option>
                 <option value="MUSIC_DESOLATE_LANDSCAPE">MUSIC_DESOLATE_LANDSCAPE (desolate_landscape.uge)</option>
                 <option value="MUSIC_FOREST">MUSIC_FOREST (Forest.uge)</option>
+                <option value="MUSIC_BOSS">MUSIC_BOSS (Boss fight.uge)</option>
               </select>
             </div>
             <div className="form-group">

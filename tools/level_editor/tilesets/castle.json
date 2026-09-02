@@ -1,0 +1,277 @@
+{
+  "id": "castle",
+  "label": "Castle & Bastion",
+  "gb_tileset_kind": "WORLD_TILESET_CASTLE",
+  "tiles": [
+    {
+      "id": "castle_0_0",
+      "label": "Battlement (0)",
+      "gb_constant": "TILE_CASTLE_0_0",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_1",
+      "label": "Battlement (1)",
+      "gb_constant": "TILE_CASTLE_0_1",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_2",
+      "label": "Battlement (2)",
+      "gb_constant": "TILE_CASTLE_0_2",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_3",
+      "label": "Battlement (3)",
+      "gb_constant": "TILE_CASTLE_0_3",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_4",
+      "label": "Battlement (4)",
+      "gb_constant": "TILE_CASTLE_0_4",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_5",
+      "label": "Tower Crest (5)",
+      "gb_constant": "TILE_CASTLE_0_5",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_6",
+      "label": "Tower Crest (6)",
+      "gb_constant": "TILE_CASTLE_0_6",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_0_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_7",
+      "label": "Tower Crest (7)",
+      "gb_constant": "TILE_CASTLE_0_7",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_0_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_0_8",
+      "label": "Tower Crest (8)",
+      "gb_constant": "TILE_CASTLE_0_8",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_0_8.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_0",
+      "label": "Fortress Wall (0)",
+      "gb_constant": "TILE_CASTLE_1_0",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_1",
+      "label": "Fortress Wall (1)",
+      "gb_constant": "TILE_CASTLE_1_1",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_2",
+      "label": "Fortress Wall (2)",
+      "gb_constant": "TILE_CASTLE_1_2",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_3",
+      "label": "Gate/Passage (3)",
+      "gb_constant": "TILE_CASTLE_1_3",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_1_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_4",
+      "label": "Gate/Passage (4)",
+      "gb_constant": "TILE_CASTLE_1_4",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_1_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_5",
+      "label": "Gate/Passage (5)",
+      "gb_constant": "TILE_CASTLE_1_5",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_1_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_6",
+      "label": "Fortress Wall (6)",
+      "gb_constant": "TILE_CASTLE_1_6",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_7",
+      "label": "Fortress Wall (7)",
+      "gb_constant": "TILE_CASTLE_1_7",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_1_8",
+      "label": "Fortress Wall (8)",
+      "gb_constant": "TILE_CASTLE_1_8",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_8.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_0",
+      "label": "Stone Floor (0)",
+      "gb_constant": "TILE_CASTLE_2_0",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_2_0.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_1",
+      "label": "Pillar Base (1)",
+      "gb_constant": "TILE_CASTLE_2_1",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_2_1.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_2",
+      "label": "Pillar Base (2)",
+      "gb_constant": "TILE_CASTLE_2_2",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_2_2.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_3",
+      "label": "Pillar Base (3)",
+      "gb_constant": "TILE_CASTLE_2_3",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_2_3.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_4",
+      "label": "Pillar Base (4)",
+      "gb_constant": "TILE_CASTLE_2_4",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_2_4.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_5",
+      "label": "Stone Floor (5)",
+      "gb_constant": "TILE_CASTLE_2_5",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_2_5.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_6",
+      "label": "Stone Floor (6)",
+      "gb_constant": "TILE_CASTLE_2_6",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_2_6.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_7",
+      "label": "Stone Floor (7)",
+      "gb_constant": "TILE_CASTLE_2_7",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_2_7.png",
+      "category": "terrain"
+    },
+    {
+      "id": "castle_2_8",
+      "label": "Pillar Base (8)",
+      "gb_constant": "TILE_CASTLE_2_8",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_2_8.png",
+      "category": "terrain"
+    }
+  ]
+}

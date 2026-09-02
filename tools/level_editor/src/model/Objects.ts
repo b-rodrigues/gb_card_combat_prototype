@@ -63,9 +63,26 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
       display_name: 'SLIME',
       battle: 'BATTLE_SLIME',
       ai: 'AI_PATROL_CROSS',
-      overworld_sprite: 'exterior.slime',
-      battle_sprite: 'battle.slime',
-      battle_name: 'SLIME'
+      overworld_sprite: 'combat.slime_bottom_mid',
+      battle_sprite: 'combat.slime_bottom_mid',
+      battle_name: 'SLIME',
+      animation_frames: ['combat.slime_bottom_mid', 'combat.slime_anim_mid']
+    }
+  },
+  {
+    type: 'enemy',
+    label: 'Bat Enemy (Animated)',
+    defaultId: 'enemy_bat',
+    color: '#9b59b6',
+    icon: '🦇',
+    defaultProps: {
+      display_name: 'BAT',
+      battle: 'BATTLE_BAT',
+      ai: 'AI_PATROL_CIRCLE',
+      overworld_sprite: 'combat.bat_0_body',
+      battle_sprite: 'combat.bat_0_body',
+      battle_name: 'CAVE BAT',
+      animation_frames: ['combat.bat_0_body', 'combat.bat_1_body']
     }
   },
   {
@@ -81,8 +98,8 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
       is_boss: true,
       sprite_width: 9,
       sprite_height: 9,
-      overworld_sprite: 'dungeon.wall',
-      battle_sprite: 'boss.giausar',
+      overworld_sprite: 'combat.boss_head_mid',
+      battle_sprite: 'combat.boss_head_mid',
       battle_name: 'LORD GIAUSAR'
     }
   },

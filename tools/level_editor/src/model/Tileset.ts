@@ -13,6 +13,9 @@ import objectsFurnitureJson from '../../tilesets/objects_furniture.json';
 import structFencesJson from '../../tilesets/structures_fences.json';
 import structPropsJson from '../../tilesets/structures_props.json';
 import desolateJson from '../../tilesets/desolate_landscape.json';
+import combatJson from '../../tilesets/combat.json';
+import castleJson from '../../tilesets/castle.json';
+import overworldJson from '../../tilesets/overworld.json';
 
 export interface TileDefinition {
   id: string;
@@ -68,6 +71,9 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   structures_fences: parseTilesetJson(structFencesJson),
   structures_props: parseTilesetJson(structPropsJson),
   desolate_landscape: parseTilesetJson(desolateJson),
+  combat: parseTilesetJson(combatJson),
+  castle: parseTilesetJson(castleJson),
+  overworld: parseTilesetJson(overworldJson),
 };
 
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
@@ -85,6 +91,8 @@ export const TILESET_OBJECTS_FURNITURE = BUILTIN_TILESETS.objects_furniture;
 export const TILESET_STRUCT_FENCES = BUILTIN_TILESETS.structures_fences;
 export const TILESET_STRUCT_PROPS = BUILTIN_TILESETS.structures_props;
 export const TILESET_DESOLATE = BUILTIN_TILESETS.desolate_landscape;
+export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
+export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 
 export function getTileset(id: string): TilesetDefinition {
   return BUILTIN_TILESETS[id] || BUILTIN_TILESETS.exterior;

@@ -49,15 +49,15 @@
     "hp": 100,
     "max_hp": 100,
     "tiles": [
-      ["dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.stairs_down", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall"],
-      ["dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall"],
-      ["dungeon.floor", "dungeon.floor", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.floor", "dungeon.floor"],
-      ["dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.floor"],
-      ["dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.stairs_down"],
-      ["dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor"],
-      ["dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.stairs_down", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor"],
-      ["dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.floor", "dungeon.wall"],
-      ["dungeon.wall", "dungeon.wall", "dungeon.wall", "dungeon.floor", "dungeon.wall", "dungeon.floor", "dungeon.wall", "dungeon.wall", "dungeon.wall"]
+      ["combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_right", "combat.boss_horns_right", "combat.boss_horns_right"],
+      ["combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_right", "combat.boss_horns_right", "combat.boss_horns_right"],
+      ["combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_left", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_mid", "combat.boss_horns_right", "combat.boss_horns_right", "combat.boss_horns_right"],
+      ["combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_right", "combat.boss_head_right", "combat.boss_head_right"],
+      ["combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_right", "combat.boss_head_right", "combat.boss_head_right"],
+      ["combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_left", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_mid", "combat.boss_head_right", "combat.boss_head_right", "combat.boss_head_right"],
+      ["combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_right", "combat.boss_torso_right", "combat.boss_torso_right"],
+      ["combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_right", "combat.boss_torso_right", "combat.boss_torso_right"],
+      ["combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_left", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_mid", "combat.boss_torso_right", "combat.boss_torso_right", "combat.boss_torso_right"]
     ]
   }
 }
