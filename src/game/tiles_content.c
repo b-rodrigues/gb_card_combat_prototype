@@ -23,6 +23,11 @@ const uint8_t g_tileset_desolate[768] = {
 #include "gfx/rpg_desolate_world_tiles.inc"
 };
 
+const uint8_t g_tileset_castle[432] = {
+    /* 27 castle tiles (432 bytes) */
+#include "gfx/rpg_castle_tiles.inc"
+};
+
 /* Font tiles extracted from assets/intrepid.png (96 tiles = 1536 bytes) */
 const uint8_t g_intrepid_font_tiles[1536] = {
 #include "gfx/intrepid_font_tiles.inc"

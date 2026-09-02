@@ -128,6 +128,8 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
 		--palette auto \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
+	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
+		--palette auto --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
 		--palette auto --tile-coords "3,2 4,2" \
 		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h

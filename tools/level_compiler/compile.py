@@ -66,6 +66,7 @@ TILESET_KIND_MAP = {
     "structures_props": "WORLD_TILESET_STRUCTURES_PROPS",
     "desolate_landscape": "WORLD_TILESET_DESOLATE",
     "desolate": "WORLD_TILESET_DESOLATE",
+    "castle": "WORLD_TILESET_CASTLE",
 }
 
 

@@ -472,6 +472,10 @@ void ui_load_tileset(uint8_t tileset)
             src = g_tileset_desolate;
             tile_count = 48;
             break;
+        case WORLD_TILESET_CASTLE:
+            src = g_tileset_castle;
+            tile_count = 27;
+            break;
         default:
             src = g_tileset_exterior;
             tile_count = 4;
@@ -567,7 +571,10 @@ void ui_draw_actors_sprites(const World *world)
         shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
 
         /* Animate campfire tile at (17, 11) in background tilemap */
-        ((volatile uint8_t *)0x9800)[(11 & 31) * 32 + (17 & 31)] = (uint8_t)(RPG_TILE_BASE_DESOLATE + 3 + anim_step);
+        ((volatile uint8_t *)0x9800)[(11 & 31) * 32 + (17 & 31)] = (uint8_t)(RPG_TILE_BASE_DESOLATE + 37 + anim_step);
+#ifdef DEBUG_BUILD
+        g_tilemap_mirror[(11 & 31) * 32 + (17 & 31)] = (uint8_t)(RPG_TILE_BASE_DESOLATE + 37 + anim_step);
+#endif
     } else {
         shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
         shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
