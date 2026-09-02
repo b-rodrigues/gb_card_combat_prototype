@@ -59,8 +59,15 @@ export const Inspector: React.FC<InspectorProps> = ({
 }) => {
   const [tab, setTab] = useState<'context' | 'layers' | 'map'>('context');
 
-  // Collect all tiles from all tilesets for the tile selector
-  const allTiles: TileDefinition[] = Object.values(BUILTIN_TILESETS).flatMap(ts => ts.tiles);
+  // Collect all tiles from all tilesets with scoped IDs
+  const allTilesWithScope = Object.values(BUILTIN_TILESETS).flatMap((ts) =>
+    ts.tiles.map((t) => ({
+      ...t,
+      tilesetId: ts.id,
+      tilesetLabel: ts.label,
+      scopedId: `${ts.id}.${t.id}`,
+    }))
+  );
 
   const selectedExit = activeLayer === 'exits' && selectedEntityIndex !== null ? level.exits[selectedEntityIndex] : null;
   const selectedObject = activeLayer === 'objects' && selectedEntityIndex !== null ? level.objects[selectedEntityIndex] : null;
@@ -542,44 +549,80 @@ export const Inspector: React.FC<InspectorProps> = ({
                   
                   <div className="form-group">
                     <label>Overworld Sprite</label>
-                    <select
-                      value={selectedObject.overworld_sprite || ''}
-                      onChange={(e) =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          overworld_sprite: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">-- None --</option>
-                      {allTiles.map((tile) => (
-                        <option key={tile.id} value={`${tile.id}`}>
-                          {tile.label} ({tile.gb_constant})
-                        </option>
-                      ))}
-                    </select>
+                    {(() => {
+                      const currentVal = selectedObject.overworld_sprite || '';
+                      const matched = allTilesWithScope.find(
+                        (t) => t.scopedId === currentVal || t.id === currentVal
+                      );
+                      const selectVal = matched ? matched.scopedId : currentVal;
+
+                      return (
+                        <select
+                          value={selectVal}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              overworld_sprite: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">-- None --</option>
+                          {selectVal && !allTilesWithScope.some((t) => t.scopedId === selectVal) && (
+                            <option value={selectVal}>{selectVal} (custom)</option>
+                          )}
+                          {Object.values(BUILTIN_TILESETS).map((ts) => (
+                            <optgroup key={ts.id} label={ts.label}>
+                              {ts.tiles.map((tile) => (
+                                <option key={`${ts.id}.${tile.id}`} value={`${ts.id}.${tile.id}`}>
+                                  {tile.label} ({tile.gb_constant})
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      );
+                    })()}
                   </div>
 
                   <div className="form-group">
                     <label>Battle Sprite</label>
-                    <select
-                      value={selectedObject.battle_sprite || ''}
-                      onChange={(e) =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          battle_sprite: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">-- None --</option>
-                      {allTiles
-                        .filter((tile) => tile.category === 'enemy')
-                        .map((tile) => (
-                          <option key={tile.id} value={`${tile.id}`}>
-                            {tile.label} ({tile.gb_constant})
-                          </option>
-                        ))}
-                    </select>
+                    {(() => {
+                      const currentVal = selectedObject.battle_sprite || '';
+                      const matched = allTilesWithScope.find(
+                        (t) => t.scopedId === currentVal || t.id === currentVal
+                      );
+                      const selectVal = matched ? matched.scopedId : currentVal;
+
+                      return (
+                        <select
+                          value={selectVal}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              battle_sprite: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">-- None --</option>
+                          {selectVal && !allTilesWithScope.some((t) => t.scopedId === selectVal) && (
+                            <option value={selectVal}>{selectVal} (custom)</option>
+                          )}
+                          {Object.values(BUILTIN_TILESETS).map((ts) => {
+                            const enemyTiles = ts.tiles.filter((t) => t.category === 'enemy');
+                            if (enemyTiles.length === 0) return null;
+                            return (
+                              <optgroup key={ts.id} label={ts.label}>
+                                {enemyTiles.map((tile) => (
+                                  <option key={`${ts.id}.${tile.id}`} value={`${ts.id}.${tile.id}`}>
+                                    {tile.label} ({tile.gb_constant})
+                                  </option>
+                                ))}
+                              </optgroup>
+                            );
+                          })}
+                        </select>
+                      );
+                    })()}
                   </div>
 
                   <div className="form-group">
