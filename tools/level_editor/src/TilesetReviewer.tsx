@@ -269,9 +269,9 @@ export const TilesetReviewer: React.FC<TilesetReviewerProps> = ({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="tileset-reviewer-overlay" onClick={onClose}>
       <div
-        className="modal-container tileset-reviewer-modal"
+        className="tileset-reviewer-modal"
         onClick={(e) => e.stopPropagation()}
         style={{ width: '92vw', maxWidth: '1180px', height: '88vh', display: 'flex', flexDirection: 'column' }}
       >

@@ -27,7 +27,8 @@ interface ToolbarProps {
   onValidate: () => void;
   onDescribe: () => void;
   onNew: () => void;
-  onOpenTilesetReviewer?: () => void;
+  isTilesetReviewerOpen?: boolean;
+  onToggleTilesetReviewer?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -55,7 +56,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onNew,
   clonePattern,
   onClearClone,
-  onOpenTilesetReviewer,
+  isTilesetReviewerOpen,
+  onToggleTilesetReviewer,
 }) => {
   return (
     <div className="toolbar">
@@ -96,14 +98,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <button className="btn" onClick={onDownload} title="Export / Download JSON file">
           ⬇️ Export
         </button>
-        {onOpenTilesetReviewer && (
+        {onToggleTilesetReviewer && (
           <button
-            className="btn"
-            style={{ background: '#8e44ad', color: '#ffffff', fontWeight: 'bold' }}
-            onClick={onOpenTilesetReviewer}
-            title="Review and edit tile asset properties or import a new tileset PNG"
+            className={`btn ${isTilesetReviewerOpen ? 'active' : ''}`}
+            style={{
+              background: isTilesetReviewerOpen ? '#9b59b6' : '#8e44ad',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              border: isTilesetReviewerOpen ? '1px solid #00f0ff' : '1px solid rgba(255,255,255,0.15)',
+              boxShadow: isTilesetReviewerOpen ? '0 0 10px rgba(0, 240, 255, 0.4)' : 'none',
+            }}
+            onClick={onToggleTilesetReviewer}
+            title={isTilesetReviewerOpen ? 'Quit / Close Tileset Reviewer' : 'Review and edit tile asset properties or import a new tileset PNG'}
           >
-            🎨 Import/Review Tiles
+            🎨 {isTilesetReviewerOpen ? '✕ Close Tiles' : 'Import/Review Tiles'}
           </button>
         )}
       </div>

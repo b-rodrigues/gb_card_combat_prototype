@@ -56,7 +56,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  z-index: 10;
+  position: relative;
+  z-index: 105;
 }
 
 .header-title {
@@ -180,6 +181,8 @@ body {
   align-items: center;
   padding: 0 12px;
   gap: 8px;
+  position: relative;
+  z-index: 105;
 }
 
 .tool-group {
@@ -877,6 +880,30 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* Tileset Reviewer Overlay */
+.tileset-reviewer-overlay {
+  position: fixed;
+  top: 92px; /* Sits directly below app-header (48px) + toolbar (44px) */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 95;
+  padding: 16px;
+}
+
+.tileset-reviewer-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
 }
 
 .code-block {

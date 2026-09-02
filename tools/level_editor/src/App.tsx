@@ -645,7 +645,8 @@ export const App: React.FC = () => {
             setClonePattern(null);
             setNotification({ message: 'Clone buffer cleared. Drag a box to copy tiles.', type: 'info' });
           }}
-          onOpenTilesetReviewer={() => setShowTilesetReviewer(true)}
+          isTilesetReviewerOpen={showTilesetReviewer}
+          onToggleTilesetReviewer={() => setShowTilesetReviewer((prev) => !prev)}
         />
 
         {/* Notification Toast */}
