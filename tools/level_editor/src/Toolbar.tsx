@@ -16,6 +16,11 @@ interface ToolbarProps {
   showCollision: boolean;
   onToggleCollision: () => void;
   onSave: () => void;
+  onDownload: () => void;
+  onCompileRom: () => void;
+  onRunGame: () => void;
+  isCompiling: boolean;
+  isRunning: boolean;
   onLoad: () => void;
   onValidate: () => void;
   onDescribe: () => void;
@@ -36,6 +41,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   showCollision,
   onToggleCollision,
   onSave,
+  onDownload,
+  onCompileRom,
+  onRunGame,
+  isCompiling,
+  isRunning,
   onLoad,
   onValidate,
   onDescribe,
@@ -50,14 +60,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <button className="btn" onClick={onLoad} title="Load JSON File">
           📂 Load
         </button>
-        <button className="btn btn-success" onClick={onSave} title="Save / Download JSON (Ctrl+S)">
+        <button className="btn btn-success" onClick={onSave} title="Save to disk (levels/<id>.json)">
           💾 Save
+        </button>
+        <button
+          className="btn"
+          style={{ background: '#d35400', color: '#fff', fontWeight: 'bold' }}
+          onClick={onCompileRom}
+          disabled={isCompiling}
+          title="Save Level & Build Game Boy ROM (make debug)"
+        >
+          {isCompiling ? '⏳ Compiling...' : '🔨 Compile ROM'}
+        </button>
+        <button
+          className="btn"
+          style={{ background: '#27ae60', color: '#fff', fontWeight: 'bold' }}
+          onClick={onRunGame}
+          disabled={isRunning || isCompiling}
+          title="Launch Game Boy ROM in PyBoy emulator"
+        >
+          {isRunning ? '⏳ Launching...' : '▶️ Run Game (PyBoy)'}
         </button>
         <button className="btn" onClick={onValidate} title="Validate Level">
           ✓ Validate
         </button>
         <button className="btn btn-accent" onClick={onDescribe} title="Generate LLM Semantic Description">
           🤖 LLM View
+        </button>
+        <button className="btn" onClick={onDownload} title="Export / Download JSON file">
+          ⬇️ Export
         </button>
       </div>
 

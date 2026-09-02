@@ -125,6 +125,8 @@ def map_base_tile_const(gb_const, t_info):
     if gb_const in ("TILE_FLOOR", "TILE_WALL", "TILE_EXIT", "TILE_BUILDING",
                     "TILE_STUMP_TL", "TILE_STUMP_TR", "TILE_STUMP_BL", "TILE_STUMP_BR"):
         return gb_const
+    if gb_const and gb_const.startswith("TILE_DESOLATE_"):
+        return gb_const
     ascii_char = t_info.get("ascii", "#")
     if ascii_char == ".":
         return "TILE_FLOOR"
@@ -180,7 +182,7 @@ def optimize_terrain(level_data, tileset):
                 gb_const = map_base_tile_const(t_info.get("gb_constant", "TILE_FLOOR"), t_info)
 
                 # Default background is TILE_FLOOR, and perimeter is TILE_WALL
-                if gb_const == "TILE_FLOOR":
+                if gb_const in ("TILE_FLOOR", "TILE_DESOLATE_FLOOR_PLAIN"):
                     visited[y][x] = True
                     continue
 
@@ -400,6 +402,50 @@ def main():
         f.write(c_code)
 
     print(f"Successfully compiled {len(levels_by_id)} level(s) to {output_path}")
+
+    # Synchronize actor positions into src/game/actors_content.c
+    sync_actors_content(levels_by_id)
+
+
+def sync_actors_content(levels_by_id, actors_path=None):
+    import re
+    if actors_path is None:
+        actors_path = REPO_ROOT / "src" / "game" / "actors_content.c"
+    if not os.path.exists(actors_path):
+        return
+    with open(actors_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    updated = False
+    for sid, lvl in levels_by_id.items():
+        table_name = f"g_{sid}_actors"
+        m = re.search(r"(static const WorldActorDefinition " + table_name + r"\[\] = \{)(.*?)(\};)", content, re.DOTALL)
+        if not m:
+            continue
+        header, block_text, footer = m.group(1), m.group(2), m.group(3)
+        orig_block = block_text
+        objects = lvl.get("objects", [])
+        for obj in objects:
+            props = obj.get("properties", {})
+            entity_id = props.get("entity_id")
+            if not entity_id:
+                continue
+            pos = obj.get("position", {})
+            x = pos.get("x")
+            y = pos.get("y")
+            if x is None or y is None:
+                continue
+            pattern = r"(\{\s*\d+,\s*" + re.escape(entity_id) + r",\s*)(\d+),\s*(\d+),"
+            block_text = re.sub(pattern, rf"\g<1>{x}, {y},", block_text)
+
+        if block_text != orig_block:
+            content = content[:m.start(2)] + block_text + content[m.end(2):]
+            updated = True
+
+    if updated:
+        with open(actors_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"Synchronized actor positions to {actors_path}")
 
 
 if __name__ == "__main__":

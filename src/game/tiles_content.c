@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 /* World background tiles extracted from assets/ by tools/png2gb.py (make gfx) */
-const uint8_t g_rpg_world_tiles[336] = {
+const uint8_t g_rpg_world_tiles[1024] = {
     /* 4 exterior tiles (64 bytes): Floor, Wall, Gate, Building */
 #include "gfx/rpg_exterior_tiles.inc"
 
@@ -13,7 +13,7 @@ const uint8_t g_rpg_world_tiles[336] = {
     /* 8 forest tiles (128 bytes): Floor, Tree, Gate, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump */
 #include "gfx/rpg_forest_tiles.inc"
 
-    /* 5 desolate landscape tiles (80 bytes): Floor, Wall, Staircase, Fire 1, Fire 2 */
+    /* 48 desolate landscape tiles (768 bytes): All wall, floor, rock, tree, and prop tiles */
 #include "gfx/rpg_desolate_world_tiles.inc"
 };
 

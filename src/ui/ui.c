@@ -128,9 +128,9 @@ void ui_init(void)
         set_bkg_data((uint8_t)(UI_TILE_CARD_SWORD + p), 1, (const uint8_t *)g_ui_screen_buf);
     }
 
-    /* Load world background tiles from Bank 5 (21 tiles = 336 bytes) */
-    for (p = 0; p < 21; p += 3) {
-        uint8_t count = (uint8_t)((p + 3 <= 21) ? 3 : (21 - p));
+    /* Load world background tiles from Bank 5 (64 tiles = 1024 bytes) */
+    for (p = 0; p < 64; p += 3) {
+        uint8_t count = (uint8_t)((p + 3 <= 64) ? 3 : (64 - p));
         banked_copy(5, g_ui_screen_buf, g_rpg_world_tiles + ((uint16_t)p << 4), (uint16_t)count << 4);
         set_bkg_data((uint8_t)(RPG_TILE_BASE_EXTERIOR + p), count, (const uint8_t *)g_ui_screen_buf);
     }
@@ -449,6 +449,17 @@ void ui_format_int(int16_t value, char *out)
     banked_call_run();
 }
 
+static char ui_get_world_tile_glyph(uint8_t t)
+{
+    if (t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
+        if (t == TILE_DESOLATE_STAIRCASE) return '>';
+        if (t == TILE_DESOLATE_FIRE_01 || t == TILE_DESOLATE_FIRE_02) return '*';
+        if ((t >= TILE_DESOLATE_FLOOR_00 && t <= TILE_DESOLATE_FLOOR_03) || t == TILE_DESOLATE_FLOOR_PLAIN) return '.';
+        return '#';
+    }
+    return (t < 8) ? g_sem_map[t] : '.';
+}
+
 /* One world cell into the 32x32 background tilemap ring at the wrapped
  * address (the PPU reads the background at SCX/SCY = the absolute camera
  * pixel position, so the ring must hold the world tiles at (world & 31)).
@@ -463,6 +474,7 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     uint8_t tile_idx;
     uint8_t sx;
     uint8_t sy;
+    char glyph;
     const WorldActorDefinition *actor;
     volatile uint8_t *tilemap = (volatile uint8_t *)0x9800;
 
@@ -475,9 +487,17 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     actor = actor_find_at(world, col, row);
     if (actor && !(actor->flags & ACTOR_FLAG_HOSTILE)) {
         tile_idx = (uint8_t)(ui_font_tile_base + (uint8_t)(actor->visual - ' '));
+        glyph = actor->visual;
     } else {
-        uint8_t lookup_id = rpg_lookup_tile_id(scene_get_tileset(world->map_id), g_sem_map[t]);
-        tile_idx = lookup_id ? lookup_id : (uint8_t)(ui_font_tile_base + (uint8_t)(g_sem_map[t] - ' '));
+        glyph = ui_get_world_tile_glyph(t);
+        if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
+            t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
+            uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_WALL_00);
+            tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
+        } else {
+            uint8_t lookup_id = rpg_lookup_tile_id(scene_get_tileset(world->map_id), glyph);
+            tile_idx = lookup_id ? lookup_id : (uint8_t)(ui_font_tile_base + (uint8_t)(glyph - ' '));
+        }
     }
     tilemap[(row & 31) * 32 + (col & 31)] = tile_idx;
 #ifdef DEBUG_BUILD
@@ -487,7 +507,7 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     sx = (uint8_t)(col - world->scroll_x);
     sy = (uint8_t)(row - world->scroll_y);
     if (sx < WORLD_VIEW_W && sy < WORLD_VIEW_H) {
-        g_ui_screen_buf[sy][sx] = (actor && !(actor->flags & ACTOR_FLAG_HOSTILE)) ? actor->visual : g_sem_map[t];
+        g_ui_screen_buf[sy][sx] = glyph;
     }
 }
 
@@ -569,7 +589,7 @@ static void ui_refill_semantic(const World *world)
             if (col >= world->width || row >= world->height) {
                 g_ui_screen_buf[y][x] = '.';
             } else {
-                g_ui_screen_buf[y][x] = g_sem_map[world->map[row][col]];
+                g_ui_screen_buf[y][x] = ui_get_world_tile_glyph(world->map[row][col]);
             }
         }
     }

@@ -42,7 +42,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS)
 OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
 
 # Emulator detection
-EMULATOR ?= $(shell command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
+EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
 .PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music level levels editor clean
 
@@ -126,7 +126,7 @@ gfx:
 		--palette auto --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
-		--palette auto --tile-coords "0,2 0,0 8,2 5,2 6,2" \
+		--palette auto \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
 		--palette auto --tile-coords "3,2 4,2" \
@@ -154,6 +154,9 @@ levels:
 	@python3 tools/level_compiler/validate.py levels/*.json
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
+
+src/game/scenes_content.c: $(wildcard levels/*.json)
+	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 
 # Extract tile images from source PNGs for the web editor (uses same coords as asset_atlas.py)
 extract-tiles:

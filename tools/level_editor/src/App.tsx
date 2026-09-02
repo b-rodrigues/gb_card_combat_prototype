@@ -7,7 +7,7 @@ import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
-import { downloadLevelJson } from './io/saveLevel';
+import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 
@@ -74,6 +74,55 @@ export const App: React.FC = () => {
   const [showValidateModal, setShowValidateModal] = useState<boolean>(false);
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
+
+  // Compilation & Run State
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const handleSaveToServer = async () => {
+    setNotification({ message: 'Saving level to disk...', type: 'info' });
+    const res = await saveLevelToServer(level);
+    if (res.success) {
+      setNotification({ message: `Successfully saved ${level.id} to ${res.path}!`, type: 'success' });
+    } else {
+      setNotification({ message: `Save failed: ${res.error}`, type: 'error' });
+    }
+  };
+
+  const handleCompileRom = async () => {
+    setIsCompiling(true);
+    setNotification({ message: 'Saving level & compiling Game Boy ROM (make debug)...', type: 'info' });
+    await saveLevelToServer(level);
+    const res = await compileRom();
+    setIsCompiling(false);
+    if (res.success) {
+      setNotification({ message: 'ROM Built Successfully! (build/rpg_card_proto_debug.gb)', type: 'success' });
+    } else {
+      setNotification({ message: `ROM Compilation Failed: ${res.error}`, type: 'error' });
+      alert(`Compilation failed:\n\n${res.error}\n\n${res.log || ''}`);
+    }
+  };
+
+  const handleRunGame = async () => {
+    setIsRunning(true);
+    setNotification({ message: 'Launching emulator...', type: 'info' });
+    const res = await runGame();
+    setIsRunning(false);
+    if (res.success) {
+      setNotification({ message: res.message || 'Launched emulator on desktop!', type: 'success' });
+    } else {
+      setNotification({ message: `Launch failed: ${res.error}`, type: 'error' });
+      alert(`Failed to launch emulator:\n\n${res.error}`);
+    }
+  };
 
   // Push state to undo history
   const pushState = useCallback((newLevel: EditorLevel) => {
@@ -498,7 +547,12 @@ export const App: React.FC = () => {
           onToggleGrid={() => setShowGrid(!showGrid)}
           showCollision={showCollision}
           onToggleCollision={() => setShowCollision(!showCollision)}
-          onSave={() => downloadLevelJson(level)}
+          onSave={handleSaveToServer}
+          onDownload={() => downloadLevelJson(level)}
+          onCompileRom={handleCompileRom}
+          onRunGame={handleRunGame}
+          isCompiling={isCompiling}
+          isRunning={isRunning}
           onLoad={async () => {
             try {
               const res = await promptLoadLevelFile();
@@ -512,6 +566,39 @@ export const App: React.FC = () => {
           onDescribe={() => setShowDescribeModal(true)}
           onNew={handleCreateNewLevel}
         />
+
+        {/* Notification Toast */}
+        {notification && (
+          <div
+            style={{
+              padding: '8px 16px',
+              backgroundColor: notification.type === 'success' ? '#27ae60' : notification.type === 'error' ? '#c0392b' : '#2980b9',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              zIndex: 100
+            }}
+          >
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '16px',
+                marginLeft: '12px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div className="main-content">
           {/* Left Sidebar */}

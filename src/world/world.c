@@ -93,7 +93,10 @@ bool world_is_walkable(const World *w, uint8_t x, uint8_t y)
     uint8_t tile;
     if (!w || x >= w->width || y >= w->height) return false;
     tile = w->map[y][x];
-    return (tile == TILE_FLOOR || tile == TILE_EXIT);
+    if (tile == TILE_FLOOR || tile == TILE_EXIT) return true;
+    if (tile >= TILE_DESOLATE_FLOOR_00 && tile <= TILE_DESOLATE_FLOOR_03) return true;
+    if (tile == TILE_DESOLATE_FLOOR_PLAIN || tile == TILE_DESOLATE_STAIRCASE) return true;
+    return false;
 }
 
 WorldMoveResult world_try_begin_move(World *w, int8_t dx, int8_t dy,
