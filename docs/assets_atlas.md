@@ -31,11 +31,11 @@ tile, not a source sheet.
 
 | AssetId | Sheet | COL | ROW | Notes |
 |---------|-------|-----|-----|-------|
-| `ASSET_EXTERIOR_GRASS` | `RPG_exterior.png` | 1 | 9 | exterior tileset tile |
+| `ASSET_EXTERIOR_GRASS` | `RPG_exterior.png` | 0 | 0 | exterior tileset tile |
 | `ASSET_EXTERIOR_WALL` | `RPG_exterior.png` | 8 | 1 | exterior tileset tile |
 | `ASSET_EXTERIOR_EXIT_GATE` | `RPG_exterior.png` | 8 | 2 | exterior tileset tile |
 | `ASSET_EXTERIOR_BUILDING_WALL` | `RPG_exterior.png` | 0 | 5 | exterior tileset tile |
-| `ASSET_FOREST_FLOOR` | `RPG_exterior.png` | 1 | 9 | forest tileset tile (sourced from RPG_exterior.png) |
+| `ASSET_FOREST_FLOOR` | `RPG_exterior.png` | 0 | 0 | forest tileset tile (sourced from RPG_exterior.png) |
 | `ASSET_FOREST_TREE` | `RPG_exterior.png` | 0 | 5 | forest tileset tile (sourced from RPG_exterior.png) |
 | `ASSET_FOREST_GATE` | `RPG_exterior.png` | 8 | 2 | forest tileset tile (sourced from RPG_exterior.png) |
 | `ASSET_FOREST_STUMP_TL` | `RPG_exterior.png` | 0 | 14 | forest tileset tile (sourced from RPG_exterior.png) |

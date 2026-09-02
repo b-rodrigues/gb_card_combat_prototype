@@ -58,7 +58,7 @@ FONT_COLS, FONT_ROWS = 16, 6
 # Semantic tile coordinates per aligned sheet (Makefile gfx --tile-coords).
 TILESETS = {
     "RPG_exterior.png": {
-        "EXTERIOR_GRASS": (1, 9),
+        "EXTERIOR_GRASS": (0, 0),
         "EXTERIOR_WALL": (8, 1),
         "EXTERIOR_EXIT_GATE": (8, 2),
         "EXTERIOR_BUILDING_WALL": (0, 5),
@@ -437,7 +437,7 @@ TILESETS = {
 }
 # Forest tiles live in RPG_exterior.png at independent coordinates.
 FOREST_COORDS = {
-    "FOREST_FLOOR": (1, 9),
+    "FOREST_FLOOR": (0, 0),
     "FOREST_TREE": (0, 5),
     "FOREST_GATE": (8, 2),
     "FOREST_STUMP_TL": (0, 14),

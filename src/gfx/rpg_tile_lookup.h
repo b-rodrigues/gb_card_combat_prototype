@@ -38,11 +38,14 @@ extern const uint8_t g_intrepid_font_tiles[1536];
 static inline uint8_t rpg_lookup_tile_id(uint8_t tileset_kind, char glyph)
 {
     if (tileset_kind == 15 /* WORLD_TILESET_CASTLE */) {
-        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 23); /* Stone floor */
+        if (glyph == '.') return (uint8_t)(RPG_TILE_BASE_WORLD + 18); /* Plain solid stone floor (0,2) */
         if (glyph == '#') return (uint8_t)(RPG_TILE_BASE_WORLD + 10); /* Castle wall */
         if (glyph == '>' || glyph == '<') return (uint8_t)(RPG_TILE_BASE_WORLD + 13); /* Archway gate */
         if (glyph == 'B' || glyph == '*') return (uint8_t)(RPG_TILE_BASE_WORLD + 16); /* Torch / prop */
         return 0;
+    }
+    if (tileset_kind == 14 /* WORLD_TILESET_DESOLATE */ && glyph == '.') {
+        return (uint8_t)(RPG_TILE_BASE_DESOLATE + 32); /* Plain solid floor (0,2) */
     }
     if (tileset_kind == 2 /* WORLD_TILESET_FOREST */ && glyph >= '1' && glyph <= '4') {
         return (uint8_t)(RPG_TILE_BASE_WORLD + 3 + (glyph - '1'));

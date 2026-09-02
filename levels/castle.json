@@ -4,14 +4,14 @@
   "map": {
     "width": 20,
     "height": 18,
-    "tileset": "interior",
+    "tileset": "castle",
     "music": "MUSIC_DESOLATE_LANDSCAPE",
     "map_id": "MAP_CASTLE"
   },
   "layers": {
     "terrain": [
-      { "x": 3, "y": 3, "width": 4, "height": 6, "tile": "interior.building" },
-      { "x": 13, "y": 3, "width": 4, "height": 6, "tile": "interior.building" }
+      { "x": 3, "y": 3, "width": 4, "height": 6, "tile": "castle.wall" },
+      { "x": 13, "y": 3, "width": 4, "height": 6, "tile": "castle.wall" }
     ]
   },
   "player": {

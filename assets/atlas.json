@@ -6028,9 +6028,9 @@
    "row": 2
   },
   "EXTERIOR_GRASS": {
-   "col": 1,
+   "col": 0,
    "png": "RPG_exterior.png",
-   "row": 9
+   "row": 0
   },
   "EXTERIOR_WALL": {
    "col": 8,
@@ -6038,9 +6038,9 @@
    "row": 1
   },
   "FOREST_FLOOR": {
-   "col": 1,
+   "col": 0,
    "png": "RPG_exterior.png",
-   "row": 9
+   "row": 0
   },
   "FOREST_GATE": {
    "col": 8,
@@ -9058,7 +9058,7 @@
    "cells": {
     "0": {
      "col": 0,
-     "named": null,
+     "named": "FOREST_FLOOR",
      "row": 0,
      "tile": 0
     },
@@ -9850,7 +9850,7 @@
     },
     "217": {
      "col": 1,
-     "named": "FOREST_FLOOR",
+     "named": null,
      "row": 9,
      "tile": 217
     },

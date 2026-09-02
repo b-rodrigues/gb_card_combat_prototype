@@ -76,7 +76,7 @@ gfx:
 	@python3 tools/png2gb.py assets/player_demo.png --name player_sprite_tile \
 		-o $(GFX_OUT_DIR)/player_sprite_tile.h
 	@python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_exterior_tiles \
-		--palette gb_green --tile-coords "1,9 8,1 8,2 0,5" \
+		--palette gb_green --tile-coords "0,0 8,1 8,2 0,5" \
 		--raw -o $(GFX_OUT_DIR)/rpg_exterior_tiles.inc
 	@python3 tools/png2gb.py assets/RPG_interior.png --name rpg_interior_tiles \
 		--palette gb_green --tile-coords "1,1 1,0 8,4 6,3" \
@@ -115,10 +115,10 @@ gfx:
 		--palette gb_green --tile-coords "0,64 1,64 2,64 3,64 4,64 5,64 6,64 7,64" \
 		--raw -o $(GFX_OUT_DIR)/rpg_structures_props_tiles.inc
 	@python3 tools/png2gb.py assets/RPG_forest_tiles.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "1,9 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
+		--palette gb_green --tile-coords "0,0 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc 2>/dev/null || \
 	python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "1,9 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
+		--palette gb_green --tile-coords "0,0 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc

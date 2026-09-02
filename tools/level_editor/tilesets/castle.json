@@ -4,6 +4,26 @@
   "gb_tileset_kind": "WORLD_TILESET_CASTLE",
   "tiles": [
     {
+      "id": "floor",
+      "label": "Plain Stone Floor",
+      "gb_constant": "TILE_FLOOR",
+      "walkable": true,
+      "color": "#bdc3c7",
+      "ascii": ".",
+      "image_url": "/tiles/castle/floor.png",
+      "category": "terrain"
+    },
+    {
+      "id": "wall",
+      "label": "Castle Wall",
+      "gb_constant": "TILE_WALL",
+      "walkable": false,
+      "color": "#7f8c8d",
+      "ascii": "#",
+      "image_url": "/tiles/castle/castle_1_1.png",
+      "category": "terrain"
+    },
+    {
       "id": "castle_0_0",
       "label": "Battlement (0)",
       "gb_constant": "TILE_CASTLE_0_0",

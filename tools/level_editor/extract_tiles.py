@@ -114,6 +114,8 @@ def main():
             out_path = out_dir / f"{tile_id}.png"
 
             upscaled.save(out_path)
+            if tile_id == "grass" and tileset_id == "exterior":
+                upscaled.save(out_dir / "floor.png")
             print(f"  {tileset_id}/{tile_id}.png <- {png_name} ({col},{row})")
 
     print(f"\nDone! Extracted tiles to {OUTPUT_DIR}")
