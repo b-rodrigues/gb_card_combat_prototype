@@ -37,10 +37,51 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        function getNixBin(): string | null {
+          const candidates = ['nix', '/run/current-system/sw/bin/nix', '/usr/bin/nix', '/bin/nix'];
+          for (const c of candidates) {
+            try {
+              if (c.startsWith('/') && fs.existsSync(c)) return c;
+            } catch {}
+          }
+          return 'nix';
+        }
+
+        function runInToolchain(cmd: string, callback: (err: any, stdout: string, stderr: string) => void) {
+          const hasDirectTools = (() => {
+            try {
+              const { execSync } = require('child_process');
+              execSync('python3 --version && make --version && lcc -v', { stdio: 'ignore' });
+              return true;
+            } catch {
+              return false;
+            }
+          })();
+
+          const nixBin = getNixBin();
+          const fullCmd = hasDirectTools
+            ? cmd
+            : `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
+
+          exec(fullCmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+            if (err && !hasDirectTools) {
+              // Fallback to direct execution in case nix failed
+              exec(cmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, callback);
+            } else if (err && hasDirectTools && nixBin) {
+              // Fallback to nix develop in case host environment had issues
+              const nixFallback = `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
+              exec(nixFallback, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, callback);
+            } else {
+              callback(err, stdout, stderr);
+            }
+          });
+        }
+
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
-          exec('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && make debug', { cwd: repoRoot }, (err, stdout, stderr) => {
+          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && make debug', (err, stdout, stderr) => {
             if (err) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
+              console.error('Compile error:', err.message, stderr);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: stderr || err.message, log: stdout }));
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -51,21 +92,30 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'POST' && req.url === '/api/run-game') {
-          exec('which pyboy sameboy mgba-qt mgba 2>&1', { cwd: repoRoot }, (err, stdout) => {
+          runInToolchain('which sameboy mgba pyboy 2>&1', (err, stdout) => {
             const lines = stdout.split('\n').map(l => l.trim()).filter(l => l && !l.includes('no ') && !l.includes('warning'));
             const emu = lines[0] || 'pyboy';
             const romPath = path.join(repoRoot, 'build', 'rpg_card_proto_debug.gb');
+            const hasDirectTools = (() => {
+              try {
+                const { execSync } = require('child_process');
+                execSync(`${emu} --help 2>&1`, { stdio: 'ignore' });
+                return true;
+              } catch {
+                return false;
+              }
+            })();
+
             try {
-              const child = spawn(emu, [romPath], {
-                cwd: repoRoot,
-                detached: true,
-                stdio: 'ignore'
-              });
+              const child = hasDirectTools
+                ? spawn(emu, [romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' })
+                : spawn(getNixBin() || 'nix', ['develop', '--command', emu, romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' });
+
               child.unref();
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: true, emulator: path.basename(emu), message: `Launched ${path.basename(emu)} on desktop` }));
             } catch (spawnErr: any) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: spawnErr.message }));
             }
           });
