@@ -4,7 +4,7 @@
   "map": {
     "width": 32,
     "height": 18,
-    "tileset": "exterior",
+    "tileset": "forest",
     "music": "MUSIC_FOREST",
     "map_id": "MAP_FIELD"
   },

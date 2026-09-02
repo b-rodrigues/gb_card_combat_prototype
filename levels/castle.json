@@ -10,8 +10,16 @@
   },
   "layers": {
     "terrain": [
-      { "x": 3, "y": 3, "width": 4, "height": 6, "tile": "castle.wall" },
-      { "x": 13, "y": 3, "width": 4, "height": 6, "tile": "castle.wall" }
+      { "x": 3, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_left_wall" },
+      { "x": 6, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_right_wall" },
+      { "x": 13, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_left_wall" },
+      { "x": 16, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_right_wall" },
+      { "x": 4, "y": 3, "width": 2, "height": 1, "tile": "castle.castle_top_wall" },
+      { "x": 14, "y": 3, "width": 2, "height": 1, "tile": "castle.castle_top_wall" },
+      { "x": 4, "y": 8, "width": 2, "height": 1, "tile": "castle.castle_bottom_wall" },
+      { "x": 14, "y": 8, "width": 2, "height": 1, "tile": "castle.castle_bottom_wall" },
+      { "x": 9, "y": 6, "width": 1, "height": 1, "tile": "castle.castle_table" },
+      { "x": 9, "y": 9, "width": 1, "height": 1, "tile": "castle.castle_chest" }
     ]
   },
   "player": {

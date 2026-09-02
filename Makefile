@@ -170,10 +170,10 @@ extract-tiles:
 		--output-json tools/level_editor/tilesets/forest.json
 	@python3 tools/level_editor/import_tileset.py \
 		--sheet assets/desolate_landscape.png --csv assets/desolate_landscape-description.csv \
-		--tileset-id overworld --label "Overworld Realm" \
-		--gb-tileset-kind WORLD_TILESET_OVERWORLD \
-		--output-dir tools/level_editor/public/tiles/overworld \
-		--output-json tools/level_editor/tilesets/overworld.json
+		--tileset-id desolate_landscape --label "Desolate Landscape" \
+		--gb-tileset-kind WORLD_TILESET_DESOLATE \
+		--output-dir tools/level_editor/public/tiles/desolate_landscape \
+		--output-json tools/level_editor/tilesets/desolate_landscape.json
 	@python3 tools/level_editor/import_tileset.py \
 		--sheet assets/castle-tile.png --csv assets/castle-tileset-description.csv \
 		--tileset-id castle --label "Castle & Bastion" \

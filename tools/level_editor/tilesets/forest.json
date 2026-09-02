@@ -146,7 +146,7 @@
     {
       "id": "forest_top_left_tree_stump",
       "label": "top left tree stump",
-      "gb_constant": "TILE_FOREST_TOP_LEFT_TREE_STUMP",
+      "gb_constant": "TILE_STUMP_TL",
       "walkable": false,
       "color": "#78a658",
       "ascii": "#",
@@ -156,7 +156,7 @@
     {
       "id": "forest_top_right_tree_stump",
       "label": "top right tree stump",
-      "gb_constant": "TILE_FOREST_TOP_RIGHT_TREE_STUMP",
+      "gb_constant": "TILE_STUMP_TR",
       "walkable": false,
       "color": "#739d52",
       "ascii": "#",
@@ -306,7 +306,7 @@
     {
       "id": "forest_bottom_left_tree_stump",
       "label": "bottom left tree stump",
-      "gb_constant": "TILE_FOREST_BOTTOM_LEFT_TREE_STUMP",
+      "gb_constant": "TILE_STUMP_BL",
       "walkable": false,
       "color": "#687c40",
       "ascii": "#",
@@ -316,7 +316,7 @@
     {
       "id": "forest_bottom_right_three_stump",
       "label": "bottom right three stump",
-      "gb_constant": "TILE_FOREST_BOTTOM_RIGHT_THREE_STUMP",
+      "gb_constant": "TILE_STUMP_BR",
       "walkable": false,
       "color": "#677b3f",
       "ascii": "#",

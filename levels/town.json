@@ -4,14 +4,14 @@
   "map": {
     "width": 20,
     "height": 18,
-    "tileset": "exterior",
+    "tileset": "forest",
     "music": "MUSIC_TOWN",
     "map_id": "MAP_TOWN"
   },
   "layers": {
     "terrain": [
-      { "x": 3, "y": 3, "width": 6, "height": 4, "tile": "exterior.building" },
-      { "x": 12, "y": 3, "width": 5, "height": 4, "tile": "exterior.building" }
+      { "x": 3, "y": 3, "width": 6, "height": 4, "tile": "forest.forest_top_wall_1" },
+      { "x": 12, "y": 3, "width": 5, "height": 4, "tile": "forest.forest_top_wall_1" }
     ]
   },
   "player": {

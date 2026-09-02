@@ -499,6 +499,14 @@ static char ui_get_world_tile_glyph(uint8_t t)
         if ((t >= TILE_DESOLATE_FLOOR_00 && t <= TILE_DESOLATE_FLOOR_03) || t == TILE_DESOLATE_FLOOR_PLAIN) return '.';
         return '#';
     }
+    if (t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) {
+        if (t == TILE_DESOLATE_LANDSCAPE_40) return '>';
+        if (t == TILE_DESOLATE_LANDSCAPE_37 || t == TILE_DESOLATE_LANDSCAPE_38) return '*';
+        if ((t >= TILE_DESOLATE_LANDSCAPE_21 && t <= TILE_DESOLATE_LANDSCAPE_24) ||
+            t == TILE_DESOLATE_LANDSCAPE_32 ||
+            (t >= TILE_DESOLATE_LANDSCAPE_43 && t <= TILE_DESOLATE_LANDSCAPE_47)) return '.';
+        return '#';
+    }
     return (t < 8) ? g_sem_map[t] : '.';
 }
 
@@ -535,6 +543,10 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
         if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
             t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
             uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_WALL_00);
+            tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
+        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
+                   t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) {
+            uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_LANDSCAPE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
         } else {
             uint8_t lookup_id = rpg_lookup_tile_id(scene_get_tileset(world->map_id), glyph);

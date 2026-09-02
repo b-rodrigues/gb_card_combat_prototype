@@ -1,7 +1,7 @@
 import castleJson from '../../tilesets/castle.json';
 import combatJson from '../../tilesets/combat.json';
 import forestJson from '../../tilesets/forest.json';
-import overworldJson from '../../tilesets/overworld.json';
+import desolateLandscapeJson from '../../tilesets/desolate_landscape.json';
 import intrepidJson from '../../tilesets/intrepid.json';
 
 export interface TileDefinition {
@@ -27,7 +27,7 @@ function parseTilesetJson(data: any): TilesetDefinition {
   return {
     id: data.id,
     label: data.label || data.id,
-    gb_tileset_kind: data.gb_tileset_kind || 'WORLD_TILESET_OVERWORLD',
+    gb_tileset_kind: data.gb_tileset_kind || 'WORLD_TILESET_DESOLATE',
     tiles: (data.tiles || []).map((t: any) => ({
       id: t.id,
       label: t.label || t.id,
@@ -46,18 +46,18 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   castle: parseTilesetJson(castleJson),
   combat: parseTilesetJson(combatJson),
   forest: parseTilesetJson(forestJson),
-  overworld: parseTilesetJson(overworldJson),
+  desolate_landscape: parseTilesetJson(desolateLandscapeJson),
   intrepid: parseTilesetJson(intrepidJson),
 };
 
 export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
 export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
-export const TILESET_OVERWORLD = BUILTIN_TILESETS.overworld;
+export const TILESET_DESOLATE_LANDSCAPE = BUILTIN_TILESETS.desolate_landscape;
 export const TILESET_INTREPID = BUILTIN_TILESETS.intrepid;
 
 export function getTileset(id: string): TilesetDefinition {
-  return BUILTIN_TILESETS[id] || BUILTIN_TILESETS.overworld || BUILTIN_TILESETS.forest;
+  return BUILTIN_TILESETS[id] || BUILTIN_TILESETS.desolate_landscape || BUILTIN_TILESETS.forest;
 }
 
 export function updateTilesetInMemory(tileset: TilesetDefinition): void {
