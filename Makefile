@@ -160,9 +160,26 @@ levels:
 src/game/scenes_content.c: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 
-# Extract tile images from source PNGs for the web editor (uses same coords as asset_atlas.py)
+# Extract tile images from source PNGs for the web editor (import_tileset.py)
 extract-tiles:
-	@python3 tools/level_editor/extract_tiles.py
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/forest-tile.png --csv assets/forest-tileset-description.csv \
+		--tileset-id forest --label "Whispering Forest" \
+		--gb-tileset-kind WORLD_TILESET_FOREST \
+		--output-dir tools/level_editor/public/tiles/forest \
+		--output-json tools/level_editor/tilesets/forest.json
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/desolate_landscape.png --csv assets/desolate_landscape-description.csv \
+		--tileset-id overworld --label "Overworld Realm" \
+		--gb-tileset-kind WORLD_TILESET_OVERWORLD \
+		--output-dir tools/level_editor/public/tiles/overworld \
+		--output-json tools/level_editor/tilesets/overworld.json
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/castle-tile.png --csv assets/castle-tileset-description.csv \
+		--tileset-id castle --label "Castle & Bastion" \
+		--gb-tileset-kind WORLD_TILESET_CASTLE \
+		--output-dir tools/level_editor/public/tiles/castle \
+		--output-json tools/level_editor/tilesets/castle.json
 
 editor: extract-tiles
 	@echo "Starting Game Boy RPG Level Editor..."
