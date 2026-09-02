@@ -50,7 +50,7 @@ export const App: React.FC = () => {
   const [selectedEntityIndex, setSelectedEntityIndex] = useState<number | null>(null);
 
   // View Options
-  const [zoom, setZoom] = useState<number>(2);
+  const [zoom, setZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [showCollision, setShowCollision] = useState<boolean>(false);
   const [showTerrain, setShowTerrain] = useState<boolean>(true);
