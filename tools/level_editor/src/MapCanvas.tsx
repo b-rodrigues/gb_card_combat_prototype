@@ -297,11 +297,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.lineWidth = isSelected ? 2.5 : 1.5;
         ctx.stroke();
 
-        // Icon
-        ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+        // Sprite image or fallback icon
+        const spriteId = obj.overworld_sprite
+          ? obj.overworld_sprite.includes('.')
+            ? obj.overworld_sprite.split('.')[1]
+            : obj.overworld_sprite
+          : null;
+        const spriteImg = spriteId ? tileImages.get(spriteId) : null;
+        if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(spriteImg, px + 2, py + 2, tileSize - 4, tileSize - 4);
+        } else {
+          ctx.font = `${Math.floor(tileSize * 0.45)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tmpl?.icon || '👾', px + tileSize / 2, py + tileSize / 2);
+        }
       });
     }
 

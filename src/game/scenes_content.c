@@ -59,10 +59,16 @@ static const SceneTerrainBlock s_castle_terrain[] = {
 };
 
 static const SceneTerrainBlock s_south_field_terrain[] = {
-    { 4, 4, 2, 2, TILE_WALL },
-    { 15, 4, 2, 2, TILE_WALL },
-    { 5, 12, 3, 2, TILE_WALL },
-    { 14, 12, 3, 2, TILE_WALL },
+    { 0, 0, 20, 1, TILE_WALL },
+    { 0, 1, 1, 17, TILE_WALL },
+    { 19, 1, 1, 17, TILE_WALL },
+    { 9, 2, 2, 2, TILE_WALL },
+    { 13, 5, 2, 2, TILE_WALL },
+    { 10, 10, 2, 2, TILE_WALL },
+    { 12, 11, 1, 1, TILE_EXIT },
+    { 17, 11, 1, 1, TILE_WALL },
+    { 3, 14, 2, 2, TILE_WALL },
+    { 1, 17, 18, 1, TILE_WALL },
     { 0, 0, 0, 0, 0 }
 };
 

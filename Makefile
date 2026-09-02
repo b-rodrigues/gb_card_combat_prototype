@@ -128,6 +128,9 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
 		--palette auto --tile-coords "6,1 0,0 8,2 14,0" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
+	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
+		--palette auto --tile-coords "3,2" \
+		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical
