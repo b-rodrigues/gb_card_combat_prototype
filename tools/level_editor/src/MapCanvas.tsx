@@ -28,6 +28,9 @@ interface MapCanvasProps {
   onExitMoved: (index: number, x: number, y: number) => void;
   onAddObjectAt: (x: number, y: number) => void;
   onAddExitAt: (x: number, y: number) => void;
+  clonePattern?: string[][] | null;
+  onClonePatternCaptured?: (pattern: string[][]) => void;
+  onStampPattern?: (startX: number, startY: number, pattern: string[][]) => void;
 }
 
 const TILE_SIZE = 24; // Base pixel size per tile
@@ -55,12 +58,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onExitMoved,
   onAddObjectAt,
   onAddExitAt,
+  clonePattern,
+  onClonePatternCaptured,
+  onStampPattern,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragStartTile, setDragStartTile] = useState<{ x: number; y: number } | null>(null);
   const [hoverTile, setHoverTile] = useState<{ x: number; y: number } | null>(null);
   const [draggingEntity, setDraggingEntity] = useState<{ type: 'object' | 'exit' | 'spawn'; index: number } | null>(null);
+  const [isCapturingClone, setIsCapturingClone] = useState(false);
 
   const tileset: TilesetDefinition = BUILTIN_TILESETS[level.tileset] || BUILTIN_TILESETS.forest;
   const defaultFloorTile = tileset.tiles.find((t) => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
@@ -664,6 +671,80 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.globalAlpha = 1.0;
     }
 
+    // 2b. Render Clone Region Capture Preview
+    if (isMouseDown && activeTool === 'clone' && isCapturingClone && dragStartTile && hoverTile) {
+      const rx = Math.min(dragStartTile.x, hoverTile.x);
+      const ry = Math.min(dragStartTile.y, hoverTile.y);
+      const rw = Math.abs(dragStartTile.x - hoverTile.x) + 1;
+      const rh = Math.abs(dragStartTile.y - hoverTile.y) + 1;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.18)';
+      ctx.fillRect(rx * tileSize, ry * tileSize, rw * tileSize, rh * tileSize);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(rx * tileSize, ry * tileSize, rw * tileSize, rh * tileSize);
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(10, 15, 25, 0.85)';
+      const badgeY = Math.max(0, ry * tileSize - 20);
+      ctx.fillRect(rx * tileSize, badgeY, 60, 18);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.strokeRect(rx * tileSize, badgeY, 60, 18);
+      ctx.fillStyle = '#00f0ff';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(`${rw}×${rh}`, rx * tileSize + 6, badgeY + 13);
+      ctx.restore();
+    }
+
+    // 2c. Render Clone Stamp Ghost Preview
+    if (activeTool === 'clone' && !isCapturingClone && clonePattern && clonePattern.length > 0 && hoverTile && activeLayer === 'terrain') {
+      const pw = clonePattern[0]?.length || 0;
+      const ph = clonePattern.length;
+      const sx = hoverTile.x;
+      const sy = hoverTile.y;
+
+      ctx.save();
+      ctx.globalAlpha = 0.65;
+      ctx.imageSmoothingEnabled = false;
+
+      for (let py = 0; py < ph; py++) {
+        for (let px = 0; px < pw; px++) {
+          const tId = clonePattern[py][px];
+          const tx = sx + px;
+          const ty = sy + py;
+          if (tx >= level.width || ty >= level.height) continue;
+
+          const img = tileImages.get(tId);
+          const tDef = tileMap.get(tId);
+          if (img && img.complete && img.naturalWidth > 0) {
+            ctx.drawImage(img, tx * tileSize, ty * tileSize, tileSize, tileSize);
+          } else {
+            ctx.fillStyle = tDef?.color || '#ffffff';
+            ctx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+          }
+        }
+      }
+
+      ctx.globalAlpha = 0.95;
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 2;
+      const bw = Math.min(pw, level.width - sx) * tileSize;
+      const bh = Math.min(ph, level.height - sy) * tileSize;
+      ctx.strokeRect(sx * tileSize, sy * tileSize, bw, bh);
+
+      ctx.fillStyle = 'rgba(10, 15, 25, 0.85)';
+      const badgeY = Math.max(0, sy * tileSize - 20);
+      ctx.fillRect(sx * tileSize, badgeY, 75, 18);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.strokeRect(sx * tileSize, badgeY, 75, 18);
+      ctx.fillStyle = '#00f0ff';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(`📋 ${pw}×${ph}`, sx * tileSize + 6, badgeY + 13);
+      ctx.restore();
+    }
+
     // 3. Render Collision Walkability Overlay
     if (showCollision) {
       for (let y = 0; y < level.height; y++) {
@@ -943,6 +1024,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     tileMap,
     tileImages,
     animTick,
+    clonePattern,
+    isCapturingClone,
   ]);
 
   useEffect(() => {
@@ -1023,6 +1106,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       } else if (activeTool === 'eyedropper') {
         const picked = level.grid[coords.y]?.[coords.x] || defaultFloorTile;
         onTilePicked(picked);
+      } else if (activeTool === 'clone') {
+        const isCaptureAction = e.shiftKey || e.altKey || e.button === 2 || !clonePattern || clonePattern.length === 0;
+        if (isCaptureAction) {
+          setIsCapturingClone(true);
+        } else if (clonePattern && onStampPattern) {
+          onStampPattern(coords.x, coords.y, clonePattern);
+        }
       }
     }
   };
@@ -1051,6 +1141,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         onTilePainted(coords.x, coords.y, selectedTileId);
       } else if (activeTool === 'eraser') {
         onTilePainted(coords.x, coords.y, defaultFloorTile);
+      } else if (activeTool === 'clone' && !isCapturingClone && clonePattern && onStampPattern) {
+        onStampPattern(coords.x, coords.y, clonePattern);
       }
     }
   };
@@ -1064,7 +1156,27 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       onRectPainted(rx, ry, rw, rh, selectedTileId);
     }
 
+    if (isMouseDown && activeTool === 'clone' && isCapturingClone && dragStartTile && hoverTile && activeLayer === 'terrain') {
+      const rx = Math.min(dragStartTile.x, hoverTile.x);
+      const ry = Math.min(dragStartTile.y, hoverTile.y);
+      const rw = Math.abs(dragStartTile.x - hoverTile.x) + 1;
+      const rh = Math.abs(dragStartTile.y - hoverTile.y) + 1;
+
+      const pattern: string[][] = [];
+      for (let y = ry; y < ry + rh; y++) {
+        const row: string[] = [];
+        for (let x = rx; x < rx + rw; x++) {
+          row.push(level.grid[y]?.[x] || defaultFloorTile);
+        }
+        pattern.push(row);
+      }
+      if (onClonePatternCaptured) {
+        onClonePatternCaptured(pattern);
+      }
+    }
+
     setIsMouseDown(false);
+    setIsCapturingClone(false);
     setDragStartTile(null);
     setDraggingEntity(null);
   };
@@ -1080,8 +1192,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onContextMenu={(e) => {
+            if (activeTool === 'clone') e.preventDefault();
+          }}
           onMouseLeave={() => {
             setIsMouseDown(false);
+            setIsCapturingClone(false);
             setHoverTile(null);
             setDraggingEntity(null);
           }}
@@ -1100,6 +1216,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         <span>
           Zoom: {Math.round(zoom * 100)}%
         </span>
+        {activeTool === 'clone' && (
+          <span style={{ color: '#00f0ff', fontWeight: 500 }}>
+            {clonePattern && clonePattern.length > 0
+              ? `📋 Stamp ${clonePattern[0].length}×${clonePattern.length}: Click to stamp • Shift+Drag or Right-Click to copy new`
+              : '📋 Drag a box over map tiles to copy'}
+          </span>
+        )}
       </div>
     </div>
   );

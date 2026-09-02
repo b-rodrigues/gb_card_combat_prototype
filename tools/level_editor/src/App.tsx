@@ -56,6 +56,7 @@ export const App: React.FC = () => {
   const [activeLayer, setActiveLayer] = useState<EditLayer>('terrain');
   const [selectedTileId, setSelectedTileId] = useState<string>('tree');
   const [selectedEntityIndex, setSelectedEntityIndex] = useState<number | null>(null);
+  const [clonePattern, setClonePattern] = useState<string[][] | null>(null);
 
   // View Options
   const [zoom, setZoom] = useState<number>(1);
@@ -180,6 +181,14 @@ export const App: React.FC = () => {
         setActiveTool('eyedropper');
       } else if (e.key.toLowerCase() === 'v') {
         setActiveTool('select');
+      } else if (e.key.toLowerCase() === 'c') {
+        setActiveTool('clone');
+      } else if (e.key === 'Escape' && activeTool === 'clone') {
+        setClonePattern(null);
+        setNotification({ message: 'Clone buffer cleared. Drag a box to copy tiles.', type: 'info' });
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        handleDuplicateSelectedEntity();
       }
     };
 
@@ -229,6 +238,70 @@ export const App: React.FC = () => {
       row.map((col, x) => (x >= rx && x < rx + rw && y >= ry && y < ry + rh ? tileId : col))
     );
     pushState({ ...level, grid: newGrid });
+  };
+
+  const handleClonePatternCaptured = (pattern: string[][]) => {
+    if (!pattern || pattern.length === 0 || pattern[0].length === 0) return;
+    setClonePattern(pattern);
+    const pw = pattern[0].length;
+    const ph = pattern.length;
+    setNotification({
+      message: `Copied ${pw}×${ph} tile area! Click to stamp • Shift+Drag to copy a new area.`,
+      type: 'info'
+    });
+  };
+
+  const handleStampPattern = (startX: number, startY: number, pattern: string[][]) => {
+    if (!pattern || pattern.length === 0 || pattern[0].length === 0) return;
+    const pw = pattern[0].length;
+    const ph = pattern.length;
+
+    let changed = false;
+    for (let py = 0; py < ph; py++) {
+      for (let px = 0; px < pw; px++) {
+        const tx = startX + px;
+        const ty = startY + py;
+        if (tx >= 0 && tx < level.width && ty >= 0 && ty < level.height) {
+          if (level.grid[ty]?.[tx] !== pattern[py][px]) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (changed) break;
+    }
+    if (!changed) return;
+
+    const newGrid = level.grid.map((row, y) =>
+      row.map((col, x) => {
+        if (x >= startX && x < startX + pw && y >= startY && y < startY + ph) {
+          const px = x - startX;
+          const py = y - startY;
+          return pattern[py]?.[px] ?? col;
+        }
+        return col;
+      })
+    );
+    pushState({ ...level, grid: newGrid });
+  };
+
+  const handleDuplicateSelectedEntity = () => {
+    if (selectedEntityIndex === null) return;
+    if (selectedEntityIndex >= 0 && selectedEntityIndex < level.objects.length) {
+      const orig = level.objects[selectedEntityIndex];
+      const copy = {
+        ...JSON.parse(JSON.stringify(orig)),
+        id: `${orig.id}_copy`,
+        position: {
+          x: Math.min(orig.position.x + 1, level.width - 1),
+          y: Math.min(orig.position.y + 1, level.height - 1)
+        }
+      };
+      const newObjs = [...level.objects, copy];
+      pushState({ ...level, objects: newObjs });
+      setSelectedEntityIndex(newObjs.length - 1);
+      setNotification({ message: `Duplicated object "${orig.id}"!`, type: 'success' });
+    }
   };
 
   const handleFill = (startX: number, startY: number, newTileId: string) => {
@@ -565,6 +638,11 @@ export const App: React.FC = () => {
           onValidate={() => setShowValidateModal(true)}
           onDescribe={() => setShowDescribeModal(true)}
           onNew={handleCreateNewLevel}
+          clonePattern={clonePattern}
+          onClearClone={() => {
+            setClonePattern(null);
+            setNotification({ message: 'Clone buffer cleared. Drag a box to copy tiles.', type: 'info' });
+          }}
         />
 
         {/* Notification Toast */}
@@ -656,6 +734,9 @@ export const App: React.FC = () => {
                   tile_char: '<',
                 });
               }}
+              clonePattern={clonePattern}
+              onClonePatternCaptured={handleClonePatternCaptured}
+              onStampPattern={handleStampPattern}
             />
           </main>
 
@@ -683,6 +764,7 @@ export const App: React.FC = () => {
               onAddObject={handleAddObject}
               onUpdateObject={handleUpdateObject}
               onDeleteObject={handleDeleteObject}
+              onDuplicateObject={handleDuplicateSelectedEntity}
               onAddRegion={handleAddRegion}
               onUpdateRegion={handleUpdateRegion}
               onDeleteRegion={handleDeleteRegion}

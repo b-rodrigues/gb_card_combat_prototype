@@ -1,10 +1,12 @@
 import React from 'react';
 
-export type ToolType = 'brush' | 'eraser' | 'rect' | 'fill' | 'eyedropper' | 'select';
+export type ToolType = 'brush' | 'eraser' | 'rect' | 'fill' | 'eyedropper' | 'select' | 'clone';
 
 interface ToolbarProps {
   activeTool: ToolType;
   onSelectTool: (tool: ToolType) => void;
+  clonePattern?: string[][] | null;
+  onClearClone?: () => void;
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
@@ -50,6 +52,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onValidate,
   onDescribe,
   onNew,
+  clonePattern,
+  onClearClone,
 }) => {
   return (
     <div className="toolbar">
@@ -137,6 +141,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           👆 Select <span className="shortcut">V</span>
         </button>
+        <button
+          className={`btn-tool ${activeTool === 'clone' ? 'active' : ''}`}
+          onClick={() => onSelectTool('clone')}
+          title="Clone Stamp: Drag or Shift+Drag to capture, click to stamp (C)"
+        >
+          📋 Clone <span className="shortcut">C</span>
+        </button>
+        {activeTool === 'clone' && (
+          <div className="clone-badge" title="Clone Stamp: Drag or Shift+Drag to capture, click to stamp">
+            {clonePattern && clonePattern.length > 0 ? (
+              <>
+                <span className="clone-badge-dims">{clonePattern[0].length}×{clonePattern.length}</span>
+                <button
+                  className="btn-tiny"
+                  onClick={(e) => { e.stopPropagation(); onClearClone?.(); }}
+                  title="Clear clone buffer to capture a new area"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <span className="clone-badge-hint">Drag box</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="divider" />

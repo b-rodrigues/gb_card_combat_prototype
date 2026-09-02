@@ -539,6 +539,46 @@ body {
 .map-canvas.tool-fill { cursor: copy; }
 .map-canvas.tool-eyedropper { cursor: alias; }
 .map-canvas.tool-select { cursor: default; }
+.map-canvas.tool-clone { cursor: crosshair; }
+
+.clone-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #00f0ff;
+  height: 28px;
+}
+
+.clone-badge-dims {
+  font-weight: bold;
+}
+
+.clone-badge-hint {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.btn-tiny {
+  background: transparent;
+  border: none;
+  color: #00f0ff;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+.btn-tiny:hover {
+  background: rgba(0, 240, 255, 0.25);
+  color: #ffffff;
+}
 
 .canvas-footer-status {
   height: 24px;

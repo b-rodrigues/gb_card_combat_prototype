@@ -85,6 +85,7 @@ interface InspectorProps {
   onAddObject: (obj: LevelObject) => void;
   onUpdateObject: (index: number, obj: LevelObject) => void;
   onDeleteObject: (index: number) => void;
+  onDuplicateObject?: (index: number) => void;
   onAddRegion: (region: LevelRegion) => void;
   onUpdateRegion: (index: number, region: LevelRegion) => void;
   onDeleteRegion: (index: number) => void;
@@ -112,6 +113,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onAddObject,
   onUpdateObject,
   onDeleteObject,
+  onDuplicateObject,
   onAddRegion,
   onUpdateRegion,
   onDeleteRegion,
@@ -2573,6 +2575,15 @@ export const Inspector: React.FC<InspectorProps> = ({
                 )}
 
                 <div className="btn-group-row">
+                  {onDuplicateObject && (
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => onDuplicateObject(selectedEntityIndex)}
+                      title="Clone / Duplicate object (Ctrl+D)"
+                    >
+                      📋 Clone
+                    </button>
+                  )}
                   <button
                     className="btn btn-sm btn-danger"
                     onClick={() => onDeleteObject(selectedEntityIndex)}
