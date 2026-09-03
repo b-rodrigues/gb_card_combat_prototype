@@ -582,7 +582,7 @@ void ui_draw_actors_sprites(const World *world)
     s_anim_counter++;
     anim_step = (uint8_t)((s_anim_counter >> 4) & 1);
 
-    if (world->map_id == MAP_SOUTH_FIELD) {
+    if (world->map_id == MAP_SOUTH_FIELD || world->map_id == MAP_FOREST) {
         shadow_OAM[PLAYER_SPRITE_NUM].tile = (uint8_t)(HERO_DESOLATE_SPRITE_TILE_ID + anim_step);
         shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
 

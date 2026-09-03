@@ -10,6 +10,14 @@
   },
   "layers": {
     "terrain": [
+      { "x": 1, "y": 1, "width": 1, "height": 1, "tile": "forest.forest_top_left_corner_wall" },
+      { "x": 2, "y": 1, "width": 16, "height": 1, "tile": "forest.forest_top_wall_1" },
+      { "x": 18, "y": 1, "width": 1, "height": 1, "tile": "forest.forest_top_right_corner_wall" },
+      { "x": 1, "y": 2, "width": 1, "height": 14, "tile": "forest.forest_left_wall_1" },
+      { "x": 18, "y": 2, "width": 1, "height": 14, "tile": "forest.forest_right_wall_1" },
+      { "x": 1, "y": 16, "width": 1, "height": 1, "tile": "forest.forest_bottom_left_corner_wall" },
+      { "x": 2, "y": 16, "width": 16, "height": 1, "tile": "forest.forest_bottom_wall_1" },
+      { "x": 18, "y": 16, "width": 1, "height": 1, "tile": "forest.forest_bottom_right_corner_wall" },
       { "x": 3, "y": 3, "width": 1, "height": 1, "tile": "forest.forest_top_left_treetop" },
       { "x": 4, "y": 3, "width": 1, "height": 1, "tile": "forest.forest_top_right_tree_top" },
       { "x": 3, "y": 4, "width": 1, "height": 1, "tile": "forest.forest_bottom_left_treetrunk" },
@@ -48,7 +56,11 @@
     "spawn": {
       "x": 12,
       "y": 10,
-      "facing": "UP"
+      "facing": "UP",
+      "animation_frames": [
+        "forest.forest_hero_frame_1_with_green_forest_background",
+        "forest.forest_hero_frame_2_with_green_forest_background"
+      ]
     }
   },
   "exits": [
@@ -66,10 +78,10 @@
     {
       "id": "forest_slime",
       "type": "enemy",
-      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+      "overworld_sprite": "forest.forest_enemy_kobold_frame_1",
       "animation_frames": [
-        "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
-        "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"
+        "forest.forest_enemy_kobold_frame_1",
+        "forest.forest_enemay_kobold_frame_2"
       ],
       "position": { "x": 10, "y": 8 },
       "properties": {
@@ -82,10 +94,10 @@
     {
       "id": "forest_bat",
       "type": "enemy",
-      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
+      "overworld_sprite": "forest.forest_enemy_bats_frame_1",
       "animation_frames": [
-        "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
-        "desolate_landscape.desolate_landscape_enemy_bats_frame_2"
+        "forest.forest_enemy_bats_frame_1",
+        "forest.forest_enemy_bats_frame_2"
       ],
       "position": { "x": 7, "y": 4 },
       "properties": {

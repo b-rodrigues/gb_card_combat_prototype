@@ -116,6 +116,15 @@ def verify_hostile_sprites(sess):
     castle tile set, and the castle boss must be drawn as a 2x2 background
     block (not an OAM sprite).  Semantic scenarios cannot see this: they
     assert actor positions/visuals, not OAM tile bytes."""
+    print("== Forest hero sprite + walls ==")
+    forest = load_scenario(sess, "forest_boot.json")
+    sess.load_scenario(forest)
+    sess.step(2)
+    # Player on MAP_FOREST renders the HERO_DESOLATE sprite (98|99), same as
+    # south_field; every other map uses PLAYER (102).
+    check("forest player renders as hero OAM tile (98|99)",
+          1, (98 <= shadow_sprite_tile(sess) <= 99))
+
     print("== Hostile sprite tiles (south_field kobold / bat) ==")
     south = load_scenario(sess, "south_field_boot.json")
     sess.load_scenario(south)

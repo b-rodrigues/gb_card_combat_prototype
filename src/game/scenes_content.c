@@ -23,6 +23,14 @@ static const SceneTerrainBlock s_town_terrain[] = {
 };
 
 static const SceneTerrainBlock s_forest_terrain[] = {
+    { 1, 1, 1, 1, TILE_WALL },
+    { 2, 1, 16, 1, TILE_WALL },
+    { 18, 1, 1, 1, TILE_WALL },
+    { 1, 2, 1, 14, TILE_WALL },
+    { 18, 2, 1, 14, TILE_WALL },
+    { 1, 16, 1, 1, TILE_WALL },
+    { 2, 16, 16, 1, TILE_WALL },
+    { 18, 16, 1, 1, TILE_WALL },
     { 3, 3, 1, 1, TILE_WALL },
     { 4, 3, 1, 1, TILE_WALL },
     { 3, 4, 1, 1, TILE_WALL },

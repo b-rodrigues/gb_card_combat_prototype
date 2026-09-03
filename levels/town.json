@@ -18,7 +18,11 @@
     "spawn": {
       "x": 2,
       "y": 7,
-      "facing": "RIGHT"
+      "facing": "RIGHT",
+      "animation_frames": [
+        "forest.forest_hero_frame_1_with_green_forest_background",
+        "forest.forest_hero_frame_2_with_green_forest_background"
+      ]
     }
   },
   "exits": [
