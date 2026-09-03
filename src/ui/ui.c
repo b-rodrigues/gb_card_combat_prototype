@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "actor.h"
+#include "tile_glyph.h"
 #include "scene.h"
 #include "card.h"
 #include "rpg/status.h"
@@ -477,7 +478,7 @@ void ui_load_tileset(uint8_t tileset)
             break;
         case WORLD_TILESET_FOREST:
             src = g_tileset_forest;
-            tile_count = 8;
+            tile_count = 9;
             break;
         case WORLD_TILESET_DESOLATE:
             src = g_tileset_desolate;
@@ -510,14 +511,8 @@ static char ui_get_world_tile_glyph(uint8_t t)
         if ((t >= TILE_DESOLATE_FLOOR_00 && t <= TILE_DESOLATE_FLOOR_03) || t == TILE_DESOLATE_FLOOR_PLAIN) return '.';
         return '#';
     }
-    if (t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) {
-        if (t == TILE_DESOLATE_LANDSCAPE_40) return '>';
-        if (t == TILE_DESOLATE_LANDSCAPE_37 || t == TILE_DESOLATE_LANDSCAPE_38) return '*';
-        if ((t >= TILE_DESOLATE_LANDSCAPE_21 && t <= TILE_DESOLATE_LANDSCAPE_24) ||
-            t == TILE_DESOLATE_LANDSCAPE_32 ||
-            (t >= TILE_DESOLATE_LANDSCAPE_43 && t <= TILE_DESOLATE_LANDSCAPE_47)) return '.';
-        return '#';
-    }
+    if (t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47)
+        return tile_landscape_glyph(t);
     return (t < 8) ? g_sem_map[t] : '.';
 }
 
@@ -552,7 +547,13 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
         glyph = actor->visual;
     } else {
         glyph = ui_get_world_tile_glyph(t);
-        if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
+        if (t == TILE_EXIT) {
+            WorldTilesetKind ets = scene_get_tileset(world->map_id);
+            uint8_t ex = (ets == WORLD_TILESET_DESOLATE) ? TILESET_EXIT_DESOLATE :
+                         (ets == WORLD_TILESET_FOREST) ? TILESET_EXIT_FOREST :
+                         (ets == WORLD_TILESET_CASTLE) ? TILESET_EXIT_CASTLE : 2;
+            tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + ex);
+        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
             t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
             uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_WALL_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);

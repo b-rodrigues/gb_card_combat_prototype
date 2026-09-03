@@ -175,6 +175,24 @@ def verify_hostile_sprites(sess):
     check("boss bot-right background tile in mirror", 145, mirror_at(sess, mirror, 11, 6))
 
 
+def verify_exit_art(sess):
+    """Tileset-specific exit art (manifest vram_block exit markings):
+    gate cells render the tileset's exit tile, not the generic gate.
+    town (forest) -> 128+8, south_field (desolate) -> 128+40,
+    castle -> 128+26.  RPG_TILE_BASE_* are all 128."""
+    print("== Exit art (per-tileset gate tiles) ==")
+    cases = (("town_boot.json", (1, 7), 136),
+             ("south_field_boot.json", (12, 0), 168),
+             ("south_field_boot.json", (12, 11), 168),
+             ("castle_boot.json", (12, 11), 154))
+    mirror = sess.get_symbol("g_tilemap_mirror")
+    for name, (x, y), want in cases:
+        sess.load_scenario(load_scenario(sess, name))
+        sess.step(2)
+        check(f"{name} gate ({x},{y}) renders exit art",
+              want, mirror_at(sess, mirror, x, y))
+
+
 def verify_battle_transition(sess):
     print("== Battle transition (first_encounter) ==")
     sess.load_scenario(load_scenario(sess, "first_encounter.json"))
@@ -308,7 +326,8 @@ def main():
                       ("battle steady frame", verify_steady_battle_frame),
                       ("scene", verify_scene_transition),
                       ("dialogue", verify_dialogue_transition),
-                      ("hostile sprites", verify_hostile_sprites)):
+                      ("hostile sprites", verify_hostile_sprites),
+                      ("exit art", verify_exit_art)):
         sess = EmulatorSession(rom_path=ROM)
         try:
             sess.connect()

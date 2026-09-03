@@ -2,6 +2,7 @@
 
 #include "world.h"
 #include "actor.h"
+#include "tile_walk.h"
 
 extern uint8_t g_patrol_outcome;
 extern uint8_t g_patrol_evt[4];
@@ -99,19 +100,16 @@ void world_patrol_slot_banked(void)
         blocked = 1;
     } else {
         tile = g_patrol_world->map[target_y][target_x];
-        /* Walkable-set replica of world_is_walkable() (src/world/world.c) --
-         * bank-3 bodies must not call fixed-bank code.  KEEP IN SYNC. */
+        /* Same generated traits table as world_is_walkable() (the bank-3
+         * body inlines the table instead of calling fixed-bank code, but
+         * both read generated/tiles/tile_traits.h: one source, no sync). */
         if (tile == TILE_FLOOR || tile == TILE_EXIT) {
             blocked = 0;
         } else if (tile >= TILE_DESOLATE_FLOOR_00 && tile <= TILE_DESOLATE_FLOOR_03) {
             blocked = 0;
         } else if (tile == TILE_DESOLATE_FLOOR_PLAIN || tile == TILE_DESOLATE_STAIRCASE) {
             blocked = 0;
-        } else if (tile >= TILE_DESOLATE_LANDSCAPE_21 && tile <= TILE_DESOLATE_LANDSCAPE_24) {
-            blocked = 0;
-        } else if (tile == TILE_DESOLATE_LANDSCAPE_32 || tile == TILE_DESOLATE_LANDSCAPE_40) {
-            blocked = 0;
-        } else if (tile >= TILE_DESOLATE_LANDSCAPE_43 && tile <= TILE_DESOLATE_LANDSCAPE_47) {
+        } else if (tile_landscape_walkable(tile)) {
             blocked = 0;
         } else {
             blocked = 1;

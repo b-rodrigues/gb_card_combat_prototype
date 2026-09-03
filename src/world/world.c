@@ -1,4 +1,5 @@
 #include "world.h"
+#include "tile_walk.h"
 #include "game.h"
 #include "telemetry.h"
 #include "actor.h"
@@ -96,12 +97,10 @@ bool world_is_walkable(const World *w, uint8_t x, uint8_t y)
     if (tile == TILE_FLOOR || tile == TILE_EXIT) return true;
     if (tile >= TILE_DESOLATE_FLOOR_00 && tile <= TILE_DESOLATE_FLOOR_03) return true;
     if (tile == TILE_DESOLATE_FLOOR_PLAIN || tile == TILE_DESOLATE_STAIRCASE) return true;
-    /* Desolate-landscape floor variants (kept in sync with the '.' and '>'
-     * glyphs in ui_get_world_tile_glyph and the patrol replica below):
-     * 21-24 + 32 + 43-47 are plain floors, 40 is the landscape exit. */
-    if (tile >= TILE_DESOLATE_LANDSCAPE_21 && tile <= TILE_DESOLATE_LANDSCAPE_24) return true;
-    if (tile == TILE_DESOLATE_LANDSCAPE_32 || tile == TILE_DESOLATE_LANDSCAPE_40) return true;
-    if (tile >= TILE_DESOLATE_LANDSCAPE_43 && tile <= TILE_DESOLATE_LANDSCAPE_47) return true;
+    /* Desolate-landscape floors come from the generated traits table
+     * (tools/level_compiler/generate_tiles.py from the editor manifest),
+     * so manifest edits can never silently diverge from ROM collision. */
+    if (tile_landscape_walkable(tile)) return true;
     return false;
 }
 

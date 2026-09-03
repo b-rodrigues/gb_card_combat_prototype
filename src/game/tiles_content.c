@@ -13,9 +13,12 @@ const uint8_t g_tileset_interior[64] = {
 #include "gfx/rpg_interior_tiles.inc"
 };
 
-const uint8_t g_tileset_forest[128] = {
+const uint8_t g_tileset_forest[144] = {
     /* 8 forest tiles (128 bytes): Floor, Tree, Gate, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump */
 #include "gfx/rpg_forest_tiles.inc"
+    /* + exit art (16 bytes) at index 8: see the vram_block exit marking
+     * in tools/level_editor/tilesets/forest.json */
+#include "gfx/rpg_forest_exit.inc"
 };
 
 const uint8_t g_tileset_desolate[768] = {
