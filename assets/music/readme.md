@@ -1,6 +1,6 @@
 # Game Boy Tracker Music (`assets/music/`)
 
-Music by **Putosaure**.
+Music by **jonas bryan**.
 
 This directory holds the source `.uge` (hUGETracker) files for the Game Boy RPG soundtrack.
 
