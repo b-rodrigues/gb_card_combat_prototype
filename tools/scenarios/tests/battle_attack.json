@@ -43,6 +43,14 @@
       "event": "DAMAGE_DEALT"
     },
     {
+      "type": "sfx_count",
+      "expected": 2
+    },
+    {
+      "type": "sfx_last",
+      "expected": 4
+    },
+    {
       "type": "battle_enemy_hp",
       "expected": 7
     },

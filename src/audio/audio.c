@@ -2,66 +2,62 @@
 #include "telemetry.h"
 #include "huge_music.h"
 #include "huge_music_data.h"
+#include "sfx_tables.h"
 
 MusicTrack g_audio_current_track = MUSIC_NONE;
 uint8_t g_sound_enabled = 1;
 static uint8_t step_counter = 0;
 static uint8_t note_index = 0;
 
-/* ── SFX layer ──────────────────────────────────────────────────────
+/* ── SFX layer (transcribed tracker SFX) ────────────────────────────
  * Music runs on channel 1 (see play_note / audio_update below) or via
  * hUGEDriver.  Effect sounds use channels 2 and 4 so they never collide
- * with the CH1 music voice.  CH2 (NR21-NR24) carries the menu blips and
- * the block thump; CH4 (NR41-NR44) is the hardware white-noise generator,
- * used for the attack/hit swishes (a clearly distinct voice, needs no
- * wave RAM).  When hUGEDriver music is active, channels 2 and 4 are muted
- * during SFX playback and unmuted once the SFX envelope concludes. */
-#define SFX_ENVELOPE_ON 0xF4
-#define SFX_ENVELOPE_OFF 0x00
-static uint8_t sfx_active = 0;
-static uint8_t sfx_ticks = 0;
+ * with the CH1 music voice.  Each SFX id voices the step tables in
+ * generated/sfx/sfx_tables.c (transcribed from the assets-sfx tracker
+ * files by tools/transcribe_sfx.py): score CH1 renders to the CH2 voice, score
+ * CH4 renders verbatim.  When hUGEDriver music is active, the used music
+ * channels are muted during SFX playback and unmuted at the table end. */
+#define SFX_NONE 0xFF
+/* Cursor state shared with the bank-6 stepper (src/audio/sfx_step.c):
+ * plain WRAM globals, readable from any bank. */
+/* Harness-visible trigger log (AGENTS.md 53.7: semantic, not transport):
+ * per-trigger SFX telemetry would flood the 32-entry gameplay ring and
+ * evict gameplay events scenarios assert on, so triggers land here
+ * instead: total count + last id, read by name from host tools. */
+uint16_t g_sfx_played_count = 0;
+uint8_t g_sfx_last_id = SFX_NONE;
+uint8_t sfx_id = SFX_NONE;
+uint8_t sfx_tick = 0;
+uint8_t sfx_tone_idx = 0;
+uint8_t sfx_noise_idx = 0;
+static uint8_t sfx_div = 0;
+static uint8_t sfx_muted = 0;
+
+extern uint8_t sfx_step_tick(void);
 
 void audio_play_sfx(uint8_t s)
 {
+    uint8_t voices;
+
     if (!g_sound_enabled) return;
-
-    /* Channel-4 noise bursts: a short white-noise swish with a fast
-     * volume decay envelope.  SFX_ATTACK (player slash) is a slightly
-     * longer, rougher burst than SFX_HIT (enemy strikes the player). */
-    if (s == SFX_ATTACK || s == SFX_HIT) {
-        huge_music_mute_channel(HT_CH4, HT_CH_MUTE);
-        NR41_REG = 0x0F;
-        NR42_REG = (s == SFX_ATTACK) ? 0xF2 : 0xE2;
-        NR43_REG = (s == SFX_ATTACK) ? 0x58 : 0x6C;
-        NR44_REG = 0x80;
-        sfx_active = 2;
-        sfx_ticks = (s == SFX_ATTACK) ? 12 : 9;
-        return;
-    }
-
-    /* Channel-2 tones: menu blips.  SFX_CURSOR (navigation: menu open,
-     * cursor move, sound toggle) is a higher blip; SFX_CONFIRM (selection)
-     * and SFX_SELECT (battle hand / card select) are lower variants;
-     * SFX_BACK is a deep low "bloup"; SFX_BLOCK is a low thump for a
-     * successful defend.  Split trigger so the volume/envelope lands on a
-     * fresh triggering edge. */
-    {
-        uint8_t pitch;
-        switch (s) {
-        case SFX_BACK:  pitch = 0x3A; break;
-        case SFX_BLOCK: pitch = 0x2C; break;
-        case SFX_SELECT: pitch = 0x52; break;
-        case SFX_CONFIRM: pitch = 0x45; break;
-        default:         pitch = 0x64; break;
-        }
+    if (s > SFX_BLOCK) return;
+    sfx_id = s;
+    sfx_tick = 0;
+    sfx_tone_idx = 0;
+    sfx_noise_idx = 0;
+    sfx_div = 0;
+    sfx_muted = 0;
+    voices = s_sfx_voices[s];
+    if (voices & 0x01) {
         huge_music_mute_channel(HT_CH2, HT_CH_MUTE);
-        NR21_REG = 0x80;
-        NR22_REG = SFX_ENVELOPE_ON;
-        NR23_REG = pitch;
-        NR24_REG = 0x80 | 0x03;
-        sfx_active = 1;
-        sfx_ticks = 1;
+        sfx_muted |= 0x01;
     }
+    if (voices & 0x02) {
+        huge_music_mute_channel(HT_CH4, HT_CH_MUTE);
+        sfx_muted |= 0x02;
+    }
+    g_sfx_played_count++;
+    g_sfx_last_id = s;
 }
 
 #ifdef DEBUG_BUILD
@@ -233,21 +229,27 @@ void audio_update(void)
     g_audio_ticks++;
 #endif
 
-    /* Step the SFX one-shot (a handful of timer ticks), then silence it
-     * so it does not ring on past its envelope.  sfx_active == 2 means a
-     * channel-4 noise burst; sfx_active == 1 a channel-2 tone. */
-    if (sfx_active) {
-        if (sfx_ticks == 0) {
-            if (sfx_active == 2) {
-                NR42_REG = 0x00;
-                huge_music_mute_channel(HT_CH4, HT_CH_PLAY);
-            } else {
-                NR22_REG = SFX_ENVELOPE_OFF;
-                huge_music_mute_channel(HT_CH2, HT_CH_PLAY);
+    /* Step the transcribed SFX at the 64 Hz tracker rate through the
+     * bank-6 stepper body (same inline select-6/call/restore-1 discipline
+     * as huge_music_update, which also runs in this ISR). At the table
+     * end the used voices are silenced and their music channels unmuted. */
+    if (sfx_id <= SFX_BLOCK) {
+        if (++sfx_div >= 4) {
+            sfx_div = 0;
+            *(volatile uint8_t *)0x2000 = HUGE_MUSIC_BANK;
+            if (sfx_step_tick()) {
+                if (sfx_muted & 0x01) {
+                    NR22_REG = 0x00;
+                    huge_music_mute_channel(HT_CH2, HT_CH_PLAY);
+                }
+                if (sfx_muted & 0x02) {
+                    NR42_REG = 0x00;
+                    huge_music_mute_channel(HT_CH4, HT_CH_PLAY);
+                }
+                sfx_muted = 0;
+                sfx_id = SFX_NONE;
             }
-            sfx_active = 0;
-        } else {
-            sfx_ticks--;
+            *(volatile uint8_t *)0x2000 = 1;
         }
     }
 

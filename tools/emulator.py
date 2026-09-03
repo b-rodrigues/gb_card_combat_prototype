@@ -1017,6 +1017,18 @@ class EmulatorSession:
         addr = self.get_symbol("g_tilemap_mirror")
         return [self._memread(addr + i) for i in range(32 * 32)]
 
+    def get_sfx_state(self):
+        """Read the SFX trigger log: (total count, last SFX id).
+        Per-trigger SFX telemetry would flood the 32-entry gameplay ring
+        and evict gameplay events, so triggers land in these WRAM globals
+        instead (see audio.c)."""
+        count_addr = self.get_symbol("g_sfx_played_count")
+        last_addr = self.get_symbol("g_sfx_last_id")
+        lo = self._memread(count_addr)
+        hi = self._memread(count_addr + 1)
+        count = (lo or 0) | ((hi or 0) << 8)
+        return count, self._memread(last_addr)
+
     def get_screen_buf(self):
         """Read 18×20 characters from g_ui_screen_buf."""
         addr = self.get_symbol("g_ui_screen_buf")

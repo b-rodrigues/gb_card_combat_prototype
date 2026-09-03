@@ -71,3 +71,54 @@ lib/hUGEDriver/src/hUGEDriver.asm ────────┘
      ```
    * Hook into `audio_play_music()` in `src/audio/audio.c` using `huge_music_play(&song_<track_name>)`.
 
+---
+
+## 4. Sound Effects (`assets/sfx/`, transcribed — Path C)
+
+One-shot SFX are **not** played as tracker songs (song takeover would
+interrupt BGM and the 2-order jingles would loop). They are transcribed
+into synth step tables that the existing CH2-tone / CH4-noise voices
+render with zero BGM interruption:
+
+```
+assets/sfx/*.uge
+       │  (uge2source, scratch)
+       ▼
+tools/transcribe_sfx.py  (driver-faithful emulation at 64 Hz ticks:
+note rows, instrument loads, subpattern jumps/transposes/portamento,
+arpeggio, CH4 polys, tempo, length timer)
+       ▼
+generated/sfx/sfx_tables.c  [#pragma bank 6: per-voice step arrays]
+generated/sfx/sfx_index.c   [fixed bank: 7 voice-presence bytes]
+```
+
+| File | SFX id(s) | Duration |
+|---|---|---|
+| `sfx cursor.uge` | CURSOR | 9 ticks (0.14 s) |
+| `sfx accept.uge` | CONFIRM, SELECT | 8 ticks (0.12 s) |
+| `sfx back.uge` | BACK | 10 ticks (0.16 s) |
+| `sfx hit2.uge` | ATTACK | 22 ticks (0.34 s) |
+| `sfx hit.uge` | HIT | 12 ticks (0.19 s) |
+| `sfx block.uge` | BLOCK | 77 ticks (1.20 s) |
+
+* `make sfx` regenerates the tables deterministically (byte-identical
+  reruns). The transcriber fails loudly on any encoding outside the
+  observed subset (other effects, CH2/CH3 notes, wave instruments,
+  routines, tempo changes).
+* `BLOCK`'s 1.2 s decay ducks music CH2 for its full duration by design
+  (scored envelope). If that proves annoying in play, shorten the
+  envelope in the `.uge` and regenerate — do not hand-edit the tables.
+* Runtime: `audio_play_sfx()` (ids unchanged, ~20 existing call sites)
+  mutes exactly the voices each SFX uses, steps the tables from the
+  timer ISR through the bank-6 body `sfx_step_tick()`, then silences and
+  unmutes. Triggers do NOT emit gameplay telemetry: per-trigger events
+  would flood the 32-entry ring and evict gameplay events scenarios
+  assert on. Instead each trigger bumps `g_sfx_played_count` and sets
+  `g_sfx_last_id` (WRAM globals read by name from host tools), asserted
+  via the `sfx_count` / `sfx_last` scenario assertions;
+  `tools/verify_music.py` checks 5a–5d (trigger, completion, content
+  hold, no stall).
+* Fixed-bank cost is kept under `0x8000` by structure: the voice tables
+  and stepper body live in bank 6; fixed bank holds only the 7 presence
+  bytes plus trigger/dispatch (`make memmap` gates this).
+

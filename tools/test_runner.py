@@ -32,7 +32,8 @@ VALID_ASSERTION_TYPES = {
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
     "currency", "progression_level", "progression_progress",
     "camera", "scroll_x", "scroll_y", "world_width", "world_height",
-    "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell"
+    "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell",
+    "sfx_count", "sfx_last"
 }
 
 VALID_ENTITY_IDS = set(ENTITY_ID_MAP.values())
@@ -308,6 +309,8 @@ def run_scenario(scenario):
         scy = session._memread(0xFF42)
         has_tilemap_assert = any(a.get("type") == "tilemap_cell" for a in scenario.get("assertions", []))
         tilemap_mirror = session.get_tilemap_mirror() if has_tilemap_assert else None
+        has_sfx_assert = any(a.get("type") in ("sfx_count", "sfx_last") for a in scenario.get("assertions", []))
+        sfx_count, sfx_last = session.get_sfx_state() if has_sfx_assert else (None, None)
 
         # Check if any assertion needs logical screen buffer
         has_screen_assert = any(a.get("type") in ("screen_row", "screen_row_not_contains") for a in scenario.get("assertions", []))
@@ -428,6 +431,16 @@ def run_scenario(scenario):
             actual = tilemap_mirror[idx] if tilemap_mirror is not None else None
             passed = (actual == int(expected))
             actual = f"tilemap[{world_col},{world_row}]={actual}"
+
+        elif a_type == "sfx_count":
+            actual = sfx_count
+            passed = (actual == int(expected))
+            actual = f"sfx_count={actual}"
+
+        elif a_type == "sfx_last":
+            actual = sfx_last
+            passed = (actual == int(expected))
+            actual = f"sfx_last={actual}"
 
         elif a_type == "music_track":
             actual = snap.get("music_track", "UNKNOWN")

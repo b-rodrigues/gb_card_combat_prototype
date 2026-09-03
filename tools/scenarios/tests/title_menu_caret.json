@@ -66,6 +66,14 @@
       "type": "event_count",
       "event": "RENDER_SCREEN",
       "count": 2
+    },
+    {
+      "type": "sfx_count",
+      "expected": 4
+    },
+    {
+      "type": "sfx_last",
+      "expected": 0
     }
   ]
 }

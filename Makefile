@@ -21,7 +21,7 @@ RGBASM_HUGE ?= $(shell command -v rgbasm-huge 2>/dev/null || echo rgbasm)
 RGB2SDAS = python3 tools/rgb2sdas.py
 UGE2SOURCE = uge2source
 
-INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR)
+INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR) -I$(GENERATED_SFX_DIR)
 
 SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 
@@ -32,19 +32,28 @@ DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(S
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
 MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c
+GENERATED_SFX_DIR = generated/sfx
+# Explicit list (not wildcard): asset names contain spaces, which make
+# would split. Escaped following the assets/music rules' convention.
+SFX_UGE = assets/sfx/sfx\ accept.uge assets/sfx/sfx\ back.uge \
+          assets/sfx/sfx\ block.uge assets/sfx/sfx\ cursor.uge \
+          assets/sfx/sfx\ hit.uge assets/sfx/sfx\ hit2.uge
+# Both C files come from one transcriber run (plus sfx_tables.h); the
+# recipe is deterministic, so a double invocation is a harmless no-op.
+SFX_TABLES = $(GENERATED_SFX_DIR)/sfx_tables.c $(GENERATED_SFX_DIR)/sfx_index.c
 MUSIC_OBJS = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/music/%.o,$(MUSIC_SRCS))
 MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/music/%.o,$(MUSIC_SRCS))
 
 HUGEDRIVER_OBJ = $(BUILD_DIR)/lib/hUGEDriver.o
 HUGEDRIVER_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver.o
 
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(HUGEDRIVER_OBJ)
-OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ)
+OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
 
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music level levels levels-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music sfx level levels levels-check editor clean
 
 all: $(TARGET)
 
@@ -244,7 +253,28 @@ $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
-music: $(MUSIC_SRCS)
+music: $(MUSIC_SRCS) sfx
+
+# Tracker SFX -> synth step tables (Path C transcription). Deterministic:
+# rerunning reproduces generated/sfx/sfx_tables.c byte-identically.
+sfx: $(SFX_TABLES)
+
+$(SFX_TABLES): $(SFX_UGE) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR)
+	python3 tools/transcribe_sfx.py --out "$@" $(SFX_UGE)
+
+$(GENERATED_SFX_DIR):
+	mkdir -p $(GENERATED_SFX_DIR)
+
+SFX_OBJS = $(patsubst $(GENERATED_SFX_DIR)/%.c,$(BUILD_DIR)/sfx/%.o,$(SFX_TABLES))
+SFX_OBJS_DEBUG = $(patsubst $(GENERATED_SFX_DIR)/%.c,$(BUILD_DIR)/debug/sfx/%.o,$(SFX_TABLES))
+
+$(BUILD_DIR)/sfx/%.o: $(GENERATED_SFX_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c $(INCLUDES) -o $@ $<
+
+$(BUILD_DIR)/debug/sfx/%.o: $(GENERATED_SFX_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
 $(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
 	python3 tools/compile_music.py "$<" 6 song_battle "$@"
