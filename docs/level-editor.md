@@ -927,6 +927,9 @@ Rules:
   JSON block per C block); collapsed `TILE_FLOOR`/`TILE_WALL` map to
   per-tileset canonical art; floor-only patches are design docs (they
   compile to the default background).
-- Gates: `make levels-check` runs `validate` + `compile --check` +
-  `decompile --check` + the `compile → decompile → compile` fixpoint
-  (C-equality, not JSON-text equality).
+- Gates: `make levels-check` runs `validate` + `compile --check`.
+  JSON is the source of truth, so "JSON differs from decompiled-canonical
+  form" is not an error and is not gated. `decompile.py` is kept as a
+  recovery/forensics tool (regenerate JSON from hand-edited C, audit a
+  build); its `--check`/`--roundtrip` modes are dev diagnostics for that
+  purpose, using C-equality, not JSON-text equality.

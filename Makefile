@@ -163,13 +163,12 @@ levels:
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
 
-# Two-way gates: committed C must equal fresh compile (no hand edits to
-# generated files), and compile -> decompile -> compile must be a fixpoint.
+# JSON is the source of truth: committed C must equal fresh compile (no
+# hand edits to generated files). decompile.py is a recovery/forensics
+# tool, not a gate (see docs/level-editor.md Phase 15).
 levels-check:
 	@python3 tools/level_compiler/validate.py levels/*.json
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
-	@python3 tools/level_compiler/decompile.py --check
-	@python3 tools/level_compiler/decompile.py --roundtrip
 
 src/game/scenes_content.c: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
