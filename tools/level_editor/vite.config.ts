@@ -81,47 +81,90 @@ function levelEditorApiPlugin(): Plugin {
           return 'nix';
         }
 
-        function runInToolchain(cmd: string, callback: (err: any, stdout: string, stderr: string) => void) {
-          const hasDirectTools = (() => {
+        // Full ROM toolchain probe. The old check (python3/make/lcc only)
+        // could select the direct path in an env with compilers but no
+        // audio tools, dying late at the first native-audio exec with a
+        // cryptic OSError. Every binary here must EXECUTE, not just resolve.
+        const TOOLCHAIN_TOOLS = ['python3', 'make', 'lcc', 'uge2source'];
+        function probeTools(): { ok: boolean; detail: { [k: string]: string } } {
+          const { execSync } = require('child_process');
+          const detail: { [k: string]: string } = {};
+          let ok = true;
+          for (const t of TOOLCHAIN_TOOLS) {
             try {
-              const { execSync } = require('child_process');
-              execSync('python3 --version && make --version && lcc -v', { stdio: 'ignore' });
-              return true;
-            } catch {
-              return false;
+              execSync(`${t} --version 2>&1 || ${t} -v 2>&1 || ${t} 2>&1`, { stdio: 'ignore' });
+              detail[t] = 'runs';
+            } catch (e: any) {
+              // execSync throws on nonzero exit too; what matters is whether
+              // the binary launched at all (status !== 127 and no ENOENT/ENOEXEC).
+              const msg = String((e && e.message) || e);
+              if (/ENOENT|ENOEXEC|command not found|not recognized/i.test(msg) || e.status === 127) {
+                detail[t] = `MISSING/BROKEN (${msg.split('\n')[0]})`;
+                ok = false;
+              } else {
+                detail[t] = 'runs';
+              }
             }
-          })();
+          }
+          try {
+            execSync('rgbasm-huge --help 2>&1 || rgbasm --help 2>&1', { stdio: 'ignore' });
+            detail['rgbasm'] = 'runs';
+          } catch {
+            detail['rgbasm'] = 'MISSING/BROKEN (neither rgbasm-huge nor rgbasm runs)';
+            ok = false;
+          }
+          return { ok, detail };
+        }
 
-          const nixBin = getNixBin();
-          const fullCmd = hasDirectTools
-            ? cmd
-            : `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
+        const toolchainProbe = probeTools();
+        const nixBin = getNixBin();
+        console.log(`[level-editor] repoRoot=${repoRoot} toolchain=${toolchainProbe.ok ? 'direct' : 'nix-develop'}`,
+          JSON.stringify(toolchainProbe.detail));
 
-          exec(fullCmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
-            if (err && !hasDirectTools) {
-              // Fallback to direct execution in case nix failed
-              exec(cmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, callback);
-            } else if (err && hasDirectTools && nixBin) {
-              // Fallback to nix develop in case host environment had issues
-              const nixFallback = `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
-              exec(nixFallback, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, callback);
-            } else {
-              callback(err, stdout, stderr);
-            }
-          });
+        function runInToolchain(cmd: string, callback: (err: any, stdout: string, stderr: string) => void) {
+          const nixCmd = `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
+          const attempts: { route: string; cmd: string; error?: string; stderr?: string }[] = [];
+          const finish = (err: any, stdout: string, stderr: string, route: string) => {
+            if (err) attempts.push({ route, cmd: route === 'direct' ? cmd : nixCmd, error: err.message, stderr });
+            (callback as any)(err, stdout, stderr, attempts);
+          };
+          const runNix = (cb: (err: any, stdout: string, stderr: string) => void) => {
+            exec(nixCmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => cb(err, stdout, stderr));
+          };
+          const runDirect = (cb: (err: any, stdout: string, stderr: string) => void) => {
+            exec(cmd, { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => cb(err, stdout, stderr));
+          };
+          if (toolchainProbe.ok) {
+            // Direct tools verified: run direct; on failure retry once via
+            // nix (host env quirks) and report BOTH attempts explicitly.
+            runDirect((err, stdout, stderr) => {
+              if (!err) return callback(err, stdout, stderr);
+              attempts.push({ route: 'direct', cmd, error: err.message, stderr });
+              runNix((err2, stdout2, stderr2) => finish(err2, stdout2, stderr2, 'nix-develop'));
+            });
+          } else if (nixBin) {
+            // Toolchain incomplete: direct execution is known-broken, so do
+            // not attempt it (it only produces cryptic late failures).
+            runNix((err, stdout, stderr) => finish(err, stdout, stderr, 'nix-develop'));
+          } else {
+            const err: any = new Error(
+              `ROM toolchain incomplete (${Object.entries(toolchainProbe.detail).filter(([, v]) => v !== 'runs').map(([k]) => k).join(', ')}) ` +
+              `and no 'nix' binary found. Run the editor from inside \`nix develop\` (AGENTS.md section 1).`);
+            callback(err, '', '');
+          }
         }
 
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
-          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && make debug', (err, stdout, stderr) => {
+          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && make debug', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message, stderr);
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: false, error: stderr || err.message, log: stdout }));
+              res.end(JSON.stringify({ success: false, error: stderr || err.message, log: stdout, attempts: attempts || [] }));
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: true, log: stdout, romPath: 'build/rpg_card_proto_debug.gb' }));
             }
-          });
+          }) as any);
           return;
         }
 

@@ -53,7 +53,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music sfx level levels levels-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check doctor music sfx level levels levels-check editor clean
 
 all: $(TARGET)
 
@@ -210,6 +210,14 @@ editor: extract-tiles
 atlas-check:
 	@python3 tools/asset_atlas.py --check
 
+# Toolchain self-check: every required native binary must not only resolve
+# but EXECUTE (a broken file shadowing the real one fails at exec time with
+# a cryptic OSError deep inside a build rule). Order-only prerequisite of
+# the music/SFX conversion rules, so a broken toolchain fails here first
+# with the fix command instead of mid-build.
+doctor:
+	@python3 tools/doctor.py
+
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
@@ -259,7 +267,7 @@ music: $(MUSIC_SRCS) sfx
 # rerunning reproduces generated/sfx/sfx_tables.c byte-identically.
 sfx: $(SFX_TABLES)
 
-$(SFX_TABLES): $(SFX_UGE) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR)
+$(SFX_TABLES): $(SFX_UGE) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
 	python3 tools/transcribe_sfx.py --out "$@" $(SFX_UGE)
 
 $(GENERATED_SFX_DIR):
@@ -276,16 +284,16 @@ $(BUILD_DIR)/debug/sfx/%.o: $(GENERATED_SFX_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
-$(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+$(GENERATED_MUSIC_DIR)/battle.c: assets/music/Battle\ BGM.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_battle "$@"
 
-$(GENERATED_MUSIC_DIR)/desolate_landscape.c: assets/music/desolate_landscape.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+$(GENERATED_MUSIC_DIR)/desolate_landscape.c: assets/music/desolate_landscape.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_desolate_landscape "$@"
 
-$(GENERATED_MUSIC_DIR)/forest.c: assets/music/Forest.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+$(GENERATED_MUSIC_DIR)/forest.c: assets/music/Forest.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_forest "$@"
 
-$(GENERATED_MUSIC_DIR)/boss_fight.c: assets/music/Boss\ fight.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR)
+$(GENERATED_MUSIC_DIR)/boss_fight.c: assets/music/Boss\ fight.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_boss_fight "$@"
 
 $(GENERATED_MUSIC_DIR):
