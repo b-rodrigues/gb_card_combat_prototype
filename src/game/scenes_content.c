@@ -16,53 +16,60 @@ const SceneExit g_all_exits[] = {
     { 12, 11, 12, 10, SCENE_MOUNTAIN_PASS, '>' }
 };
 
+static const SceneTerrainBlock s_field_terrain[] = {
+    { 5, 5, 3, 2, TILE_FOREST_21 },
+    { 20, 10, 4, 2, TILE_FOREST_22 },
+    { 10, 13, 2, 2, TILE_FOREST_23 },
+    { 0, 0, 0, 0, 0 }
+};
+
 static const SceneTerrainBlock s_town_terrain[] = {
-    { 3, 3, 6, 4, TILE_WALL },
-    { 12, 3, 5, 4, TILE_WALL },
+    { 3, 3, 6, 4, TILE_FOREST_01 },
+    { 12, 3, 5, 4, TILE_FOREST_01 },
     { 0, 0, 0, 0, 0 }
 };
 
 static const SceneTerrainBlock s_forest_terrain[] = {
-    { 1, 1, 1, 1, TILE_WALL },
-    { 2, 1, 16, 1, TILE_WALL },
-    { 18, 1, 1, 1, TILE_WALL },
-    { 1, 2, 1, 14, TILE_WALL },
-    { 18, 2, 1, 14, TILE_WALL },
-    { 1, 16, 1, 1, TILE_WALL },
-    { 2, 16, 16, 1, TILE_WALL },
-    { 18, 16, 1, 1, TILE_WALL },
-    { 3, 3, 1, 1, TILE_WALL },
-    { 4, 3, 1, 1, TILE_WALL },
-    { 3, 4, 1, 1, TILE_WALL },
-    { 4, 4, 1, 1, TILE_WALL },
-    { 15, 3, 1, 1, TILE_WALL },
-    { 16, 3, 1, 1, TILE_WALL },
-    { 15, 4, 1, 1, TILE_WALL },
-    { 16, 4, 1, 1, TILE_WALL },
-    { 6, 7, 1, 1, TILE_WALL },
-    { 7, 7, 1, 1, TILE_WALL },
-    { 6, 8, 1, 1, TILE_WALL },
-    { 7, 8, 1, 1, TILE_WALL },
-    { 15, 8, 1, 1, TILE_WALL },
-    { 16, 8, 1, 1, TILE_WALL },
-    { 15, 9, 1, 1, TILE_WALL },
-    { 16, 9, 1, 1, TILE_WALL },
-    { 3, 12, 1, 1, TILE_WALL },
-    { 4, 12, 1, 1, TILE_WALL },
-    { 3, 13, 1, 1, TILE_WALL },
-    { 4, 13, 1, 1, TILE_WALL },
-    { 15, 13, 1, 1, TILE_WALL },
-    { 16, 13, 1, 1, TILE_WALL },
-    { 15, 14, 1, 1, TILE_WALL },
-    { 16, 14, 1, 1, TILE_WALL },
-    { 10, 4, 1, 1, TILE_WALL },
-    { 11, 4, 1, 1, TILE_WALL },
-    { 10, 5, 1, 1, TILE_WALL },
-    { 11, 5, 1, 1, TILE_WALL },
-    { 5, 14, 1, 1, TILE_WALL },
-    { 6, 14, 1, 1, TILE_WALL },
-    { 5, 15, 1, 1, TILE_WALL },
-    { 6, 15, 1, 1, TILE_WALL },
+    { 1, 1, 1, 1, TILE_FOREST_00 },
+    { 2, 1, 16, 1, TILE_FOREST_01 },
+    { 18, 1, 1, 1, TILE_FOREST_05 },
+    { 1, 2, 1, 14, TILE_FOREST_09 },
+    { 18, 2, 1, 14, TILE_FOREST_06 },
+    { 1, 16, 1, 1, TILE_FOREST_16 },
+    { 2, 16, 16, 1, TILE_FOREST_17 },
+    { 18, 16, 1, 1, TILE_FOREST_26 },
+    { 3, 3, 1, 1, TILE_FOREST_12 },
+    { 4, 3, 1, 1, TILE_FOREST_13 },
+    { 3, 4, 1, 1, TILE_FOREST_28 },
+    { 4, 4, 1, 1, TILE_FOREST_29 },
+    { 15, 3, 1, 1, TILE_FOREST_12 },
+    { 16, 3, 1, 1, TILE_FOREST_13 },
+    { 15, 4, 1, 1, TILE_FOREST_28 },
+    { 16, 4, 1, 1, TILE_FOREST_29 },
+    { 6, 7, 1, 1, TILE_FOREST_12 },
+    { 7, 7, 1, 1, TILE_FOREST_13 },
+    { 6, 8, 1, 1, TILE_FOREST_28 },
+    { 7, 8, 1, 1, TILE_FOREST_29 },
+    { 15, 8, 1, 1, TILE_FOREST_12 },
+    { 16, 8, 1, 1, TILE_FOREST_13 },
+    { 15, 9, 1, 1, TILE_FOREST_28 },
+    { 16, 9, 1, 1, TILE_FOREST_29 },
+    { 3, 12, 1, 1, TILE_FOREST_12 },
+    { 4, 12, 1, 1, TILE_FOREST_13 },
+    { 3, 13, 1, 1, TILE_FOREST_28 },
+    { 4, 13, 1, 1, TILE_FOREST_29 },
+    { 15, 13, 1, 1, TILE_FOREST_12 },
+    { 16, 13, 1, 1, TILE_FOREST_13 },
+    { 15, 14, 1, 1, TILE_FOREST_28 },
+    { 16, 14, 1, 1, TILE_FOREST_29 },
+    { 10, 4, 1, 1, TILE_FOREST_14 },
+    { 11, 4, 1, 1, TILE_FOREST_15 },
+    { 10, 5, 1, 1, TILE_FOREST_30 },
+    { 11, 5, 1, 1, TILE_FOREST_31 },
+    { 5, 14, 1, 1, TILE_FOREST_14 },
+    { 6, 14, 1, 1, TILE_FOREST_15 },
+    { 5, 15, 1, 1, TILE_FOREST_30 },
+    { 6, 15, 1, 1, TILE_FOREST_31 },
     { 0, 0, 0, 0, 0 }
 };
 
@@ -101,16 +108,16 @@ static const SceneTerrainBlock s_mountain_pass_terrain[] = {
 };
 
 static const SceneTerrainBlock s_castle_terrain[] = {
-    { 3, 3, 1, 6, TILE_WALL },
-    { 6, 3, 1, 6, TILE_WALL },
-    { 13, 3, 1, 6, TILE_WALL },
-    { 16, 3, 1, 6, TILE_WALL },
-    { 4, 3, 2, 1, TILE_WALL },
-    { 14, 3, 2, 1, TILE_WALL },
-    { 4, 8, 2, 1, TILE_WALL },
-    { 14, 8, 2, 1, TILE_WALL },
-    { 9, 6, 1, 1, TILE_WALL },
-    { 9, 9, 1, 1, TILE_WALL },
+    { 3, 3, 1, 6, TILE_CASTLE_03 },
+    { 6, 3, 1, 6, TILE_CASTLE_04 },
+    { 13, 3, 1, 6, TILE_CASTLE_03 },
+    { 16, 3, 1, 6, TILE_CASTLE_04 },
+    { 4, 3, 2, 1, TILE_CASTLE_01 },
+    { 14, 3, 2, 1, TILE_CASTLE_01 },
+    { 4, 8, 2, 1, TILE_CASTLE_10 },
+    { 14, 8, 2, 1, TILE_CASTLE_10 },
+    { 9, 6, 1, 1, TILE_CASTLE_13 },
+    { 9, 9, 1, 1, TILE_CASTLE_15 },
     { 0, 0, 0, 0, 0 }
 };
 
@@ -120,7 +127,7 @@ static const SceneTerrainBlock s_south_field_terrain[] = {
 };
 
 const SceneDefinition g_scenes[] = {
-    { MAP_FIELD,           MUSIC_FOREST,      32, 18, &g_all_exits[0],     3, WORLD_TILESET_FOREST,    0 },
+    { MAP_FIELD,           MUSIC_FOREST,      32, 18, &g_all_exits[0],     3, WORLD_TILESET_FOREST,    s_field_terrain },
     { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[3],     1, WORLD_TILESET_FOREST,    s_town_terrain },
     { MAP_FOREST,          MUSIC_FOREST,      20, 18, &g_all_exits[4],     1, WORLD_TILESET_FOREST,    s_forest_terrain },
     { MAP_MOUNTAIN_PASS,   MUSIC_DESOLATE,    20, 18, &g_all_exits[5],     2, WORLD_TILESET_DESOLATE,  s_mountain_pass_terrain },

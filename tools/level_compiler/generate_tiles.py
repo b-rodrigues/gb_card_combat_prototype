@@ -51,10 +51,8 @@ def load_tiletype_numbers():
 
 
 def landscape_entries(tilesets, const_by_value):
-    """(name, value, walkable, glyph) for the desolate-landscape range,
-    derived purely from the manifest (+ the vram_block exit marking)."""
-    tileset = tilesets.get("desolate_landscape", {})
-    by_const = {t["gb_constant"]: t for t in tileset.get("tiles", [])}
+    """(name, value, walkable, glyph) for all world tileset ranges,
+    derived purely from the manifests (+ the vram_block exit markings)."""
     exit_consts = set()
     for ts in tilesets.values():
         for e in ts.get("vram_block", {}).get("tiles", []):
@@ -64,22 +62,27 @@ def landscape_entries(tilesets, const_by_value):
                 if info:
                     exit_consts.add(info["gb_constant"])
     entries = []
-    for name in sorted(by_const,
-                       key=lambda n: const_by_value.get(n, 9999)):
-        value = const_by_value.get(name)
-        if value is None or not (182 <= value <= 229):
+    for ts_id, ts in sorted(tilesets.items()):
+        if not ts.get("vram_block"):
             continue
-        info = by_const[name]
-        walkable = bool(info.get("walkable", False))
-        if name in exit_consts:
-            glyph = ">"
-        elif info.get("category") == "object":
-            glyph = "*"
-        elif walkable:
-            glyph = "."
-        else:
-            glyph = "#"
-        entries.append((name, value, walkable, glyph))
+        by_const = {t["gb_constant"]: t for t in ts.get("tiles", [])}
+        for name in sorted(by_const,
+                           key=lambda n: const_by_value.get(n, 9999)):
+            value = const_by_value.get(name)
+            if value is None:
+                continue
+            info = by_const[name]
+            walkable = bool(info.get("walkable", False))
+            if name in exit_consts:
+                glyph = ">"
+            elif info.get("category") == "object":
+                glyph = "*"
+            elif walkable:
+                glyph = "."
+            else:
+                glyph = "#"
+            entries.append((name, value, walkable, glyph))
+    entries.sort(key=lambda e: e[1])
     return entries
 
 

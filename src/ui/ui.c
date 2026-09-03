@@ -470,7 +470,7 @@ void ui_load_tileset(uint8_t tileset)
     switch (tileset) {
         case WORLD_TILESET_FOREST:
             src = g_tileset_forest;
-            tile_count = 9;
+            tile_count = 48;
             break;
         case WORLD_TILESET_DESOLATE:
             src = g_tileset_desolate;
@@ -482,7 +482,7 @@ void ui_load_tileset(uint8_t tileset)
             break;
         default:
             src = g_tileset_forest;
-            tile_count = 9;
+            tile_count = 48;
             break;
     }
 
@@ -503,7 +503,9 @@ static char ui_get_world_tile_glyph(uint8_t t)
         if ((t >= TILE_DESOLATE_FLOOR_00 && t <= TILE_DESOLATE_FLOOR_03) || t == TILE_DESOLATE_FLOOR_PLAIN) return '.';
         return '#';
     }
-    if (t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47)
+    if ((t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) ||
+        (t >= TILE_FOREST_00 && t <= TILE_FOREST_47) ||
+        (t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26))
         return tile_landscape_glyph(t);
     return (t < 8) ? g_sem_map[t] : '.';
 }
@@ -553,6 +555,14 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
                    t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) {
             uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_LANDSCAPE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
+        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_FOREST &&
+                   t >= TILE_FOREST_00 && t <= TILE_FOREST_47) {
+            uint8_t f_idx = (uint8_t)(t - TILE_FOREST_00);
+            tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + f_idx);
+        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_CASTLE &&
+                   t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) {
+            uint8_t c_idx = (uint8_t)(t - TILE_CASTLE_00);
+            tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + c_idx);
         } else {
             uint8_t lookup_id = rpg_lookup_tile_id(scene_get_tileset(world->map_id), glyph);
             tile_idx = lookup_id ? lookup_id : (uint8_t)(ui_font_tile_base + (uint8_t)(glyph - ' '));

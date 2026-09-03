@@ -530,7 +530,8 @@ class EmulatorSession:
         self._session_dir = session_dir
         rom_copy = os.path.join(session_dir, "rom.gb")
         shutil.copyfile(self.rom_path, rom_copy)
-        cmd = ['xvfb-run', '-a', 'mgba',
+        auth_file = os.path.join(session_dir, "Xauthority")
+        cmd = ['xvfb-run', '-d', '-f', auth_file, 'mgba',
                '-C', 'audioSync=false', '-C', 'videoSync=false',
                '-d', rom_copy]
         self.proc = subprocess.Popen(cmd, stdin=slave, stdout=slave, stderr=slave,

@@ -181,7 +181,7 @@ def verify_exit_art(sess):
     town (forest) -> 128+8, south_field (desolate) -> 128+40,
     castle -> 128+26.  RPG_TILE_BASE_* are all 128."""
     print("== Exit art (per-tileset gate tiles) ==")
-    cases = (("town_boot.json", (1, 7), 136),
+    cases = (("town_boot.json", (1, 7), 168),
              ("south_field_boot.json", (12, 0), 168),
              ("south_field_boot.json", (12, 11), 168),
              ("castle_boot.json", (12, 11), 154))

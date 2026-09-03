@@ -141,6 +141,7 @@ void world_patrol_slot_banked(void)
     }
 
     if (blocked) {
+        bp[ACTOR_OFFSET(ai_step)]  = (uint8_t)(ai_step_v + 1);
         bp[ACTOR_OFFSET(ai_timer)] = PATROL_STEP_INTERVAL;
         return;
     }

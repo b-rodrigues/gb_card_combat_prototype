@@ -6,7 +6,7 @@
     {
       "id": "castle_top_left_corner_wall",
       "label": "top left corner wall",
-      "gb_constant": "TILE_CASTLE_TOP_LEFT_CORNER_WALL",
+      "gb_constant": "TILE_CASTLE_00",
       "walkable": false,
       "color": "#606060",
       "ascii": "#",
@@ -16,7 +16,7 @@
     {
       "id": "castle_top_wall",
       "label": "top wall",
-      "gb_constant": "TILE_CASTLE_TOP_WALL",
+      "gb_constant": "TILE_CASTLE_01",
       "walkable": false,
       "color": "#818181",
       "ascii": "#",
@@ -26,7 +26,7 @@
     {
       "id": "castle_top_right_corner_wall",
       "label": "top right corner wall",
-      "gb_constant": "TILE_CASTLE_TOP_RIGHT_CORNER_WALL",
+      "gb_constant": "TILE_CASTLE_02",
       "walkable": false,
       "color": "#606060",
       "ascii": "#",
@@ -36,7 +36,7 @@
     {
       "id": "castle_left_wall",
       "label": "left wall",
-      "gb_constant": "TILE_CASTLE_LEFT_WALL",
+      "gb_constant": "TILE_CASTLE_03",
       "walkable": false,
       "color": "#767676",
       "ascii": "#",
@@ -46,7 +46,7 @@
     {
       "id": "castle_right_wall",
       "label": "right wall",
-      "gb_constant": "TILE_CASTLE_RIGHT_WALL",
+      "gb_constant": "TILE_CASTLE_04",
       "walkable": false,
       "color": "#767676",
       "ascii": "#",
@@ -56,7 +56,7 @@
     {
       "id": "castle_window",
       "label": "window",
-      "gb_constant": "TILE_CASTLE_WINDOW",
+      "gb_constant": "TILE_CASTLE_05",
       "walkable": false,
       "color": "#777777",
       "ascii": "#",
@@ -66,7 +66,7 @@
     {
       "id": "castle_curtain",
       "label": "curtain",
-      "gb_constant": "TILE_CASTLE_CURTAIN",
+      "gb_constant": "TILE_CASTLE_06",
       "walkable": false,
       "color": "#893424",
       "ascii": "#",
@@ -76,7 +76,7 @@
     {
       "id": "castle_top_left_boss",
       "label": "top left boss",
-      "gb_constant": "TILE_CASTLE_TOP_LEFT_BOSS",
+      "gb_constant": "TILE_CASTLE_07",
       "walkable": false,
       "color": "#585454",
       "ascii": "#",
@@ -86,7 +86,7 @@
     {
       "id": "castle_top_right_boss",
       "label": "top right boss",
-      "gb_constant": "TILE_CASTLE_TOP_RIGHT_BOSS",
+      "gb_constant": "TILE_CASTLE_08",
       "walkable": false,
       "color": "#666262",
       "ascii": "#",
@@ -96,7 +96,7 @@
     {
       "id": "castle_bottom_left_corren_wall",
       "label": "bottom left corren wall",
-      "gb_constant": "TILE_CASTLE_BOTTOM_LEFT_CORREN_WALL",
+      "gb_constant": "TILE_CASTLE_09",
       "walkable": false,
       "color": "#5a5a5a",
       "ascii": "#",
@@ -106,7 +106,7 @@
     {
       "id": "castle_bottom_wall",
       "label": "bottom wall",
-      "gb_constant": "TILE_CASTLE_BOTTOM_WALL",
+      "gb_constant": "TILE_CASTLE_10",
       "walkable": false,
       "color": "#666666",
       "ascii": "#",
@@ -116,7 +116,7 @@
     {
       "id": "castle_bottom_right_corner_wall",
       "label": "bottom right corner wall",
-      "gb_constant": "TILE_CASTLE_BOTTOM_RIGHT_CORNER_WALL",
+      "gb_constant": "TILE_CASTLE_11",
       "walkable": false,
       "color": "#5a5a5a",
       "ascii": "#",
@@ -126,7 +126,7 @@
     {
       "id": "castle_chair_facing_left",
       "label": "chair facing left",
-      "gb_constant": "TILE_CASTLE_CHAIR_FACING_LEFT",
+      "gb_constant": "TILE_CASTLE_12",
       "walkable": false,
       "color": "#bcb6ab",
       "ascii": "#",
@@ -136,7 +136,7 @@
     {
       "id": "castle_table",
       "label": "table",
-      "gb_constant": "TILE_CASTLE_TABLE",
+      "gb_constant": "TILE_CASTLE_13",
       "walkable": false,
       "color": "#9e8e71",
       "ascii": "#",
@@ -146,7 +146,7 @@
     {
       "id": "castle_chair_facing_riht",
       "label": "chair facing riht",
-      "gb_constant": "TILE_CASTLE_CHAIR_FACING_RIHT",
+      "gb_constant": "TILE_CASTLE_14",
       "walkable": false,
       "color": "#bcb6ab",
       "ascii": "#",
@@ -156,7 +156,7 @@
     {
       "id": "castle_chest",
       "label": "chest",
-      "gb_constant": "TILE_CASTLE_CHEST",
+      "gb_constant": "TILE_CASTLE_15",
       "walkable": false,
       "color": "#a29271",
       "ascii": "#",
@@ -166,7 +166,7 @@
     {
       "id": "castle_bottom_left_boss",
       "label": "bottom left boss",
-      "gb_constant": "TILE_CASTLE_BOTTOM_LEFT_BOSS",
+      "gb_constant": "TILE_CASTLE_16",
       "walkable": false,
       "color": "#474747",
       "ascii": "#",
@@ -176,7 +176,7 @@
     {
       "id": "castle_bottom_right_boss",
       "label": "bottom right boss",
-      "gb_constant": "TILE_CASTLE_BOTTOM_RIGHT_BOSS",
+      "gb_constant": "TILE_CASTLE_17",
       "walkable": false,
       "color": "#403e3a",
       "ascii": "#",
@@ -186,7 +186,7 @@
     {
       "id": "castle_plain_floor",
       "label": "plain floor",
-      "gb_constant": "TILE_CASTLE_PLAIN_FLOOR",
+      "gb_constant": "TILE_CASTLE_18",
       "walkable": true,
       "color": "#d7d7d7",
       "ascii": ".",
@@ -196,7 +196,7 @@
     {
       "id": "castle_hero_frame_1_with_green_forest_background",
       "label": "hero_frame_1 with green forest background",
-      "gb_constant": "TILE_CASTLE_HERO_FRAME_1_WITH_GREEN_FOREST_BACKGROUND",
+      "gb_constant": "TILE_CASTLE_19",
       "walkable": true,
       "color": "#727272",
       "ascii": ".",
@@ -206,7 +206,7 @@
     {
       "id": "castle_hero_frame_2_with_green_forest_background",
       "label": "hero_frame_2 with green forest background",
-      "gb_constant": "TILE_CASTLE_HERO_FRAME_2_WITH_GREEN_FOREST_BACKGROUND",
+      "gb_constant": "TILE_CASTLE_20",
       "walkable": true,
       "color": "#727272",
       "ascii": ".",
@@ -216,7 +216,7 @@
     {
       "id": "castle_enemy_kobold_frame_1",
       "label": "enemy kobold frame 1",
-      "gb_constant": "TILE_CASTLE_ENEMY_KOBOLD_FRAME_1",
+      "gb_constant": "TILE_CASTLE_21",
       "walkable": true,
       "color": "#a79595",
       "ascii": ".",
@@ -226,7 +226,7 @@
     {
       "id": "castle_enemay_kobold_frame_2",
       "label": "enemay kobold frame 2",
-      "gb_constant": "TILE_CASTLE_ENEMAY_KOBOLD_FRAME_2",
+      "gb_constant": "TILE_CASTLE_22",
       "walkable": true,
       "color": "#a79595",
       "ascii": ".",
@@ -236,7 +236,7 @@
     {
       "id": "castle_enemy_bat_frame_1",
       "label": "enemy bat frame 1",
-      "gb_constant": "TILE_CASTLE_ENEMY_BAT_FRAME_1",
+      "gb_constant": "TILE_CASTLE_23",
       "walkable": true,
       "color": "#b8b8b8",
       "ascii": ".",
@@ -246,7 +246,7 @@
     {
       "id": "castle_enemy_bat_frame_2",
       "label": "enemy bat frame 2",
-      "gb_constant": "TILE_CASTLE_ENEMY_BAT_FRAME_2",
+      "gb_constant": "TILE_CASTLE_24",
       "walkable": true,
       "color": "#b8b8b8",
       "ascii": ".",
@@ -256,7 +256,7 @@
     {
       "id": "castle_merchant_desolate_landscape",
       "label": "merchant-desolate-landscape",
-      "gb_constant": "TILE_CASTLE_MERCHANT_DESOLATE_LANDSCAPE",
+      "gb_constant": "TILE_CASTLE_25",
       "walkable": true,
       "color": "#8a8174",
       "ascii": ".",
@@ -266,7 +266,7 @@
     {
       "id": "castle_exit_castle",
       "label": "exit castle",
-      "gb_constant": "TILE_CASTLE_EXIT_CASTLE",
+      "gb_constant": "TILE_CASTLE_26",
       "walkable": true,
       "color": "#858585",
       "ascii": ".",

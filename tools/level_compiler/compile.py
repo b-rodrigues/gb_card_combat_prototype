@@ -113,7 +113,7 @@ def map_base_tile_const(gb_const, t_info):
     if gb_const in ("TILE_FLOOR", "TILE_WALL", "TILE_EXIT", "TILE_BUILDING",
                     "TILE_STUMP_TL", "TILE_STUMP_TR", "TILE_STUMP_BL", "TILE_STUMP_BR"):
         return gb_const
-    if gb_const and gb_const.startswith("TILE_DESOLATE_"):
+    if gb_const and gb_const.startswith("TILE_"):
         return gb_const
     ascii_char = t_info.get("ascii", "#")
     if ascii_char == ".":

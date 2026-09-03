@@ -4,13 +4,9 @@
 
 /* World background tiles extracted from assets/ by tools/png2gb.py (make gfx) */
 
-const uint8_t g_tileset_forest[144] = {
-    /* 9 forest tiles (144 bytes): Floor, Tree, Exit, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump, Exit */
-#include "gfx/rpg_forest_floor.inc"
-#include "gfx/rpg_forest_tree.inc"
-#include "gfx/rpg_forest_exit.inc"
-#include "gfx/rpg_forest_stumps.inc"
-#include "gfx/rpg_forest_exit.inc"
+const uint8_t g_tileset_forest[768] = {
+    /* 48 forest tiles (768 bytes): All wall, floor, stump, tree, and exit tiles */
+#include "gfx/rpg_forest_world_tiles.inc"
 };
 
 const uint8_t g_tileset_desolate[768] = {

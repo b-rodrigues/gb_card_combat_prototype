@@ -86,6 +86,10 @@ gfx:
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
 	# ── Forest tileset (assets/forest-tile.png, 16 cols × 3 rows) ────────
+	# Full 48-tile world sheet (g_tileset_forest)
+	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_world_tiles \
+		--palette auto \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_world_tiles.inc
 	# Floor tile: col 0, row 2
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_floor \
 		--palette auto --tile-coords "0,2" \
