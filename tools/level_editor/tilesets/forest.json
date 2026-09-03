@@ -146,7 +146,7 @@
     {
       "id": "forest_top_left_tree_stump",
       "label": "top left tree stump",
-      "gb_constant": "TILE_STUMP_TL",
+      "gb_constant": "TILE_FOREST_TOP_LEFT_TREE_STUMP",
       "walkable": false,
       "color": "#78a658",
       "ascii": "#",
@@ -156,9 +156,9 @@
     {
       "id": "forest_top_right_tree_stump",
       "label": "top right tree stump",
-      "gb_constant": "TILE_STUMP_TR",
+      "gb_constant": "TILE_FOREST_TOP_RIGHT_TREE_STUMP",
       "walkable": false,
-      "color": "#739d52",
+      "color": "#749c52",
       "ascii": "#",
       "image_url": "/tiles/forest/forest_top_right_tree_stump.png",
       "category": "nature"
@@ -306,7 +306,7 @@
     {
       "id": "forest_bottom_left_tree_stump",
       "label": "bottom left tree stump",
-      "gb_constant": "TILE_STUMP_BL",
+      "gb_constant": "TILE_FOREST_BOTTOM_LEFT_TREE_STUMP",
       "walkable": false,
       "color": "#687c40",
       "ascii": "#",
@@ -314,13 +314,13 @@
       "category": "nature"
     },
     {
-      "id": "forest_bottom_right_three_stump",
-      "label": "bottom right three stump",
-      "gb_constant": "TILE_STUMP_BR",
+      "id": "forest_bottom_right_tree_stump",
+      "label": "bottom right tree stump",
+      "gb_constant": "TILE_FOREST_BOTTOM_RIGHT_TREE_STUMP",
       "walkable": false,
       "color": "#677b3f",
       "ascii": "#",
-      "image_url": "/tiles/forest/forest_bottom_right_three_stump.png",
+      "image_url": "/tiles/forest/forest_bottom_right_tree_stump.png",
       "category": "nature"
     },
     {
@@ -337,9 +337,9 @@
       "id": "forest_hero_frame_1_with_green_forest_background",
       "label": "hero_frame_1 with green forest background",
       "gb_constant": "TILE_FOREST_HERO_FRAME_1_WITH_GREEN_FOREST_BACKGROUND",
-      "walkable": true,
+      "walkable": false,
       "color": "#416033",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_hero_frame_1_with_green_forest_background.png",
       "category": "npc"
     },
@@ -347,9 +347,9 @@
       "id": "forest_hero_frame_2_with_green_forest_background",
       "label": "hero_frame_2 with green forest background",
       "gb_constant": "TILE_FOREST_HERO_FRAME_2_WITH_GREEN_FOREST_BACKGROUND",
-      "walkable": true,
+      "walkable": false,
       "color": "#416033",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_hero_frame_2_with_green_forest_background.png",
       "category": "npc"
     },
@@ -357,20 +357,20 @@
       "id": "forest_enemy_kobold_frame_1",
       "label": "enemy kobold frame 1",
       "gb_constant": "TILE_FOREST_ENEMY_KOBOLD_FRAME_1",
-      "walkable": true,
+      "walkable": false,
       "color": "#728250",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_enemy_kobold_frame_1.png",
       "category": "enemy"
     },
     {
-      "id": "forest_enemay_kobold_frame_2",
-      "label": "enemay kobold frame 2",
-      "gb_constant": "TILE_FOREST_ENEMAY_KOBOLD_FRAME_2",
-      "walkable": true,
+      "id": "forest_enemy_kobold_frame_2",
+      "label": "enemy kobold frame 2",
+      "gb_constant": "TILE_FOREST_ENEMY_KOBOLD_FRAME_2",
+      "walkable": false,
       "color": "#728250",
-      "ascii": ".",
-      "image_url": "/tiles/forest/forest_enemay_kobold_frame_2.png",
+      "ascii": "#",
+      "image_url": "/tiles/forest/forest_enemy_kobold_frame_2.png",
       "category": "enemy"
     },
     {
@@ -397,9 +397,9 @@
       "id": "forest_merchant_forest",
       "label": "merchant-forest",
       "gb_constant": "TILE_FOREST_MERCHANT_FOREST",
-      "walkable": true,
+      "walkable": false,
       "color": "#5f713c",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_merchant_forest.png",
       "category": "npc"
     },
@@ -417,9 +417,9 @@
       "id": "forest_enemy_bats_frame_1",
       "label": "enemy bats frame 1",
       "gb_constant": "TILE_FOREST_ENEMY_BATS_FRAME_1",
-      "walkable": true,
+      "walkable": false,
       "color": "#699c52",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_enemy_bats_frame_1.png",
       "category": "enemy"
     },
@@ -427,9 +427,9 @@
       "id": "forest_enemy_bats_frame_2",
       "label": "enemy bats frame 2",
       "gb_constant": "TILE_FOREST_ENEMY_BATS_FRAME_2",
-      "walkable": true,
+      "walkable": false,
       "color": "#699c52",
-      "ascii": ".",
+      "ascii": "#",
       "image_url": "/tiles/forest/forest_enemy_bats_frame_2.png",
       "category": "enemy"
     },
@@ -441,6 +441,16 @@
       "color": "#808645",
       "ascii": "#",
       "image_url": "/tiles/forest/forest_treasure_chest_forest.png",
+      "category": "terrain"
+    },
+    {
+      "id": "forest_plain_floor_2",
+      "label": "plain floor",
+      "gb_constant": "TILE_FOREST_PLAIN_FLOOR",
+      "walkable": true,
+      "color": "#7bb660",
+      "ascii": ".",
+      "image_url": "/tiles/forest/forest_plain_floor_2.png",
       "category": "terrain"
     },
     {
@@ -472,70 +482,21 @@
       "ascii": ".",
       "image_url": "/tiles/forest/forest_plain_floor_5.png",
       "category": "terrain"
-    },
-    {
-      "id": "forest_plain_floor_6",
-      "label": "plain floor",
-      "gb_constant": "TILE_FOREST_PLAIN_FLOOR",
-      "walkable": true,
-      "color": "#7bb660",
-      "ascii": ".",
-      "image_url": "/tiles/forest/forest_plain_floor_6.png",
-      "category": "terrain"
     }
   ],
   "vram_block": {
-    "palette": "gb_green",
-    "source_sheet": "assets/RPG_exterior.png",
+    "palette": "auto",
+    "source_sheet": "assets/forest-tile.png",
     "tiles": [
-      {
-        "x": 0,
-        "y": 0,
-        "index": 0
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "index": 1
-      },
-      {
-        "x": 8,
-        "y": 2,
-        "index": 2
-      },
-      {
-        "x": 0,
-        "y": 14,
-        "index": 3
-      },
-      {
-        "x": 1,
-        "y": 14,
-        "index": 4
-      },
-      {
-        "x": 0,
-        "y": 15,
-        "index": 5
-      },
-      {
-        "x": 1,
-        "y": 15,
-        "index": 6
-      },
-      {
-        "x": 2,
-        "y": 16,
-        "index": 7
-      },
-      {
-        "sheet": "assets/forest-tile.png",
-        "x": 8,
-        "y": 2,
-        "index": 8,
-        "tile": "forest_exit_forest",
-        "exit": true
-      }
+      { "x": 0, "y": 2, "index": 0, "tile": "forest_plain_floor_1" },
+      { "x": 12, "y": 0, "index": 1, "tile": "forest_top_left_treetop" },
+      { "x": 8, "y": 2, "index": 2, "tile": "forest_exit_forest" },
+      { "x": 14, "y": 0, "index": 3, "tile": "forest_top_left_tree_stump" },
+      { "x": 15, "y": 0, "index": 4, "tile": "forest_top_right_tree_stump" },
+      { "x": 14, "y": 1, "index": 5, "tile": "forest_bottom_left_tree_stump" },
+      { "x": 15, "y": 1, "index": 6, "tile": "forest_bottom_right_tree_stump" },
+      { "x": 15, "y": 1, "index": 7, "tile": "forest_bottom_right_tree_stump" },
+      { "x": 8, "y": 2, "index": 8, "tile": "forest_exit_forest", "exit": true }
     ]
   }
 }

@@ -468,14 +468,6 @@ void ui_load_tileset(uint8_t tileset)
     s_loaded_tileset = (int8_t)tileset;
 
     switch (tileset) {
-        case WORLD_TILESET_EXTERIOR:
-            src = g_tileset_exterior;
-            tile_count = 4;
-            break;
-        case WORLD_TILESET_INTERIOR:
-            src = g_tileset_interior;
-            tile_count = 4;
-            break;
         case WORLD_TILESET_FOREST:
             src = g_tileset_forest;
             tile_count = 9;
@@ -489,8 +481,8 @@ void ui_load_tileset(uint8_t tileset)
             tile_count = 27;
             break;
         default:
-            src = g_tileset_exterior;
-            tile_count = 4;
+            src = g_tileset_forest;
+            tile_count = 9;
             break;
     }
 

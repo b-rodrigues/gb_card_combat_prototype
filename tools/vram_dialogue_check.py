@@ -98,8 +98,120 @@ def main():
         return 1
 
     pb = PyBoy(args.rom, window="null")
-    for _ in range(args.frames):
-        pb.tick()
+
+    # Locate the player's position field in WRAM from the boot pattern.
+    WRAM_BASE = 0xC000
+    WRAM_SIZE = 0x2000
+    wram = bytes(pb.memory[i] for i in range(WRAM_BASE, WRAM_BASE + WRAM_SIZE))
+    idx = wram.find(PLAYER_BOOT)
+    if idx < 0:
+        print("error: could not locate the player entity in WRAM after boot",
+              file=sys.stderr)
+        return 1
+    pos_addr = WRAM_BASE + idx
+
+    def pos():
+        return (pb.memory[pos_addr], pb.memory[pos_addr + 1])
+
+    def walk(btn, is_goal, budget=2000):
+        """Discrete one-tile presses until is_goal() holds.  Each press is a
+        4-tick edge (short enough that the 8-frame move commits after the
+        release, so exactly one tile) followed by a wait for the commit; a
+        press that produced no movement (dropped by PyBoy) is retried, so
+        the route converges regardless of host timing.  Returns whether the
+        goal was reached within the frame budget."""
+        for _ in range(budget):
+            if is_goal():
+                return True
+            x0, y0 = pos()
+            pb.button_press(btn)
+            for _ in range(4):
+                pb.tick()
+            pb.button_release(btn)
+            for _ in range(24):
+                pb.tick()
+                if pos() != (x0, y0):
+                    break
+        return is_goal()
+
+    def press(btn, settle=12):
+        """A 4-tick button press.  The game reads the physical joypad each
+        frame, and PyBoy applies queued events at frame boundaries, so a
+        one-tick press can miss the input_update window entirely (a stale
+        previous edge is never re-seen); a 4-tick hold guarantees the edge
+        lands inside a frame."""
+        pb.button_press(btn)
+        for _ in range(4):
+            pb.tick()
+        pb.button_release(btn)
+        for _ in range(settle):
+            pb.tick()
+
+    def is_goal():
+        return pb.memory[pos_addr] == 30
+
+    def press_start():
+        pb.button_press("start")
+        for _ in range(4):
+            pb.tick()
+        pb.button_release("start")
+        for _ in range(16):
+            pb.tick()
+
+    def wait_for_screen(screen_id, budget=300):
+        for _ in range(budget):
+            if pb.memory[game_addr] == screen_id:
+                return True
+            pb.tick()
+        return False
+
+    # Game state address (from symbol file: g_game at 0xC94C)
+    game_addr = 0xC94C
+
+    def press_a(settle=12):
+        pb.button_press("a")
+        for _ in range(4):
+            pb.tick()
+        pb.button_release("a")
+        for _ in range(settle):
+            pb.tick()
+
+    def wait_for_screen(screen_id, budget=300):
+        for _ in range(budget):
+            if pb.memory[game_addr] == screen_id:
+                return True
+            pb.tick()
+        return False
+
+    # Dismiss Title Screen (SCREEN_TITLE = 9) and Intro slides (SCREEN_INTRO = 10)
+    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at (4,4).
+    # Title screen: press START to show menu, then START again to select NEW GAME -> intro slides
+    # Intro slides: press A (or START) 3 times to advance through slides, then game_restart() drops to overworld
+    for _ in range(20):
+        if pb.memory[game_addr] == 0:
+            break
+        pb.button_press("start")
+        for _ in range(4):
+            pb.tick()
+        pb.button_release("start")
+        for _ in range(16):
+            pb.tick()
+
+    # Wait for intro screen (SCREEN_INTRO = 10)
+    wait_for_screen(10, 60)
+
+    # Advance through intro slides (3 slides, need A or START each time)
+    for _ in range(3):
+        wait_for_screen(10, 60)  # SCREEN_INTRO = 10
+        pb.button_press("a")
+        for _ in range(4):
+            pb.tick()
+        pb.button_release("a")
+        for _ in range(16):
+            pb.tick()
+
+    # Wait for game_restart to drop into OVERWORLD (screen 0)
+    wait_for_screen(0, 300)
 
     # Locate the player's position field in WRAM from the boot pattern.
     pos_addr = None

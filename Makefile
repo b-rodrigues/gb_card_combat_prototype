@@ -82,84 +82,68 @@ GFX_OUT_DIR = $(SRC_DIR)/gfx
 
 gfx:
 	@mkdir -p $(GFX_OUT_DIR)
-	@python3 tools/png2gb.py assets/player_demo.png --name player_sprite_tile \
-		-o $(GFX_OUT_DIR)/player_sprite_tile.h
-	@python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_exterior_tiles \
-		--palette gb_green --tile-coords "0,0 8,1 8,2 0,5" \
-		--raw -o $(GFX_OUT_DIR)/rpg_exterior_tiles.inc
-	@python3 tools/png2gb.py assets/RPG_interior.png --name rpg_interior_tiles \
-		--palette gb_green --tile-coords "1,1 1,0 8,4 6,3" \
-		--raw -o $(GFX_OUT_DIR)/rpg_interior_tiles.inc
-	@python3 tools/png2gb.py assets/DungeonTileset.png --name rpg_dungeon_tiles \
-		--palette gb_green \
-		--raw -o $(GFX_OUT_DIR)/rpg_dungeon_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_walls_tiles \
-		--palette gb_green --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 16,0 17,0 18,0 19,0 20,0 21,0 22,0 23,0 24,0 25,0 26,0 27,0" \
-		--raw -o $(GFX_OUT_DIR)/rpg_houses_walls_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_roofs_tiles \
-		--palette gb_green --tile-coords "64,0 65,0 66,0 67,0 68,0 69,0 70,0 71,0 72,0 73,0 74,0 75,0 76,0 77,0" \
-		--raw -o $(GFX_OUT_DIR)/rpg_houses_roofs_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_floors_tiles \
-		--palette gb_green --tile-coords "0,16 1,16 2,16 3,16 4,16 5,16 6,16 7,16 8,16 9,16 10,16 11,16 12,16 13,16" \
-		--raw -o $(GFX_OUT_DIR)/rpg_houses_floors_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_doors_tiles \
-		--palette gb_green --tile-coords "64,16 65,16 66,16 67,16 68,16 69,16" \
-		--raw -o $(GFX_OUT_DIR)/rpg_houses_doors_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_houses_windows_tiles \
-		--palette gb_green --tile-coords "96,16 97,16 98,16 99,16 100,16 101,16" \
-		--raw -o $(GFX_OUT_DIR)/rpg_houses_windows_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_nature_ground_tiles \
-		--palette gb_green --tile-coords "0,32 1,32 2,32 3,32 4,32 5,32 6,32 7,32 8,32 9,32 10,32 11,32 12,32 13,32" \
-		--raw -o $(GFX_OUT_DIR)/rpg_nature_ground_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_nature_vegetation_tiles \
-		--palette gb_green --tile-coords "64,32 65,32 66,32 67,32 68,32 69,32 70,32 71,32 72,32 73,32 74,32 75,32 76,32 77,32" \
-		--raw -o $(GFX_OUT_DIR)/rpg_nature_vegetation_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_objects_furniture_tiles \
-		--palette gb_green --tile-coords "0,48 1,48 2,48 3,48 4,48 5,48 6,48 7,48 8,48 9,48 10,48 11,48 12,48 13,48" \
-		--raw -o $(GFX_OUT_DIR)/rpg_objects_furniture_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_structures_fences_tiles \
-		--palette gb_green --tile-coords "64,48 65,48 66,48 67,48 68,48 69,48 70,48 71,48" \
-		--raw -o $(GFX_OUT_DIR)/rpg_structures_fences_tiles.inc
-	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_structures_props_tiles \
-		--palette gb_green --tile-coords "0,64 1,64 2,64 3,64 4,64 5,64 6,64 7,64" \
-		--raw -o $(GFX_OUT_DIR)/rpg_structures_props_tiles.inc
-	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_plain_floor_1.png --name rpg_forest_floor \
-		--palette auto \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_floor.inc
-	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_top_left_treetop.png --name rpg_forest_tree \
-		--palette auto \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_tree.inc
-	@python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_stumps \
-		--palette gb_green --tile-coords "0,14 1,14 0,15 1,15 2,16" \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
+	# ── Intrepid font ─────────────────────────────────────────────────────
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
-		--palette auto --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
-		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
+	# ── Forest tileset (assets/forest-tile.png, 16 cols × 3 rows) ────────
+	# Floor tile: col 0, row 2
+	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_floor \
+		--palette auto --tile-coords "0,2" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_floor.inc
+	# Treetop tile: col 12, row 0
+	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_tree \
+		--palette auto --tile-coords "12,0" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_tree.inc
+	# Exit tile: col 8, row 2
+	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_exit \
+		--palette auto --tile-coords "8,2" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_exit.inc
+	# Stump tiles TL,TR,BL,BR + mini (BR repeated): cols 14-15, rows 0-1
+	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_stumps \
+		--palette auto --tile-coords "14,0 15,0 14,1 15,1 15,1" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
+	# Sprite tiles from forest-tile.png
+	@python3 tools/png2gb.py assets/forest-tile.png --name forest_hero_sprite_tile \
+		--palette auto --tile-coords "1,2 2,2" \
+		-o $(GFX_OUT_DIR)/forest_hero_sprite_tile.h
+	@python3 tools/png2gb.py assets/forest-tile.png --name forest_kobold_sprite_tile \
+		--palette auto --tile-coords "3,2 4,2" \
+		-o $(GFX_OUT_DIR)/forest_kobold_sprite_tile.h
+	@python3 tools/png2gb.py assets/forest-tile.png --name forest_bat_sprite_tile \
+		--palette auto --tile-coords "9,2 10,2" \
+		-o $(GFX_OUT_DIR)/forest_bat_sprite_tile.h
+	@python3 tools/png2gb.py assets/forest-tile.png --name forest_chest_sprite_tile \
+		--palette auto --tile-coords "11,2" \
+		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
+	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
+	# Full 48-tile world sheet (g_tileset_desolate)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
 		--palette auto \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
-	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
-		--palette auto --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
-		--palette auto --tile-coords "3,2 4,2" \
-		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h
+	# 41-tile subset for scene terrain lookup (rows 0–2, cols 0–8 on row 2)
+	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
+		--palette auto --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
+		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
+	# Sprite tiles from desolate_landscape.png
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
 		--palette auto --tile-coords "1,2 2,2" \
 		-o $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
+	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
+		--palette auto --tile-coords "3,2 4,2" \
+		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name desolate_bat_sprite_tile \
 		--palette auto --tile-coords "9,2 10,2" \
 		-o $(GFX_OUT_DIR)/desolate_bat_sprite_tile.h
+	# ── Castle tileset (assets/castle-tile.png, 9 cols × 3 rows) ─────────
+	# Full 27-tile world sheet (g_tileset_castle)
+	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
+		--palette auto --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
+	# Sprite tiles from castle-tile.png
 	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
 		--palette auto --tile-coords "5,2 6,2" \
 		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
-	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_treasure_chest_forest.png --name forest_chest_sprite_tile \
-		--palette auto \
-		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
-	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_exit_forest.png --name rpg_forest_exit \
-		--palette auto \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_exit.inc
+
+
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical
@@ -364,12 +348,12 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@

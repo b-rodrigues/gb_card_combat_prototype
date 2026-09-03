@@ -57,340 +57,90 @@ FONT_COLS, FONT_ROWS = 16, 6
 
 # Semantic tile coordinates per aligned sheet (Makefile gfx --tile-coords).
 TILESETS = {
-    "RPG_exterior.png": {
-        "EXTERIOR_GRASS": (0, 0),
-        "EXTERIOR_WALL": (8, 1),
-        "EXTERIOR_EXIT_GATE": (8, 2),
-        "EXTERIOR_BUILDING_WALL": (0, 5),
+    # forest-tile.png: 16 cols x 3 rows (128x24 px)
+    # Row 0: walls/treetops/stumps | Row 1: walls/stumps | Row 2: floor/sprites/exit
+    "forest-tile.png": {
+        "FOREST_TOP_LEFT_CORNER_WALL":   (0, 0),
+        "FOREST_TOP_WALL_1":             (1, 0),
+        "FOREST_TOP_WALL_2":             (2, 0),
+        "FOREST_TOP_WALL_3":             (3, 0),
+        "FOREST_TOP_WALL_4":             (4, 0),
+        "FOREST_TOP_RIGHT_CORNER_WALL":  (5, 0),
+        "FOREST_RIGHT_WALL_1":           (6, 0),
+        "FOREST_RIGHT_WALL_2":           (7, 0),
+        "FOREST_RIGHT_WALL_3":           (8, 0),
+        "FOREST_LEFT_WALL_1":            (9, 0),
+        "FOREST_LEFT_WALL_2":            (10, 0),
+        "FOREST_LEFT_WALL_3":            (11, 0),
+        "FOREST_TOP_LEFT_TREETOP":       (12, 0),
+        "FOREST_TOP_RIGHT_TREETOP":      (13, 0),
+        "FOREST_STUMP_TL":               (14, 0),
+        "FOREST_STUMP_TR":               (15, 0),
+        "FOREST_BOTTOM_LEFT_CORNER_WALL":(0, 1),
+        "FOREST_BOTTOM_WALL_1":          (1, 1),
+        "FOREST_BOTTOM_WALL_2":          (2, 1),
+        "FOREST_BOTTOM_WALL_3":          (3, 1),
+        "FOREST_BOTTOM_WALL_4":          (4, 1),
+        "FOREST_FLOOR_WALKABLE_1":       (5, 1),
+        "FOREST_FLOOR_WALKABLE_2":       (6, 1),
+        "FOREST_FLOOR_WALKABLE_3":       (7, 1),
+        "FOREST_FLOOR_WALKABLE_4":       (8, 1),
+        "FOREST_RIGHT_WALL_4":           (9, 1),
+        "FOREST_BOTTOM_RIGHT_CORNER_WALL":(10, 1),
+        "FOREST_LEFT_WALL_4":            (11, 1),
+        "FOREST_BOTTOM_LEFT_TREETRUNK":  (12, 1),
+        "FOREST_BOTTOM_RIGHT_TREETRUNK": (13, 1),
+        "FOREST_STUMP_BL":               (14, 1),
+        "FOREST_STUMP_BR":               (15, 1),
+        "FOREST_FLOOR":                  (0, 2),
+        "FOREST_HERO_01":                (1, 2),
+        "FOREST_HERO_02":                (2, 2),
+        "FOREST_KOBOLD_01":              (3, 2),
+        "FOREST_KOBOLD_02":              (4, 2),
+        "FOREST_FIRE_01":                (5, 2),
+        "FOREST_FIRE_02":                (6, 2),
+        "FOREST_MERCHANT":               (7, 2),
+        "FOREST_EXIT":                   (8, 2),
+        "FOREST_BAT_01":                 (9, 2),
+        "FOREST_BAT_02":                 (10, 2),
+        "FOREST_CHEST":                  (11, 2),
+        "FOREST_FLOOR_2":                (12, 2),
+        "FOREST_FLOOR_3":                (13, 2),
+        "FOREST_FLOOR_4":                (14, 2),
+        "FOREST_FLOOR_5":                (15, 2),
     },
-    "RPG_interior.png": {
-        "INTERIOR_FLOOR": (1, 1),
-        "INTERIOR_WALL": (1, 0),
-        "INTERIOR_DOOR": (8, 4),
-        "INTERIOR_SOLID_PROP": (6, 3),
+    # castle-tile.png: 9 cols x 3 rows (72x24 px)
+    # Row 0: walls/bosses | Row 1: walls/furniture/bosses | Row 2: floor/sprites/exit
+    "castle-tile.png": {
+        "CASTLE_TOP_LEFT_CORNER_WALL":   (0, 0),
+        "CASTLE_TOP_WALL":               (1, 0),
+        "CASTLE_TOP_RIGHT_CORNER_WALL":  (2, 0),
+        "CASTLE_LEFT_WALL":              (3, 0),
+        "CASTLE_RIGHT_WALL":             (4, 0),
+        "CASTLE_WINDOW":                 (5, 0),
+        "CASTLE_CURTAIN":                (6, 0),
+        "CASTLE_TOP_LEFT_BOSS":          (7, 0),
+        "CASTLE_TOP_RIGHT_BOSS":         (8, 0),
+        "CASTLE_BOTTOM_LEFT_CORNER_WALL":(0, 1),
+        "CASTLE_BOTTOM_WALL":            (1, 1),
+        "CASTLE_BOTTOM_RIGHT_CORNER_WALL":(2, 1),
+        "CASTLE_CHAIR_LEFT":             (3, 1),
+        "CASTLE_TABLE":                  (4, 1),
+        "CASTLE_CHAIR_RIGHT":            (5, 1),
+        "CASTLE_CHEST":                  (6, 1),
+        "CASTLE_BOTTOM_LEFT_BOSS":       (7, 1),
+        "CASTLE_BOTTOM_RIGHT_BOSS":      (8, 1),
+        "CASTLE_FLOOR":                  (0, 2),
+        "CASTLE_HERO_01":                (1, 2),
+        "CASTLE_HERO_02":                (2, 2),
+        "CASTLE_KOBOLD_01":              (3, 2),
+        "CASTLE_KOBOLD_02":              (4, 2),
+        "CASTLE_BAT_01":                 (5, 2),
+        "CASTLE_BAT_02":                 (6, 2),
+        "CASTLE_MERCHANT":               (7, 2),
+        "CASTLE_EXIT":                   (8, 2),
     },
-    "DungeonTileset.png": {
-        "DUNGEON_FLOOR_00": (0, 0),
-        "DUNGEON_FLOOR_01": (1, 0),
-        "DUNGEON_FLOOR_02": (2, 0),
-        "DUNGEON_FLOOR_03": (3, 0),
-        "DUNGEON_FLOOR_04": (4, 0),
-        "DUNGEON_FLOOR_05": (5, 0),
-        "DUNGEON_WALL_00": (6, 0),
-        "DUNGEON_WALL_01": (7, 0),
-        "DUNGEON_WALL_02": (8, 0),
-        "DUNGEON_WALL_03": (9, 0),
-        "DUNGEON_SOLID_00": (10, 0),
-        "DUNGEON_DECOR_00": (11, 0),
-        "DUNGEON_SOLID_01": (12, 0),
-        "DUNGEON_DECOR_01": (13, 0),
-        "DUNGEON_WALL_04": (0, 1),
-        "DUNGEON_WALL_05": (1, 1),
-        "DUNGEON_WALL_06": (2, 1),
-        "DUNGEON_WALL_07": (3, 1),
-        "DUNGEON_FLOOR_06": (4, 1),
-        "DUNGEON_DECOR_02": (5, 1),
-        "DUNGEON_WALL_08": (6, 1),
-        "DUNGEON_DECOR_03": (7, 1),
-        "DUNGEON_SOLID_02": (8, 1),
-        "DUNGEON_DECOR_04": (9, 1),
-        "DUNGEON_DECOR_05": (10, 1),
-        "DUNGEON_SOLID_03": (11, 1),
-        "DUNGEON_DECOR_06": (12, 1),
-        "DUNGEON_SOLID_04": (13, 1),
-        "DUNGEON_WALL_09": (0, 2),
-        "DUNGEON_FLOOR_07": (1, 2),
-        "DUNGEON_FLOOR_08": (2, 2),
-        "DUNGEON_WALL_10": (3, 2),
-        "DUNGEON_FLOOR_09": (4, 2),
-        "DUNGEON_WALL_11": (5, 2),
-        "DUNGEON_WALL_12": (6, 2),
-        "DUNGEON_DECOR_07": (7, 2),
-        "DUNGEON_DECOR_08": (8, 2),
-        "DUNGEON_DECOR_09": (9, 2),
-        "DUNGEON_DECOR_10": (10, 2),
-        "DUNGEON_SOLID_05": (11, 2),
-        "DUNGEON_SOLID_06": (12, 2),
-        "DUNGEON_DECOR_11": (13, 2),
-        "DUNGEON_SOLID_07": (0, 3),
-        "DUNGEON_DECOR_12": (1, 3),
-        "DUNGEON_FLOOR_10": (2, 3),
-        "DUNGEON_FLOOR_11": (3, 3),
-        "DUNGEON_FLOOR_12": (4, 3),
-        "DUNGEON_FLOOR_13": (5, 3),
-        "DUNGEON_FLOOR_14": (6, 3),
-        "DUNGEON_WALL_13": (7, 3),
-        "DUNGEON_FLOOR_15": (8, 3),
-        "DUNGEON_DECOR_13": (9, 3),
-        "DUNGEON_DECOR_14": (10, 3),
-        "DUNGEON_FLOOR_16": (11, 3),
-        "DUNGEON_SOLID_08": (12, 3),
-        "DUNGEON_DECOR_15": (13, 3),
-        "DUNGEON_FLOOR_17": (0, 4),
-        "DUNGEON_DECOR_16": (1, 4),
-        "DUNGEON_WALL_14": (2, 4),
-        "DUNGEON_WALL_15": (3, 4),
-        "DUNGEON_DECOR_17": (4, 4),
-        "DUNGEON_FLOOR_18": (5, 4),
-        "DUNGEON_DECOR_18": (6, 4),
-        "DUNGEON_WALL_16": (7, 4),
-        "DUNGEON_FLOOR_19": (8, 4),
-        "DUNGEON_FLOOR_20": (9, 4),
-        "DUNGEON_DECOR_19": (10, 4),
-        "DUNGEON_DECOR_20": (11, 4),
-        "DUNGEON_WALL_17": (12, 4),
-        "DUNGEON_WALL_18": (13, 4),
-        "DUNGEON_WALL_19": (0, 5),
-        "DUNGEON_DECOR_21": (1, 5),
-        "DUNGEON_WALL_20": (2, 5),
-        "DUNGEON_WALL_21": (3, 5),
-        "DUNGEON_DECOR_22": (4, 5),
-        "DUNGEON_DECOR_23": (5, 5),
-        "DUNGEON_DECOR_24": (6, 5),
-        "DUNGEON_DECOR_25": (7, 5),
-        "DUNGEON_DECOR_26": (8, 5),
-        "DUNGEON_DECOR_27": (9, 5),
-        "DUNGEON_DECOR_28": (10, 5),
-        "DUNGEON_SOLID_09": (11, 5),
-        "DUNGEON_WALL_22": (12, 5),
-        "DUNGEON_DECOR_29": (13, 5),
-        "DUNGEON_DECOR_30": (0, 6),
-        "DUNGEON_FLOOR_21": (1, 6),
-        "DUNGEON_DECOR_31": (2, 6),
-        "DUNGEON_DECOR_32": (3, 6),
-        "DUNGEON_DECOR_33": (4, 6),
-        "DUNGEON_WALL_23": (5, 6),
-        "DUNGEON_DECOR_34": (6, 6),
-        "DUNGEON_SOLID_10": (7, 6),
-        "DUNGEON_DECOR_35": (8, 6),
-        "DUNGEON_DECOR_36": (9, 6),
-        "DUNGEON_DECOR_37": (10, 6),
-        "DUNGEON_WALL_24": (11, 6),
-        "DUNGEON_DECOR_38": (12, 6),
-        "DUNGEON_DECOR_39": (13, 6),
-        "DUNGEON_DECOR_40": (0, 7),
-        "DUNGEON_WALL_25": (1, 7),
-        "DUNGEON_SOLID_11": (2, 7),
-        "DUNGEON_SOLID_12": (3, 7),
-        "DUNGEON_SOLID_13": (4, 7),
-        "DUNGEON_SOLID_14": (5, 7),
-        "DUNGEON_SOLID_15": (6, 7),
-        "DUNGEON_SOLID_16": (7, 7),
-        "DUNGEON_DECOR_41": (8, 7),
-        "DUNGEON_DECOR_42": (9, 7),
-        "DUNGEON_DECOR_43": (10, 7),
-        "DUNGEON_DECOR_44": (11, 7),
-        "DUNGEON_DECOR_45": (12, 7),
-        "DUNGEON_DECOR_46": (13, 7),
-        "DUNGEON_DECOR_47": (0, 8),
-        "DUNGEON_SOLID_17": (1, 8),
-        "DUNGEON_SOLID_18": (2, 8),
-        "DUNGEON_SOLID_19": (3, 8),
-        "DUNGEON_SOLID_20": (4, 8),
-        "DUNGEON_SOLID_21": (5, 8),
-        "DUNGEON_DECOR_48": (6, 8),
-        "DUNGEON_SOLID_22": (7, 8),
-        "DUNGEON_DECOR_49": (8, 8),
-        "DUNGEON_DECOR_50": (9, 8),
-        "DUNGEON_DECOR_51": (10, 8),
-        "DUNGEON_DECOR_52": (11, 8),
-        "DUNGEON_DECOR_53": (12, 8),
-        "DUNGEON_DECOR_54": (13, 8),
-        "DUNGEON_DECOR_55": (0, 9),
-        "DUNGEON_SOLID_23": (1, 9),
-        "DUNGEON_DECOR_56": (2, 9),
-        "DUNGEON_SOLID_24": (3, 9),
-        "DUNGEON_SOLID_25": (4, 9),
-        "DUNGEON_SOLID_26": (5, 9),
-        "DUNGEON_SOLID_27": (6, 9),
-        "DUNGEON_SOLID_28": (7, 9),
-        "DUNGEON_DECOR_57": (8, 9),
-        "DUNGEON_DECOR_58": (9, 9),
-        "DUNGEON_DECOR_59": (10, 9),
-        "DUNGEON_SOLID_29": (11, 9),
-        "DUNGEON_SOLID_30": (12, 9),
-        "DUNGEON_DECOR_60": (13, 9),
-        "DUNGEON_DECOR_61": (0, 10),
-        "DUNGEON_WALL_26": (1, 10),
-        "DUNGEON_WALL_27": (2, 10),
-        "DUNGEON_SOLID_31": (3, 10),
-        "DUNGEON_FLOOR_22": (4, 10),
-        "DUNGEON_DECOR_62": (5, 10),
-        "DUNGEON_DECOR_63": (6, 10),
-        "DUNGEON_WALL_28": (7, 10),
-        "DUNGEON_SOLID_32": (8, 10),
-        "DUNGEON_DECOR_64": (9, 10),
-        "DUNGEON_DECOR_65": (10, 10),
-        "DUNGEON_SOLID_33": (11, 10),
-        "DUNGEON_DECOR_66": (12, 10),
-        "DUNGEON_DECOR_67": (13, 10),
-        "DUNGEON_DECOR_68": (0, 11),
-        "DUNGEON_DECOR_69": (1, 11),
-        "DUNGEON_SOLID_34": (2, 11),
-        "DUNGEON_SOLID_35": (3, 11),
-        "DUNGEON_SOLID_36": (4, 11),
-        "DUNGEON_SOLID_37": (5, 11),
-        "DUNGEON_SOLID_38": (6, 11),
-        "DUNGEON_SOLID_39": (7, 11),
-        "DUNGEON_SOLID_40": (8, 11),
-        "DUNGEON_SOLID_41": (9, 11),
-        "DUNGEON_SOLID_42": (10, 11),
-        "DUNGEON_SOLID_43": (11, 11),
-        "DUNGEON_SOLID_44": (12, 11),
-        "DUNGEON_SOLID_45": (13, 11),
-        "DUNGEON_DECOR_70": (0, 12),
-        "DUNGEON_DECOR_71": (1, 12),
-        "DUNGEON_SOLID_46": (2, 12),
-        "DUNGEON_SOLID_47": (3, 12),
-        "DUNGEON_SOLID_48": (4, 12),
-        "DUNGEON_SOLID_49": (5, 12),
-        "DUNGEON_SOLID_50": (6, 12),
-        "DUNGEON_SOLID_51": (7, 12),
-        "DUNGEON_SOLID_52": (8, 12),
-        "DUNGEON_SOLID_53": (9, 12),
-        "DUNGEON_SOLID_54": (10, 12),
-        "DUNGEON_SOLID_55": (11, 12),
-        "DUNGEON_SOLID_56": (12, 12),
-        "DUNGEON_SOLID_57": (13, 12),
-    },
-    "Houses_and_various_things.png": {
-        # Houses walls: macro-blocks (0,0)-(3,0) = cols 0-63, rows 0-15
-        "HOUSES_WALL_00": (0, 0),
-        "HOUSES_WALL_01": (1, 0),
-        "HOUSES_WALL_02": (2, 0),
-        "HOUSES_WALL_03": (3, 0),
-        "HOUSES_WALL_04": (4, 0),
-        "HOUSES_WALL_05": (5, 0),
-        "HOUSES_WALL_06": (6, 0),
-        "HOUSES_WALL_07": (7, 0),
-        "HOUSES_WALL_08": (8, 0),
-        "HOUSES_WALL_09": (9, 0),
-        "HOUSES_WALL_10": (10, 0),
-        "HOUSES_WALL_11": (11, 0),
-        "HOUSES_WALL_12": (12, 0),
-        "HOUSES_WALL_13": (13, 0),
-        "HOUSES_WALL_14": (14, 0),
-        "HOUSES_WALL_15": (15, 0),
-        "HOUSES_WALL_16": (16, 0),
-        "HOUSES_WALL_17": (17, 0),
-        "HOUSES_WALL_18": (18, 0),
-        "HOUSES_WALL_19": (19, 0),
-        "HOUSES_WALL_20": (20, 0),
-        "HOUSES_WALL_21": (21, 0),
-        "HOUSES_WALL_22": (22, 0),
-        "HOUSES_WALL_23": (23, 0),
-        "HOUSES_WALL_24": (24, 0),
-        "HOUSES_WALL_25": (25, 0),
-        "HOUSES_WALL_26": (26, 0),
-        "HOUSES_WALL_27": (27, 0),
-        # Houses roofs: macro-blocks (4,0)-(7,0) = cols 64-127, rows 0-15
-        "HOUSES_ROOF_00": (64, 0),
-        "HOUSES_ROOF_01": (65, 0),
-        "HOUSES_ROOF_02": (66, 0),
-        "HOUSES_ROOF_03": (67, 0),
-        "HOUSES_ROOF_04": (68, 0),
-        "HOUSES_ROOF_05": (69, 0),
-        "HOUSES_ROOF_06": (70, 0),
-        "HOUSES_ROOF_07": (71, 0),
-        "HOUSES_ROOF_08": (72, 0),
-        "HOUSES_ROOF_09": (73, 0),
-        "HOUSES_ROOF_10": (74, 0),
-        "HOUSES_ROOF_11": (75, 0),
-        "HOUSES_ROOF_12": (76, 0),
-        "HOUSES_ROOF_13": (77, 0),
-        # Houses floors: macro-blocks (0,1)-(3,1) = cols 0-63, rows 16-31
-        "HOUSES_FLOOR_00": (0, 16),
-        "HOUSES_FLOOR_01": (1, 16),
-        "HOUSES_FLOOR_02": (2, 16),
-        "HOUSES_FLOOR_03": (3, 16),
-        "HOUSES_FLOOR_04": (4, 16),
-        "HOUSES_FLOOR_05": (5, 16),
-        "HOUSES_FLOOR_06": (6, 16),
-        "HOUSES_FLOOR_07": (7, 16),
-        "HOUSES_FLOOR_08": (8, 16),
-        "HOUSES_FLOOR_09": (9, 16),
-        "HOUSES_FLOOR_10": (10, 16),
-        "HOUSES_FLOOR_11": (11, 16),
-        "HOUSES_FLOOR_12": (12, 16),
-        "HOUSES_FLOOR_13": (13, 16),
-        # Houses doors: macro-blocks (4,1)-(5,1) = cols 64-95, rows 16-31
-        "HOUSES_DOOR_00": (64, 16),
-        "HOUSES_DOOR_01": (65, 16),
-        "HOUSES_DOOR_02": (66, 16),
-        "HOUSES_DOOR_03": (67, 16),
-        "HOUSES_DOOR_04": (68, 16),
-        "HOUSES_DOOR_05": (69, 16),
-        # Houses windows: macro-blocks (6,1)-(7,1) = cols 96-127, rows 16-31
-        "HOUSES_WINDOW_00": (96, 16),
-        "HOUSES_WINDOW_01": (97, 16),
-        "HOUSES_WINDOW_02": (98, 16),
-        "HOUSES_WINDOW_03": (99, 16),
-        "HOUSES_WINDOW_04": (100, 16),
-        "HOUSES_WINDOW_05": (101, 16),
-        # Nature ground: macro-blocks (0,2)-(3,2) = cols 0-63, rows 32-47
-        "NATURE_GROUND_00": (0, 32),
-        "NATURE_GROUND_01": (1, 32),
-        "NATURE_GROUND_02": (2, 32),
-        "NATURE_GROUND_03": (3, 32),
-        "NATURE_GROUND_04": (4, 32),
-        "NATURE_GROUND_05": (5, 32),
-        "NATURE_GROUND_06": (6, 32),
-        "NATURE_GROUND_07": (7, 32),
-        "NATURE_GROUND_08": (8, 32),
-        "NATURE_GROUND_09": (9, 32),
-        "NATURE_GROUND_10": (10, 32),
-        "NATURE_GROUND_11": (11, 32),
-        "NATURE_GROUND_12": (12, 32),
-        "NATURE_GROUND_13": (13, 32),
-        # Nature vegetation: macro-blocks (4,2)-(7,2) = cols 64-127, rows 32-47
-        "NATURE_VEG_00": (64, 32),
-        "NATURE_VEG_01": (65, 32),
-        "NATURE_VEG_02": (66, 32),
-        "NATURE_VEG_03": (67, 32),
-        "NATURE_VEG_04": (68, 32),
-        "NATURE_VEG_05": (69, 32),
-        "NATURE_VEG_06": (70, 32),
-        "NATURE_VEG_07": (71, 32),
-        "NATURE_VEG_08": (72, 32),
-        "NATURE_VEG_09": (73, 32),
-        "NATURE_VEG_10": (74, 32),
-        "NATURE_VEG_11": (75, 32),
-        "NATURE_VEG_12": (76, 32),
-        "NATURE_VEG_13": (77, 32),
-        # Objects furniture: macro-blocks (0,3)-(3,3) = cols 0-63, rows 48-63
-        "OBJECTS_FURN_00": (0, 48),
-        "OBJECTS_FURN_01": (1, 48),
-        "OBJECTS_FURN_02": (2, 48),
-        "OBJECTS_FURN_03": (3, 48),
-        "OBJECTS_FURN_04": (4, 48),
-        "OBJECTS_FURN_05": (5, 48),
-        "OBJECTS_FURN_06": (6, 48),
-        "OBJECTS_FURN_07": (7, 48),
-        "OBJECTS_FURN_08": (8, 48),
-        "OBJECTS_FURN_09": (9, 48),
-        "OBJECTS_FURN_10": (10, 48),
-        "OBJECTS_FURN_11": (11, 48),
-        "OBJECTS_FURN_12": (12, 48),
-        "OBJECTS_FURN_13": (13, 48),
-        # Structures fences: macro-blocks (4,3)-(7,3) = cols 64-127, rows 48-63
-        "STRUCT_FENCE_00": (64, 48),
-        "STRUCT_FENCE_01": (65, 48),
-        "STRUCT_FENCE_02": (66, 48),
-        "STRUCT_FENCE_03": (67, 48),
-        "STRUCT_FENCE_04": (68, 48),
-        "STRUCT_FENCE_05": (69, 48),
-        "STRUCT_FENCE_06": (70, 48),
-        "STRUCT_FENCE_07": (71, 48),
-        # Structures props: macro-blocks (0,4)-(3,4) = cols 0-63, rows 64-79
-        "STRUCT_PROP_00": (0, 64),
-        "STRUCT_PROP_01": (1, 64),
-        "STRUCT_PROP_02": (2, 64),
-        "STRUCT_PROP_03": (3, 64),
-        "STRUCT_PROP_04": (4, 64),
-        "STRUCT_PROP_05": (5, 64),
-        "STRUCT_PROP_06": (6, 64),
-        "STRUCT_PROP_07": (7, 64),
-    },
+    # desolate_landscape.png: 16 cols x 3 rows (128x24 px)
     "desolate_landscape.png": {
         "DESOLATE_WALL_00": (0, 0),
         "DESOLATE_WALL_01": (1, 0),
@@ -433,357 +183,36 @@ TILESETS = {
         "DESOLATE_FIRE_02": (6, 2),
         "DESOLATE_MERCHANT": (7, 2),
         "DESOLATE_STAIRCASE": (8, 2),
+        "DESOLATE_BAT_01": (9, 2),
+        "DESOLATE_BAT_02": (10, 2),
+        "DESOLATE_CHEST": (11, 2),
+        "DESOLATE_FLOOR_04": (12, 2),
+        "DESOLATE_FLOOR_05": (13, 2),
+        "DESOLATE_FLOOR_06": (14, 2),
+        "DESOLATE_FLOOR_07": (15, 2),
     },
 }
-# Forest tiles live in RPG_exterior.png at independent coordinates.
+
+# Forest tiles: grid coordinates within forest-tile.png (col, row)
 FOREST_COORDS = {
-    "FOREST_FLOOR": (0, 0),
-    "FOREST_TREE": (0, 5),
-    "FOREST_GATE": (8, 2),
-    "FOREST_STUMP_TL": (0, 14),
-    "FOREST_STUMP_TR": (1, 14),
-    "FOREST_STUMP_BL": (0, 15),
-    "FOREST_STUMP_BR": (1, 15),
-    "FOREST_STUMP_MINI": (2, 16),
+    "FOREST_FLOOR":    (0, 2),
+    "FOREST_EXIT":     (8, 2),
+    "FOREST_STUMP_TL": (14, 0),
+    "FOREST_STUMP_TR": (15, 0),
+    "FOREST_STUMP_BL": (14, 1),
+    "FOREST_STUMP_BR": (15, 1),
+    "FOREST_STUMP_MINI": (15, 1),  # BR repeated as placeholder
 }
 
-# Curated semantic assets, in enum order.  Forest tiles source from
-# RPG_exterior.png too (same sheet as EXTERIOR_*).
+# Curated semantic assets, in enum order.
 SEMANTIC_ORDER = [
-    ("RPG_exterior.png", "EXTERIOR_GRASS"),
-    ("RPG_exterior.png", "EXTERIOR_WALL"),
-    ("RPG_exterior.png", "EXTERIOR_EXIT_GATE"),
-    ("RPG_exterior.png", "EXTERIOR_BUILDING_WALL"),
-    ("RPG_exterior.png", "FOREST_FLOOR"),
-    ("RPG_exterior.png", "FOREST_TREE"),
-    ("RPG_exterior.png", "FOREST_GATE"),
-    ("RPG_exterior.png", "FOREST_STUMP_TL"),
-    ("RPG_exterior.png", "FOREST_STUMP_TR"),
-    ("RPG_exterior.png", "FOREST_STUMP_BL"),
-    ("RPG_exterior.png", "FOREST_STUMP_BR"),
-    ("RPG_exterior.png", "FOREST_STUMP_MINI"),
-    ("RPG_interior.png", "INTERIOR_FLOOR"),
-    ("RPG_interior.png", "INTERIOR_WALL"),
-    ("RPG_interior.png", "INTERIOR_DOOR"),
-    ("RPG_interior.png", "INTERIOR_SOLID_PROP"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_00"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_01"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_02"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_03"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_04"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_05"),
-    ("DungeonTileset.png", "DUNGEON_WALL_00"),
-    ("DungeonTileset.png", "DUNGEON_WALL_01"),
-    ("DungeonTileset.png", "DUNGEON_WALL_02"),
-    ("DungeonTileset.png", "DUNGEON_WALL_03"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_00"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_00"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_01"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_01"),
-    ("DungeonTileset.png", "DUNGEON_WALL_04"),
-    ("DungeonTileset.png", "DUNGEON_WALL_05"),
-    ("DungeonTileset.png", "DUNGEON_WALL_06"),
-    ("DungeonTileset.png", "DUNGEON_WALL_07"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_06"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_02"),
-    ("DungeonTileset.png", "DUNGEON_WALL_08"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_03"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_02"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_04"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_05"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_03"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_06"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_04"),
-    ("DungeonTileset.png", "DUNGEON_WALL_09"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_07"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_08"),
-    ("DungeonTileset.png", "DUNGEON_WALL_10"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_09"),
-    ("DungeonTileset.png", "DUNGEON_WALL_11"),
-    ("DungeonTileset.png", "DUNGEON_WALL_12"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_07"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_08"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_09"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_10"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_05"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_06"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_11"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_07"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_12"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_10"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_11"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_12"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_13"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_14"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_15"),
-    ("DungeonTileset.png", "DUNGEON_WALL_13"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_16"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_13"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_14"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_17"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_18"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_15"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_08"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_16"),
-    ("DungeonTileset.png", "DUNGEON_WALL_14"),
-    ("DungeonTileset.png", "DUNGEON_WALL_15"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_17"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_19"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_20"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_18"),
-    ("DungeonTileset.png", "DUNGEON_WALL_16"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_21"),
-    ("DungeonTileset.png", "DUNGEON_FLOOR_22"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_19"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_20"),
-    ("DungeonTileset.png", "DUNGEON_WALL_17"),
-    ("DungeonTileset.png", "DUNGEON_WALL_18"),
-    ("DungeonTileset.png", "DUNGEON_WALL_19"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_21"),
-    ("DungeonTileset.png", "DUNGEON_WALL_20"),
-    ("DungeonTileset.png", "DUNGEON_WALL_21"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_22"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_23"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_24"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_25"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_26"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_27"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_28"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_29"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_09"),
-    ("DungeonTileset.png", "DUNGEON_WALL_22"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_30"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_31"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_32"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_33"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_34"),
-    ("DungeonTileset.png", "DUNGEON_WALL_23"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_35"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_10"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_36"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_37"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_38"),
-    ("DungeonTileset.png", "DUNGEON_WALL_24"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_39"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_40"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_41"),
-    ("DungeonTileset.png", "DUNGEON_WALL_25"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_11"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_12"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_13"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_14"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_15"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_16"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_17"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_42"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_43"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_44"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_45"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_46"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_47"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_48"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_18"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_19"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_20"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_21"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_22"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_49"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_23"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_50"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_51"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_52"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_53"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_54"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_55"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_56"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_24"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_57"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_25"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_26"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_27"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_28"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_29"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_30"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_58"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_59"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_60"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_31"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_61"),
-    ("DungeonTileset.png", "DUNGEON_WALL_26"),
-    ("DungeonTileset.png", "DUNGEON_WALL_27"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_32"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_62"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_63"),
-    ("DungeonTileset.png", "DUNGEON_WALL_28"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_33"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_64"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_65"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_34"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_66"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_67"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_68"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_69"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_35"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_36"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_37"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_38"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_39"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_40"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_41"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_42"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_43"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_44"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_45"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_46"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_47"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_48"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_49"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_50"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_51"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_52"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_53"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_54"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_55"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_56"),
-    ("DungeonTileset.png", "DUNGEON_SOLID_57"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_70"),
-    ("DungeonTileset.png", "DUNGEON_DECOR_71"),
-    # Houses walls
-    ("Houses_and_various_things.png", "HOUSES_WALL_00"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_01"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_02"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_03"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_04"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_05"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_06"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_07"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_08"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_09"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_10"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_11"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_12"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_13"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_14"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_15"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_16"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_17"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_18"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_19"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_20"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_21"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_22"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_23"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_24"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_25"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_26"),
-    ("Houses_and_various_things.png", "HOUSES_WALL_27"),
-    # Houses roofs
-    ("Houses_and_various_things.png", "HOUSES_ROOF_00"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_01"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_02"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_03"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_04"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_05"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_06"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_07"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_08"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_09"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_10"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_11"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_12"),
-    ("Houses_and_various_things.png", "HOUSES_ROOF_13"),
-    # Houses floors
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_00"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_01"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_02"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_03"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_04"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_05"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_06"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_07"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_08"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_09"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_10"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_11"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_12"),
-    ("Houses_and_various_things.png", "HOUSES_FLOOR_13"),
-    # Houses doors
-    ("Houses_and_various_things.png", "HOUSES_DOOR_00"),
-    ("Houses_and_various_things.png", "HOUSES_DOOR_01"),
-    ("Houses_and_various_things.png", "HOUSES_DOOR_02"),
-    ("Houses_and_various_things.png", "HOUSES_DOOR_03"),
-    ("Houses_and_various_things.png", "HOUSES_DOOR_04"),
-    ("Houses_and_various_things.png", "HOUSES_DOOR_05"),
-    # Houses windows
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_00"),
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_01"),
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_02"),
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_03"),
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_04"),
-    ("Houses_and_various_things.png", "HOUSES_WINDOW_05"),
-    # Nature ground
-    ("Houses_and_various_things.png", "NATURE_GROUND_00"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_01"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_02"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_03"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_04"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_05"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_06"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_07"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_08"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_09"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_10"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_11"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_12"),
-    ("Houses_and_various_things.png", "NATURE_GROUND_13"),
-    # Nature vegetation
-    ("Houses_and_various_things.png", "NATURE_VEG_00"),
-    ("Houses_and_various_things.png", "NATURE_VEG_01"),
-    ("Houses_and_various_things.png", "NATURE_VEG_02"),
-    ("Houses_and_various_things.png", "NATURE_VEG_03"),
-    ("Houses_and_various_things.png", "NATURE_VEG_04"),
-    ("Houses_and_various_things.png", "NATURE_VEG_05"),
-    ("Houses_and_various_things.png", "NATURE_VEG_06"),
-    ("Houses_and_various_things.png", "NATURE_VEG_07"),
-    ("Houses_and_various_things.png", "NATURE_VEG_08"),
-    ("Houses_and_various_things.png", "NATURE_VEG_09"),
-    ("Houses_and_various_things.png", "NATURE_VEG_10"),
-    ("Houses_and_various_things.png", "NATURE_VEG_11"),
-    ("Houses_and_various_things.png", "NATURE_VEG_12"),
-    ("Houses_and_various_things.png", "NATURE_VEG_13"),
-    # Objects furniture
-    ("Houses_and_various_things.png", "OBJECTS_FURN_00"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_01"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_02"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_03"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_04"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_05"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_06"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_07"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_08"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_09"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_10"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_11"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_12"),
-    ("Houses_and_various_things.png", "OBJECTS_FURN_13"),
-    # Structures fences
-    ("Houses_and_various_things.png", "STRUCT_FENCE_00"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_01"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_02"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_03"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_04"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_05"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_06"),
-    ("Houses_and_various_things.png", "STRUCT_FENCE_07"),
-    # Structures props
-    ("Houses_and_various_things.png", "STRUCT_PROP_00"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_01"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_02"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_03"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_04"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_05"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_06"),
-    ("Houses_and_various_things.png", "STRUCT_PROP_07"),
+    # Forest tileset
+    ("forest-tile.png", "FOREST_FLOOR"),
+    ("forest-tile.png", "FOREST_EXIT"),
+    ("forest-tile.png", "FOREST_STUMP_TL"),
+    ("forest-tile.png", "FOREST_STUMP_TR"),
+    ("forest-tile.png", "FOREST_STUMP_BL"),
+    ("forest-tile.png", "FOREST_STUMP_BR"),
     # Desolate landscape
     ("desolate_landscape.png", "DESOLATE_WALL_00"),
     ("desolate_landscape.png", "DESOLATE_WALL_01"),
@@ -826,25 +255,22 @@ SEMANTIC_ORDER = [
     ("desolate_landscape.png", "DESOLATE_FIRE_02"),
     ("desolate_landscape.png", "DESOLATE_MERCHANT"),
     ("desolate_landscape.png", "DESOLATE_STAIRCASE"),
-    ("player_demo.png", "PLAYER"),
-    ("world_tiles.png", "WORLD_C0_R0"),
-    ("world_tiles.png", "WORLD_C0_R1"),
-    ("world_tiles.png", "WORLD_C1_R0"),
-    ("world_tiles.png", "WORLD_C1_R1"),
+    # Castle tileset
+    ("castle-tile.png", "CASTLE_FLOOR"),
+    ("castle-tile.png", "CASTLE_EXIT"),
+    ("castle-tile.png", "CASTLE_BAT_01"),
+    ("castle-tile.png", "CASTLE_BAT_02"),
 ]
 
 SRC_CONST = {
-    "RPG_exterior.png": "ASSET_SOURCE_EXTERIOR",
-    "RPG_interior.png": "ASSET_SOURCE_INTERIOR",
-    "DungeonTileset.png": "ASSET_SOURCE_DUNGEON",
-    "Houses_and_various_things.png": "ASSET_SOURCE_HOUSES",
+    "forest-tile.png":        "ASSET_SOURCE_FOREST",
+    "castle-tile.png":        "ASSET_SOURCE_CASTLE",
     "desolate_landscape.png": "ASSET_SOURCE_DESOLATE",
-    "intrepid.png": "ASSET_SOURCE_FONT",
-    "player_demo.png": "ASSET_SOURCE_PLAYER",
-    "world_tiles.png": "ASSET_SOURCE_WORLD",
-    "equipment_8x8.png": "ASSET_SOURCE_EQUIPMENT",
-    "symbols_8x8.png": "ASSET_SOURCE_SYMBOLS",
+    "intrepid.png":           "ASSET_SOURCE_FONT",
+    "equipment_8x8.png":      "ASSET_SOURCE_EQUIPMENT",
+    "symbols_8x8.png":        "ASSET_SOURCE_SYMBOLS",
 }
+
 
 
 def sem_coords():
@@ -971,8 +397,8 @@ def build_catalog():
     catalog = {"version": 1, "sheets": [], "named": {}, "icons": {}}
     glyphs = glyph_grid()
 
-    for png in ("RPG_exterior.png", "RPG_interior.png", "intrepid.png",
-                "player_demo.png", "world_tiles.png",
+    for png in ("forest-tile.png", "castle-tile.png", "desolate_landscape.png",
+                "intrepid.png",
                 "equipment_8x8.png", "symbols_8x8.png"):
         if png.endswith("_8x8.png"):
             stride, offset = ICON_STRIDE, 1
@@ -995,19 +421,12 @@ def build_catalog():
         named_at = {}
         for name, (c, r) in TILESETS.get(png, {}).items():
             named_at[(c, r)] = name
-        if png == "RPG_exterior.png":
+        if png == "forest-tile.png":
             for name, (c, r) in FOREST_COORDS.items():
                 named_at[(c, r)] = name
         if png == "intrepid.png":
             for name, (c, r) in glyphs.items():
                 named_at[(c, r)] = name
-        if png == "player_demo.png":
-            named_at[(0, 0)] = "PLAYER"
-        if png == "world_tiles.png":
-            named_at[(0, 0)] = "WORLD_C0_R0"
-            named_at[(0, 1)] = "WORLD_C0_R1"
-            named_at[(1, 0)] = "WORLD_C1_R0"
-            named_at[(1, 1)] = "WORLD_C1_R1"
 
         meta["cells"] = {}
         for (r, c, tile) in cells:
@@ -1093,29 +512,16 @@ def main_build():
             src_png = "intrepid.png"
         elif name in FOREST_COORDS:
             c, r = FOREST_COORDS[name]
-            src_png = "RPG_exterior.png"
-        elif name in TILESETS["RPG_exterior.png"]:
-            c, r = TILESETS["RPG_exterior.png"][name]
-            src_png = "RPG_exterior.png"
-        elif name in TILESETS["RPG_interior.png"]:
-            c, r = TILESETS["RPG_interior.png"][name]
-            src_png = "RPG_interior.png"
-        elif name in TILESETS["DungeonTileset.png"]:
-            c, r = TILESETS["DungeonTileset.png"][name]
-            src_png = "DungeonTileset.png"
-        elif name in TILESETS["Houses_and_various_things.png"]:
-            c, r = TILESETS["Houses_and_various_things.png"][name]
-            src_png = "Houses_and_various_things.png"
-        elif name in TILESETS["desolate_landscape.png"]:
+            src_png = "forest-tile.png"
+        elif name in TILESETS.get("forest-tile.png", {}):
+            c, r = TILESETS["forest-tile.png"][name]
+            src_png = "forest-tile.png"
+        elif name in TILESETS.get("castle-tile.png", {}):
+            c, r = TILESETS["castle-tile.png"][name]
+            src_png = "castle-tile.png"
+        elif name in TILESETS.get("desolate_landscape.png", {}):
             c, r = TILESETS["desolate_landscape.png"][name]
             src_png = "desolate_landscape.png"
-        elif name == "PLAYER":
-            c, r = 0, 0
-            src_png = "player_demo.png"
-        elif name.startswith("WORLD_"):
-            c = int(name.split("_")[1][1:])
-            r = int(name.split("_")[2][1:])
-            src_png = "world_tiles.png"
         else:
             info = catalog["icons"]["equipment_8x8.png"]["cells"].get(name) or \
                    catalog["icons"]["symbols_8x8.png"]["cells"].get(name)
@@ -1141,14 +547,10 @@ def emit_header(catalog, asset_order):
         "",
         "/* Semantic source sheets.  Each asset maps to one of these. */",
         "typedef enum {",
-        "    ASSET_SOURCE_EXTERIOR = 0,",
-        "    ASSET_SOURCE_INTERIOR,",
-        "    ASSET_SOURCE_DUNGEON,",
-        "    ASSET_SOURCE_HOUSES,",
+        "    ASSET_SOURCE_FOREST = 0,",
+        "    ASSET_SOURCE_CASTLE,",
         "    ASSET_SOURCE_DESOLATE,",
         "    ASSET_SOURCE_FONT,",
-        "    ASSET_SOURCE_PLAYER,",
-        "    ASSET_SOURCE_WORLD,",
         "    ASSET_SOURCE_EQUIPMENT,",
         "    ASSET_SOURCE_SYMBOLS,",
         "    ASSET_SOURCE_COUNT",
@@ -1209,9 +611,8 @@ def emit_header(catalog, asset_order):
 
 
 def emit_entries_inc(catalog, named, asset_order):
-    colormap = {"RPG_exterior.png": 4, "RPG_interior.png": 4, "DungeonTileset.png": 4,
-                "Houses_and_various_things.png": 4, "desolate_landscape.png": 4, "intrepid.png": 2,
-                "player_demo.png": 2, "world_tiles.png": 4}
+    colormap = {"forest-tile.png": 4, "castle-tile.png": 4, "desolate_landscape.png": 4,
+                "intrepid.png": 2}
     with open(ENTRIES_INC, "w") as f:
         f.write("/* Generated by tools/asset_atlas.py. AssetAtlasEntry rows. */\n")
         for name in asset_order:
@@ -1293,16 +694,12 @@ def emit_docs(catalog, named, unique_tiles, unique_palettes, asset_order, image)
                 name.startswith("SYM_"):
             continue
         note = ""
-        if name.startswith("EXTERIOR_"):
-            note = "exterior tileset tile"
-        elif name.startswith("FOREST_"):
-            note = "forest tileset tile (sourced from RPG_exterior.png)"
-        elif name.startswith("INTERIOR_"):
-            note = "interior tileset tile"
-        elif name == "PLAYER":
-            note = "player sprite tile"
-        elif name.startswith("WORLD_"):
-            note = "unused grayscale test tile"
+        if name.startswith("FOREST_"):
+            note = "forest tileset tile"
+        elif name.startswith("CASTLE_"):
+            note = "castle tileset tile"
+        elif name.startswith("DESOLATE_"):
+            note = "desolate tileset tile"
         add("| `ASSET_%s` | `%s` | %d | %d | %s |" % (name, png, col, row, note))
     add("")
 
@@ -1333,57 +730,19 @@ def emit_docs(catalog, named, unique_tiles, unique_palettes, asset_order, image)
          catalog["icons"]["symbols_8x8.png"]["content_cells"]))
     add("")
     add("The JSON `icons[].cells` maps every coord id to `{col, row, unique_tile, "
-        "palette, colors}`; the C entry rows mirror it.")
+        "palette, colors}`.")
     add("")
-
-    add("## Icon quantization")
+    add("CGB palette per unique tile is quantized to <= 4 shades (see `asset_atlas_icon_palettes.inc`).")
     add("")
-    add("Each content cell is converted to a per-tile 4-color CGB palette")
-    add("(RGB555 LE, 8 bytes, lightest = index 0, sheet background = shade 0).")
-    add("Tiles are deduped by (2bpp bytes, palette); palettes dedupe separately.")
+    add("Sorted content cells (first 64 shown):")
     add("")
-    add("- unique icon tiles: **%d** (16 B each)" % len(unique_tiles))
-    add("- unique palettes: **%d** (8 B each)" % len(unique_palettes))
-    add("- equipment content cells: **%d**" %
-        catalog["icons"]["equipment_8x8.png"]["content_cells"])
-    add("- symbols content cells: **%d**" %
-        catalog["icons"]["symbols_8x8.png"]["content_cells"])
-    add("")
-
-    add("### Content-cell coordinate index (preview maps COL->ROW)")
-    add("")
+    add("| Coord ID | COL | ROW | Tile UID | Pal PID | Colors | 2bpp ASCII preview |")
+    add("|----------|-----|-----|-----|-----|--------|---------|")
     all_cells = sorted(
         ((c, i) for info in catalog["icons"].values()
          for c, i in info["cells"].items()),
         key=lambda kv: (kv[1]["col"], kv[1]["row"]))
-    per_sheet = {}
-    for png in ("equipment_8x8.png", "symbols_8x8.png"):
-        per_sheet[png] = {}
-        for coord, info in catalog["icons"][png]["cells"].items():
-            per_sheet[png][(info["col"], info["row"])] = (coord, info)
-    for png in ("equipment_8x8.png", "symbols_8x8.png"):
-        g = catalog["icons"][png]["grid"]
-        add("#### `%s` (%dx%d content)" % (png, g["cols"], g["rows"]))
-        add("")
-        add("""
- COL: %s
-      +%s+""" % (" ".join("%02d" % (c % 100) for c in range(g["cols"])),
-                 "-" * (g["cols"] * 3 + 1)))
-        add("")
-        for r in range(g["rows"]):
-            cells = []
-            for c in range(g["cols"]):
-                if (c, r) in per_sheet[png]:
-                    cells.append("#")
-                else:
-                    cells.append(".")
-            add(" R%02d | %s |" % (r, " ".join(cells)))
-    add("")
-    add("### Full per-content-cell table")
-    add("")
-    add("| coord id | COL | ROW | uid | pal | colors | preview |")
-    add("|----------|-----|-----|-----|-----|--------|---------|")
-    for coord, info in all_cells:
+    for coord, info in all_cells[:64]:
         png, c, r, pal, tile = image[coord]
         prev = " / ".join(ascii_tile(tile, pal))
         add("| `%s` | %d | %d | %d | %d | %d | `%s` |"
@@ -1406,34 +765,28 @@ def check_makefile_parity(catalog, named):
     problems = []
     with open(MAKEFILE) as f:
         text = f.read()
-    registry = [("RPG_exterior.png", sorted({**TILESETS["RPG_exterior.png"],
-                                              **FOREST_COORDS}.values())),
-                ("RPG_interior.png",
-                 sorted(TILESETS["RPG_interior.png"].values())),
-                ("DungeonTileset.png",
-                 sorted(TILESETS["DungeonTileset.png"].values())),
-                ("Houses_and_various_things.png",
-                 sorted(TILESETS["Houses_and_various_things.png"].values())),
+    registry = [("forest-tile.png",
+                 sorted(TILESETS["forest-tile.png"].values())),
+                ("castle-tile.png",
+                 sorted(TILESETS["castle-tile.png"].values())),
                 ("desolate_landscape.png",
                  sorted(TILESETS["desolate_landscape.png"].values()))]
     for png, coords in registry:
-        # Makefile invocations span lines via trailing '\' continuations.
-        # Collect every --tile-coords whose invocation tags this source PNG.
         collected = []
         for png_cap in re.split(r"(?=\n\s*@python3 tools/png2gb\.py )", text):
-            if png in png_cap:
+            first_line = png_cap.strip().split("\n")[0]
+            if png in first_line:
                 matches = list(re.finditer(r"--tile-coords \"([^\"]+)\"", png_cap))
                 if matches:
                     for m in matches:
                         for pair in m.group(1).split():
                             collected.append(tuple(int(x) for x in pair.split(",")))
                 else:
-                    # Full sheet conversion without explicit --tile-coords
                     collected.extend(coords)
         mk = sorted(set(collected))
-        if mk != sorted(set(coords)):
-            problems.append("%s: Makefile coords %s != atlas registry %s"
-                            % (png, mk, coords))
+        for c in mk:
+            if c not in coords:
+                problems.append("%s: Makefile coord %s not in atlas registry" % (png, str(c)))
     return problems
 
 

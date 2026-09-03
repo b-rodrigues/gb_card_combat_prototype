@@ -39,11 +39,11 @@
       { "x": 10, "y": 4, "width": 1, "height": 1, "tile": "forest.forest_top_left_tree_stump" },
       { "x": 11, "y": 4, "width": 1, "height": 1, "tile": "forest.forest_top_right_tree_stump" },
       { "x": 10, "y": 5, "width": 1, "height": 1, "tile": "forest.forest_bottom_left_tree_stump" },
-      { "x": 11, "y": 5, "width": 1, "height": 1, "tile": "forest.forest_bottom_right_three_stump" },
+      { "x": 11, "y": 5, "width": 1, "height": 1, "tile": "forest.forest_bottom_right_tree_stump" },
       { "x": 5, "y": 14, "width": 1, "height": 1, "tile": "forest.forest_top_left_tree_stump" },
       { "x": 6, "y": 14, "width": 1, "height": 1, "tile": "forest.forest_top_right_tree_stump" },
       { "x": 5, "y": 15, "width": 1, "height": 1, "tile": "forest.forest_bottom_left_tree_stump" },
-      { "x": 6, "y": 15, "width": 1, "height": 1, "tile": "forest.forest_bottom_right_three_stump" }
+      { "x": 6, "y": 15, "width": 1, "height": 1, "tile": "forest.forest_bottom_right_tree_stump" }
     ]
   },
   "player": {

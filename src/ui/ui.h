@@ -31,8 +31,8 @@ extern uint8_t g_is_cgb;
 /* Overworld actor OAM sprite tile bases (VRAM Block 0, 0x8000).  Collision
  * rules: must not overlap the font-duplicate block 0..95 used for ASCII
  * actor glyphs, PLAYER (102), HERO (98), or the kobold/bat bases. */
-#define PLAYER_SPRITE_TILE_ID    102u
 #define HERO_DESOLATE_SPRITE_TILE_ID 98u
+#define PLAYER_SPRITE_TILE_ID    HERO_DESOLATE_SPRITE_TILE_ID
 #define KOBOLD_SPRITE_TILE_ID    96u
 #define BAT_DESOLATE_SPRITE_TILE_ID 88u
 #define BAT_CASTLE_SPRITE_TILE_ID   92u

@@ -945,9 +945,13 @@ source of truth for what each tile *is*, for the editor and the ROM alike:
 - `generate_tiles.py` inverts the manifests into `TileType` value space
   and emits `generated/tiles/` (untracked build artifacts):
   `tile_walk.h` (walkable ranges + accessor, consumed by `world.c` and
-  the bank-3 patrol body from one source), `tile_glyph.h` (glyph ranges
-  + accessor for `ui.c`, plus per-tileset exit-art indices), and
-  `blocks.mk` (forest VRAM coordinates for the `Makefile` gfx rules).
+  the bank-3 patrol body from one source) and `tile_glyph.h` (glyph
+  ranges + accessor for `ui.c`, plus per-tileset exit-art indices).
+- Forest VRAM art comes from per-tile PNGs (`rpg_forest_floor.inc`,
+  `rpg_forest_tree.inc`, `rpg_forest_exit.inc`) plus the exterior stump
+  cells (`rpg_forest_stumps.inc`), composed in `tiles_content.c` — one
+  rule per source, no coordinate lists, no concat tooling. (An earlier
+  `blocks.mk` experiment was removed: per-PNG rules are self-describing.)
 - Legacy tiles predate manifests (generic floor/wall/exit, old desolate
   set, stumps) and stay hand-listed in ROM code; the generator documents
   the frozen set. No new legacy tiles, ever: new content flows through

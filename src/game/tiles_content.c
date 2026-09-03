@@ -3,21 +3,13 @@
 #include <stdint.h>
 
 /* World background tiles extracted from assets/ by tools/png2gb.py (make gfx) */
-const uint8_t g_tileset_exterior[64] = {
-    /* 4 exterior tiles (64 bytes): Floor, Wall, Gate, Building */
-#include "gfx/rpg_exterior_tiles.inc"
-};
-
-const uint8_t g_tileset_interior[64] = {
-    /* 4 interior tiles (64 bytes): Floor, Wall, Door, Prop */
-#include "gfx/rpg_interior_tiles.inc"
-};
 
 const uint8_t g_tileset_forest[144] = {
-    /* 8 forest tiles (128 bytes): Floor, Tree, Gate, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump */
-#include "gfx/rpg_forest_tiles.inc"
-    /* + exit art (16 bytes) at index 8: see the vram_block exit marking
-     * in tools/level_editor/tilesets/forest.json */
+    /* 9 forest tiles (144 bytes): Floor, Tree, Exit, Stump TL, Stump TR, Stump BL, Stump BR, Mini Stump, Exit */
+#include "gfx/rpg_forest_floor.inc"
+#include "gfx/rpg_forest_tree.inc"
+#include "gfx/rpg_forest_exit.inc"
+#include "gfx/rpg_forest_stumps.inc"
 #include "gfx/rpg_forest_exit.inc"
 };
 
@@ -31,7 +23,6 @@ const uint8_t g_tileset_castle[432] = {
 #include "gfx/rpg_castle_tiles.inc"
 };
 
-/* Font tiles extracted from assets/intrepid.png (96 tiles = 1536 bytes) */
 const uint8_t g_intrepid_font_tiles[1536] = {
 #include "gfx/intrepid_font_tiles.inc"
 };

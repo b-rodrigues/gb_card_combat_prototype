@@ -50,20 +50,7 @@ SCENE_ENUM_MAP = {
 }
 
 TILESET_KIND_MAP = {
-    "exterior": "WORLD_TILESET_EXTERIOR",
-    "interior": "WORLD_TILESET_INTERIOR",
     "forest": "WORLD_TILESET_FOREST",
-    "dungeon": "WORLD_TILESET_DUNGEON",
-    "houses_walls": "WORLD_TILESET_HOUSES_WALLS",
-    "houses_roofs": "WORLD_TILESET_HOUSES_ROOFS",
-    "houses_floors": "WORLD_TILESET_HOUSES_FLOORS",
-    "houses_doors": "WORLD_TILESET_HOUSES_DOORS",
-    "houses_windows": "WORLD_TILESET_HOUSES_WINDOWS",
-    "nature_ground": "WORLD_TILESET_NATURE_GROUND",
-    "nature_vegetation": "WORLD_TILESET_NATURE_VEGETATION",
-    "objects_furniture": "WORLD_TILESET_OBJECTS_FURNITURE",
-    "structures_fences": "WORLD_TILESET_STRUCTURES_FENCES",
-    "structures_props": "WORLD_TILESET_STRUCTURES_PROPS",
     "desolate_landscape": "WORLD_TILESET_DESOLATE",
     "desolate": "WORLD_TILESET_DESOLATE",
     "castle": "WORLD_TILESET_CASTLE",
@@ -330,7 +317,7 @@ def emit_c_code(levels_by_id, tilesets):
         height = lvl["map"]["height"]
         start_idx, count = exit_offsets[sid]
         exits_ptr = f"&g_all_exits[{start_idx}]" if count > 0 else "0"
-        tileset_kind = TILESET_KIND_MAP.get(lvl["map"]["tileset"], "WORLD_TILESET_EXTERIOR")
+        tileset_kind = TILESET_KIND_MAP.get(lvl["map"]["tileset"], "WORLD_TILESET_FOREST")
         terrain_ptr = scene_terrain_symbols.get(sid, "0")
 
         scene_defs.append(

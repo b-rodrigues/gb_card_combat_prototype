@@ -55,14 +55,14 @@ static const SceneTerrainBlock s_forest_terrain[] = {
     { 16, 13, 1, 1, TILE_WALL },
     { 15, 14, 1, 1, TILE_WALL },
     { 16, 14, 1, 1, TILE_WALL },
-    { 10, 4, 1, 1, TILE_STUMP_TL },
-    { 11, 4, 1, 1, TILE_STUMP_TR },
-    { 10, 5, 1, 1, TILE_STUMP_BL },
-    { 11, 5, 1, 1, TILE_STUMP_BR },
-    { 5, 14, 1, 1, TILE_STUMP_TL },
-    { 6, 14, 1, 1, TILE_STUMP_TR },
-    { 5, 15, 1, 1, TILE_STUMP_BL },
-    { 6, 15, 1, 1, TILE_STUMP_BR },
+    { 10, 4, 1, 1, TILE_WALL },
+    { 11, 4, 1, 1, TILE_WALL },
+    { 10, 5, 1, 1, TILE_WALL },
+    { 11, 5, 1, 1, TILE_WALL },
+    { 5, 14, 1, 1, TILE_WALL },
+    { 6, 14, 1, 1, TILE_WALL },
+    { 5, 15, 1, 1, TILE_WALL },
+    { 6, 15, 1, 1, TILE_WALL },
     { 0, 0, 0, 0, 0 }
 };
 

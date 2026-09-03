@@ -201,7 +201,7 @@ def verify_battle_transition(sess):
     # 1. Overworld steady: player at (13,8), camera (24,0) ->
     #    OAM x = 13*8+8-24 = 88, y = 8*8+0+16 = 80.
     check("overworld @ sprite position (shadow OAM)", (80, 88), shadow_oam(sess))
-    check("overworld sprite tile (shadow OAM)", 102, shadow_sprite_tile(sess))
+    check("overworld sprite tile (shadow OAM)", 98, shadow_sprite_tile(sess))
 
     # 2. Walk right into the slime at (14,8): the encounter is decided once
     #    the hold-to-move commits the tile (MOVE_FRAMES=8).  The sprite is
