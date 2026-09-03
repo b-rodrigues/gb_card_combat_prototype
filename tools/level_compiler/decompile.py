@@ -69,12 +69,14 @@ SPRITE_FRAMES = {
                    "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"],
         "BAT": ["desolate_landscape.desolate_landscape_enemy_bats_frame_1",
                 "desolate_landscape.desolate_landscape_enemy_bats_frame_2"],
+        "CHEST": ["desolate_landscape.desolate_landscape_treasure_chest_desolate"],
     },
     "forest": {
         "KOBOLD": ["forest.forest_enemy_kobold_frame_1",
                    "forest.forest_enemay_kobold_frame_2"],
         "BAT": ["forest.forest_enemy_bats_frame_1",
                 "forest.forest_enemy_bats_frame_2"],
+        "CHEST": ["forest.forest_treasure_chest_forest"],
     },
     "castle": {
         "KOBOLD": ["castle.castle_enemy_kobold_frame_1",

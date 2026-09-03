@@ -125,6 +125,21 @@ def verify_hostile_sprites(sess):
     check("forest player renders as hero OAM tile (98|99)",
           1, (98 <= shadow_sprite_tile(sess) <= 99))
 
+    print("== Chest pickup sprite (forest amulet as OAM, no BG glyph) ==")
+    forest_amulet = load_scenario(sess, "forest_boot.json")
+    sess.load_scenario(forest_amulet)
+    sess.step(2)
+    # Amulet is static index 0 -> OAM entry 1 + MAX_WORLD_ACTORS (4).
+    chest = shadow_oam_slot_tile(sess, 5)
+    check("forest amulet renders as chest OAM tile (94|95)",
+          1, (94 <= chest <= 95))
+    # The background cell underneath must be plain forest floor
+    # (VRAM tile 128 + 0), not the '?' ASCII glyph: glyph suppression
+    # for OAM-rendered statics.
+    mirror = sess.get_symbol("g_tilemap_mirror")
+    check("amulet background cell is floor, not '?'",
+          128, mirror_at(sess, mirror, 16, 10))
+
     print("== Hostile sprite tiles (south_field kobold / bat) ==")
     south = load_scenario(sess, "south_field_boot.json")
     sess.load_scenario(south)

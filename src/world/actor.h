@@ -116,8 +116,11 @@ ActorEngageResult actor_engage(const WorldActorDefinition *actor, DialogueState 
 void actor_load_scene(World *world, MapId map_id, const GameState *state);
 
 /* Registered static actor table (WRAM copy, banked_copy pattern).  Read
- * directly by bank-2 snapshot code; gameplay lookups stay in actor.c. */
-extern WorldActorDefinition g_static_actors[7];
+ * directly by bank-2 snapshot code; gameplay lookups stay in actor.c.
+ * Non-hostile sprite-kind statics (e.g. chests) also render as OAM
+ * sprites in the slots after the hostile ones (see ui.c). */
+#define MAX_STATIC_ACTORS 7
+extern WorldActorDefinition g_static_actors[MAX_STATIC_ACTORS];
 extern uint8_t g_static_actor_count;
 
 

@@ -36,6 +36,8 @@ extern uint8_t g_is_cgb;
 #define KOBOLD_SPRITE_TILE_ID    96u
 #define BAT_DESOLATE_SPRITE_TILE_ID 88u
 #define BAT_CASTLE_SPRITE_TILE_ID   92u
+/* Chest pickup sprite (single-frame art loaded into both anim slots). */
+#define CHEST_SPRITE_TILE_ID     94u
 
 /* Bank-3 no-arg body behind ui_draw_actors_sprites(): writes each active
  * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "world.h"
+#include "actor.h"
 #include "ui.h"
 #include "banked.h"
 #include "gfx/rpg_tile_lookup.h"
@@ -35,6 +36,7 @@ const uint8_t s_bat_tiles[32] = {
  * so the fixed-bank caller need not loop over actors. */
 #define SHADOW_OAM_BASE 0xC000u
 #define OAM_SLOT_ACTOR0 1u  /* slot 0 -> OAM entry 1 (entry 0 is the player) */
+#define OAM_SLOT_STATIC0 (OAM_SLOT_ACTOR0 + MAX_WORLD_ACTORS)
 
 /* Sub-tile position of an actor mid-step (replica of world_actor_px/py,
  * see src/world/px_banked.c).  bank-3 bodies must not call fixed-bank code. */
@@ -51,18 +53,48 @@ static uint8_t spr_axis_px(const WorldActorRuntime *a, uint8_t axis)
     return px;
 }
 
+/* SPRITE_KIND_* -> OAM tile/prop.  Single source for both loops below;
+ * the chest shares the kobold/bat convention (CHEST_SPRITE_TILE_ID holds
+ * the 1-frame art in both anim slots, so + anim stays uniform). */
+static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
+                               uint8_t anim, uint8_t *prop)
+{
+    switch (kind) {
+        case SPRITE_KIND_KOBOLD:
+            *prop = 1;
+            return (uint8_t)(KOBOLD_SPRITE_TILE_ID + anim);
+        case SPRITE_KIND_BAT:
+            *prop = 1;
+            return (uint8_t)((castle ? BAT_CASTLE_SPRITE_TILE_ID
+                                     : BAT_DESOLATE_SPRITE_TILE_ID) + anim);
+        case SPRITE_KIND_CHEST:
+            *prop = 1;
+            return (uint8_t)(CHEST_SPRITE_TILE_ID + anim);
+        case SPRITE_KIND_BOSS:
+            *prop = 0;
+            return 0;
+        default: /* SPRITE_KIND_ASCII */
+            *prop = 0;
+            return (uint8_t)(ui_font_tile_base + (uint8_t)(visual - ' '));
+    }
+}
+
 /* Compute the OAM tile/prop/position for every active non-boss actor (from
  * its SPRITE_KIND_* and sub-tile position) and write it straight into shadow
- * OAM; the castle boss is drawn into the background tilemap as a 2x2 block
- * instead.  Args: g_bk_ptr_a = const World * (WRAM), g_bk_byte_a = castle
- * flag, g_bk_byte_b = anim_step.  Inactive and SPRITE_KIND_BOSS actors get
- * their OAM entry hidden (y=0). */
+ * OAM; static (non-hostile) actors with sprite art follow in the entries
+ * after the hostile slots, while ASCII-kind statics keep their background
+ * glyph (see ui_draw_world_cell) and stay hidden here.  The castle boss is
+ * drawn into the background tilemap as a 2x2 block instead.
+ * Args: g_bk_ptr_a = const World * (WRAM), g_bk_byte_a = castle flag,
+ * g_bk_byte_b = anim_step.  Inactive and SPRITE_KIND_BOSS actors get their
+ * OAM entry hidden (y=0). */
 void ui_actors_sprites_banked(void)
 {
     const World *w = (const World *)g_bk_ptr_a;
     uint8_t castle = g_bk_byte_a;
     uint8_t anim = g_bk_byte_b;
     uint8_t slot;
+    uint8_t i;
 
     if (!w) return;
     for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
@@ -73,25 +105,8 @@ void ui_actors_sprites_banked(void)
         uint8_t prop = 0;
         uint8_t px, py;
         if (a->active) {
-            switch (a->sprite_kind) {
-                case SPRITE_KIND_KOBOLD:
-                    tile = (uint8_t)(KOBOLD_SPRITE_TILE_ID + anim);
-                    prop = 1;
-                    break;
-                case SPRITE_KIND_BAT:
-                    tile = (uint8_t)((castle ? BAT_CASTLE_SPRITE_TILE_ID
-                                             : BAT_DESOLATE_SPRITE_TILE_ID) + anim);
-                    prop = 1;
-                    break;
-                case SPRITE_KIND_BOSS:
-                    tile = 0;
-                    prop = 0;
-                    break;
-                default: /* SPRITE_KIND_ASCII */
-                    tile = (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' '));
-                    prop = 0;
-                    break;
-            }
+            tile = sprite_tile_for((uint8_t)a->sprite_kind, a->visual,
+                                   castle, anim, &prop);
         }
         if (tile) {
             px = (uint8_t)(spr_axis_px(a, 0) - w->camera_px_x);
@@ -103,6 +118,40 @@ void ui_actors_sprites_banked(void)
                 e[3] = prop;
                 continue;
             }
+        }
+        e[0] = 0;  /* hidden */
+    }
+    for (i = 0; i < MAX_STATIC_ACTORS; i++) {
+        const WorldActorDefinition *d;
+        volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
+                                                   ((OAM_SLOT_STATIC0 + i) << 2));
+        uint8_t tile;
+        uint8_t prop = 0;
+        uint8_t px, py;
+        if (i >= g_static_actor_count) {
+            e[0] = 0;  /* no static here: hide any stale sprite */
+            continue;
+        }
+        d = &g_static_actors[i];
+        if (d->sprite_kind == SPRITE_KIND_ASCII ||
+            d->sprite_kind == SPRITE_KIND_BOSS) {
+            e[0] = 0;  /* glyph path / boss block own these */
+            continue;
+        }
+        tile = sprite_tile_for((uint8_t)d->sprite_kind, d->visual,
+                               castle, anim, &prop);
+        if (!tile) {
+            e[0] = 0;
+            continue;
+        }
+        px = (uint8_t)((uint8_t)(d->x << 3) - w->camera_px_x);
+        py = (uint8_t)((uint8_t)(d->y << 3) - w->camera_px_y);
+        if (px < 160 && py < 144) {
+            e[0] = (uint8_t)(py + 16);
+            e[1] = (uint8_t)(px + 8);
+            e[2] = tile;
+            e[3] = prop;
+            continue;
         }
         e[0] = 0;  /* hidden */
     }

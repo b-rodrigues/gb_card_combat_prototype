@@ -151,6 +151,9 @@ gfx:
 	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
 		--palette auto --tile-coords "5,2 6,2" \
 		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
+	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_treasure_chest_forest.png --name forest_chest_sprite_tile \
+		--palette auto \
+		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical

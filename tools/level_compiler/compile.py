@@ -441,7 +441,8 @@ def resolve_sprite_kind(obj):
     names = " ".join(str(f) for f in frames) + " " + str(obj.get("overworld_sprite") or "")
     for token, kind in (("kobold", "SPRITE_KIND_KOBOLD"),
                         ("boss", "SPRITE_KIND_BOSS"),
-                        ("bat", "SPRITE_KIND_BAT")):
+                        ("bat", "SPRITE_KIND_BAT"),
+                        ("chest", "SPRITE_KIND_CHEST")):
         if token in names:
             return kind
     ent = (obj.get("properties") or {}).get("entity_id", "")

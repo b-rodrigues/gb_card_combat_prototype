@@ -88,7 +88,7 @@ static const WorldActorDefinition g_forest_actors[] = {
         ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         '?', "AMULET", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_AMULET_NOTHING, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
         0, 0,
-         SPRITE_KIND_ASCII
+         SPRITE_KIND_CHEST
     },
 };
 

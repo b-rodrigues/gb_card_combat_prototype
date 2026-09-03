@@ -64,6 +64,7 @@ static const palette_color_t cgb_sprite_palette_orange[4] = {
 #include "gfx/player_sprite_tile.h"
 #include "gfx/kobold_sprite_tile.h"
 #include "gfx/hero_desolate_sprite_tile.h"
+#include "gfx/forest_chest_sprite_tile.h"
 #include "gfx/rpg_tile_lookup.h"
 #include "gfx/asset_atlas.h"
 #include "game_ids.h"
@@ -197,6 +198,10 @@ void ui_sprite_init(void)
     banked_copy(3, s_bat_load_buf, s_bat_tiles, 32);
     set_sprite_data(BAT_DESOLATE_SPRITE_TILE_ID, 2, s_bat_load_buf);
     set_sprite_data(BAT_CASTLE_SPRITE_TILE_ID, 2, s_bat_load_buf);
+    /* Single-frame chest art into both anim slots so the shared
+     * SPRITE_KIND_* + anim_step pipeline stays uniform. */
+    set_sprite_data(CHEST_SPRITE_TILE_ID, 1, forest_chest_sprite_tile);
+    set_sprite_data((uint8_t)(CHEST_SPRITE_TILE_ID + 1), 1, forest_chest_sprite_tile);
     shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
     shadow_OAM[PLAYER_SPRITE_NUM].y = 0;
     SPRITES_8x8;
@@ -220,11 +225,12 @@ void ui_sprite_hide(void)
 }
 
 /* Hide the player and actor sprites in real OAM right now, before the new
- * screen's full redraw runs. */
+ * screen's full redraw runs.  Covers the hostile slots plus the static
+ * sprite slots behind them (see OAM_SLOT_STATIC0 in ui_world_sprite_banked). */
 void ui_sprite_begin_transition(void)
 {
     uint8_t i;
-    for (i = 0; i <= MAX_WORLD_ACTORS; i++) {
+    for (i = 0; i <= MAX_WORLD_ACTORS + MAX_STATIC_ACTORS; i++) {
         shadow_OAM[i].y = 0;
     }
     refresh_OAM();
@@ -540,7 +546,8 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     }
 
     actor = actor_find_at(world, col, row);
-    if (actor && !(actor->flags & ACTOR_FLAG_HOSTILE)) {
+    if (actor && !(actor->flags & ACTOR_FLAG_HOSTILE) &&
+        actor->sprite_kind == SPRITE_KIND_ASCII) {
         tile_idx = (uint8_t)(ui_font_tile_base + (uint8_t)(actor->visual - ' '));
         glyph = actor->visual;
     } else {

@@ -114,6 +114,10 @@
     {
       "id": "amulet_pickup",
       "type": "item",
+      "overworld_sprite": "forest.forest_treasure_chest_forest",
+      "animation_frames": [
+        "forest.forest_treasure_chest_forest"
+      ],
       "position": { "x": 16, "y": 10 },
       "properties": {
         "entity_id": "ENTITY_ID_AMULET",
