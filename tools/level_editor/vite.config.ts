@@ -2,12 +2,62 @@ import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import { exec, spawn } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
+
+// Full ROM toolchain probe, evaluated ONCE at server start (module scope).
+// NOTE: never require() here: vite bundles this config to ESM, where
+// dynamic require() throws "not supported" and kills the whole editor.
+// Static imports above are the only safe form.
+const TOOLCHAIN_TOOLS = ['python3', 'make', 'lcc', 'uge2source'];
+function probeTools(): { ok: boolean; detail: { [k: string]: string } } {
+  const detail: { [k: string]: string } = {};
+  let ok = true;
+  for (const t of TOOLCHAIN_TOOLS) {
+    try {
+      execSync(`${t} --version 2>&1 || ${t} -v 2>&1 || ${t} 2>&1`, { stdio: 'ignore' });
+      detail[t] = 'runs';
+    } catch (e: any) {
+      // execSync throws on nonzero exit too; what matters is whether
+      // the binary launched at all (status !== 127 and no ENOENT/ENOEXEC).
+      const msg = String((e && e.message) || e);
+      if (/ENOENT|ENOEXEC|command not found|not recognized/i.test(msg) || e.status === 127) {
+        detail[t] = `MISSING/BROKEN (${msg.split('\n')[0]})`;
+        ok = false;
+      } else {
+        detail[t] = 'runs';
+      }
+    }
+  }
+  try {
+    execSync('rgbasm-huge --help 2>&1 || rgbasm --help 2>&1', { stdio: 'ignore' });
+    detail['rgbasm'] = 'runs';
+  } catch {
+    detail['rgbasm'] = 'MISSING/BROKEN (neither rgbasm-huge nor rgbasm runs)';
+    ok = false;
+  }
+  return { ok, detail };
+}
+
+const toolchainProbe = probeTools();
+
+function getNixBin(): string | null {
+  const candidates = ['nix', '/run/current-system/sw/bin/nix', '/usr/bin/nix', '/bin/nix'];
+  for (const c of candidates) {
+    try {
+      if (c.startsWith('/') && fs.existsSync(c)) return c;
+    } catch {}
+  }
+  return 'nix';
+}
+
+const nixBin = getNixBin();
 
 function levelEditorApiPlugin(): Plugin {
   return {
     name: 'level-editor-api',
     configureServer(server) {
+      console.log(`[level-editor] toolchain=${toolchainProbe.ok ? 'direct' : 'nix-develop'}`,
+        JSON.stringify(toolchainProbe.detail), `nix=${nixBin}`);
       server.middlewares.use((req, res, next) => {
         const repoRoot = path.resolve(__dirname, '../..');
 
@@ -71,56 +121,6 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
-        function getNixBin(): string | null {
-          const candidates = ['nix', '/run/current-system/sw/bin/nix', '/usr/bin/nix', '/bin/nix'];
-          for (const c of candidates) {
-            try {
-              if (c.startsWith('/') && fs.existsSync(c)) return c;
-            } catch {}
-          }
-          return 'nix';
-        }
-
-        // Full ROM toolchain probe. The old check (python3/make/lcc only)
-        // could select the direct path in an env with compilers but no
-        // audio tools, dying late at the first native-audio exec with a
-        // cryptic OSError. Every binary here must EXECUTE, not just resolve.
-        const TOOLCHAIN_TOOLS = ['python3', 'make', 'lcc', 'uge2source'];
-        function probeTools(): { ok: boolean; detail: { [k: string]: string } } {
-          const { execSync } = require('child_process');
-          const detail: { [k: string]: string } = {};
-          let ok = true;
-          for (const t of TOOLCHAIN_TOOLS) {
-            try {
-              execSync(`${t} --version 2>&1 || ${t} -v 2>&1 || ${t} 2>&1`, { stdio: 'ignore' });
-              detail[t] = 'runs';
-            } catch (e: any) {
-              // execSync throws on nonzero exit too; what matters is whether
-              // the binary launched at all (status !== 127 and no ENOENT/ENOEXEC).
-              const msg = String((e && e.message) || e);
-              if (/ENOENT|ENOEXEC|command not found|not recognized/i.test(msg) || e.status === 127) {
-                detail[t] = `MISSING/BROKEN (${msg.split('\n')[0]})`;
-                ok = false;
-              } else {
-                detail[t] = 'runs';
-              }
-            }
-          }
-          try {
-            execSync('rgbasm-huge --help 2>&1 || rgbasm --help 2>&1', { stdio: 'ignore' });
-            detail['rgbasm'] = 'runs';
-          } catch {
-            detail['rgbasm'] = 'MISSING/BROKEN (neither rgbasm-huge nor rgbasm runs)';
-            ok = false;
-          }
-          return { ok, detail };
-        }
-
-        const toolchainProbe = probeTools();
-        const nixBin = getNixBin();
-        console.log(`[level-editor] repoRoot=${repoRoot} toolchain=${toolchainProbe.ok ? 'direct' : 'nix-develop'}`,
-          JSON.stringify(toolchainProbe.detail));
-
         function runInToolchain(cmd: string, callback: (err: any, stdout: string, stderr: string) => void) {
           const nixCmd = `${nixBin} develop --command bash --norc -c ${JSON.stringify(cmd)}`;
           const attempts: { route: string; cmd: string; error?: string; stderr?: string }[] = [];
@@ -175,7 +175,6 @@ function levelEditorApiPlugin(): Plugin {
             const romPath = path.join(repoRoot, 'build', 'rpg_card_proto_debug.gb');
             const hasDirectTools = (() => {
               try {
-                const { execSync } = require('child_process');
                 execSync(`${emu} --help 2>&1`, { stdio: 'ignore' });
                 return true;
               } catch {
