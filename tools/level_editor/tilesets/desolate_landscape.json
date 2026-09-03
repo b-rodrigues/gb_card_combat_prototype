@@ -434,13 +434,13 @@
       "category": "enemy"
     },
     {
-      "id": "desolate_landscape_plain_floor_2",
-      "label": "plain floor",
+      "id": "desolate_landscape_treasure_chest_desolate",
+      "label": "treasure chest desolate",
       "gb_constant": "TILE_DESOLATE_LANDSCAPE_43",
-      "walkable": true,
-      "color": "#938da1",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_2.png",
+      "walkable": false,
+      "color": "#89765d",
+      "ascii": "#",
+      "image_url": "/tiles/desolate_landscape/desolate_landscape_treasure_chest_desolate.png",
       "category": "terrain"
     },
     {

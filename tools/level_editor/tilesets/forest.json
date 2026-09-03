@@ -434,13 +434,13 @@
       "category": "enemy"
     },
     {
-      "id": "forest_plain_floor_2",
-      "label": "plain floor",
-      "gb_constant": "TILE_FOREST_PLAIN_FLOOR",
-      "walkable": true,
-      "color": "#7bb660",
-      "ascii": ".",
-      "image_url": "/tiles/forest/forest_plain_floor_2.png",
+      "id": "forest_treasure_chest_forest",
+      "label": "treasure chest forest",
+      "gb_constant": "TILE_FOREST_TREASURE_CHEST_FOREST",
+      "walkable": false,
+      "color": "#808645",
+      "ascii": "#",
+      "image_url": "/tiles/forest/forest_treasure_chest_forest.png",
       "category": "terrain"
     },
     {
