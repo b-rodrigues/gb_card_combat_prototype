@@ -483,5 +483,59 @@
       "image_url": "/tiles/forest/forest_plain_floor_6.png",
       "category": "terrain"
     }
-  ]
+  ],
+  "vram_block": {
+    "palette": "gb_green",
+    "source_sheet": "assets/RPG_exterior.png",
+    "tiles": [
+      {
+        "x": 0,
+        "y": 0,
+        "index": 0
+      },
+      {
+        "x": 0,
+        "y": 5,
+        "index": 1
+      },
+      {
+        "x": 8,
+        "y": 2,
+        "index": 2
+      },
+      {
+        "x": 0,
+        "y": 14,
+        "index": 3
+      },
+      {
+        "x": 1,
+        "y": 14,
+        "index": 4
+      },
+      {
+        "x": 0,
+        "y": 15,
+        "index": 5
+      },
+      {
+        "x": 1,
+        "y": 15,
+        "index": 6
+      },
+      {
+        "x": 2,
+        "y": 16,
+        "index": 7
+      },
+      {
+        "sheet": "assets/forest-tile.png",
+        "x": 8,
+        "y": 2,
+        "index": 8,
+        "tile": "forest_exit_forest",
+        "exit": true
+      }
+    ]
+  }
 }

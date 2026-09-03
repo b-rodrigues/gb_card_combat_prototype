@@ -483,5 +483,300 @@
       "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_6.png",
       "category": "terrain"
     }
-  ]
+  ],
+  "vram_block": {
+    "palette": "auto",
+    "source_sheet": "assets/desolate_landscape.png",
+    "tiles": [
+      {
+        "x": 0,
+        "y": 0,
+        "index": 0,
+        "tile": "desolate_landscape_top_left_corner_wall"
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "index": 1,
+        "tile": "desolate_landscape_top_wall_1"
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "index": 2,
+        "tile": "desolate_landscape_top_wall_2"
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "index": 3,
+        "tile": "desolate_landscape_top_wall_3"
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "index": 4,
+        "tile": "desolate_landscape_top_wall_4"
+      },
+      {
+        "x": 5,
+        "y": 0,
+        "index": 5,
+        "tile": "desolate_landscape_top_right_corner_wall"
+      },
+      {
+        "x": 6,
+        "y": 0,
+        "index": 6,
+        "tile": "desolate_landscape_right_wall_1"
+      },
+      {
+        "x": 7,
+        "y": 0,
+        "index": 7,
+        "tile": "desolate_landscape_right_wall_2"
+      },
+      {
+        "x": 8,
+        "y": 0,
+        "index": 8,
+        "tile": "desolate_landscape_right_wall_3"
+      },
+      {
+        "x": 9,
+        "y": 0,
+        "index": 9,
+        "tile": "desolate_landscape_left_wall_1"
+      },
+      {
+        "x": 10,
+        "y": 0,
+        "index": 10,
+        "tile": "desolate_landscape_left_wall_2"
+      },
+      {
+        "x": 11,
+        "y": 0,
+        "index": 11,
+        "tile": "desolate_landscape_left_wall_3"
+      },
+      {
+        "x": 12,
+        "y": 0,
+        "index": 12,
+        "tile": "desolate_landscape_top_left_treetop"
+      },
+      {
+        "x": 13,
+        "y": 0,
+        "index": 13,
+        "tile": "desolate_landscape_top_right_tree_top"
+      },
+      {
+        "x": 14,
+        "y": 0,
+        "index": 14,
+        "tile": "desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 15,
+        "y": 0,
+        "index": 15,
+        "tile": "desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "index": 16,
+        "tile": "desolate_landscape_bottom_left_corner_wall"
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "index": 17,
+        "tile": "desolate_landscape_bottom_wall_1"
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "index": 18,
+        "tile": "desolate_landscape_bottom_wall_2"
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "index": 19,
+        "tile": "desolate_landscape_bottom_wall_3"
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "index": 20,
+        "tile": "desolate_landscape_bottom_wall_4"
+      },
+      {
+        "x": 5,
+        "y": 1,
+        "index": 21,
+        "tile": "desolate_landscape_floor_with_stuff_walkable_1"
+      },
+      {
+        "x": 6,
+        "y": 1,
+        "index": 22,
+        "tile": "desolate_landscape_floor_with_stuff_walkable_2"
+      },
+      {
+        "x": 7,
+        "y": 1,
+        "index": 23,
+        "tile": "desolate_landscape_floor_with_stuff_walkable_3"
+      },
+      {
+        "x": 8,
+        "y": 1,
+        "index": 24,
+        "tile": "desolate_landscape_florr_with_stuff_walkable"
+      },
+      {
+        "x": 9,
+        "y": 1,
+        "index": 25,
+        "tile": "desolate_landscape_right_wall_4"
+      },
+      {
+        "x": 10,
+        "y": 1,
+        "index": 26,
+        "tile": "desolate_landscape_bottom_right_corner_wall"
+      },
+      {
+        "x": 11,
+        "y": 1,
+        "index": 27,
+        "tile": "desolate_landscape_left_wall_4"
+      },
+      {
+        "x": 12,
+        "y": 1,
+        "index": 28,
+        "tile": "desolate_landscape_bottom_left_treetrunk"
+      },
+      {
+        "x": 13,
+        "y": 1,
+        "index": 29,
+        "tile": "desolate_landscape_bottom_right_tree_trunk"
+      },
+      {
+        "x": 14,
+        "y": 1,
+        "index": 30,
+        "tile": "desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 15,
+        "y": 1,
+        "index": 31,
+        "tile": "desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "index": 32,
+        "tile": "desolate_landscape_plain_floor_1"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "index": 33,
+        "tile": "desolate_landscape_hero_frame_1_with_green_forest_background"
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "index": 34,
+        "tile": "desolate_landscape_hero_frame_2_with_green_forest_background"
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "index": 35,
+        "tile": "desolate_landscape_enemy_kobold_frame_1"
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "index": 36,
+        "tile": "desolate_landscape_enemay_kobold_frame_2"
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "index": 37,
+        "tile": "desolate_landscape_fire_frame_1"
+      },
+      {
+        "x": 6,
+        "y": 2,
+        "index": 38,
+        "tile": "desolate_landscape_fire_frame_2"
+      },
+      {
+        "x": 7,
+        "y": 2,
+        "index": 39,
+        "tile": "desolate_landscape_merchant_desolate_landscape"
+      },
+      {
+        "x": 8,
+        "y": 2,
+        "index": 40,
+        "tile": "desolate_landscape_exit_desolate_landscape",
+        "exit": true
+      },
+      {
+        "x": 9,
+        "y": 2,
+        "index": 41,
+        "tile": "desolate_landscape_enemy_bats_frame_1"
+      },
+      {
+        "x": 10,
+        "y": 2,
+        "index": 42,
+        "tile": "desolate_landscape_enemy_bats_frame_2"
+      },
+      {
+        "x": 11,
+        "y": 2,
+        "index": 43,
+        "tile": "desolate_landscape_treasure_chest_desolate"
+      },
+      {
+        "x": 12,
+        "y": 2,
+        "index": 44,
+        "tile": "desolate_landscape_plain_floor_3"
+      },
+      {
+        "x": 13,
+        "y": 2,
+        "index": 45,
+        "tile": "desolate_landscape_plain_floor_4"
+      },
+      {
+        "x": 14,
+        "y": 2,
+        "index": 46,
+        "tile": "desolate_landscape_plain_floor_5"
+      },
+      {
+        "x": 15,
+        "y": 2,
+        "index": 47,
+        "tile": "desolate_landscape_plain_floor_6"
+      }
+    ]
+  }
 }

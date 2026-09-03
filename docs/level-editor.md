@@ -933,3 +933,32 @@ Rules:
   recovery/forensics tool (regenerate JSON from hand-edited C, audit a
   build); its `--check`/`--roundtrip` modes are dev diagnostics for that
   purpose, using C-equality, not JSON-text equality.
+
+# Phase 16 — Manifest-driven tile traits (JSON ⇄ ROM)
+
+Tileset manifests (`tools/level_editor/tilesets/*.json`) are the single
+source of truth for what each tile *is*, for the editor and the ROM alike:
+
+- `vram_block`: ordered VRAM block composition (sheet coords + manifest
+  cross-refs) with exactly one `exit: true` tile per world tileset.
+  Checked by `make tiles-check`.
+- `generate_tiles.py` inverts the manifests into `TileType` value space
+  and emits `generated/tiles/` (untracked build artifacts):
+  `tile_walk.h` (walkable ranges + accessor, consumed by `world.c` and
+  the bank-3 patrol body from one source), `tile_glyph.h` (glyph ranges
+  + accessor for `ui.c`, plus per-tileset exit-art indices), and
+  `blocks.mk` (forest VRAM coordinates for the `Makefile` gfx rules).
+- Legacy tiles predate manifests (generic floor/wall/exit, old desolate
+  set, stumps) and stay hand-listed in ROM code; the generator documents
+  the frozen set. No new legacy tiles, ever: new content flows through
+  manifests.
+- Exit gates render per-tileset art (desolate 40, forest 8, castle 26)
+  while `TILE_EXIT` remains the single semantic gate marker, so movement,
+  patrol, and exit lookup are untouched.
+- Merging artist drops: `merge_tileset.py` recomputes every sheet cell
+  and applies diffs only at changed indices (never run raw
+  `import_tileset.py` against the curated manifests — it renames the
+  `gb_constant`s the ROM build depends on).
+- Gates: `make tiles-check` (manifest validity), `make tiles` (regrow),
+  full harness after any ROM-side consumption change (movement and
+  rendering both read these tables).

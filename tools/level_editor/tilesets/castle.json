@@ -273,5 +273,174 @@
       "image_url": "/tiles/castle/castle_exit_castle.png",
       "category": "terrain"
     }
-  ]
+  ],
+  "vram_block": {
+    "palette": "auto",
+    "source_sheet": "assets/castle-tile.png",
+    "tiles": [
+      {
+        "x": 0,
+        "y": 0,
+        "index": 0,
+        "tile": "castle_top_left_corner_wall"
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "index": 1,
+        "tile": "castle_top_wall"
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "index": 2,
+        "tile": "castle_top_right_corner_wall"
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "index": 3,
+        "tile": "castle_left_wall"
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "index": 4,
+        "tile": "castle_right_wall"
+      },
+      {
+        "x": 5,
+        "y": 0,
+        "index": 5,
+        "tile": "castle_window"
+      },
+      {
+        "x": 6,
+        "y": 0,
+        "index": 6,
+        "tile": "castle_curtain"
+      },
+      {
+        "x": 7,
+        "y": 0,
+        "index": 7,
+        "tile": "castle_top_left_boss"
+      },
+      {
+        "x": 8,
+        "y": 0,
+        "index": 8,
+        "tile": "castle_top_right_boss"
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "index": 9,
+        "tile": "castle_bottom_left_corren_wall"
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "index": 10,
+        "tile": "castle_bottom_wall"
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "index": 11,
+        "tile": "castle_bottom_right_corner_wall"
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "index": 12,
+        "tile": "castle_chair_facing_left"
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "index": 13,
+        "tile": "castle_table"
+      },
+      {
+        "x": 5,
+        "y": 1,
+        "index": 14,
+        "tile": "castle_chair_facing_riht"
+      },
+      {
+        "x": 6,
+        "y": 1,
+        "index": 15,
+        "tile": "castle_chest"
+      },
+      {
+        "x": 7,
+        "y": 1,
+        "index": 16,
+        "tile": "castle_bottom_left_boss"
+      },
+      {
+        "x": 8,
+        "y": 1,
+        "index": 17,
+        "tile": "castle_bottom_right_boss"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "index": 18,
+        "tile": "castle_plain_floor"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "index": 19,
+        "tile": "castle_hero_frame_1_with_green_forest_background"
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "index": 20,
+        "tile": "castle_hero_frame_2_with_green_forest_background"
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "index": 21,
+        "tile": "castle_enemy_kobold_frame_1"
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "index": 22,
+        "tile": "castle_enemay_kobold_frame_2"
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "index": 23,
+        "tile": "castle_enemy_bat_frame_1"
+      },
+      {
+        "x": 6,
+        "y": 2,
+        "index": 24,
+        "tile": "castle_enemy_bat_frame_2"
+      },
+      {
+        "x": 7,
+        "y": 2,
+        "index": 25,
+        "tile": "castle_merchant_desolate_landscape"
+      },
+      {
+        "x": 8,
+        "y": 2,
+        "index": 26,
+        "tile": "castle_exit_castle",
+        "exit": true
+      }
+    ]
+  }
 }

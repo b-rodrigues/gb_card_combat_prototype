@@ -21,7 +21,7 @@ RGBASM_HUGE ?= $(shell command -v rgbasm-huge 2>/dev/null || echo rgbasm)
 RGB2SDAS = python3 tools/rgb2sdas.py
 UGE2SOURCE = uge2source
 
-INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR) -I$(GENERATED_SFX_DIR)
+INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR) -I$(GENERATED_SFX_DIR) -I$(GENERATED_TILES_DIR)
 
 SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 
@@ -53,7 +53,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check doctor music sfx level levels levels-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check tiles tiles-check doctor music sfx level levels levels-check editor clean
 
 all: $(TARGET)
 
@@ -65,7 +65,7 @@ debug: $(TARGET_DEBUG)
 # build: sdcc's --use-stdout pipeline corrupts the .asm stream when warnings
 # are enabled (they leak into stdout).  Compiling with -S surfaces the same
 # warnings without invoking the assembler.
-lint: gfx $(SRCS)
+lint: gfx tiles $(SRCS)
 	@ok=1; \
 	for f in $(SRCS); do \
 		out=$$($(CC) -S -Wf-Wall $(INCLUDES) -o /dev/null "$$f" 2>&1 || true); \
@@ -79,6 +79,10 @@ lint: gfx $(SRCS)
 # Deterministic: rerunning produces byte-identical output.  Requires Pillow,
 # which the Nix dev shell provides.
 GFX_OUT_DIR = $(SRC_DIR)/gfx
+
+# Manifest-driven VRAM coordinates (generated/tiles/blocks.mk). Make
+# rebuilds the fragment automatically when missing or stale, then re-execs.
+include generated/tiles/blocks.mk
 
 gfx:
 	@mkdir -p $(GFX_OUT_DIR)
@@ -124,10 +128,10 @@ gfx:
 		--palette gb_green --tile-coords "0,64 1,64 2,64 3,64 4,64 5,64 6,64 7,64" \
 		--raw -o $(GFX_OUT_DIR)/rpg_structures_props_tiles.inc
 	@python3 tools/png2gb.py assets/RPG_forest_tiles.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "0,0 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
+		--palette gb_green --tile-coords "$(TILES_FOREST_COORDS)" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc 2>/dev/null || \
 	python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "0,0 0,5 8,2 0,14 1,14 0,15 1,15 2,16" \
+		--palette gb_green --tile-coords "$(TILES_FOREST_COORDS)" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
@@ -154,6 +158,9 @@ gfx:
 	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_treasure_chest_forest.png --name forest_chest_sprite_tile \
 		--palette auto \
 		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
+	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_exit_forest.png --name rpg_forest_exit \
+		--palette auto \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_exit.inc
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical
@@ -212,6 +219,29 @@ editor: extract-tiles
 
 atlas-check:
 	@python3 tools/asset_atlas.py --check
+
+# Tileset manifest check: vram_block composition, exit marking, sheet bounds.
+tiles-check:
+	@python3 tools/level_editor/validate_tilesets.py tools/level_editor/tilesets/*.json
+
+# Tile-trait generation: manifests -> generated/tiles/tile_traits.h
+# (walk/glyph ranges + exit indices consumed by world.c, patrol_banked.c,
+# ui.c). Deterministic: rerunning reproduces the header byte-identically.
+GENERATED_TILES_DIR = generated/tiles
+GENERATED_TILE_WALK = $(GENERATED_TILES_DIR)/tile_walk.h
+GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
+GENERATED_TILE_BLOCKS = $(GENERATED_TILES_DIR)/blocks.mk
+tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_BLOCKS)
+
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_BLOCKS): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
+
+$(GENERATED_TILES_DIR):
+	mkdir -p $(GENERATED_TILES_DIR)
+
+# Consumers rebuild when the generated headers change (they are untracked).
+$(BUILD_DIR)/world/world.o $(BUILD_DIR)/world/patrol_banked.o $(BUILD_DIR)/debug/world/world.o $(BUILD_DIR)/debug/world/patrol_banked.o: $(GENERATED_TILE_WALK)
+$(BUILD_DIR)/ui/ui.o $(BUILD_DIR)/debug/ui/ui.o: $(GENERATED_TILE_GLYPH)
 
 # Toolchain self-check: every required native binary must not only resolve
 # but EXECUTE (a broken file shadowing the real one fails at exec time with
