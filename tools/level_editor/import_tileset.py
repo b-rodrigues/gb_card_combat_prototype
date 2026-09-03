@@ -39,10 +39,13 @@ def slugify(text):
 
 
 def infer_walkable(description):
+    # Only genuine terrain counts as walkable.  Sprite-sheet art that shares
+    # the bank (hero/npc/merchant/enemy frames) must never be walkable: the
+    # ROM renders those tiles as solid and blocks movement onto them, so a
+    # walkable:true flag here would make host collision disagree with the
+    # game (see world_is_walkable).
     d = description.lower()
-    if "walkable" in d or "floor" in d or "exit" in d or "merchant" in d or "hero" in d:
-        return True
-    if "enemy" in d or "kobold" in d or "bats" in d:
+    if "walkable" in d or "floor" in d or "exit" in d:
         return True
     return False
 

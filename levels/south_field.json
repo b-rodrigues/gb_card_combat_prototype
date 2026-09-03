@@ -9,7 +9,15 @@
     "map_id": "MAP_SOUTH_FIELD"
   },
   "layers": {
-    "terrain": []
+    "terrain": [
+      {
+        "x": 5,
+        "y": 5,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_plain_floor_1"
+      }
+    ]
   },
   "player": {
     "spawn": {

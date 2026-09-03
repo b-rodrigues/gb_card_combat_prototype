@@ -106,11 +106,16 @@ static const SceneTerrainBlock s_castle_terrain[] = {
     { 0, 0, 0, 0, 0 }
 };
 
+static const SceneTerrainBlock s_south_field_terrain[] = {
+    { 5, 5, 1, 1, TILE_DESOLATE_LANDSCAPE_32 },
+    { 0, 0, 0, 0, 0 }
+};
+
 const SceneDefinition g_scenes[] = {
     { MAP_FIELD,           MUSIC_FOREST,      32, 18, &g_all_exits[0],     3, WORLD_TILESET_FOREST,    0 },
     { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[3],     1, WORLD_TILESET_FOREST,    s_town_terrain },
     { MAP_FOREST,          MUSIC_FOREST,      20, 18, &g_all_exits[4],     1, WORLD_TILESET_FOREST,    s_forest_terrain },
     { MAP_MOUNTAIN_PASS,   MUSIC_DESOLATE,    20, 18, &g_all_exits[5],     2, WORLD_TILESET_DESOLATE,  s_mountain_pass_terrain },
     { MAP_CASTLE,          MUSIC_DESOLATE,    20, 18, &g_all_exits[7],     1, WORLD_TILESET_CASTLE,    s_castle_terrain },
-    { MAP_SOUTH_FIELD,     MUSIC_DESOLATE,    20, 18, &g_all_exits[8],     2, WORLD_TILESET_DESOLATE,  0 }
+    { MAP_SOUTH_FIELD,     MUSIC_DESOLATE,    20, 18, &g_all_exits[8],     2, WORLD_TILESET_DESOLATE,  s_south_field_terrain }
 };

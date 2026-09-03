@@ -99,7 +99,23 @@ void world_patrol_slot_banked(void)
         blocked = 1;
     } else {
         tile = g_patrol_world->map[target_y][target_x];
-        if (tile != 0) blocked = 1;
+        /* Walkable-set replica of world_is_walkable() (src/world/world.c) --
+         * bank-3 bodies must not call fixed-bank code.  KEEP IN SYNC. */
+        if (tile == TILE_FLOOR || tile == TILE_EXIT) {
+            blocked = 0;
+        } else if (tile >= TILE_DESOLATE_FLOOR_00 && tile <= TILE_DESOLATE_FLOOR_03) {
+            blocked = 0;
+        } else if (tile == TILE_DESOLATE_FLOOR_PLAIN || tile == TILE_DESOLATE_STAIRCASE) {
+            blocked = 0;
+        } else if (tile >= TILE_DESOLATE_LANDSCAPE_21 && tile <= TILE_DESOLATE_LANDSCAPE_24) {
+            blocked = 0;
+        } else if (tile == TILE_DESOLATE_LANDSCAPE_32 || tile == TILE_DESOLATE_LANDSCAPE_40) {
+            blocked = 0;
+        } else if (tile >= TILE_DESOLATE_LANDSCAPE_43 && tile <= TILE_DESOLATE_LANDSCAPE_47) {
+            blocked = 0;
+        } else {
+            blocked = 1;
+        }
     }
 
     if (!blocked) {
