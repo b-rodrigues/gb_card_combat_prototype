@@ -228,7 +228,8 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
     if exits_ok:
         passed.append("Exits valid")
 
-    # 5. Objects Check
+    # 5. Objects Check (full-fidelity actor slots: JSON must be able to
+    # roundtrip the C WorldActorDefinition rows -- see decompile.py)
     objects_ok = True
     objects = level_data.get("objects", [])
     seen_obj_ids = set()
@@ -249,6 +250,52 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
         if ox < 0 or ox >= width or oy < 0 or oy >= height:
             errors.append(f"Object '{oid}' position ({ox}, {oy}) is outside map bounds")
             objects_ok = False
+
+        otype = obj.get("type", "")
+        props = obj.get("properties", {})
+        if not isinstance(props, dict):
+            errors.append(f"Object '{oid}' properties must be an object")
+            objects_ok = False
+            continue
+        if not props.get("entity_id"):
+            # Decorative objects (e.g. the south_field campfire) have no
+            # engine actor row: decompile.py preserves them verbatim and
+            # compile.py ignores them. Not an error, but they cannot
+            # carry actor slots.
+            warnings.append(f"Object '{oid}' has no entity_id: kept verbatim, ignored by compile")
+            for key in ("actor_id", "hp", "max_hp", "battle", "ai"):
+                if key in props:
+                    errors.append(f"Object '{oid}' has no entity_id but carries actor slot '{key}'")
+                    objects_ok = False
+            continue
+        aid = props.get("actor_id", 0)
+        if not isinstance(aid, int) or aid < 0 or aid > 65535:
+            errors.append(f"Object '{oid}' has invalid actor_id '{aid}' (0..65535)")
+            objects_ok = False
+        facing = props.get("facing", "DOWN")
+        if facing not in ("UP", "DOWN", "LEFT", "RIGHT"):
+            errors.append(f"Object '{oid}' has invalid facing '{facing}'")
+            objects_ok = False
+        for flag in props.get("flags", []):
+            if flag not in ("HOSTILE", "BLOCKING", "INTERACTABLE"):
+                errors.append(f"Object '{oid}' has unknown flag '{flag}'")
+                objects_ok = False
+        visual = props.get("visual", "?")
+        if not isinstance(visual, str) or len(visual) != 1:
+            errors.append(f"Object '{oid}' visual must be a single character")
+            objects_ok = False
+        if otype == "enemy":
+            for key in ("hp", "max_hp", "ai"):
+                if key not in props:
+                    errors.append(f"Enemy object '{oid}' is missing properties.{key}")
+                    objects_ok = False
+            if "battle" not in props:
+                errors.append(f"Enemy object '{oid}' is missing properties.battle")
+                objects_ok = False
+        for key in ("hp", "max_hp", "gold_reward"):
+            if key in props and (not isinstance(props[key], int) or props[key] < 0):
+                errors.append(f"Object '{oid}' has invalid {key} '{props[key]}'")
+                objects_ok = False
 
     if objects_ok:
         passed.append("Objects valid")
@@ -286,6 +333,21 @@ def main():
             sys.exit(1)
 
     overall_success = True
+
+    # Cross-file check: nonzero actor_id values drive persistent defeat
+    # tracking in GameState.world and must be unique across scenes.
+    seen_actor_ids = {}
+    for p, data in loaded_levels:
+        for obj in data.get("objects", []):
+            props = obj.get("properties", {}) or {}
+            aid = props.get("actor_id", 0)
+            if isinstance(aid, int) and aid != 0:
+                if aid in seen_actor_ids:
+                    print(f"ERROR: actor_id {aid} used by both "
+                          f"'{seen_actor_ids[aid]}' and '{obj.get('id')}' (must be unique)")
+                    overall_success = False
+                else:
+                    seen_actor_ids[aid] = obj.get("id")
 
     for p, data in loaded_levels:
         basename = os.path.basename(p)

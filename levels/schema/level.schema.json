@@ -164,7 +164,45 @@
             }
           },
           "properties": {
-            "type": "object"
+            "type": "object",
+            "description": "Engine-mapped actor fields. entity_id/display_name/battle/ai/dialogue/shop/save/quest_var/quest_val are the original slots; actor_id/facing/flags/visual/hp/max_hp/gold_reward/reward_currency are full-fidelity slots so JSON roundtrips the C rows (see tools/level_compiler/decompile.py). overworld_sprite/animation_frames select the SPRITE_KIND_* render.",
+            "properties": {
+              "entity_id": { "type": "string" },
+              "display_name": { "type": "string" },
+              "battle": { "type": "string" },
+              "ai": { "type": "string" },
+              "dialogue": { "type": "string" },
+              "shop": { "type": "integer" },
+              "save": { "type": "integer" },
+              "quest_var": { "type": "string" },
+              "quest_val": { "type": "integer" },
+              "actor_id": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535,
+                "description": "Stable persistent instance id (defeat tracking). Must be unique across scenes when nonzero."
+              },
+              "facing": {
+                "type": "string",
+                "enum": ["UP", "DOWN", "LEFT", "RIGHT"]
+              },
+              "flags": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["HOSTILE", "BLOCKING", "INTERACTABLE"] }
+              },
+              "visual": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1,
+                "description": "ASCII fallback glyph (semantic buffer + ASCII-kind actors)"
+              },
+              "hp": { "type": "integer", "minimum": 0, "description": "Required for type=enemy" },
+              "max_hp": { "type": "integer", "minimum": 0, "description": "Required for type=enemy" },
+              "gold_reward": { "type": "integer", "minimum": 0 },
+              "reward_currency": { "type": "string" },
+              "overworld_sprite": { "type": "string" },
+              "animation_frames": { "type": "array", "items": { "type": "string" } }
+            }
           }
         }
       }

@@ -10,44 +10,220 @@
   },
   "layers": {
     "terrain": [
-      { "x": 1, "y": 0, "width": 3, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_wall_1" },
-      { "x": 16, "y": 0, "width": 3, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_wall_2" },
-      { "x": 1, "y": 1, "width": 3, "height": 16, "tile": "desolate_landscape.desolate_landscape_left_wall_1" },
-      { "x": 16, "y": 1, "width": 3, "height": 16, "tile": "desolate_landscape.desolate_landscape_right_wall_1" },
-      { "x": 1, "y": 17, "width": 3, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_wall_1" },
-      { "x": 16, "y": 17, "width": 3, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_wall_2" },
-      { "x": 6, "y": 3, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 7, "y": 3, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 6, "y": 4, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 7, "y": 4, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" },
-      { "x": 13, "y": 3, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 14, "y": 3, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 13, "y": 4, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 14, "y": 4, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" },
-      { "x": 6, "y": 8, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 7, "y": 8, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 6, "y": 9, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 7, "y": 9, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" },
-      { "x": 14, "y": 8, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 15, "y": 8, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 14, "y": 9, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 15, "y": 9, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" },
-      { "x": 5, "y": 13, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 6, "y": 13, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 5, "y": 14, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 6, "y": 14, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" },
-      { "x": 13, "y": 13, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_left_rock" },
-      { "x": 14, "y": 13, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_top_right_rock" },
-      { "x": 13, "y": 14, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_left_rock" },
-      { "x": 14, "y": 14, "width": 1, "height": 1, "tile": "desolate_landscape.desolate_landscape_bottom_right_rock" }
+      {
+        "x": 1,
+        "y": 0,
+        "width": 3,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_wall_1"
+      },
+      {
+        "x": 16,
+        "y": 0,
+        "width": 3,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_wall_2"
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "width": 3,
+        "height": 16,
+        "tile": "desolate_landscape.desolate_landscape_left_wall_1"
+      },
+      {
+        "x": 16,
+        "y": 1,
+        "width": 3,
+        "height": 16,
+        "tile": "desolate_landscape.desolate_landscape_right_wall_1"
+      },
+      {
+        "x": 1,
+        "y": 17,
+        "width": 3,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_wall_1"
+      },
+      {
+        "x": 16,
+        "y": 17,
+        "width": 3,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_wall_2"
+      },
+      {
+        "x": 6,
+        "y": 3,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 7,
+        "y": 3,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 6,
+        "y": 4,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 7,
+        "y": 4,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 13,
+        "y": 3,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 14,
+        "y": 3,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 13,
+        "y": 4,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 14,
+        "y": 4,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 6,
+        "y": 8,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 7,
+        "y": 8,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 6,
+        "y": 9,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 7,
+        "y": 9,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 14,
+        "y": 8,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 15,
+        "y": 8,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 14,
+        "y": 9,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 15,
+        "y": 9,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 5,
+        "y": 13,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 6,
+        "y": 13,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 5,
+        "y": 14,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 6,
+        "y": 14,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      },
+      {
+        "x": 13,
+        "y": 13,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_left_rock"
+      },
+      {
+        "x": 14,
+        "y": 13,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_top_right_rock"
+      },
+      {
+        "x": 13,
+        "y": 14,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_left_rock"
+      },
+      {
+        "x": 14,
+        "y": 14,
+        "width": 1,
+        "height": 1,
+        "tile": "desolate_landscape.desolate_landscape_bottom_right_rock"
+      }
     ]
   },
   "player": {
-    "spawn": {
-      "x": 12,
-      "y": 10,
-      "facing": "UP"
-    }
+    "spawn": { "x": 12, "y": 10, "facing": "UP" }
   },
   "exits": [
     {
@@ -82,6 +258,14 @@
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
         "display_name": "SLIME",
+        "actor_id": 4,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "E",
+        "hp": 16,
+        "max_hp": 16,
+        "gold_reward": 5,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_SLIME_TRIO",
         "ai": "AI_PATROL_CROSS"
       }
@@ -92,10 +276,7 @@
       "id": "narrow_pass",
       "bounds": { "x": 4, "y": 1, "width": 12, "height": 16 },
       "description": "A narrow rocky canyon flanked by steep cliffs.",
-      "gameplay": {
-        "purpose": "corridor",
-        "difficulty": 2
-      }
+      "gameplay": { "purpose": "corridor", "difficulty": 2 }
     }
   ]
 }

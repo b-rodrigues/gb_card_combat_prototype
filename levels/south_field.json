@@ -59,13 +59,18 @@
         "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
         "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"
       ],
-      "position": {
-        "x": 8,
-        "y": 8
-      },
+      "position": { "x": 8, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
         "display_name": "SLIME",
+        "actor_id": 7,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "E",
+        "hp": 10,
+        "max_hp": 10,
+        "gold_reward": 5,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_SLIME",
         "ai": "AI_PATROL_CROSS"
       }
@@ -78,13 +83,18 @@
         "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
         "desolate_landscape.desolate_landscape_enemy_bats_frame_2"
       ],
-      "position": {
-        "x": 14,
-        "y": 10
-      },
+      "position": { "x": 14, "y": 10 },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
         "display_name": "BAT",
+        "actor_id": 8,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "V",
+        "hp": 8,
+        "max_hp": 8,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_BAT",
         "ai": "AI_PATROL_CIRCLE"
       }
@@ -97,30 +107,16 @@
         "desolate_landscape.desolate_landscape_fire_frame_1",
         "desolate_landscape.desolate_landscape_fire_frame_2"
       ],
-      "position": {
-        "x": 17,
-        "y": 11
-      },
-      "properties": {
-        "display_name": "CAMPFIRE",
-        "dialogue": "A crackling fire warms the desolate wasteland."
-      }
+      "position": { "x": 17, "y": 11 },
+      "properties": { "display_name": "CAMPFIRE", "dialogue": "A crackling fire warms the desolate wasteland." }
     }
   ],
   "regions": [
     {
       "id": "southern_wilds",
-      "bounds": {
-        "x": 2,
-        "y": 2,
-        "width": 16,
-        "height": 14
-      },
+      "bounds": { "x": 2, "y": 2, "width": 16, "height": 14 },
       "description": "Wild plains south of the starting area teeming with roaming monsters.",
-      "gameplay": {
-        "purpose": "combat_exploration",
-        "difficulty": 1
-      }
+      "gameplay": { "purpose": "combat_exploration", "difficulty": 1 }
     }
   ]
 }

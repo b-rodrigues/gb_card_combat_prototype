@@ -44,7 +44,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music level levels editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check music level levels levels-check editor clean
 
 all: $(TARGET)
 
@@ -162,6 +162,14 @@ levels:
 	@python3 tools/level_compiler/validate.py levels/*.json
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
+
+# Two-way gates: committed C must equal fresh compile (no hand edits to
+# generated files), and compile -> decompile -> compile must be a fixpoint.
+levels-check:
+	@python3 tools/level_compiler/validate.py levels/*.json
+	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
+	@python3 tools/level_compiler/decompile.py --check
+	@python3 tools/level_compiler/decompile.py --roundtrip
 
 src/game/scenes_content.c: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c

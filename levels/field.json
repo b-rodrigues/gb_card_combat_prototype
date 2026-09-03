@@ -1,13 +1,7 @@
 {
   "id": "field",
   "name": "Emerald Plains",
-  "map": {
-    "width": 32,
-    "height": 18,
-    "tileset": "forest",
-    "music": "MUSIC_FOREST",
-    "map_id": "MAP_FIELD"
-  },
+  "map": { "width": 32, "height": 18, "tileset": "forest", "music": "MUSIC_FOREST", "map_id": "MAP_FIELD" },
   "layers": {
     "terrain": [
       { "x": 5, "y": 5, "width": 3, "height": 2, "tile": "forest.forest_floor_with_stuff_walkable_1" },
@@ -60,14 +54,19 @@
       "id": "field_slime",
       "type": "enemy",
       "overworld_sprite": "forest.forest_enemy_kobold_frame_1",
-      "animation_frames": [
-        "forest.forest_enemy_kobold_frame_1",
-        "forest.forest_enemay_kobold_frame_2"
-      ],
+      "animation_frames": [ "forest.forest_enemy_kobold_frame_1", "forest.forest_enemay_kobold_frame_2" ],
       "position": { "x": 14, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
         "display_name": "SLIME",
+        "actor_id": 1,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "E",
+        "hp": 10,
+        "max_hp": 10,
+        "gold_reward": 5,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_SLIME_TRIO",
         "ai": "AI_PATROL_CROSS"
       }
@@ -79,7 +78,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_SIGNPOST",
         "display_name": "SIGNPOST",
-        "dialogue": "DIALOGUE_ID_SIGNPOST"
+        "dialogue": "DIALOGUE_ID_SIGNPOST",
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "?",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     }
   ],
@@ -88,10 +95,7 @@
       "id": "open_field",
       "bounds": { "x": 2, "y": 2, "width": 28, "height": 14 },
       "description": "Rolling grasslands leading between town and forest.",
-      "gameplay": {
-        "purpose": "travel",
-        "difficulty": 1
-      }
+      "gameplay": { "purpose": "travel", "difficulty": 1 }
     }
   ]
 }

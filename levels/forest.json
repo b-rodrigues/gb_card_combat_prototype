@@ -1,13 +1,7 @@
 {
   "id": "forest",
   "name": "Whispering Forest",
-  "map": {
-    "width": 20,
-    "height": 18,
-    "tileset": "forest",
-    "music": "MUSIC_FOREST",
-    "map_id": "MAP_FOREST"
-  },
+  "map": { "width": 20, "height": 18, "tileset": "forest", "music": "MUSIC_FOREST", "map_id": "MAP_FOREST" },
   "layers": {
     "terrain": [
       { "x": 1, "y": 1, "width": 1, "height": 1, "tile": "forest.forest_top_left_corner_wall" },
@@ -79,14 +73,19 @@
       "id": "forest_slime",
       "type": "enemy",
       "overworld_sprite": "forest.forest_enemy_kobold_frame_1",
-      "animation_frames": [
-        "forest.forest_enemy_kobold_frame_1",
-        "forest.forest_enemay_kobold_frame_2"
-      ],
+      "animation_frames": [ "forest.forest_enemy_kobold_frame_1", "forest.forest_enemay_kobold_frame_2" ],
       "position": { "x": 10, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
         "display_name": "SLIME",
+        "actor_id": 2,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "E",
+        "hp": 12,
+        "max_hp": 12,
+        "gold_reward": 5,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_SLIME",
         "ai": "AI_PATROL_CROSS"
       }
@@ -95,14 +94,19 @@
       "id": "forest_bat",
       "type": "enemy",
       "overworld_sprite": "forest.forest_enemy_bats_frame_1",
-      "animation_frames": [
-        "forest.forest_enemy_bats_frame_1",
-        "forest.forest_enemy_bats_frame_2"
-      ],
+      "animation_frames": [ "forest.forest_enemy_bats_frame_1", "forest.forest_enemy_bats_frame_2" ],
       "position": { "x": 7, "y": 4 },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
         "display_name": "BAT",
+        "actor_id": 3,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "V",
+        "hp": 8,
+        "max_hp": 8,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_BAT",
         "ai": "AI_PATROL_CIRCLE"
       }
@@ -114,7 +118,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_AMULET",
         "display_name": "AMULET",
-        "dialogue": "DIALOGUE_ID_AMULET_NOTHING"
+        "dialogue": "DIALOGUE_ID_AMULET_NOTHING",
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "?",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     }
   ],
@@ -123,10 +135,7 @@
       "id": "north_clearing",
       "bounds": { "x": 3, "y": 2, "width": 14, "height": 6 },
       "description": "A quiet clearing where the trees thin out and ancient stumps remain.",
-      "gameplay": {
-        "purpose": "exploration",
-        "difficulty": 1
-      }
+      "gameplay": { "purpose": "exploration", "difficulty": 1 }
     }
   ]
 }

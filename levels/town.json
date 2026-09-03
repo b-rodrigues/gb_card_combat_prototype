@@ -1,13 +1,7 @@
 {
   "id": "town",
   "name": "Oakhaven Town",
-  "map": {
-    "width": 20,
-    "height": 18,
-    "tileset": "forest",
-    "music": "MUSIC_TOWN",
-    "map_id": "MAP_TOWN"
-  },
+  "map": { "width": 20, "height": 18, "tileset": "forest", "music": "MUSIC_TOWN", "map_id": "MAP_TOWN" },
   "layers": {
     "terrain": [
       { "x": 3, "y": 3, "width": 6, "height": 4, "tile": "forest.forest_top_wall_1" },
@@ -44,7 +38,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_MAYOR",
         "display_name": "MAYOR",
-        "dialogue": "DIALOGUE_ID_MAYOR_GREETING"
+        "dialogue": "DIALOGUE_ID_MAYOR_GREETING",
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "M",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     },
     {
@@ -54,7 +56,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_GUARD",
         "display_name": "GUARD",
-        "dialogue": "DIALOGUE_ID_GUARD_GREETING"
+        "dialogue": "DIALOGUE_ID_GUARD_GREETING",
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "G",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     },
     {
@@ -64,7 +74,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_SHOPKEEPER",
         "display_name": "SHOPKEEPER",
-        "shop": 1
+        "shop": 1,
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "S",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     },
     {
@@ -74,7 +92,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_MERCHANT",
         "display_name": "MERCHANT",
-        "shop": 2
+        "shop": 2,
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "M",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     },
     {
@@ -84,7 +110,15 @@
       "properties": {
         "entity_id": "ENTITY_ID_WIZARD",
         "display_name": "WIZARD",
-        "save": 0
+        "save": 0,
+        "actor_id": 0,
+        "facing": "DOWN",
+        "flags": [ "BLOCKING", "INTERACTABLE" ],
+        "visual": "W",
+        "hp": 0,
+        "max_hp": 0,
+        "gold_reward": 0,
+        "ai": "AI_NONE"
       }
     }
   ],
@@ -93,10 +127,7 @@
       "id": "town_square",
       "bounds": { "x": 8, "y": 4, "width": 6, "height": 6 },
       "description": "Central plaza of the peaceful town where villagers gather.",
-      "gameplay": {
-        "purpose": "hub",
-        "difficulty": 0
-      }
+      "gameplay": { "purpose": "hub", "difficulty": 0 }
     }
   ]
 }

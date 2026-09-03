@@ -348,6 +348,9 @@ def main():
     parser.add_argument("--all", action="store_true", help="Compile all level files in levels/ directory")
     parser.add_argument("-o", "--output", help="Output C file path (default: src/game/scenes_content.c)")
     parser.add_argument("--tilesets-dir", help="Tilesets directory")
+    parser.add_argument("--actors-output", help="Actor tables output C file path (default: src/game/actors_content.c)")
+    parser.add_argument("--check", action="store_true",
+                        help="Do not write; exit nonzero if fresh output differs from the file")
 
     args = parser.parse_args()
 
@@ -398,14 +401,33 @@ def main():
     else:
         output_path = Path(output_path)
 
+    actors_code = emit_actors_code(levels_by_id)
+
+    actors_path = args.actors_output
+    if not actors_path:
+        actors_path = REPO_ROOT / "src" / "game" / "actors_content.c"
+    else:
+        actors_path = Path(actors_path)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    if args.check:
+        for path, fresh in ((output_path, c_code), (actors_path, actors_code)):
+            try:
+                committed = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                committed = None
+            if committed is None or committed.strip() != fresh.strip():
+                print(f"DRIFT: fresh compile differs from {path}", file=sys.stderr)
+                sys.exit(1)
+        print(f"compile --check OK: {output_path} and {actors_path} match fresh output")
+        return
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(c_code)
+    actors_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(actors_path, "w", encoding="utf-8") as f:
+        f.write(actors_code)
 
     print(f"Successfully compiled {len(levels_by_id)} level(s) to {output_path}")
-
-    # Synchronize actor positions into src/game/actors_content.c
-    sync_actors_content(levels_by_id)
 
 
 """Resolve the overworld sprite kind for a level object from its editor
@@ -432,70 +454,117 @@ def resolve_sprite_kind(obj):
     return "SPRITE_KIND_ASCII"
 
 
-"""Set an actor row's sprite_kind within a scene table's block text.  The
-row is located by its entity_id marker; if it already carries a
-SPRITE_KIND_* token it is rewritten, otherwise one is appended before the
-row's closing brace.  Returns the (possibly unchanged) block text."""
-def set_sprite_kind_in_block(block_text, entity_id, spk):
-    import re
-    irow = block_text.find(entity_id)
-    if irow < 0:
-        return block_text
-    bracestart = block_text.rfind('{', 0, irow)
-    bclose = block_text.find('\n    }', irow)
-    if bclose < 0:
-        return block_text
-    row = block_text[bracestart:bclose]
-    if 'SPRITE_KIND_' in row:
-        newrow = re.sub(r'SPRITE_KIND_[A-Z_]+', spk, row)
-    else:
-        newrow = row.rstrip() + ',\n         ' + spk
-    return block_text[:bracestart] + newrow + block_text[bclose:]
+"""Full-fidelity actor tables: every WorldActorDefinition row is generated
+from its level JSON object, so the JSON roundtrips the C rows (see
+decompile.py). Table order matches the historic file to keep diffs small."""
+ACTOR_TABLE_ORDER = ["town", "field", "forest", "mountain_pass", "castle", "south_field"]
 
 
-def sync_actors_content(levels_by_id, actors_path=None):
-    import re
-    if actors_path is None:
-        actors_path = REPO_ROOT / "src" / "game" / "actors_content.c"
-    if not os.path.exists(actors_path):
-        return
-    with open(actors_path, "r", encoding="utf-8") as f:
-        content = f.read()
+def default_actor_flags(otype):
+    if otype == "enemy":
+        return ["HOSTILE", "BLOCKING", "INTERACTABLE"]
+    return ["BLOCKING", "INTERACTABLE"]
 
-    updated = False
-    for sid, lvl in levels_by_id.items():
-        table_name = f"g_{sid}_actors"
-        m = re.search(r"(static const WorldActorDefinition " + table_name + r"\[\] = \{)(.*?)(\};)", content, re.DOTALL)
-        if not m:
-            continue
-        header, block_text, footer = m.group(1), m.group(2), m.group(3)
-        orig_block = block_text
-        objects = lvl.get("objects", [])
-        for obj in objects:
-            props = obj.get("properties", {})
-            entity_id = props.get("entity_id")
-            if not entity_id:
-                continue
-            pos = obj.get("position", {})
-            x = pos.get("x")
-            y = pos.get("y")
-            if x is None or y is None:
-                continue
-            pattern = r"(\{\s*\d+,\s*" + re.escape(entity_id) + r",\s*)(\d+),\s*(\d+),"
-            block_text = re.sub(pattern, rf"\g<1>{x}, {y},", block_text)
 
-            spk = resolve_sprite_kind(obj)
-            if spk != "SPRITE_KIND_ASCII":
-                block_text = set_sprite_kind_in_block(block_text, entity_id, spk)
+def default_actor_visual(obj):
+    props = obj.get("properties", {})
+    ent = props.get("entity_id", "")
+    if ent == "ENTITY_ID_SLIME":
+        return "E"
+    if ent == "ENTITY_ID_BAT":
+        return "V"
+    if ent == "ENTITY_ID_SLIME_LORD":
+        return "L"
+    if ent in ("ENTITY_ID_SIGNPOST", "ENTITY_ID_AMULET"):
+        return "?"
+    name = props.get("display_name", "?")
+    return name[0] if name else "?"
 
-        if block_text != orig_block:
-            content = content[:m.start(2)] + block_text + content[m.end(2):]
-            updated = True
 
-    if updated:
-        with open(actors_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"Synchronized actor positions/sprites to {actors_path}")
+def actor_interaction(obj):
+    props = obj.get("properties", {})
+    if obj.get("type") == "enemy":
+        return "INTERACTION_COMBAT"
+    if "shop" in props:
+        return "INTERACTION_SHOP"
+    if "save" in props:
+        return "INTERACTION_SAVE"
+    if "dialogue" in props:
+        return "INTERACTION_DIALOGUE"
+    return "INTERACTION_NONE"
+
+
+def emit_actor_row(obj):
+    props = obj.get("properties", {})
+    pos = obj.get("position", {})
+    ent = props.get("entity_id")
+    if not ent:
+        raise ValueError(f"actor object '{obj.get('id')}' has no properties.entity_id")
+    x = pos.get("x", 0)
+    y = pos.get("y", 0)
+    facing = "DIRECTION_" + props.get("facing", "DOWN")
+    flags = props.get("flags")
+    if flags is None:
+        flags = default_actor_flags(obj.get("type"))
+    flag_expr = " | ".join("ACTOR_FLAG_" + f for f in flags) if flags else "0"
+    visual = "'" + props.get("visual", default_actor_visual(obj)) + "'"
+    name = '"%s"' % props.get("display_name", ent)
+    inter = actor_interaction(obj)
+    shop = props.get("shop", 0)
+    dlg = props.get("dialogue", "DIALOGUE_ID_NONE")
+    battle = props.get("battle", "BATTLE_NONE")
+    ai = props.get("ai", "AI_NONE")
+    hp = props.get("hp", 0)
+    max_hp = props.get("max_hp", 0)
+    gold = props.get("gold_reward", 0)
+    cur = props.get("reward_currency", "0")
+    svar = props.get("quest_var", "0")
+    sval = props.get("quest_val", 0)
+    spk = resolve_sprite_kind(obj)
+    aid = props.get("actor_id", 0)
+    line1 = f"        {aid}, {ent}, {x}, {y}, {facing},"
+    line2 = f"        {flag_expr},"
+    line3 = (f"        {visual}, {name}, {inter}, {shop}, {dlg}, {battle}, {ai}, "
+             f"{hp}, {max_hp}, {gold}, {cur},")
+    line4 = f"        {svar}, {sval},"
+    line5 = f"         {spk}"
+    return "    {\n" + "\n".join([line1, line2, line3, line4, line5]) + "\n    },"
+
+
+def emit_actors_code(levels_by_id):
+    """Generate complete src/game/actors_content.c."""
+    ordered = [sid for sid in ACTOR_TABLE_ORDER if sid in levels_by_id]
+    for sid in levels_by_id:
+        if sid not in ordered:
+            ordered.append(sid)
+    out = []
+    out.append("/* Generated by tools/level_compiler/compile.py -- DO NOT EDIT DIRECTLY */")
+    out.append("#pragma bank 2\n")
+    out.append('#include "actor.h"')
+    out.append('#include "game_ids.h"\n')
+    out.append("/* ── Scene-owned actor definitions (game content) ──────────────────")
+    out.append(" *")
+    out.append(" * Friendly actors are pure static definitions.  Hostile actors are")
+    out.append(" * spawned into World.actors runtime slots by actor_load_scene(), so a")
+    out.append(" * scene can hold several hostile actors at once.  Each hostile definition")
+    out.append(" * carries a stable ActorId (unique across scenes) so its defeat can be")
+    out.append(" * recorded persistently in GameState.world and survive scene reloads.")
+    out.append(" */\n")
+    for sid in ordered:
+        out.append(f"static const WorldActorDefinition g_{sid}_actors[] = {{")
+        for obj in levels_by_id[sid].get("objects", []):
+            props = obj.get("properties", {}) or {}
+            if not props.get("entity_id"):
+                continue  # decoration object: no engine row
+            out.append(emit_actor_row(obj))
+        out.append("};\n")
+    out.append("const WorldActorTable g_actor_tables[] = {")
+    for sid in ordered:
+        map_enum = MAP_ENUM_MAP.get(sid, f"MAP_{sid.upper()}")
+        out.append(f"    {{ {map_enum + ',':<20s} g_{sid}_actors,")
+        out.append(f"        (uint8_t)(sizeof(g_{sid}_actors) / sizeof(g_{sid}_actors[0])) }},")
+    out.append("};")
+    return "\n".join(out) + "\n"
 
 
 if __name__ == "__main__":

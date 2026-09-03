@@ -23,11 +23,7 @@
     ]
   },
   "player": {
-    "spawn": {
-      "x": 10,
-      "y": 10,
-      "facing": "UP"
-    }
+    "spawn": { "x": 10, "y": 10, "facing": "UP" }
   },
   "exits": [
     {
@@ -45,14 +41,19 @@
       "id": "castle_bat",
       "type": "enemy",
       "overworld_sprite": "castle.castle_enemy_bat_frame_1",
-      "animation_frames": [
-        "castle.castle_enemy_bat_frame_1",
-        "castle.castle_enemy_bat_frame_2"
-      ],
+      "animation_frames": [ "castle.castle_enemy_bat_frame_1", "castle.castle_enemy_bat_frame_2" ],
       "position": { "x": 12, "y": 7 },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
         "display_name": "BAT",
+        "actor_id": 5,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "V",
+        "hp": 8,
+        "max_hp": 8,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_BAT",
         "ai": "AI_PATROL_CIRCLE"
       }
@@ -71,6 +72,16 @@
       "properties": {
         "entity_id": "ENTITY_ID_SLIME_LORD",
         "display_name": "LORD OF SLIMES",
+        "actor_id": 6,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "L",
+        "hp": 50,
+        "max_hp": 50,
+        "gold_reward": 50,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_NONE",
+        "ai": "AI_NONE",
         "quest_var": "VARIABLE_ID_QUEST_MONSTER_HUNT",
         "quest_val": 2
       }
@@ -81,10 +92,7 @@
       "id": "throne_room",
       "bounds": { "x": 4, "y": 2, "width": 12, "height": 12 },
       "description": "The abandoned castle throne room where the Slime Lord awaits.",
-      "gameplay": {
-        "purpose": "boss_arena",
-        "difficulty": 3
-      }
+      "gameplay": { "purpose": "boss_arena", "difficulty": 3 }
     }
   ]
 }

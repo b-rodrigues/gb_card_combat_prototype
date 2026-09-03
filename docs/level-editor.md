@@ -898,3 +898,35 @@ Build:
 **That's the architectural decision that makes the whole idea work.**
 
 And I'd start with **M1–M4 before writing a single line of React**. If the JSON → C → ROM pipeline is solid, the web editor becomes "just" a nice graphical front-end to a well-defined system rather than the thing you're gambling the project on.
+
+# Phase 15 — Two-way sync (JSON ⇄ C tables)
+
+The pipeline runs in both directions, with C tables as the interchange
+point (the `.gb` is never parsed):
+
+```text
+levels/*.json --compile.py--> scenes_content.c + actors_content.c
+scenes_content.c + actors_content.c --decompile.py--> levels/*.json
+```
+
+Rules:
+
+- `scenes_content.c` and `actors_content.c` are **generated files** (`make
+  levels` writes both). Never hand-edit them; `make levels-check` fails on
+  drift.
+- Every actor row is fully specified by its JSON object (`actor_id`,
+  `facing`, `flags`, `visual`, `hp`/`max_hp`, `gold_reward`,
+  `reward_currency`, plus the original `entity_id`/`battle`/`ai`/...).
+  `actor_id` is stable and unique across scenes: it drives persistent
+  defeat tracking, so never renumber it.
+- `decompile.py` merges compilable sections back into the JSON, preserving
+  editorial sections (`name`, `regions`, `player.spawn`), decoration
+  objects without an `entity_id`, and author art choices that compile to
+  the same tile. Anything it cannot map is a loud error, never a silent
+  invention. Known normalizations: terrain blocks roundtrip verbatim (one
+  JSON block per C block); collapsed `TILE_FLOOR`/`TILE_WALL` map to
+  per-tileset canonical art; floor-only patches are design docs (they
+  compile to the default background).
+- Gates: `make levels-check` runs `validate` + `compile --check` +
+  `decompile --check` + the `compile → decompile → compile` fixpoint
+  (C-equality, not JSON-text equality).
