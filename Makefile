@@ -80,10 +80,6 @@ lint: gfx tiles $(SRCS)
 # which the Nix dev shell provides.
 GFX_OUT_DIR = $(SRC_DIR)/gfx
 
-# Manifest-driven VRAM coordinates (generated/tiles/blocks.mk). Make
-# rebuilds the fragment automatically when missing or stale, then re-execs.
-include generated/tiles/blocks.mk
-
 gfx:
 	@mkdir -p $(GFX_OUT_DIR)
 	@python3 tools/png2gb.py assets/player_demo.png --name player_sprite_tile \
@@ -127,12 +123,15 @@ gfx:
 	@python3 tools/png2gb.py assets/Houses_and_various_things.png --name rpg_structures_props_tiles \
 		--palette gb_green --tile-coords "0,64 1,64 2,64 3,64 4,64 5,64 6,64 7,64" \
 		--raw -o $(GFX_OUT_DIR)/rpg_structures_props_tiles.inc
-	@python3 tools/png2gb.py assets/RPG_forest_tiles.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "$(TILES_FOREST_COORDS)" \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc 2>/dev/null || \
-	python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_tiles \
-		--palette gb_green --tile-coords "$(TILES_FOREST_COORDS)" \
-		--raw -o $(GFX_OUT_DIR)/rpg_forest_tiles.inc
+	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_plain_floor_1.png --name rpg_forest_floor \
+		--palette auto \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_floor.inc
+	@python3 tools/png2gb.py tools/level_editor/public/tiles/forest/forest_top_left_treetop.png --name rpg_forest_tree \
+		--palette auto \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_tree.inc
+	@python3 tools/png2gb.py assets/RPG_exterior.png --name rpg_forest_stumps \
+		--palette gb_green --tile-coords "0,14 1,14 0,15 1,15 2,16" \
+		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
@@ -213,7 +212,13 @@ extract-tiles:
 		--output-dir tools/level_editor/public/tiles/castle \
 		--output-json tools/level_editor/tilesets/castle.json
 
-editor: extract-tiles
+# NOTE: extract-tiles is intentionally NOT a dependency here.
+# The tileset JSON files (tools/level_editor/tilesets/*.json) are the sole
+# source of truth for tile definitions, vram_block layouts, and gb_constant
+# values.  Run 'make extract-tiles' once manually when importing a new PNG
+# sheet, then commit the resulting JSON.  Re-running it on every editor
+# launch would overwrite hand-crafted fields (gb_constant, vram_block).
+editor:
 	@echo "Starting Game Boy RPG Level Editor..."
 	@cd tools/level_editor && npm install --no-audit --no-fund && npm run dev
 
@@ -230,10 +235,9 @@ tiles-check:
 GENERATED_TILES_DIR = generated/tiles
 GENERATED_TILE_WALK = $(GENERATED_TILES_DIR)/tile_walk.h
 GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
-GENERATED_TILE_BLOCKS = $(GENERATED_TILES_DIR)/blocks.mk
-tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_BLOCKS)
+tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH)
 
-$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_BLOCKS): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
 	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
 
 $(GENERATED_TILES_DIR):
