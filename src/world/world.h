@@ -312,6 +312,19 @@ typedef enum {
 /* Frames between autonomous patrol steps for hostile actors (~0.53 seconds). */
 #define PATROL_STEP_INTERVAL 32
 
+/* How a hostile/visual actor is drawn in the overworld.  The choice is a
+ * per-actor property selected by the level editor's object sprite
+ * (overworld_sprite / animation_frames) and carried end-to-end from the
+ * level JSON through compile.py into the ROM.  Defined here so both
+ * WorldActorRuntime (this header) and WorldActorDefinition (actor.h, which
+ * includes world.h) can use it without a circular include. */
+typedef enum {
+    SPRITE_KIND_ASCII = 0,  /* render the ASCII visual via the console font */
+    SPRITE_KIND_KOBOLD = 1, /* 2-frame slime-as-kobold OBJ sprite */
+    SPRITE_KIND_BAT = 2,    /* 2-frame per-map bat OBJ sprite */
+    SPRITE_KIND_BOSS = 3    /* 2x2 castle boss drawn as background tiles */
+} ActorSpriteKind;
+
 /* Mutable runtime state for a spawned World Actor.  Static actor
  * configuration lives in WorldActorDefinition; hostile actors are spawned
  * into World.actors by actor_load_scene().  actor_id is the persistent
@@ -330,6 +343,7 @@ typedef struct {
     uint8_t reward_currency;     /* copied from the definition */
     const char *display_name;    /* copied from the definition */
     uint8_t visual;              /* ASCII char: 'S', 'B', etc. */
+    ActorSpriteKind sprite_kind; /* how this actor is drawn (from def) */
     uint8_t spawn_x;             /* patrol anchor origin */
     uint8_t spawn_y;
     uint8_t ai_type;             /* ActorAiType */

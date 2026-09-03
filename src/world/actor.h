@@ -67,6 +67,7 @@ typedef struct {
     CurrencyId reward_currency;  /* currency granted on defeat (0 = none) */
     VariableId spawn_variable;   /* spawn only when this variable == spawn_value (0 = always) */
     int16_t spawn_value;
+    ActorSpriteKind sprite_kind; /* how the overworld renders this actor */
 } WorldActorDefinition;
 
 /* A per-map block of actor definitions.  The engine owns no scene content:

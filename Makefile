@@ -136,6 +136,12 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
 		--palette auto --tile-coords "1,2 2,2" \
 		-o $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
+	@python3 tools/png2gb.py assets/desolate_landscape.png --name desolate_bat_sprite_tile \
+		--palette auto --tile-coords "9,2 10,2" \
+		-o $(GFX_OUT_DIR)/desolate_bat_sprite_tile.h
+	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
+		--palette auto --tile-coords "5,2 6,2" \
+		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
 
 # Regenerate the asset atlas (docs/assets_atlas.md + src/gfx/asset_atlas.h
 # + the banked .inc data).  Deterministic: rerunning produces byte-identical

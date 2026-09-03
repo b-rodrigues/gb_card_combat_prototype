@@ -97,6 +97,60 @@ def shadow_sprite_tile(sess):
     return sess._memread(0xC002)
 
 
+def shadow_oam_slot_tile(sess, slot):
+    """Tile byte of shadow OAM entry `slot` (0 = player).  Each entry is
+    four bytes at 0xC000 + 4*slot: y, x, tile, attr."""
+    return sess._memread(0xC000 + 4 * slot + 2)
+
+
+def mirror_at(sess, mirror_addr, x, y):
+    """g_tilemap_mirror byte for tilemap cell (x, y).  DEBUG-only mirror of
+    the 0x9800 ring (32 x 32), asserted because mGBA cannot read VRAM."""
+    return sess._memread(mirror_addr + (y & 31) * 32 + (x & 31))
+
+
+def verify_hostile_sprites(sess):
+    """Regression net for the Chunk-2 data-driven overworld sprite pipeline
+    (SPRITE_KIND_* decoded in the bank-3 pass): hostile actors must render
+    as the chosen OAM sprite tiles (kobold/bat), the castle bat must use the
+    castle tile set, and the castle boss must be drawn as a 2x2 background
+    block (not an OAM sprite).  Semantic scenarios cannot see this: they
+    assert actor positions/visuals, not OAM tile bytes."""
+    print("== Hostile sprite tiles (south_field kobold / bat) ==")
+    south = load_scenario(sess, "south_field_boot.json")
+    sess.load_scenario(south)
+    sess.step(2)
+    # Actor slot 0 (SLIME) = OAM entry 1; slot 1 (BAT) = OAM entry 2.
+    kobold = shadow_oam_slot_tile(sess, 1)
+    bat = shadow_oam_slot_tile(sess, 2)
+    check("south_field slime renders as kobold OAM tile (96|97)",
+          1, (96 <= kobold <= 97))
+    check("south_field bat renders as desolate bat OAM tile (88|89)",
+          1, (88 <= bat <= 89))
+
+    print("== Boss sprite rendering (castle: bat + 2x2 boss block) ==")
+    boss = load_scenario(sess, "boss_appears.json")
+    sess.load_scenario(boss)
+    sess.step(1)
+    # Actor slot 0 (BAT) = OAM entry 1; slot 1 (SLIME_LORD/BOSS) = entry 2.
+    castle_bat = shadow_oam_slot_tile(sess, 1)
+    # The boss is hidden from OAM (y=0); read the entry's y byte.  The tile
+    # byte may hold a stale value from a prior actor in this slot, so assert
+    # the semantic "not drawn as a sprite" via y==0 (hidden), not tile==0.
+    boss_y = sess._memread(0xC000 + 4 * 2)  # entry 2 y byte
+    check("castle bat renders as castle bat OAM tile (92|93)",
+          1, (92 <= castle_bat <= 93))
+    check("boss is not hidden from OAM (y==0)",
+          0, boss_y)
+    # Boss 2x2 background block at (10,5): castle tile indices 7,8,16,17
+    # -> RPG_TILE_BASE_WORLD (128) + 7/8/16/17 = 135/136/144/145 in mirror.
+    mirror = sess.get_symbol("g_tilemap_mirror")
+    check("boss top-left  background tile in mirror", 135, mirror_at(sess, mirror, 10, 5))
+    check("boss top-right background tile in mirror", 136, mirror_at(sess, mirror, 11, 5))
+    check("boss bot-left  background tile in mirror", 144, mirror_at(sess, mirror, 10, 6))
+    check("boss bot-right background tile in mirror", 145, mirror_at(sess, mirror, 11, 6))
+
+
 def verify_battle_transition(sess):
     print("== Battle transition (first_encounter) ==")
     sess.load_scenario(load_scenario(sess, "first_encounter.json"))
@@ -229,7 +283,8 @@ def main():
     for label, fn in (("battle", verify_battle_transition),
                       ("battle steady frame", verify_steady_battle_frame),
                       ("scene", verify_scene_transition),
-                      ("dialogue", verify_dialogue_transition)):
+                      ("dialogue", verify_dialogue_transition),
+                      ("hostile sprites", verify_hostile_sprites)):
         sess = EmulatorSession(rom_path=ROM)
         try:
             sess.connect()

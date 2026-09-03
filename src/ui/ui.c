@@ -70,9 +70,6 @@ static const palette_color_t cgb_sprite_palette_orange[4] = {
 #include "banked.h"
 
 #define PLAYER_SPRITE_NUM 0
-#define PLAYER_SPRITE_TILE_ID 102
-#define KOBOLD_SPRITE_TILE_ID 96
-#define HERO_DESOLATE_SPRITE_TILE_ID 98
 
 static const uint16_t s_card_icon_uids[13] = {
     29,  /* ASSET_EQUIP_C04_R03: Iron Sword (UI_TILE_CARD_SWORD) */
@@ -189,9 +186,17 @@ void ui_init(void)
  * render positions it via ui_sprite_move(). */
 void ui_sprite_init(void)
 {
+    static uint8_t s_bat_load_buf[32];
+    extern const uint8_t s_bat_tiles[32];
+
     set_sprite_data(PLAYER_SPRITE_TILE_ID, 1, player_sprite_tile);
     set_sprite_data(KOBOLD_SPRITE_TILE_ID, 2, kobold_sprite_tile);
     set_sprite_data(HERO_DESOLATE_SPRITE_TILE_ID, 2, hero_desolate_sprite_tile);
+    /* Bat art lives in a bank-3 const (not the fixed bank); copy it to a
+     * WRAM staging buffer, then load both tileset variants from it. */
+    banked_copy(3, s_bat_load_buf, s_bat_tiles, 32);
+    set_sprite_data(BAT_DESOLATE_SPRITE_TILE_ID, 2, s_bat_load_buf);
+    set_sprite_data(BAT_CASTLE_SPRITE_TILE_ID, 2, s_bat_load_buf);
     shadow_OAM[PLAYER_SPRITE_NUM].tile = PLAYER_SPRITE_TILE_ID;
     shadow_OAM[PLAYER_SPRITE_NUM].y = 0;
     SPRITES_8x8;
@@ -569,9 +574,8 @@ static uint8_t s_anim_counter = 0;
 
 void ui_draw_actors_sprites(const World *world)
 {
-    uint8_t slot;
-    const WorldActorRuntime *a;
     uint8_t anim_step;
+    uint8_t castle;
 
     if (!world) return;
 
@@ -592,27 +596,18 @@ void ui_draw_actors_sprites(const World *world)
         shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
     }
 
-    for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
-        uint8_t spr = (uint8_t)(1 + slot);
-        a = &world->actors[slot];
-        if (a->active) {
-            uint8_t px = (uint8_t)(world_actor_px(a) - world->camera_px_x);
-            uint8_t py = (uint8_t)(world_actor_py(a) - world->camera_px_y);
-            if (px < 160 && py < 144) {
-                shadow_OAM[spr].y = (uint8_t)(py + 16);
-                shadow_OAM[spr].x = (uint8_t)(px + 8);
-                if (world->map_id == MAP_SOUTH_FIELD && (a->visual == 'S' || a->visual == 'E' || a->id == ENTITY_ID_SLIME)) {
-                    shadow_OAM[spr].tile = (uint8_t)(KOBOLD_SPRITE_TILE_ID + anim_step);
-                    shadow_OAM[spr].prop = 1;
-                } else {
-                    shadow_OAM[spr].tile = (uint8_t)(ui_font_tile_base + (uint8_t)(a->visual - ' '));
-                    shadow_OAM[spr].prop = 0;
-                }
-                continue;
-            }
-        }
-        shadow_OAM[spr].y = 0;
-    }
+    /* Resolve every non-boss actor's OAM tile/prop/position in one banked
+     * pass (bank 3) so the data-driven SPRITE_KIND_* switch and the shadow
+     * OAM writes do not bloat the fixed bank (AGENTS.md §52.18 / §55.5).
+     * The banked body writes directly into shadow OAM (WRAM, always
+     * mapped) and hides inactive/BOSS actors. */
+    castle = (scene_get_tileset(world->map_id) == WORLD_TILESET_CASTLE);
+    g_bk_call_bank = 3;
+    g_bk_call_target = (uint16_t)&ui_actors_sprites_banked;
+    g_bk_ptr_a = (void *)world;
+    g_bk_byte_a = castle;
+    g_bk_byte_b = anim_step;
+    banked_call_run();
 }
 
 /* Draw every cell in [c0,c1) x [r0,r1) into the tilemap ring. */

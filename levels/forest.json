@@ -66,6 +66,11 @@
     {
       "id": "forest_slime",
       "type": "enemy",
+      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+      "animation_frames": [
+        "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+        "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"
+      ],
       "position": { "x": 10, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
@@ -77,6 +82,11 @@
     {
       "id": "forest_bat",
       "type": "enemy",
+      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
+      "animation_frames": [
+        "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
+        "desolate_landscape.desolate_landscape_enemy_bats_frame_2"
+      ],
       "position": { "x": 7, "y": 4 },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",

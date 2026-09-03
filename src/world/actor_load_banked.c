@@ -43,6 +43,7 @@ static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
      * live in the fixed bank (overworld_screen dereferences the pointer
      * while bank 1 is mapped). */
     r->visual = def->visual;
+    r->sprite_kind = def->sprite_kind;
     r->spawn_x = def->x;
     r->spawn_y = def->y;
     r->ai_type = def->ai_type;
@@ -121,6 +122,8 @@ void actor_load_scene_banked(void)
                 g_static_actors[g_static_actor_count].facing = def->facing;
                 g_static_actors[g_static_actor_count].flags = def->flags;
                 g_static_actors[g_static_actor_count].visual = def->visual;
+                g_static_actors[g_static_actor_count].sprite_kind =
+                    def->sprite_kind;
                 g_static_actors[g_static_actor_count].display_name =
                     def->display_name;
                 g_static_actors[g_static_actor_count].interaction =

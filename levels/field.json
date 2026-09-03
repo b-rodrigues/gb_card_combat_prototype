@@ -51,6 +51,11 @@
     {
       "id": "field_slime",
       "type": "enemy",
+      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+      "animation_frames": [
+        "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+        "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"
+      ],
       "position": { "x": 14, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",

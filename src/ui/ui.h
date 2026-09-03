@@ -28,6 +28,21 @@ extern uint8_t g_is_cgb;
 #define UI_TILE_COIN             115u
 #define UI_TILE_DECK             116u
 
+/* Overworld actor OAM sprite tile bases (VRAM Block 0, 0x8000).  Collision
+ * rules: must not overlap the font-duplicate block 0..95 used for ASCII
+ * actor glyphs, PLAYER (102), HERO (98), or the kobold/bat bases. */
+#define PLAYER_SPRITE_TILE_ID    102u
+#define HERO_DESOLATE_SPRITE_TILE_ID 98u
+#define KOBOLD_SPRITE_TILE_ID    96u
+#define BAT_DESOLATE_SPRITE_TILE_ID 88u
+#define BAT_CASTLE_SPRITE_TILE_ID   92u
+
+/* Bank-3 no-arg body behind ui_draw_actors_sprites(): writes each active
+ * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)
+ * and the castle boss 2x2 background block.  Lives in bank 3 to keep the
+ * fixed bank under 0x8000. */
+void ui_actors_sprites_banked(void);
+
 /* Per-tile background palette indices (CGB VRAM bank-1 attributes):
  * 0 = default grayscale, 1 = fire, 2 = iron (steel blue), 3 = heal / cyan,
  * 4 = poison (emerald), 5 = wood (brown), 6 = gold (mythril),

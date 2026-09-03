@@ -44,6 +44,11 @@
     {
       "id": "castle_bat",
       "type": "enemy",
+      "overworld_sprite": "castle.castle_enemy_bat_frame_1",
+      "animation_frames": [
+        "castle.castle_enemy_bat_frame_1",
+        "castle.castle_enemy_bat_frame_2"
+      ],
       "position": { "x": 12, "y": 7 },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
@@ -55,6 +60,13 @@
     {
       "id": "slime_lord",
       "type": "enemy",
+      "overworld_sprite": "castle.castle_top_left_boss",
+      "animation_frames": [
+        "castle.castle_top_left_boss",
+        "castle.castle_top_right_boss",
+        "castle.castle_bottom_left_boss",
+        "castle.castle_bottom_right_boss"
+      ],
       "position": { "x": 10, "y": 5 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME_LORD",

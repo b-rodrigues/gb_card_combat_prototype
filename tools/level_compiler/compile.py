@@ -408,6 +408,51 @@ def main():
     sync_actors_content(levels_by_id)
 
 
+"""Resolve the overworld sprite kind for a level object from its editor
+sprite choice (overworld_sprite / animation_frames tile names) or its
+entity type.  Matching is by substring on the tileset-qualified tile ids:
+the editor names each hostile actor's sprite after its art, e.g.
+`desolate_landscape_enemy_kobold_frame_1`, `desolate_landscape_enemy_bats_*`,
+and the castle boss `castle_top_left_boss` (a 2x2 sprite)."""
+def resolve_sprite_kind(obj):
+    frames = obj.get("animation_frames") or []
+    names = " ".join(str(f) for f in frames) + " " + str(obj.get("overworld_sprite") or "")
+    for token, kind in (("kobold", "SPRITE_KIND_KOBOLD"),
+                        ("boss", "SPRITE_KIND_BOSS"),
+                        ("bat", "SPRITE_KIND_BAT")):
+        if token in names:
+            return kind
+    ent = (obj.get("properties") or {}).get("entity_id", "")
+    if "ENTITY_ID_SLIME_LORD" in ent:
+        return "SPRITE_KIND_BOSS"
+    if "ENTITY_ID_SLIME" in ent:
+        return "SPRITE_KIND_KOBOLD"
+    if "ENTITY_ID_BAT" in ent:
+        return "SPRITE_KIND_BAT"
+    return "SPRITE_KIND_ASCII"
+
+
+"""Set an actor row's sprite_kind within a scene table's block text.  The
+row is located by its entity_id marker; if it already carries a
+SPRITE_KIND_* token it is rewritten, otherwise one is appended before the
+row's closing brace.  Returns the (possibly unchanged) block text."""
+def set_sprite_kind_in_block(block_text, entity_id, spk):
+    import re
+    irow = block_text.find(entity_id)
+    if irow < 0:
+        return block_text
+    bracestart = block_text.rfind('{', 0, irow)
+    bclose = block_text.find('\n    }', irow)
+    if bclose < 0:
+        return block_text
+    row = block_text[bracestart:bclose]
+    if 'SPRITE_KIND_' in row:
+        newrow = re.sub(r'SPRITE_KIND_[A-Z_]+', spk, row)
+    else:
+        newrow = row.rstrip() + ',\n         ' + spk
+    return block_text[:bracestart] + newrow + block_text[bclose:]
+
+
 def sync_actors_content(levels_by_id, actors_path=None):
     import re
     if actors_path is None:
@@ -439,6 +484,10 @@ def sync_actors_content(levels_by_id, actors_path=None):
             pattern = r"(\{\s*\d+,\s*" + re.escape(entity_id) + r",\s*)(\d+),\s*(\d+),"
             block_text = re.sub(pattern, rf"\g<1>{x}, {y},", block_text)
 
+            spk = resolve_sprite_kind(obj)
+            if spk != "SPRITE_KIND_ASCII":
+                block_text = set_sprite_kind_in_block(block_text, entity_id, spk)
+
         if block_text != orig_block:
             content = content[:m.start(2)] + block_text + content[m.end(2):]
             updated = True
@@ -446,7 +495,7 @@ def sync_actors_content(levels_by_id, actors_path=None):
     if updated:
         with open(actors_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"Synchronized actor positions to {actors_path}")
+        print(f"Synchronized actor positions/sprites to {actors_path}")
 
 
 if __name__ == "__main__":
