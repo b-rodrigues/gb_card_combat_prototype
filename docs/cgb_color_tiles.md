@@ -11,7 +11,7 @@ This document analyzes how background color currently flows through the engine, 
 | **Is stuff missing to achieve full-color tiles?** | **YES** | Missing: automated CGB palette generation, per-tile attribute mapping in manifests/level compiler, per-scene dynamic CRAM loading, and level editor palette support. |
 | **Do we need a palette?** | **YES** | CGB hardware requires up to 8 background palettes in CRAM, each containing 4 colors (15-bit RGB555). We specifically need **per-scene palette sets** rather than the single global set currently used. |
 | **Is it hardcoded?** | **YES** | All 8 CGB BG palettes are hardcoded into a single compile-time array (`cgb_bg_palettes[8][4]` in `src/ui/ui_color_banked.c`). Furthermore, palette assignment per tile is hardcoded via an ASCII character glyph heuristic in `ui_cell_palette()`. |
-| **What do?** | **ROADMAP** | 1. Implement harmonized Color 0 backdrops with pinned anchor-color support in `png2gb.py`.<br>2. Support multi-hue palettes (e.g. green + brown in one palette).<br>3. Replace the ASCII glyph heuristic with a direct ROM `tile_id -> palette_index` lookup (avoiding SDCC `__mulint`).<br>4. Introduce per-scene CRAM palette loading during safe VBlank/LCD-off transitions.<br>5. Establish a single-source JSON manifest for web editor and ROM parity. |
+| **What do?** | **ROADMAP** | 1. Implement harmonized Color 0 backdrops with pinned anchor-color support in `png2gb.py`.<br>2. Support multi-hue palettes (e.g. green + brown in one palette).<br>3. Replace the ASCII glyph heuristic with a direct ROM `tile_id -> palette_index` lookup (avoiding SDCC `__mulint`).<br>4. Address the palette slot double-booking collision (terrain vs. battle/card status colors).<br>5. Introduce per-scene CRAM palette loading during safe VBlank/LCD-off transitions.<br>6. Establish a single-source JSON manifest for web editor and ROM parity. |
 
 ---
 
@@ -123,9 +123,111 @@ static uint8_t ui_cell_palette(uint8_t glyph, uint8_t kind)
 
 ---
 
-## 3. Why the Tree Currently Fails (The Technical Breakdown)
+## 3. Deep Dive: Are We Missing Palettes Alongside the Tilesets?
 
-When we inspect the actual pixels rendered in `screenshots/14-forest-arrived.png`, we see the consequences:
+Examining the codebase reveals three concrete structural gaps:
+
+### Gap 1: Exactly One Global Palette Set, Not One Per Tileset
+`src/ui/ui_color_banked.c` defines a single `cgb_bg_palettes[8][4]` array, and `ui_init()` is the **only** place it gets programmed into CRAM — once, at boot. Forest, Castle, and Desolate Landscape all draw from the exact same 8 slots. There is no per-tileset or per-scene palette storage anywhere in the codebase today.
+
+### Gap 2: Tileset JSON `color` Field is Cosmetic Only
+Files like `tools/level_editor/tilesets/forest.json` do carry a `"color": "#2c4321"` per tile. Checking the schema (`levels/schema/tileset.schema.json`) reveals:
+> `"color": { "type": "string", "description": "Hex color code for editor rendering" }`
+
+This is strictly a visual swatch for the web level editor's HTML5 preview canvas. It is **not** wired into the ROM's palette pipeline at all. The tileset JSON does not declare any CGB hardware palette information.
+
+### Gap 3: The 8 Palette Slots are Already Double-Booked
+The 8 CGB background palette slots are **not** terrain-only. Inspecting `src/ui/ui.h` and `ui.c`:
+- **Terrain slots**:
+  - `UI_COLOR_FIELD` (3): forest foliage & grass floor
+  - `UI_COLOR_WOOD` (5): tree trunks, stumps, wooden fences
+  - `UI_COLOR_DIM` (7): rocks & desolate wasteland ground
+- **Battle status and Card-type slots**:
+  - `UI_COLOR_FIRE` (1): burn status effect / flame cards
+  - `UI_COLOR_ICE` (2): freeze status effect / ice cards / iron sword
+  - `UI_COLOR_POISON` (4): poison status effect / poison dagger
+  - `UI_COLOR_GOLD` (6): gold coins / bow cards
+
+Notice that these are the **exact same 8 background slots**!
+If a future "per-scene CRAM loading" pass blindly reprograms all 8 palettes when entering Forest vs. Castle (overwriting slots 1, 2, 4, 6 with forest hues), then transitioning from Forest directly into battle will render burn, freeze, and poison status text and card banners with forest hues until something restores the canonical UI palette.
+
+#### Mitigations for the Double-Booking Collision:
+1. **Screen-Transition CRAM Reloading (Recommended)**:
+   - When transitioning screens (`OVERWORLD -> BATTLE` or `OVERWORLD -> MENU`), reload CRAM with the canonical UI/Battle palette set.
+   - When returning to `OVERWORLD`, reload CRAM with the active scene's terrain palettes.
+   - This keeps all 8 slots available for rich terrain during exploration while preserving battle UI colors during combat.
+2. **Palette Slot Reservation / Partitioning**:
+   - If UI overlays appear directly on top of the overworld (e.g. dialogue boxes, menu frames), reserve slots:
+     - Slots 0–3: Scene-specific terrain palettes.
+     - Slots 4–7: Fixed universal UI, status, and font colors.
+3. **Move Battle Status Effects to OBJ (Sprite) Palettes**:
+   - Game Boy Color has 8 completely separate Object (Sprite) palettes in CRAM (`OCPS`/`OCPD`). Status indicators rendered via sprites do not compete with BG tilemap palettes.
+
+### Tooling Prerequisite: `png2gb.py` Anchor Color Mode
+`png2gb.py --palette auto` only supports per-tile luminance sorting today. It lacks any ability to pin a designated backdrop color to index 0. Without this tool enhancement, the "harmonized Color 0" convention cannot be built reliably.
+
+---
+
+## 4. ELI5: How Graphics Actually Get Into the Game
+
+Think of the Game Boy Color screen as an interactive coloring book. Creating the final picture requires four distinct parts working together:
+
+```
+1. Rubber Stamps        2. Stamp Grid           3. Crayon Boxes         4. Coloring Instructions
+   (VRAM Bank 0)           (Tilemap Ring)          (CRAM Palettes)         (VRAM Bank 1 Attributes)
+ ┌───────────────┐       ┌───────────────┐       ┌───────────────┐       ┌────────────────────────┐
+ │ 8x8 Tile Art  │       │ Which stamp   │       │ 8 boxes of    │       │ Which crayon box to    │
+ │ (shades 0..3, │ ────► │ goes in each  │ ────► │ 4 crayons     │ ────► │ color each stamp with  │
+ │  no color)    │       │ square        │       │ each          │       │ on the grid            │
+ └───────────────┘       └───────────────┘       └───────────────┘       └────────────────────────┘
+                                                                                     │
+                                                                                     ▼
+                                                                           [Final Colored Screen]
+```
+
+### 1. The Rubber Stamps (Tile Patterns in VRAM Bank 0)
+The artist creates 8×8 pixel shapes: a treetop curve, a piece of bark, a patch of grass.
+On the cartridge, these shapes don't have any real color! They are molded like rubber stamps with **4 shades of grey ink**:
+- Shade 0 (lightest / background)
+- Shade 1 (light tone)
+- Shade 2 (dark tone)
+- Shade 3 (black / deepest shadow)
+
+### 2. The Floorplan (The Tilemap at `0x9800`)
+The Game Boy has a 32×32 grid called the Tilemap. It tells the hardware:
+- *"Put Rubber Stamp #12 at square (3, 3)."* (The treetop)
+- *"Put Rubber Stamp #28 at square (3, 4)."* (The tree trunk)
+
+### 3. The Crayon Boxes (Palettes in CRAM)
+The Game Boy Color has a small shelf called CRAM that can only hold **8 small boxes of crayons**.
+Each box contains exactly **4 crayons**:
+- **Crayon Box 3 (Field)**: [Grass Green, Forest Green, Deep Forest Green, Black]
+- **Crayon Box 5 (Wood)**:  [Light Beige, Light Brown, Medium Brown, Dark Brown]
+
+### 4. The Coloring Instructions (Attributes in VRAM Bank 1)
+Behind the stamp grid lies a second sheet called the Attribute Map. For each square, it specifies:
+- *"Color Stamp #12 using Crayon Box 3 (Field)."*
+- *"Color Stamp #28 using Crayon Box 5 (Wood)."*
+
+### Why Does the Tree Trunk Get an Ugly Beige Box?
+Look at what happens to the tree trunk stamp:
+1. The rubber stamp for the tree trunk contains the brown bark, but its bottom corners also have a bit of **grass** where the trunk meets the lawn.
+2. The computer saw that the grass was the brightest part of that stamp, so it marked the grass as **Shade 0**, and the tree bark as **Shade 2 and 3**.
+3. Next, the game says: *"This tile is a tree trunk! Color it using Crayon Box 5 (Wood)!"*
+4. The Game Boy picks up Crayon Box 5. Crayon #0 in that box is **Light Beige**!
+5. So the Game Boy colors the grass around the trunk with **Beige**, while the rest of the lawn was colored with **Grass Green** from Crayon Box 3!
+6. **Result**: A visible beige rectangular box surrounds the trunk.
+
+### Why Can't We Just Put 50 Colors on Screen Like a Modern PC?
+1. An 8×8 rubber stamp can only touch **ONE Crayon Box** at a time. You cannot use Box 3 for the top half of a tile and Box 5 for the bottom half.
+2. If you want an 8×8 tile to have both green leaves and brown bark, you must create a Crayon Box that contains **both green and brown crayons**.
+3. You only have 8 boxes for the whole background, so they must be shared smartly.
+
+---
+
+## 5. Why the Tree Currently Fails (The Technical Breakdown)
+
+Inspecting the actual pixels rendered in `screenshots/14-forest-arrived.png` confirms these exact hardware limitations:
 
 ### 1. The Background Color 0 Mismatch ("The Beige Box" Bug)
 On Game Boy Color, **Color 0 in a background palette is opaque**. It is not transparent like sprite Color 0.
@@ -149,7 +251,7 @@ Because `ui_cell_palette` relies on ASCII characters:
 
 ---
 
-## 4. Game Boy Color Hardware Constraints
+## 6. Game Boy Color Hardware Constraints
 
 To design the solution properly, we must adhere to the physical capabilities of the Game Boy Color PPU:
 
@@ -178,7 +280,7 @@ To design the solution properly, we must adhere to the physical capabilities of 
 
 ---
 
-## 5. Architectural Blueprint: What Needs to Be Done ("What Do?")
+## 7. Architectural Blueprint: What Needs to Be Done ("What Do?")
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -216,8 +318,9 @@ To design the solution properly, we must adhere to the physical capabilities of 
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 4. SAFE PER-SCENE CRAM STREAMING                                            │
-│    - Map transitions write new scene palettes during LCD-off / VBlank wipe  │
+│ 4. SAFE PER-SCENE CRAM STREAMING & SCREEN-TRANSITION RELOADING              │
+│    - Overworld transitions stream active scene palettes during LCD-off      │
+│    - Screen transitions (Overworld <-> Battle) reload battle/card palettes   │
 │    - Gated via GBDK set_bkg_palette() / atomic VBlank loop                  │
 │    - DMG fallback remains 100% byte-identical (DMG ignores VBK & BCPS)      │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -293,21 +396,24 @@ VBK_REG = 0;
 - Instant $O(1)$ lookup with no ASCII glyph guessing.
 - Complete separation of terrain presentation from collision logic.
 
-### Pillar 4: Safe CRAM Write Timing
-To guarantee reliable execution across real hardware and emulators without Mode 3 corruption:
-1. **Scene Transitions (LCD-off / Full Screen Wipe)**:
+### Pillar 4: Safe CRAM Write Timing & Screen Transition Reloading
+To guarantee reliable execution across real hardware and emulators without Mode 3 corruption or slot collisions:
+1. **Screen Transitions (Overworld <-> Battle)**:
+   - When entering battle, reload CRAM with the canonical UI / Status / Card palettes (`cgb_bg_palettes`).
+   - When returning to the overworld, reload CRAM with the active scene's terrain palettes.
+2. **Scene Transitions (LCD-off / Full Screen Wipe)**:
    - When changing maps in `world_change_map()`, palette loading must be gated through the transition wipe (where `ui_sprite_begin_transition()` has already hidden sprites and the LCD is blanked or safely transitioning).
    - Use GBDK's standard library function:
      ```c
      set_bkg_palette(0, 8, (const palette_color_t *)active_scene_palettes);
      ```
    - Standard library routines are audited against VBlank/LCD timing.
-2. **Harness Safety**:
+3. **Harness Safety**:
    - In harness mode (`g_harness_mode`), VBlank waits are bypassed; loading with LCD off ensures instantaneous, deterministic execution in tests.
 
 ---
 
-## 6. Single Source of Truth: Web Level Editor Parity
+## 8. Single Source of Truth: Web Level Editor Parity
 
 To prevent drift between the Python/C build pipeline and the TypeScript/React web editor (`tools/level_editor/src/`):
 
@@ -334,7 +440,7 @@ To prevent drift between the Python/C build pipeline and the TypeScript/React we
 
 ---
 
-## 7. Verification Plan
+## 9. Verification Plan
 
 1. **Deterministic Attribute Mirroring in Test Harness**:
    - In debug builds, pair `g_tilemap_mirror` with an attribute mirror:
