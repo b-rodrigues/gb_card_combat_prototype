@@ -136,8 +136,6 @@
             pkgs.imagemagick
             pkgs.python3
             pkgs.python3Packages.pillow
-            pkgs.python3Packages.scikit-learn
-            pkgs.python3Packages.scipy
             pyboy
             pkgs.nodejs
           ];

@@ -11,7 +11,7 @@ This document analyzes how background color currently flows through the engine, 
 | **Is stuff missing to achieve full-color tiles?** | **YES** | Missing: automated CGB palette extraction from PNGs, per-tile attribute mapping in manifests/level compiler, per-scene dynamic CRAM loading, and level editor palette support. |
 | **Do we need a palette?** | **YES** | CGB hardware requires up to 8 background palettes in CRAM, each containing 4 colors (15-bit RGB555). We specifically need **per-scene palette sets** rather than the single global set currently used. |
 | **Is it hardcoded?** | **YES** | All 8 CGB BG palettes are hardcoded into a single compile-time array (`cgb_bg_palettes[8][4]` in `src/ui/ui_color_banked.c`). Furthermore, palette assignment per tile is hardcoded via an ASCII character glyph heuristic in `ui_cell_palette()`. |
-| **What do?** | **ROADMAP** | 1. **[DONE]** Add `--anchor-color` to `png2gb.py` to pin the scene backdrop to index 0.<br>2. **[DONE]** Build palette compiler/exporter in `generate_tiles.py` to emit `tile_palette.h`.<br>3. **[DONE]** Replace ASCII glyph heuristic with direct ROM `g_tile_pal_*` lookup.<br>4. **[DONE]** Address double-booking collision via screen-transition CRAM reloading (`ui_set_cram_palette`).<br>5. **[DONE]** Introduce per-scene CRAM palette sets for distinct scene aesthetics (Castle, Desolate).<br>6. **[TODO]** Establish single-source JSON manifest for web editor canvas color preview. |
+| **What do?** | **ROADMAP** | 1. **[DONE]** Add `--anchor-color` to `png2gb.py` to pin the scene backdrop to index 0.<br>2. **[DONE]** Build palette compiler/exporter in `generate_tiles.py` to emit `tile_palette.h`.<br>3. **[DONE]** Replace ASCII glyph heuristic with direct ROM `g_tile_pal_*` lookup.<br>4. **[DONE]** Address double-booking collision via screen-transition CRAM reloading (`ui_set_cram_palette`).<br>5. **[DONE]** Introduce per-scene CRAM palette sets for distinct scene aesthetics (Castle, Desolate).<br>6. **[DONE]** Establish single-source JSON manifest for web editor canvas color preview (`tools/palette_compiler.py`). |
 
 ---
 
@@ -152,7 +152,7 @@ On Game Boy Color, **Color 0 in a background palette is opaque**. It is not tran
 > [!IMPORTANT]
 > **The fix**: Color 0 of every outdoor palette in a scene must be the **same RGB value** (the scene's ground color). If Palette 3 (Field) has Color 0 = Grass Green and Palette 5 (Wood) also has Color 0 = Grass Green, the shade-0 grass around the trunk renders identically to the shade-0 grass on the floor tile. No seam.
 
-### 3.2 The Monochromatic Palette Trap [TODO]
+### 3.2 The Monochromatic Palette Trap [DONE]
 - `UI_COLOR_FIELD` contains **only green shades**: `[RGB8(120,176,96), RGB8(40,72,24), RGB8(24,56,8), RGB8(0,0,0)]`.
 - `UI_COLOR_WOOD` contains **only brown shades**: `[RGB8(245,230,210), RGB8(196,138,72), RGB8(138,82,34), RGB8(61,32,10)]`.
 - In `assets/forest-tile.png`, the top-right treetop has a brown branch `#4a3b1c`. Because it is assigned Palette 3, that brown branch is rendered as dark green.
@@ -283,7 +283,7 @@ To design the solution properly, we must adhere to the physical capabilities of 
 > 2. The remaining ≤ 3 distinct colors in the 8×8 tile are sorted by luminance and assigned to indices following the existing shade-skipping logic (e.g. 2 remaining colors → `{2, 3}`, not `{1, 2}`).
 > 3. If a tile does not contain the anchor color (e.g. solid wall), index 0 is still filled with the scene's harmonized backdrop in CRAM, ensuring zero border clash.
 
-### Pillar 2: Multi-Hue Palettes for Complex 8×8 Tiles [TODO]
+### Pillar 2: Multi-Hue Palettes for Complex 8×8 Tiles [DONE]
 A CGB palette does not have to be a single monochromatic ramp.
 If an 8×8 tile needs both foliage and bark (or if a small tree is drawn in a single tile):
 ```c
@@ -350,7 +350,7 @@ To guarantee reliable execution across real hardware and emulators without Mode 
 
 ---
 
-## 7. Single Source of Truth: Web Level Editor Parity [TODO]
+## 7. Single Source of Truth: Web Level Editor Parity [DONE]
 
 To prevent drift between the Python/C build pipeline and the TypeScript/React web editor (`tools/level_editor/src/`):
 
@@ -366,7 +366,7 @@ To prevent drift between the Python/C build pipeline and the TypeScript/React we
         (Consumed by Web Editor)       (Compiled into ROM Bank 5)
 ```
 
-### 7.1 Manifest as Contract [TODO]
+### 7.1 Manifest as Contract [DONE]
 - `palette_compiler.py` outputs a JSON manifest containing:
   - The 8 CGB palettes in hex (`["#7bb660", "#2a4f1a", "#1d3e0f", "#000000"]`).
   - The per-tile palette index array (`"tile_palettes": [0, 0, ..., 1, 1, 2, 2]`).
@@ -380,7 +380,7 @@ To prevent drift between the Python/C build pipeline and the TypeScript/React we
 
 ## 8. Verification Plan
 
-### 8.1 Deterministic Attribute Mirroring in Test Harness (`g_tilemap_attr_mirror`) [TODO]
+### 8.1 Deterministic Attribute Mirroring in Test Harness (`g_tilemap_attr_mirror`) [DONE]
 - In debug builds, pair `g_tilemap_mirror` with an attribute mirror:
   ```c
   #ifdef DEBUG_BUILD

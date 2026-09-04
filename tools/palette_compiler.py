@@ -209,6 +209,13 @@ def is_green(rgb: Tuple[int, int, int]) -> bool:
     return g > r and g > b and g > 40
 
 
+DEFAULT_FLOOR_PALETTES = {
+    "forest": 3,              # field (greens) - UI_COLOR_FIELD
+    "desolate_landscape": 7,  # slate rock - UI_COLOR_DIM
+    "castle": 0,              # stone (light gray) - UI_COLOR_NONE
+}
+
+
 def match_tile_to_palette(
     tile_colors: List[Tuple[int, int, int]],
     palettes: List[List[Tuple[int, int, int]]],
@@ -226,6 +233,12 @@ def match_tile_to_palette(
     and brown colors should prefer the wood palette (index 5) which has
     harmonized Color 0 = anchor + brown foreground colors.
     """
+    floor_palette_idx = DEFAULT_FLOOR_PALETTES.get(tileset_id, 0)
+
+    # If tile only contains the scene's anchor backdrop color, assign floor palette directly
+    if tile_colors and all(color_distance(c, anchor_rgb) < 5.0 for c in tile_colors):
+        return floor_palette_idx
+
     # Detect if tile has both green and brown colors
     has_green = any(is_green(c) for c in tile_colors)
     has_brown = any(is_brown(c) for c in tile_colors)
@@ -250,7 +263,8 @@ def match_tile_to_palette(
         if has_green and has_brown and pal_idx == wood_palette_idx:
             avg_dist *= 0.5  # Strong preference for wood palette
 
-        if avg_dist < best_total_dist:
+        # Prefer floor palette when distances tie
+        if avg_dist < best_total_dist or (abs(avg_dist - best_total_dist) < 1e-4 and pal_idx == floor_palette_idx):
             best_total_dist = avg_dist
             best_palette = pal_idx
 
@@ -288,6 +302,15 @@ def write_manifest(tileset_id: str, manifest: Dict[str, Any]) -> Path:
     return out_path
 
 
+# Per-tileset curated overrides (e.g. animated fire frames)
+TILE_PALETTE_OVERRIDES = {
+    "desolate_landscape": {
+        37: 1,  # Campfire frame 1 (fire)
+        38: 1,  # Campfire frame 2 (fire)
+    },
+}
+
+
 def process_tileset(tileset_id: str) -> Dict[str, Any]:
     """Process a single tileset: load JSON+PNG, match to fixed palettes, output manifest."""
     print(f"Processing {tileset_id}...")
@@ -319,10 +342,15 @@ def process_tileset(tileset_id: str) -> Dict[str, Any]:
     anchor_rgb = tuple(int(anchor_hex.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     print(f"  Anchor color: {anchor_hex} -> RGB{anchor_rgb}")
 
+    overrides = TILE_PALETTE_OVERRIDES.get(tileset_id, {})
+
     # Match each tile to best fixed palette
     tile_palettes = []
     for i, tile_colors in enumerate(tile_colors_list):
-        pal_idx = match_tile_to_palette(tile_colors, palettes, anchor_rgb, tileset_id)
+        if i in overrides:
+            pal_idx = overrides[i]
+        else:
+            pal_idx = match_tile_to_palette(tile_colors, palettes, anchor_rgb, tileset_id)
         tile_palettes.append(pal_idx)
 
     print(f"  Tile palette assignments: {tile_palettes}")
