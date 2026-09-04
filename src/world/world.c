@@ -28,6 +28,9 @@ void world_load_map(World *w, MapId map_id, const GameState *state)
     w->width = def ? def->width : WORLD_WIDTH;
     w->height = def ? def->height : WORLD_HEIGHT;
     w->map_id = map_id;
+    /* Cache the tileset kind on the world itself (see world.h): the render
+     * path reads it per cell without touching the static cache. */
+    w->tileset_kind = def ? def->tileset : WORLD_TILESET_FOREST;
     w->encounter_actor_index = NO_ACTOR_INDEX;
     w->map_changed = false;
     w->move_state = MOVE_STATE_IDLE;

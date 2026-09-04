@@ -997,6 +997,15 @@ The web editor must never be a stale snapshot of the JSON:
 - There is no `collision.overrides` section: collision is derived solely
   from the tileset manifest's `walkable` flag (it never had a
   compiler/ROM consumer, so it was removed rather than carried).
+- WYSIWYG parity (`make parity`, `tools/parity_check.py`): the ROM must
+  show what the editor shows for the same JSON — whole-map VRAM tile
+  parity per map (terrain expanded from JSON, indices via the manifest
+  `vram_block` cross-refs, compared against the live tilemap mirror) plus
+  animation frame-set parity (every JSON `animation_frames` id must
+  resolve in manifest + `vram_block`, and the ROM sprite-tile rules must
+  load those sheet cells; timing may differ, sets and order must not).
+  Actor-occupied cells are skipped (actor overlay rules belong to actor
+  scenarios).  Named exceptions only, never silent divergence.
 
 # Phase 18 — Screens into the ROM build (title + battle mockups)
 
@@ -1005,9 +1014,10 @@ The web editor must never be a stale snapshot of the JSON:
 - `title_compile.py screens/title.json` → `src/game/title_data.c`
   (live data: `title_content.c` reads it).
 - `battle_compile.py --all` → `src/game/battle_screens.c` +
-  `src/game/battle_types.c` (compile-covered but **not yet consumed by
-  the renderer** — only `extern` decls in `src/battle/battle_data.h`;
-  connecting them is future work; see `docs/BATTLE_SCREENS_COMPILER_ISSUE.md`).
+  `src/game/battle_types.c`, with enemy-type battle art consumed by the
+  bank-4 loader + bank-3 BG stamper (HP row 1, art rows 3-4, caret row 5).
+  Full hud_layout-driven positioning beyond the art rows is still future
+  work; see `docs/BATTLE_SCREENS_COMPILER_ISSUE.md`.
 - Enemy battle art: `screens/enemy_types/*.json` `sprite: { art, frames }`
   selects a 3x2 art set from `assets/battle_sprites.png` (composed by
   `tools/compose_battle_sprites.py` from the curated combat PNGs; cell

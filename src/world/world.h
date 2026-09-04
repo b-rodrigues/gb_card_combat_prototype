@@ -5,6 +5,15 @@
 #include "rpg/state.h"
 #include <stdbool.h>
 
+/* Tileset art families for scene rendering.  Defined here (rather than
+ * scene.h) so World can carry its loaded kind without a circular include;
+ * scene.h picks it up through this header. */
+typedef enum {
+    WORLD_TILESET_FOREST   = 2,
+    WORLD_TILESET_DESOLATE = 14,
+    WORLD_TILESET_CASTLE   = 15
+} WorldTilesetKind;
+
 /* Hard caps for the tile buffer: a scene may be any size up to these.
  * The overworld camera windows a WORLD_VIEW_W x WORLD_VIEW_H view out of
  * the scene and scrolls it with the scroll offset; the 40-col cap
@@ -327,6 +336,13 @@ typedef struct {
     uint8_t move_target_y;
     uint8_t move_progress;   /* 0..MOVE_FRAMES, sub-tile pixel offset */
     uint8_t move_outcome;    /* MoveOutcome resolved at commit */
+
+    /* Scene tileset kind, copied from the scene definition at load time.
+     * Appended at the END of World (never mid-struct): the renderer reads
+     * it per cell instead of the fragile static cache in scene.c, whose
+     * map-0 line could poison once and misrender a whole map as generic
+     * fallback art.  Runtime only, never persistent. */
+    WorldTilesetKind tileset_kind;
 } World;
 
 void world_init(World *w, const GameState *state);

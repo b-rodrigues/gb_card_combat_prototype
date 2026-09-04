@@ -6,9 +6,8 @@
 > both in `debug`/`release` deps, `/api/compile-rom` runs them).
 > Enemy-type battle art (`sprite: { art, frames }` → bank-4 art table) is
 > consumed by the battle art loader + BG stamper (HP row 1, art rows 3-4,
-> caret row 5).  Still open: full hud_layout-driven rendering (positions
-> beyond the art rows remain renderer constants) and the legacy
-> `src/game/battle_data.c` (`screens/battle.json`) orphan.
+> caret row 5).  Still open: full hud_layout-driven positioning, and the
+> legacy `src/game/battle_data.c` (`screens/battle.json`) orphan.
 > See below for the original report.
 
 ## Problem Summary (historical)

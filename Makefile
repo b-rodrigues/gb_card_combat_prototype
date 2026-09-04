@@ -53,7 +53,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check tiles tiles-check doctor music sfx level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check tiles tiles-check doctor music sfx level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -437,6 +437,13 @@ screenshot: $(TARGET)
 # milestone, and saves raw 160x144 PNGs into screenshots/.  Visual review
 # only -- semantic telemetry stays authoritative.  Manual only; not part of
 # the CI chain.
+# WYSIWYG gate: the ROM must show what the level editor shows for the
+# same levels/*.json (whole-map VRAM parity per map + animation frame-set
+# parity).  Needs the debug ROM (runs the SameBoy harness like
+# test-harness).  Manual only for now; not part of the CI chain.
+parity: debug
+	@python3 tools/parity_check.py
+
 screenshots: $(TARGET)
 	@python3 tools/capture_walkthrough.py
 

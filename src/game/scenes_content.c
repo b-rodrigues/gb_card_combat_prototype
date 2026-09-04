@@ -17,9 +17,9 @@ const SceneExit g_all_exits[] = {
 };
 
 static const SceneTerrainBlock s_field_terrain[] = {
-    { 5, 5, 3, 2, TILE_FOREST_21 },
-    { 20, 10, 4, 2, TILE_FOREST_22 },
-    { 10, 13, 2, 2, TILE_FOREST_23 },
+    { 5, 5, 3, 2, TILE_FOREST_32 },
+    { 20, 10, 4, 2, TILE_FOREST_32 },
+    { 10, 13, 2, 2, TILE_FOREST_32 },
     { 0, 0, 0, 0, 0 }
 };
 

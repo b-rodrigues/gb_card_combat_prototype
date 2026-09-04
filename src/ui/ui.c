@@ -542,29 +542,29 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     } else {
         glyph = ui_get_world_tile_glyph(t);
         if (t == TILE_EXIT) {
-            WorldTilesetKind ets = scene_get_tileset(world->map_id);
+            WorldTilesetKind ets = world->tileset_kind;
             uint8_t ex = (ets == WORLD_TILESET_DESOLATE) ? TILESET_EXIT_DESOLATE :
                          (ets == WORLD_TILESET_FOREST) ? TILESET_EXIT_FOREST :
                          (ets == WORLD_TILESET_CASTLE) ? TILESET_EXIT_CASTLE : 2;
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + ex);
-        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
+        } else if (world->tileset_kind == WORLD_TILESET_DESOLATE &&
             t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
             uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_WALL_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
-        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_DESOLATE &&
+        } else if (world->tileset_kind == WORLD_TILESET_DESOLATE &&
                    t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) {
             uint8_t des_idx = (uint8_t)(t - TILE_DESOLATE_LANDSCAPE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_DESOLATE + des_idx);
-        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_FOREST &&
+        } else if (world->tileset_kind == WORLD_TILESET_FOREST &&
                    t >= TILE_FOREST_00 && t <= TILE_FOREST_47) {
             uint8_t f_idx = (uint8_t)(t - TILE_FOREST_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + f_idx);
-        } else if (scene_get_tileset(world->map_id) == WORLD_TILESET_CASTLE &&
+        } else if (world->tileset_kind == WORLD_TILESET_CASTLE &&
                    t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) {
             uint8_t c_idx = (uint8_t)(t - TILE_CASTLE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + c_idx);
         } else {
-            uint8_t lookup_id = rpg_lookup_tile_id(scene_get_tileset(world->map_id), glyph);
+            uint8_t lookup_id = rpg_lookup_tile_id(world->tileset_kind, glyph);
             tile_idx = lookup_id ? lookup_id : (uint8_t)(ui_font_tile_base + (uint8_t)(glyph - ' '));
         }
     }
@@ -592,7 +592,7 @@ void ui_draw_actors_sprites(const World *world)
     s_anim_counter++;
     anim_step = (uint8_t)((s_anim_counter >> 4) & 1);
 
-    if (world->map_id == MAP_SOUTH_FIELD || world->map_id == MAP_FOREST) {
+    if (world->map_id == MAP_SOUTH_FIELD) {
         shadow_OAM[PLAYER_SPRITE_NUM].tile = (uint8_t)(HERO_DESOLATE_SPRITE_TILE_ID + anim_step);
         shadow_OAM[PLAYER_SPRITE_NUM].prop = 0;
 
@@ -611,7 +611,7 @@ void ui_draw_actors_sprites(const World *world)
      * OAM writes do not bloat the fixed bank (AGENTS.md §52.18 / §55.5).
      * The banked body writes directly into shadow OAM (WRAM, always
      * mapped) and hides inactive/BOSS actors. */
-    castle = (scene_get_tileset(world->map_id) == WORLD_TILESET_CASTLE);
+    castle = (world->tileset_kind == WORLD_TILESET_CASTLE);
     g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&ui_actors_sprites_banked;
     g_bk_ptr_a = (void *)world;
@@ -674,7 +674,7 @@ void ui_draw_world_map(const World *world)
     if (!world) return;
 
     /* Ensure active scene's tileset is loaded into VRAM Block 1 (slots 128..255) */
-    ui_load_tileset((uint8_t)scene_get_tileset(world->map_id));
+    ui_load_tileset((uint8_t)world->tileset_kind);
 
     /* Populate the entire 32-column x 18-row background ring during LCD-safe
      * full map redraw. Field: all 32 x 18 cells. Smaller maps: col 20..31 are

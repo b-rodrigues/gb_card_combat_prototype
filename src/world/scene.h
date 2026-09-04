@@ -26,11 +26,8 @@ typedef struct {
     uint8_t tile;
 } SceneTerrainBlock;
 
-typedef enum {
-    WORLD_TILESET_FOREST   = 2,
-    WORLD_TILESET_DESOLATE = 14,
-    WORLD_TILESET_CASTLE   = 15
-} WorldTilesetKind;
+/* WorldTilesetKind lives in world.h (see above); used here for the
+ * scene definition's tileset field. */
 
 /* Data-driven scene definition.  Terrain generation is driven by banked
  * terrain_blocks; exit placement is applied automatically from the exits table.
