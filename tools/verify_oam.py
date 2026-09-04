@@ -124,6 +124,11 @@ def verify_hostile_sprites(sess):
     # south_field; every other map uses PLAYER (102).
     check("forest player renders as hero OAM tile (98|99)",
           1, (98 <= shadow_sprite_tile(sess) <= 99))
+    attr_mirror = sess.get_symbol("g_tilemap_attr_mirror")
+    check("forest treetop (3, 3) has field canopy palette (3)",
+          3, mirror_at(sess, attr_mirror, 3, 3))
+    check("forest treetrunk (3, 4) has wood trunk palette (5)",
+          5, mirror_at(sess, attr_mirror, 3, 4))
 
     print("== Chest pickup sprite (forest amulet as OAM, no BG glyph) ==")
     forest_amulet = load_scenario(sess, "forest_boot.json")

@@ -1021,6 +1021,13 @@ class EmulatorSession:
         addr = self.get_symbol("g_tilemap_mirror")
         return [self._memread(addr + i) for i in range(32 * 32)]
 
+    def get_tilemap_attr_mirror(self):
+        """Read the g_tilemap_attr_mirror ring (DEBUG build). Indexed
+        by (world_row & 31) * 32 + (world_col & 31); values are CGB palette
+        attribute indices (0..7)."""
+        addr = self.get_symbol("g_tilemap_attr_mirror")
+        return [self._memread(addr + i) for i in range(32 * 32)]
+
     def get_sfx_state(self):
         """Read the SFX trigger log: (total count, last SFX id).
         Per-trigger SFX telemetry would flood the 32-entry gameplay ring

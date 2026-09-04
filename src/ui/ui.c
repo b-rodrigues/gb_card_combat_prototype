@@ -35,6 +35,9 @@ void ui_set_cram_palette(uint8_t overworld)
  * debugger cannot read VRAM).  DEBUG-only: 1 KB of WRAM the release does
  * not carry. */
 uint8_t g_tilemap_mirror[32 * 32];
+/* Mirror of the background tilemap attribute ring (VBK=1 0x9800).
+ * Placed in unmapped WRAM0 (0xC100-0xC4FF) so it does not consume _DATA budget. */
+volatile __at(0xC100) uint8_t g_tilemap_attr_mirror[32 * 32];
 #endif
 
 /* GBDK console .mode byte (defined in crt0.s _DATA). Bit 2 is M_NO_SCROLL. */
@@ -574,10 +577,13 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
      * (measured +180B for a flat chain), while a 2-param helper compiles
      * tight. */
     {
+        uint8_t pal = ui_cell_palette(tile_idx, (uint8_t)glyph, (uint8_t)world->tileset_kind);
         VBK_REG = 1;
-        ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
-            ui_cell_palette(tile_idx, (uint8_t)glyph, (uint8_t)world->tileset_kind);
+        ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] = pal;
         VBK_REG = 0;
+#ifdef DEBUG_BUILD
+        g_tilemap_attr_mirror[(row & 31) * 32 + (col & 31)] = pal;
+#endif
     }
 
     sx = (uint8_t)(col - world->scroll_x);

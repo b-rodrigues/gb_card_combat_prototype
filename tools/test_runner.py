@@ -32,7 +32,7 @@ VALID_ASSERTION_TYPES = {
     "flag", "variable", "inventory", "party_hp", "party_level", "actor_state",
     "currency", "progression_level", "progression_progress",
     "camera", "scroll_x", "scroll_y", "world_width", "world_height",
-    "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell",
+    "camera_px_x", "camera_px_y", "scx", "scy", "tilemap_cell", "tilemap_attr",
     "sfx_count", "sfx_last"
 }
 
@@ -309,6 +309,8 @@ def run_scenario(scenario):
         scy = session._memread(0xFF42)
         has_tilemap_assert = any(a.get("type") == "tilemap_cell" for a in scenario.get("assertions", []))
         tilemap_mirror = session.get_tilemap_mirror() if has_tilemap_assert else None
+        has_tilemap_attr_assert = any(a.get("type") == "tilemap_attr" for a in scenario.get("assertions", []))
+        tilemap_attr_mirror = session.get_tilemap_attr_mirror() if has_tilemap_attr_assert else None
         has_sfx_assert = any(a.get("type") in ("sfx_count", "sfx_last") for a in scenario.get("assertions", []))
         sfx_count, sfx_last = session.get_sfx_state() if has_sfx_assert else (None, None)
 
@@ -431,6 +433,14 @@ def run_scenario(scenario):
             actual = tilemap_mirror[idx] if tilemap_mirror is not None else None
             passed = (actual == int(expected))
             actual = f"tilemap[{world_col},{world_row}]={actual}"
+
+        elif a_type == "tilemap_attr":
+            world_row = a.get("row", 0)
+            world_col = a.get("col", 0)
+            idx = (world_row & 31) * 32 + (world_col & 31)
+            actual = tilemap_attr_mirror[idx] if tilemap_attr_mirror is not None else None
+            passed = (actual == int(expected))
+            actual = f"tilemap_attr[{world_col},{world_row}]={actual}"
 
         elif a_type == "sfx_count":
             actual = sfx_count
