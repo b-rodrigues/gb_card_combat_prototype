@@ -782,6 +782,15 @@ void ui_draw_battle_full(const Battle *battle)
     if (!battle) return;
 
     ui_clear_screen();
+    /* Battle enemy art (screens/enemy_types.json) loads here, inside the
+     * LCD-off full-draw window: one banked call resolves art per enemy,
+     * streams 12 tiles per slot into VRAM, and caches art for the
+     * bank-3 stamper below.  Must precede ui_update_battle so the first
+     * frame already shows sprites. */
+    g_bk_call_bank = 4;
+    g_bk_call_target = (uint16_t)&battle_art_load_banked;
+    g_bk_ptr_a = (void *)battle;
+    banked_call_run();
     ui_update_battle(battle);
     /* The timer bar is otherwise only redrawn on a tile-boundary change
      * (battle_screen.c), so draw it here once at a full count on entry;

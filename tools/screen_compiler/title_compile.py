@@ -343,6 +343,8 @@ def main(args=None):
                         help="Output C file (default: src/game/title_data.c)")
     parser.add_argument("--validate", action="store_true",
                         help="Only validate JSON, don't emit C")
+    parser.add_argument("--check", action="store_true",
+                        help="Do not write; exit nonzero if fresh output differs from the file")
 
     args = parser.parse_args(args)
 
@@ -358,6 +360,17 @@ def main(args=None):
 
     # Emit C
     output_text = build_title_c_output(data)
+
+    if args.check:
+        try:
+            committed = output_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            committed = None
+        if committed is None or committed != output_text:
+            print("DRIFT: fresh compile differs from %s" % output_path, file=sys.stderr)
+            return 1
+        print("title compile --check OK: %s matches fresh output" % output_path)
+        return 0
 
     # Ensure output directory exists
     out_dir = Path(output_path).parent

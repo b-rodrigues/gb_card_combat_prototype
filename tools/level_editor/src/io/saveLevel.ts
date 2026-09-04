@@ -36,7 +36,7 @@ export async function compileRom(): Promise<{ success: boolean; log?: string; ro
   }
 }
 
-export async function runGame(): Promise<{ success: boolean; emulator?: string; message?: string; error?: string }> {
+export async function runGame(): Promise<{ success: boolean; emulator?: string; message?: string; stale?: string[]; error?: string }> {
   try {
     const res = await fetch('/api/run-game', { method: 'POST' });
     const data = await res.json();

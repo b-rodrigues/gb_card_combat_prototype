@@ -12,6 +12,13 @@
 #include "content.h"
 #include <string.h>
 
+/* Per-enemy battle art (see battle.h): uninitialized WRAM arrays (bss, so
+ * no _INITIALIZER cost); written by the bank-4 battle art loader at every
+ * battle entry, read by the bank-3 stamper. */
+uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
  * deck from the player's owned cards.  When NULL, fall back to the

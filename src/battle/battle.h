@@ -92,6 +92,23 @@ typedef struct {
     Card enemy_played_card;                    /* Card drawn by enemy this turn */
 } Battle;
 
+/* Per-enemy battle art (screens/enemy_types.json), parallel to
+ * Battle.enemies[] but stored OUTSIDE Battle: Battle sits mid-Game, so any
+ * growth shifts every later Game field to 16-bit offsets across dozens of
+ * fixed-bank accessors (fixed-bank _CODE budget; see 52.18).  WRAM has room
+ * (_DATA headroom), fixed bank does not.  Written by the battle art loader;
+ * never persisted (Battle is temporary runtime state, AGENTS.md 53.1). */
+extern uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+
+/* Banked battle-art loader (src/battle/battle_art_banked.c, ROM bank 4):
+ * g_bk_ptr_a = Battle*.  Resolves each enemy's art from the enemy-type
+ * tables, loads 12 tiles per slot into VRAM, caches art in the WRAM
+ * globals above.  Dispatched once per battle entry from
+ * ui_draw_battle_full() (LCD-off window). */
+void battle_art_load_banked(void);
+
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,

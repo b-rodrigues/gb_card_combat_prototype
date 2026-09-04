@@ -3,7 +3,7 @@
   "id": "slime",
   "label": "Slime",
   "category": "minion",
-  "sprite": "battle.slime",
+  "sprite": { "art": "slime", "frames": 2 },
   "name": "SLIME",
   "hp": 10,
   "max_hp": 10,

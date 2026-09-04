@@ -262,7 +262,7 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
-          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && make debug', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
+          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message, stderr);
               res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -289,6 +289,32 @@ function levelEditorApiPlugin(): Plugin {
               }
             })();
 
+            // Staleness probe: content JSON newer than the debug ROM means
+            // Run Game would launch a stale build (it does not save/compile).
+            let stale: string[] = [];
+            try {
+              const romMtime = fs.statSync(romPath).mtimeMs;
+              const contentDirs = ['levels', 'screens',
+                path.join('tools', 'level_editor', 'tilesets')];
+              const fresh: string[] = [];
+              const scan = (dir: string) => {
+                for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                  const p = path.join(dir, e.name);
+                  if (e.isDirectory()) { scan(p); continue; }
+                  if (!e.name.endsWith('.json')) continue;
+                  try {
+                    if (fs.statSync(p).mtimeMs > romMtime) fresh.push(path.relative(repoRoot, p));
+                  } catch { /* raced deletion: ignore */ }
+                }
+              };
+              for (const d of contentDirs) {
+                try { scan(path.join(repoRoot, d)); } catch { /* missing dir: ignore */ }
+              }
+              stale = fresh.sort().slice(0, 8);
+            } catch {
+              stale = ['<rom missing: compile first>'];
+            }
+
             try {
               const child = hasDirectTools
                 ? spawn(emu, [romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' })
@@ -296,7 +322,7 @@ function levelEditorApiPlugin(): Plugin {
 
               child.unref();
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, emulator: path.basename(emu), message: `Launched ${path.basename(emu)} on desktop` }));
+              res.end(JSON.stringify({ success: true, emulator: path.basename(emu), message: `Launched ${path.basename(emu)} on desktop`, stale }));
             } catch (spawnErr: any) {
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: spawnErr.message }));

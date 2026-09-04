@@ -997,3 +997,31 @@ The web editor must never be a stale snapshot of the JSON:
 - There is no `collision.overrides` section: collision is derived solely
   from the tileset manifest's `walkable` flag (it never had a
   compiler/ROM consumer, so it was removed rather than carried).
+
+# Phase 18 — Screens into the ROM build (title + battle mockups)
+
+`screens/*.json` is compiled exactly like `levels/*.json`:
+
+- `title_compile.py screens/title.json` → `src/game/title_data.c`
+  (live data: `title_content.c` reads it).
+- `battle_compile.py --all` → `src/game/battle_screens.c` +
+  `src/game/battle_types.c` (compile-covered but **not yet consumed by
+  the renderer** — only `extern` decls in `src/battle/battle_data.h`;
+  connecting them is future work; see `docs/BATTLE_SCREENS_COMPILER_ISSUE.md`).
+- Enemy battle art: `screens/enemy_types/*.json` `sprite: { art, frames }`
+  selects a 3x2 art set from `assets/battle_sprites.png` (composed by
+  `tools/compose_battle_sprites.py` from the curated combat PNGs; cell
+  order pinned by `ART_SETS` in `battle_compile.py` and mirrored by the
+  `make gfx` rule).  The bank-4 loader (`battle_art_load_banked`)
+  resolves art per battle, streams 12 tiles per enemy slot into BG tiles
+  at battle entry (LCD-off), and the bank-3 stamper draws them at the
+  compiled hud_layout rows (HP row 1, art rows 3-4, caret row 5).
+  Per-enemy art lives in WRAM globals, never in `Battle` (struct growth
+  would ripple 16-bit offsets through fixed-bank accessors).
+- `make screens` regenerates all three; `make screens-check` fails on
+  drift (both compilers support `--check`; `battle_compile.py` also
+  supports `--validate`).  `screens` is a prerequisite of `debug` and
+  `release`, and `/api/compile-rom` runs the same commands.
+- Legacy note: `src/game/battle_data.c` (`screens/battle.json`) is orphan
+  output no current generator writes and nothing reads; leave it alone
+  until the renderer-consumption work decides its fate.

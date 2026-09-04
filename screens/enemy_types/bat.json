@@ -3,7 +3,7 @@
   "id": "bat",
   "label": "Bat",
   "category": "minion",
-  "sprite": "battle.bat",
+  "sprite": { "art": "bat", "frames": 2 },
   "name": "BAT",
   "hp": 8,
   "max_hp": 8,

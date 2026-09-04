@@ -3,7 +3,7 @@
   "id": "slime_lord",
   "label": "Lord of Slimes",
   "category": "boss",
-  "sprite": "battle.slime_lord",
+  "sprite": { "art": "boss", "frames": 1 },
   "name": "LORD OF SLIMES",
   "hp": 50,
   "max_hp": 50,

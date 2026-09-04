@@ -47,13 +47,15 @@ typedef struct EnemyTypeDef {
     const char *id;
     const char *label;
     uint8_t category;  // 0=minion, 1=elite, 2=boss
-    const char *sprite;
     const char *name;
     uint8_t base_hp;
     uint8_t base_max_hp;
     const char *battle_id;
     uint8_t gold_reward;
     uint8_t reward_currency;
+    uint8_t art_index;  // battle art set (0=slime,1=bat,2=boss), 0xFF = text fallback
+    uint8_t art_frames;  // animation frames (1..2, 0 when art_index is 0xFF)
+    uint8_t art_palette;  // CGB battle palette (ui_color_* index; DMG ignores)
 } EnemyTypeDef;
 
 /* Generated data declarations (bank 4) */

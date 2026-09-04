@@ -13,52 +13,60 @@ static const EnemyTypeDef g_enemy_type_bat = {
     "bat",
     "Bat",
     0,
-    "battle.bat",
     "BAT",
     8,
     8,
     "BATTLE_BAT",
     8,
-    CURRENCY_ID_GOLD
+    CURRENCY_ID_GOLD,
+    1,
+    2,
+    7
 };
 
 static const EnemyTypeDef g_enemy_type_slime = {
     "slime",
     "Slime",
     0,
-    "battle.slime",
     "SLIME",
     10,
     10,
     "BATTLE_SLIME",
     5,
-    CURRENCY_ID_GOLD
+    CURRENCY_ID_GOLD,
+    0,
+    2,
+    4
 };
 
 static const EnemyTypeDef g_enemy_type_slime_lord = {
     "slime_lord",
     "Lord of Slimes",
     2,
-    "battle.slime_lord",
     "LORD OF SLIMES",
     50,
     50,
     "BATTLE_SLIME_LORD",
     50,
-    CURRENCY_ID_GOLD
+    CURRENCY_ID_GOLD,
+    2,
+    1,
+    1
 };
 
 static const EnemyTypeDef g_enemy_type_wolf = {
     "wolf",
     "Wolf",
     1,
-    "battle.wolf",
     "WOLF",
     16,
     16,
     "BATTLE_WOLF",
     15,
-    CURRENCY_ID_GOLD
+    CURRENCY_ID_GOLD,
+    255,
+    0,
+    0
 };
 
 const EnemyTypeDef* const g_enemy_types[4] = {

@@ -238,6 +238,91 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     g_ui_screen_buf[y][x + 2] = (char)('0' + value);
 }
 
+/* Enemy battle-sprite stamper.  Layout (hud_layout in the battle screen
+ * JSON: enemy_hp_row 1, enemy_sprite_row 3, enemy_cursor_row 5; names stay on
+ * row 2): HP numbers above, 3x2 art on rows 3-4, target caret below.
+ * Art tiles live at BG base 128 + 12*slot (loaded by the bank-4 loader at
+ * battle entry); frame selects from the battle clock, masked by the type's
+ * frame count (single-frame art holds frame 0).  blank!=0 forces text
+ * blanks (dead slots, blink telegraph) instead of art.  Art cells bypass
+ * the semantic screen buffer: art is presentation, and text never addresses
+ * rows 3-4, so unconditional VRAM writes are safe. */
+#define BATTLE_ART_VRAM_BASE 128u
+#define BATTLE_ART_SLOT_TILES 12u
+#define BATTLE_ART_FRAME_TILES 6u
+#define BATTLE_ART_W 3u
+
+#ifdef DEBUG_BUILD
+/* WRAM tilemap mirror (ui.c): screen coords == ring coords in battle
+ * (screen_change() zeroes SCX/SCY), so the harness can assert stamped
+ * art tiles via tilemap_cell. */
+extern uint8_t g_tilemap_mirror[32 * 32];
+#endif
+
+extern uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+
+static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
+                                  const volatile Battle *battle, uint8_t blank)
+{
+    uint8_t frame = 0;
+    uint8_t base;
+    uint8_t cx, cy;
+    volatile uint8_t *dst;
+
+    if (!blank && slot < MAX_BATTLE_ENEMIES &&
+        g_battle_enemy_art[slot] != 0xFF) {
+        if (g_battle_enemy_art_frames[slot] > 1) {
+            frame = (uint8_t)((battle->timer_ticks >> 4) & 1);
+        }
+        base = (uint8_t)(BATTLE_ART_VRAM_BASE + slot * BATTLE_ART_SLOT_TILES +
+                         frame * BATTLE_ART_FRAME_TILES);
+        VBK_REG = 0;
+        for (cy = 0; cy < 2; cy++) {
+            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(3 + cy) << 5) + x);
+            for (cx = 0; cx < BATTLE_ART_W; cx++) {
+                battle_vram_sync_write(dst, (uint8_t)(base + cy * BATTLE_ART_W + cx));
+#ifdef DEBUG_BUILD
+                g_tilemap_mirror[(3 + cy) * 32 + (x + cx)] =
+                    (uint8_t)(base + cy * BATTLE_ART_W + cx);
+#endif
+                dst++;
+            }
+        }
+        /* CGB art color (no-op on DMG, which falls back to grayscale):
+         * the loader cached one palette per enemy slot. */
+        battle_color_span(x, 3, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
+        battle_color_span(x, 4, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
+        return;
+    }
+    /* Rows 3-4 are the art zone: no text path addresses them, so blanks
+     * are unconditional direct writes.  Routing through battle_draw_text_line
+     * would hit its skip-guard (semantic buffer already holds spaces while
+     * VRAM still shows a dead enemy's tiles) and leave stale art behind. */
+    {
+        uint8_t space = ui_font_tile_base;
+        char *buf;
+        VBK_REG = 0;
+        for (cy = 0; cy < 2; cy++) {
+            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(3 + cy) << 5) + x);
+            buf = &g_ui_screen_buf[3 + cy][x];
+            for (cx = 0; cx < BATTLE_ART_W; cx++) {
+                battle_vram_sync_write(dst, space);
+#ifdef DEBUG_BUILD
+                g_tilemap_mirror[(3 + cy) * 32 + (x + cx)] = space;
+#endif
+                *buf = ' ';
+                dst++;
+                buf++;
+            }
+        }
+        /* Drop any previous art tint so blanks match surrounding text. */
+        battle_color_span(x, 3, BATTLE_ART_W, UI_COLOR_NONE);
+        battle_color_span(x, 4, BATTLE_ART_W, UI_COLOR_NONE);
+    }
+}
+
 static void battle_draw_enemy_columns(const volatile Battle *battle)
 {
     uint8_t k, x = 0;
@@ -256,20 +341,23 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
                 battle_color_span(x, 2, 6,
                                   battle_status_color(&s_battle_status[k + 1]));
             }
-            battle_draw_num2(x, 3, e->hp);
-            battle_put_char((uint8_t)(x + 2), 3, '/');
-            battle_draw_num2((uint8_t)(x + 3), 3, e->max_hp);
-            battle_put_char((uint8_t)(x + 5), 3, ' ');
+            battle_draw_enemy_art(x, k, battle,
+                                  (uint8_t)(blink_name && k == battle->attacking_enemy_idx));
+            battle_draw_num2(x, 1, e->hp);
+            battle_put_char((uint8_t)(x + 2), 1, '/');
+            battle_draw_num2((uint8_t)(x + 3), 1, e->max_hp);
+            battle_put_char((uint8_t)(x + 5), 1, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                battle_draw_text_line(x, 4, "  ^   ", 6);
+                battle_draw_text_line(x, 5, "  ^   ", 6);
                 continue;
             }
         } else {
+            battle_draw_text_line(x, 1, NULL, 6);
             battle_draw_text_line(x, 2, NULL, 6);
-            battle_draw_text_line(x, 3, NULL, 6);
+            battle_draw_enemy_art(x, k, battle, 1);
         }
-        battle_draw_text_line(x, 4, NULL, 6);
+        battle_draw_text_line(x, 5, NULL, 6);
     }
 }
 

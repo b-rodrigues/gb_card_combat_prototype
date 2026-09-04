@@ -53,7 +53,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check tiles tiles-check doctor music sfx level levels levels-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check tiles tiles-check doctor music sfx level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -119,6 +119,14 @@ gfx:
 	@python3 tools/png2gb.py assets/forest-tile.png --name forest_chest_sprite_tile \
 		--palette auto --tile-coords "11,2" \
 		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
+	# ── Battle enemy art (assets/battle_sprites.png, 3 cols × 8 rows) ────
+	# 36 tiles: 3 art sets × 12 cells (2 frames × 3x2).  Order MUST match
+	# ART_ORDER in tools/screen_compiler/battle_compile.py (slime, bat,
+	# boss); art set N lives at tile offset N*12 in battle_enemy_art.h.
+	# Sheet layout: see tools/compose_battle_sprites.py.
+	@python3 tools/png2gb.py assets/battle_sprites.png --name battle_enemy_art \
+		--palette auto --tile-coords "0,0 1,0 2,0 0,1 1,1 2,1 0,2 1,2 2,2 0,1 1,1 2,1 0,3 1,3 2,3 0,7 0,7 0,7 0,4 1,4 2,4 0,7 0,7 0,7 0,5 1,5 2,5 0,6 1,6 2,6 0,5 1,5 2,5 0,6 1,6 2,6" \
+		-o $(GFX_OUT_DIR)/battle_enemy_art.h
 	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
 	# Full 48-tile world sheet (g_tileset_desolate)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
@@ -178,6 +186,24 @@ levels-check:
 
 src/game/scenes_content.c: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+
+# Screen content compiler (docs/level-editor.md Phase 17): screens/*.json is
+# the source of truth for title + battle mockup data, just as levels/*.json
+# is for scenes.  Committed C must equal fresh compile (no hand edits).
+screens:
+	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
+	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
+	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types}.c"
+
+screens-check:
+	@python3 tools/screen_compiler/title_compile.py --check
+	@python3 tools/screen_compiler/battle_compile.py --all --check
+
+src/game/title_data.c: screens/title.json
+	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
+
+src/game/battle_screens.c src/game/battle_types.c: $(wildcard screens/battle/*.json) $(wildcard screens/enemy_types/*.json)
+	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
 
 # Extract tile images from source PNGs for the web editor (import_tileset.py)
 extract-tiles:
@@ -352,12 +378,12 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx tiles levels music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels screens music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels screens music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@

@@ -3,7 +3,7 @@
   "id": "wolf",
   "label": "Wolf",
   "category": "elite",
-  "sprite": "battle.wolf",
+  "sprite": null,
   "name": "WOLF",
   "hp": 16,
   "max_hp": 16,

@@ -171,7 +171,12 @@ export const App: React.FC = () => {
   const handleCompileRom = async () => {
     setIsCompiling(true);
     setNotification({ message: 'Saving level & compiling Game Boy ROM (make debug)...', type: 'info' });
-    await saveLevelToServer(level);
+    const saved = await saveLevelToServer(level);
+    if (!saved.success) {
+      setIsCompiling(false);
+      setNotification({ message: `Save failed, ROM not compiled: ${saved.error}`, type: 'error' });
+      return;
+    }
     const res = await compileRom();
     setIsCompiling(false);
     if (res.success) {
@@ -188,7 +193,11 @@ export const App: React.FC = () => {
     const res = await runGame();
     setIsRunning(false);
     if (res.success) {
-      setNotification({ message: res.message || 'Launched emulator on desktop!', type: 'success' });
+      if (res.stale && res.stale.length > 0) {
+        setNotification({ message: `Launched emulator on desktop - WARNING: ROM is stale (newer content: ${res.stale.join(', ')}). Compile ROM first!`, type: 'error' });
+      } else {
+        setNotification({ message: res.message || 'Launched emulator on desktop!', type: 'success' });
+      }
     } else {
       setNotification({ message: `Launch failed: ${res.error}`, type: 'error' });
       alert(`Failed to launch emulator:\n\n${res.error}`);
@@ -869,6 +878,11 @@ export const App: React.FC = () => {
               </button>
             </div>
             <div className="modal-body">
+              <div style={{ marginBottom: '12px', fontSize: '13px', opacity: 0.85 }}>
+                Browser checks are a subset of the toolchain validator — the full
+                check (<code>validate.py</code>, per-tile rules, cross-file actor-id
+                uniqueness) runs server-side at Compile ROM time.
+              </div>
               <div className="validation-list">
                 {validationResult.passed.map((p, i) => (
                   <div key={i} className="val-item passed">

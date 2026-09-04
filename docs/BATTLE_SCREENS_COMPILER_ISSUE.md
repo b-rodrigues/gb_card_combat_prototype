@@ -1,6 +1,17 @@
-# Battle Screen Compiler Issue
+# Battle Screen Compiler Issue — RESOLVED (wiring landed)
 
-## Problem Summary
+> Status update: the designated-initializer syntax was fixed in `6204f34`
+> (the compiler already emits positional initializers); `screens/`
+> JSON is now wired into the build (`make screens`, `make screens-check`,
+> both in `debug`/`release` deps, `/api/compile-rom` runs them).
+> Enemy-type battle art (`sprite: { art, frames }` → bank-4 art table) is
+> consumed by the battle art loader + BG stamper (HP row 1, art rows 3-4,
+> caret row 5).  Still open: full hud_layout-driven rendering (positions
+> beyond the art rows remain renderer constants) and the legacy
+> `src/game/battle_data.c` (`screens/battle.json`) orphan.
+> See below for the original report.
+
+## Problem Summary (historical)
 
 The battle screen data compiler (`tools/screen_compiler/battle_compile.py`) generates `src/game/battle_screens.c` using C designated initializers syntax (`.field = value`). The lcc C compiler (used by GBDK-4 for Game Boy development) does not support this syntax, causing compilation errors:
 

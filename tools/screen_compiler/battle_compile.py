@@ -34,6 +34,27 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 
+# Battle-sprite art sets.  Each set is 12 sheet cells (2 frames x 3x2) into
+# assets/battle_sprites.png (3 cols x 8 rows; see tools/compose_battle_sprites.py):
+# frame 0 = cells[0:6], frame 1 = cells[6:12].  Single-frame sets repeat
+# frame 0.  The Makefile gfx rule emits the header in this same order, so
+# art set N lives at tile offset N*12 in battle_enemy_art.h.
+# BLANK is the all-white cell that pads 3x1 art (bat) to 3x2 slots.
+# Each set also names its CGB battle palette (ui_color_* indices in ui.h):
+# slime = poison emerald, bat = dim gray, boss = fire red.  DMG hardware
+# ignores attributes and falls back to grayscale via BGP 0xE4.
+BLANK = (0, 7)
+ART_SETS = {
+    "slime": ([(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
+              [(0, 2), (1, 2), (2, 2), (0, 1), (1, 1), (2, 1)], 4),
+    "bat": ([(0, 3), (1, 3), (2, 3), BLANK, BLANK, BLANK],
+            [(0, 4), (1, 4), (2, 4), BLANK, BLANK, BLANK], 7),
+    "boss": ([(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)],
+             [(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)], 1),
+}
+ART_ORDER = ["slime", "bat", "boss"]
+ART_CELLS_PER_SET = 12
+
 
 def validate_enemy_type(path: Path) -> dict:
     """Validate and return an enemy type JSON."""
@@ -56,9 +77,11 @@ def validate_enemy_type(path: Path) -> dict:
         if val > 255:
             print("WARNING: %s: %s %d > 255; will be truncated" % (path.name, field, val))
 
-    # Validate strings
-    for field, max_len in [('label', 20), ('name', 20), ('sprite', 30), ('battle_id', 30)]:
+    # Validate strings (sprite is an object-or-null art selection, not a string)
+    for field, max_len in [('label', 20), ('name', 20), ('battle_id', 30)]:
         val = data.get(field, '')
+        if val is None:
+            val = ''
         if len(val) > max_len:
             print(
                 "WARNING: %s: %s length %d > %d; will be truncated"
@@ -80,6 +103,14 @@ def validate_enemy_type(path: Path) -> dict:
     currency = data.get('reward_currency', '')
     if not currency.startswith('CURRENCY_ID_'):
         print("WARNING: %s: reward_currency '%s' should start with CURRENCY_ID_" % (path.name, currency))
+
+    # Validate battle-sprite art selection (null = text fallback)
+    sprite = data.get('sprite')
+    if sprite is not None:
+        if not isinstance(sprite, dict) or sprite.get('art') not in ART_SETS:
+            print("WARNING: %s: sprite.art '%s' not in %s" % (path.name, (sprite or {}).get('art'), sorted(ART_SETS)))
+        elif sprite.get('frames') not in (1, 2):
+            print("WARNING: %s: sprite.frames '%s' must be 1 or 2" % (path.name, sprite.get('frames')))
 
     return data
 
@@ -248,17 +279,28 @@ def build_enemy_types_output(enemy_types):
     et_ids = sorted(enemy_types.keys())
     for et_id in et_ids:
         et = enemy_types[et_id]
+        sprite = et.get('sprite') or {}
+        art_id = sprite.get('art')
+        try:
+            art_index = ART_ORDER.index(art_id)
+            art_palette = ART_SETS[art_id][2]
+        except ValueError:
+            art_index = 0xFF  # text fallback: no battle art
+            art_palette = 0
+        art_frames = sprite.get('frames', 0) if art_index != 0xFF else 0
         lines.append("static const EnemyTypeDef g_enemy_type_%s = {" % et['id'])
         lines.append('    %s,' % c_escape(et['id']))
         lines.append('    %s,' % c_escape(et['label']))
         lines.append('    %d,' % cat_map.get(et['category'], 0))
-        lines.append('    %s,' % c_escape(et['sprite']))
         lines.append('    %s,' % c_escape(et['name']))
         lines.append('    %d,' % et['hp'])
         lines.append('    %d,' % et['max_hp'])
         lines.append('    %s,' % c_escape(et['battle_id']))
         lines.append('    %d,' % et['gold_reward'])
-        lines.append('    %s' % et['reward_currency'])
+        lines.append('    %s,' % et['reward_currency'])
+        lines.append('    %d,' % art_index)
+        lines.append('    %d,' % art_frames)
+        lines.append('    %d' % art_palette)
         lines.append("};")
         lines.append("")
 
@@ -285,6 +327,8 @@ def main(args=None):
                         help="Output directory (default: src/game/)")
     parser.add_argument("--validate", action="store_true",
                         help="Only validate JSON, don't emit C")
+    parser.add_argument("--check", action="store_true",
+                        help="Do not write; exit nonzero if fresh output differs from the files")
 
     args = parser.parse_args(args)
 
@@ -324,7 +368,8 @@ def main(args=None):
         print("WARNING: No battle screens loaded")
 
     if args.validate:
-        print("JSON validation passed: %s" % input_path)
+        print("JSON validation passed (%d battle screen(s), %d enemy type(s))"
+              % (len(battle_screens), len(enemy_types)))
         return 0
 
     # Generate outputs
@@ -333,12 +378,27 @@ def main(args=None):
 
     # Write battle_screens.c
     battle_screens_path = output_dir / "battle_screens.c"
+    # Write battle_types.c
+    battle_types_path = output_dir / "battle_types.c"
+
+    if args.check:
+        for path, fresh in ((battle_screens_path, battle_screens_output),
+                            (battle_types_path, enemy_types_output)):
+            try:
+                committed = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                committed = None
+            if committed is None or committed != fresh:
+                print("DRIFT: fresh compile differs from %s" % path, file=sys.stderr)
+                return 1
+        print("battle compile --check OK: %s and %s match fresh output"
+              % (battle_screens_path, battle_types_path))
+        return 0
+
     with open(battle_screens_path, "w") as f:
         f.write(battle_screens_output)
     print("Wrote %s" % battle_screens_path)
 
-    # Write battle_types.c
-    battle_types_path = output_dir / "battle_types.c"
     with open(battle_types_path, "w") as f:
         f.write(enemy_types_output)
     print("Wrote %s" % battle_types_path)

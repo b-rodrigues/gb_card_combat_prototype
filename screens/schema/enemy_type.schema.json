@@ -23,8 +23,23 @@
       "description": "Enemy category for battle screen filtering."
     },
     "sprite": {
-      "type": "string",
-      "description": "Tile ID for battle rendering (tileset.tile_id format, e.g., 'battle.slime')."
+      "type": ["object", "null"],
+      "description": "Battle-sprite art selection. Null = text fallback (no battle art). Otherwise names an art set from assets/battle_sprites.png (see ART_SETS in battle_compile.py) rendered as 3x2 background tiles in battle.",
+      "properties": {
+        "art": {
+          "type": "string",
+          "enum": ["slime", "bat", "boss"],
+          "description": "Art-set id; must exist in the compiler's ART_SETS table."
+        },
+        "frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "description": "Animation frames (2 = alternate top row, e.g. slime mouth; 1 = static)."
+        }
+      },
+      "required": ["art", "frames"],
+      "additionalProperties": false
     },
     "name": {
       "type": "string",

@@ -1,0 +1,71 @@
+{
+  "name": "battle_slime_sprite",
+  "test": true,
+  "description": "Slime trio battle renders 3x2 enemy art tiles (slime art set from screens/enemy_types.json) under each HP line",
+  "scenario_id": "BATTLE_BOOT",
+  "actions": [],
+  "assertions": [
+    {
+      "type": "screen",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "game_state",
+      "expected": "BATTLE"
+    },
+    {
+      "type": "screen_row",
+      "row": 1,
+      "contains": "10/10"
+    },
+    {
+      "type": "screen_row",
+      "row": 2,
+      "contains": "SLIME"
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 3,
+      "col": 0,
+      "expected": 128
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 3,
+      "col": 1,
+      "expected": 129
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 4,
+      "col": 0,
+      "expected": 131
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 3,
+      "col": 7,
+      "expected": 140
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 3,
+      "col": 14,
+      "expected": 152
+    },
+    {
+      "type": "event_occurred",
+      "event": "BATTLE_STARTED"
+    }
+  ],
+  "initial_state": {
+    "scene": "FIELD",
+    "player": {
+      "x": 13,
+      "y": 8,
+      "facing": "DOWN"
+    },
+    "seed": 5002,
+    "start_battle": true
+  }
+}

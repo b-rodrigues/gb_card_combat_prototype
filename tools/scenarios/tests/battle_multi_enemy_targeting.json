@@ -41,12 +41,12 @@
     },
     {
       "type": "screen_row",
-      "row": 3,
+      "row": 1,
       "contains": "16/16  16/16  16/16"
     },
     {
       "type": "screen_row",
-      "row": 4,
+      "row": 5,
       "contains": "       ^"
     },
     {
