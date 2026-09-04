@@ -11,7 +11,7 @@ This document analyzes how background color currently flows through the engine, 
 | **Is stuff missing to achieve full-color tiles?** | **YES** | Missing: automated CGB palette generation, per-tile attribute mapping in manifests/level compiler, per-scene dynamic CRAM loading, and level editor palette support. |
 | **Do we need a palette?** | **YES** | CGB hardware requires up to 8 background palettes in CRAM, each containing 4 colors (15-bit RGB555). We specifically need **per-scene palette sets** rather than the single global set currently used. |
 | **Is it hardcoded?** | **YES** | All 8 CGB BG palettes are hardcoded into a single compile-time array (`cgb_bg_palettes[8][4]` in `src/ui/ui_color_banked.c`). Furthermore, palette assignment per tile is hardcoded via an ASCII character glyph heuristic in `ui_cell_palette()`. |
-| **What do?** | **ROADMAP** | 1. Implement harmonized Color 0 backdrops across all nature palettes.<br>2. Support multi-hue palettes (e.g. green + brown in one palette).<br>3. Replace the ASCII glyph heuristic with a direct ROM `tile_id -> palette_index` lookup table.<br>4. Introduce per-scene CRAM palette loading during map transitions. |
+| **What do?** | **ROADMAP** | 1. Implement harmonized Color 0 backdrops with pinned anchor-color support in `png2gb.py`.<br>2. Support multi-hue palettes (e.g. green + brown in one palette).<br>3. Replace the ASCII glyph heuristic with a direct ROM `tile_id -> palette_index` lookup (avoiding SDCC `__mulint`).<br>4. Introduce per-scene CRAM palette loading during safe VBlank/LCD-off transitions.<br>5. Establish a single-source JSON manifest for web editor and ROM parity. |
 
 ---
 
@@ -172,24 +172,24 @@ To design the solution properly, we must adhere to the physical capabilities of 
 3. **No Background Transparency**:
    - Background Color 0 is drawn whenever a pixel's 2bpp index is 0.
    - To have a non-rectangular object (like a tree trunk or rock) sit on grass without a visible rectangular seam, **Color 0 of the object's palette MUST be the exact same RGB color as the grass**!
+4. **CRAM Write Timing Constraints**:
+   - In CGB Mode 3 (pixel transfer), Palette RAM is completely inaccessible to the CPU. Reads return `0xFF` and writes are ignored or cause bus noise.
+   - All CRAM updates must occur when the LCD is off (`display_off()` / `LCDC_REG &= ~0x80`) or strictly within VBlank (`vsync()`).
 
 ---
 
 ## 5. Architectural Blueprint: What Needs to Be Done ("What Do?")
 
-To implement full-color tiles cleanly without breaking DMG compatibility or blowing the fixed-bank memory budget, we propose a 4-pillar architecture:
-
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. ASSET & PALETTE PIPELINE                                                 │
-│    tools/palette_compiler.py (or extended png2gb.py):                       │
-│    - Takes source sheet (assets/forest-tile.png)                            │
-│    - Extracts up to 8 optimal 4-color CGB palettes per scene                │
-│    - Enforces Harmonized Color 0 for all outdoor nature tiles               │
+│ 1. ASSET & PALETTE PIPELINE (tools/png2gb.py & palette compiler)            │
+│    - Pinned Anchor Color Mode: pin scene floor (grass) strictly to index 0  │
+│    - Cluster remaining colors into up to 8 CGB palettes (<= 4 colors each)  │
+│    - Enforce Harmonized Color 0 across outdoor nature palettes              │
 │    - Generates:                                                             │
 │        * 2bpp tile data (.inc)                                              │
 │        * CGB palette definitions (8 x 4 RGB555 entries)                     │
-│        * ROM tile-to-palette table: const uint8_t g_forest_tile_palette[48] │
+│        * Shared JSON manifest for level editor & ROM compiler               │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
@@ -205,95 +205,150 @@ To implement full-color tiles cleanly without breaking DMG compatibility or blow
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 3. DATA-DRIVEN ROM LOOKUP (Eliminating the ASCII Glyph Heuristic)           │
-│    In ui_draw_world_cell():                                                 │
-│        uint8_t pal = g_scene_tile_palettes[tileset_kind][tile_index];       │
+│ 3. DATA-DRIVEN ROM LOOKUP (Zero __mulint Overhead)                          │
+│    Flat 1D pointer selected via switch(kind), avoiding non-power-of-2 mul:  │
+│        const uint8_t *pal_tbl = ui_get_tileset_palette_table(kind);        │
 │        VBK_REG = 1;                                                         │
-│        tilemap[offset] = pal;                                               │
+│        tilemap[offset] = pal_tbl[tile_index];                               │
 │        VBK_REG = 0;                                                         │
-│    => O(1) array lookup in banked ROM. No glyph guessing, 0 extra CPU.      │
+│    => O(1) direct pointer index. Zero glyph guessing, zero __mulint calls. │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 4. PER-SCENE DYNAMIC PALETTE MANAGEMENT                                     │
-│    - When scene_load() loads MAP_FOREST, it writes forest_bg_palettes to    │
-│      BCPS/BCPD.                                                             │
-│    - When transitioning to MAP_CASTLE, castle_bg_palettes are loaded.       │
-│    - DMG fallback remains 100% byte-identical (DMG ignores VBK & BCPS).     │
+│ 4. SAFE PER-SCENE CRAM STREAMING                                            │
+│    - Map transitions write new scene palettes during LCD-off / VBlank wipe  │
+│    - Gated via GBDK set_bkg_palette() / atomic VBlank loop                  │
+│    - DMG fallback remains 100% byte-identical (DMG ignores VBK & BCPS)      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Pillar 1: Harmonized Color 0 ("Backdrop Harmony")
-To prevent the "beige box" bug:
-For any scene (e.g. Forest), establish the base floor color as the universal Color 0 for all terrain palettes:
-- Color 0 = `RGB8(120, 176, 96)` (Forest Grass).
-- Palette 1 (`PAL_CANOPY`): `[Grass Green, Foliage Light, Foliage Dark, Shadow]`.
-- Palette 2 (`PAL_TRUNK`): `[Grass Green, Bark Mid, Bark Dark, Deep Shadow]`.
-- Palette 3 (`PAL_TREE_MIXED`): `[Grass Green, Foliage Green, Bark Brown, Deep Outline]`.
+### Pillar 1: Harmonized Color 0 & `png2gb.py` Anchor Color Mode
 
-Because all these palettes share the exact same Grass Green in Color 0, any transparent/empty pixel in the trunk or canopy tile renders as seamless grass.
+> [!IMPORTANT]
+> **Resolving the Auto-Luminance Sort Conflict**:
+> Currently, `png2gb.py --palette auto` independently sorts every tile's colors by luminance. If a tile contains white highlights (e.g. flowers, shiny rocks, sparkles) that have higher luminance than grass `#7bb660`, luminance sorting puts white into index 0 and demotes grass to index 1 or 2. This silently breaks the rule that index 0 is always the shared backdrop.
+>
+> **The Mitigation**:
+> Add a pinned anchor-color argument to `tools/png2gb.py`:
+> ```bash
+> python3 tools/png2gb.py assets/forest-tile.png --anchor-color "#7bb660" ...
+> ```
+> When `--anchor-color` is set:
+> 1. Color matching the anchor is **strictly pinned to index 0**.
+> 2. The remaining $\le 3$ distinct colors in the 8x8 tile are sorted by luminance and assigned to indices 1, 2, and 3.
+> 3. If a tile does not contain the anchor color (e.g. solid wall), index 0 is still filled with the scene's harmonized backdrop in CRAM, ensuring zero border clash.
 
 ### Pillar 2: Multi-Hue Palettes for Complex 8x8 Tiles
-A CGB palette does not have to be a single color ramp.
+A CGB palette does not have to be a single monochromatic ramp.
 If an 8x8 tile needs both foliage and bark (or if a small tree is drawn in a single tile):
 ```c
 /* 4 colors: Floor + Foliage + Wood + Outline */
 { RGB8(120, 176, 96), RGB8(40, 110, 30), RGB8(138, 82, 34), RGB8(20, 30, 10) }
 ```
-This allows a single tile to contain **green treetop and brown trunk** simultaneously!
+This allows a single tile to contain **green treetop and brown trunk** simultaneously.
 
-### Pillar 3: Data-Driven ROM Palette Lookup Table
-Instead of parsing ASCII characters, each tileset provides a 48-byte ROM lookup table:
+### Pillar 3: Data-Driven ROM Palette Lookup (Avoiding SDCC `__mulint`)
+
+> [!CAUTION]
+> **The Banked-Code Multiplication Trap**:
+> In SDCC / Game Boy development, indexing a 2D array like `g_scene_tile_palettes[tileset_kind][tile_index]` where the second dimension is 48 generates a library call to `__mulint` because 48 is not a power of 2 ($48 = 32 + 16$).
+> In banked code and per-cell rendering loops, `__mulint` causes fixed-bank code bloat, cycle waste, and potential link errors.
+
+**The Solution**: Use a flat 1D pointer selected via `switch`:
 ```c
-/* Generated automatically from tileset manifest */
-const uint8_t g_forest_tile_palette[48] = {
-    /* 00..07 Walls */    0, 0, 0, 0, 0, 0, 0, 0,
-    /* 08..11 Walls */    0, 0, 0, 0,
-    /* 12..13 Treetops */ 1, 1,  /* PAL_CANOPY (green) */
-    /* 14..15 Stumps */   2, 2,  /* PAL_TRUNK (brown)  */
+/* In banked content (e.g. Bank 5) */
+const uint8_t g_forest_tile_palettes[48] = {
+    0, 0, 0, 0, 0, 0, 0, 0,  /* 00..07 Walls */
+    0, 0, 0, 0,              /* 08..11 Walls */
+    1, 1,                    /* 12..13 Treetops (PAL_CANOPY green) */
+    2, 2,                    /* 14..15 Stumps   (PAL_TRUNK brown)  */
     /* ... */
-    /* 28..29 Trunks */   2, 2,  /* PAL_TRUNK (brown)  */
-    /* 30..31 Stumps */   2, 2,
-    /* 32     Floor */    1,
+    2, 2,                    /* 28..29 Trunks   (PAL_TRUNK brown)  */
+    2, 2,                    /* 30..31 Stumps   (PAL_TRUNK brown)  */
+    1                        /* 32     Floor                       */
 };
+
+const uint8_t *ui_get_tileset_palette_table(uint8_t tileset_kind)
+{
+    switch (tileset_kind) {
+        case WORLD_TILESET_FOREST:   return g_forest_tile_palettes;
+        case WORLD_TILESET_CASTLE:   return g_castle_tile_palettes;
+        case WORLD_TILESET_DESOLATE: return g_desolate_tile_palettes;
+        default:                     return NULL;
+    }
+}
 ```
-In `src/ui/ui.c`:
+In `ui_draw_world_cell()`:
 ```c
+const uint8_t *pal_tbl = ui_get_tileset_palette_table(world->tileset_kind);
+uint8_t pal = pal_tbl ? pal_tbl[tile_idx - RPG_TILE_BASE_WORLD] : 0;
+
 VBK_REG = 1;
-tilemap[cell_offset] = g_tileset_palettes[world->tileset_kind][tile_index];
+tilemap[cell_offset] = pal;
 VBK_REG = 0;
 ```
 **Benefits**:
-- Instant $O(1)$ lookup with zero runtime branching.
-- Independent of ASCII glyphs or collision types.
-- Supports any tile having any of the 8 palettes.
-- Completely preserves the existing ASCII display for tests and harness.
+- Zero multiplication: SDCC compiles this into direct pointer indexing (`HL + A`).
+- Instant $O(1)$ lookup with no ASCII glyph guessing.
+- Complete separation of terrain presentation from collision logic.
 
-### Pillar 4: Per-Scene CRAM Loading
-In `src/core/scene.c` or during `world_change_map()`:
-1. Define per-scene palette banks:
-   - `g_forest_cgb_palettes[8][4]`
-   - `g_castle_cgb_palettes[8][4]`
-   - `g_desolate_cgb_palettes[8][4]`
-2. When changing maps on CGB hardware (`if (g_is_cgb)`):
-   - Stream the active scene's 64 bytes (8 palettes × 8 bytes) to `BCPS_REG` / `BCPD_REG` during VBlank.
-   - Ensures Castle levels can use rich stone grays, royal purples, and torch ambers without competing with the Forest's green and wood allocations.
+### Pillar 4: Safe CRAM Write Timing
+To guarantee reliable execution across real hardware and emulators without Mode 3 corruption:
+1. **Scene Transitions (LCD-off / Full Screen Wipe)**:
+   - When changing maps in `world_change_map()`, palette loading must be gated through the transition wipe (where `ui_sprite_begin_transition()` has already hidden sprites and the LCD is blanked or safely transitioning).
+   - Use GBDK's standard library function:
+     ```c
+     set_bkg_palette(0, 8, (const palette_color_t *)active_scene_palettes);
+     ```
+   - Standard library routines are audited against VBlank/LCD timing.
+2. **Harness Safety**:
+   - In harness mode (`g_harness_mode`), VBlank waits are bypassed; loading with LCD off ensures instantaneous, deterministic execution in tests.
 
 ---
 
-## 6. Verification and Parity Plan
+## 6. Single Source of Truth: Web Level Editor Parity
 
-When this system is implemented, verification must cover:
+To prevent drift between the Python/C build pipeline and the TypeScript/React web editor (`tools/level_editor/src/`):
 
-1. **WYSIWYG Editor Parity**:
-   - The web level editor canvas should preview tiles with their exact CGB palette attributes rather than unconstrained 24-bit PNG colors.
-2. **DMG Backward Compatibility**:
-   - Verify that running the ROM in DMG mode (`BGP_REG = 0xE4`) displays the same clean 4-shade grayscale output without visual corruption.
-3. **Automated RGB Probing via Harness**:
-   - Add a test scenario capturing screenshot probes at known coordinates:
-     - Treetop probe at `(3, 3)` asserts predominantly green pixels (`G > R && G > B`).
-     - Tree trunk probe at `(3, 4)` asserts brown bark pixels (`R > B && G < R`) and green floor pixels at the base (`G > R`).
-4. **OAM & VBlank Timing Integrity**:
-   - Ensure attribute writes to VRAM Bank 1 always reset `VBK_REG = 0` immediately (AGENTS.md §38).
-   - Ensure palette updates run during VBlank or with LCD disabled. Run `make verify-oam` to ensure sprite timing is unaffected.
+```
+                       [assets/forest-tile.png]
+                                  │
+                                  ▼
+                     [tools/palette_compiler.py]
+                                  │
+                   ┌──────────────┴──────────────┐
+                   ▼                             ▼
+        [generated/tiles/forest.json]  [src/gfx/forest_palettes.inc]
+        (Consumed by Web Editor)       (Compiled into ROM Bank 5)
+```
+
+1. **Manifest as Contract**:
+   - `palette_compiler.py` outputs a JSON manifest containing:
+     - The 8 CGB palettes in hex (`["#7bb660", "#2a4f1a", "#1d3e0f", "#000000"]`).
+     - The per-tile palette index array (`"tile_palettes": [0, 0, ..., 1, 1, 2, 2]`).
+2. **Editor Canvas Rendering**:
+   - The web level editor's `MapCanvas.tsx` loads the JSON manifest.
+   - When rendering the canvas preview, instead of displaying the raw unquantized 24-bit PNG, it shades the tile using the manifest's palette colors.
+   - Guaranteed 100% WYSIWYG parity between browser canvas and Game Boy display.
+
+---
+
+## 7. Verification Plan
+
+1. **Deterministic Attribute Mirroring in Test Harness**:
+   - In debug builds, pair `g_tilemap_mirror` with an attribute mirror:
+     ```c
+     #ifdef DEBUG_BUILD
+     uint8_t g_tilemap_attr_mirror[32 * 32];
+     #endif
+     ```
+   - The SameBoy test harness can assert that cell `(3, 3)` (treetop) has attribute `1` (`PAL_CANOPY`) and cell `(3, 4)` (trunk) has attribute `2` (`PAL_TRUNK`).
+   - Semantic assertions are authoritative over raw pixels (AGENTS.md §7).
+2. **Visual Smoke Tests & Screenshot Hash Checks**:
+   - RGB probing at known coordinates (`G > R && G > B` for treetop; `R > B && G < R` for bark) serves as an initial sanity check.
+   - Full regression protection uses deterministic screenshot perceptual hashing against reference frames in `screenshots/`.
+3. **Hardware Fidelity Check**:
+   - Run `make verify-oam` and mGBA single-stepping to verify that CRAM updates do not corrupt OAM sprite timing or trip VBlank deadlines.
+4. **DMG Backward Compatibility**:
+   - Running the ROM in DMG mode (`BGP_REG = 0xE4`) must remain byte-identical in gameplay and visual grayscale output.
