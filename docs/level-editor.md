@@ -1006,6 +1006,12 @@ The web editor must never be a stale snapshot of the JSON:
   load those sheet cells; timing may differ, sets and order must not).
   Actor-occupied cells are skipped (actor overlay rules belong to actor
   scenarios).  Named exceptions only, never silent divergence.
+- CGB color is attribute-driven, not pixel-driven: tile bytes carry shade
+  indices, the 8 BG palettes carry the hues (slot 3 = field green; the
+  rest per `cgb_bg_palettes`).  Overworld ground cells get their tileset
+  palette in `ui_draw_world_cell` (forest field-green; DMG output is
+  unchanged grayscale).  Parity checks indices, not colors; color is
+  verified by RGB probes + screenshots.
 
 # Phase 18 — Screens into the ROM build (title + battle mockups)
 

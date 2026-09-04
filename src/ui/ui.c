@@ -39,8 +39,9 @@ uint8_t ui_font_tile_base;
 
 /* Background palette ramps live in bank 3 (ui_color_banked.c); ui_init()
  * banked_copies them into WRAM to program BCPS.  Index 0 = grayscale,
- * 1-4 = effect colors (fire red / ice blue / heal green / poison purple). */
-extern const palette_color_t cgb_bg_palettes[5][4];
+ * 1-2 = effect colors (fire red / ice blue), 3 = field green, 4 = poison,
+ * 5-6 = wood/gold, 7 = dim. */
+extern const palette_color_t cgb_bg_palettes[8][4];
 
 /* Player-sprite ramp: entry 3 (the hero ink color) is light grey so the
  * hero is visible against the white floor on CGB. */
@@ -572,6 +573,19 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
 #ifdef DEBUG_BUILD
     g_tilemap_mirror[(row & 31) * 32 + (col & 31)] = tile_idx;
 #endif
+
+    /* CGB ground color (Game Boy Color first; DMG ignores attributes and
+     * keeps grayscale): forest walkable ground renders field-green,
+     * everything else explicitly palette 0 so map changes (and CGB power-on
+     * attribute garbage) never leave a stale tint.  Single comparison, no
+     * table, no calls: this cell path is where the fixed-bank budget lives
+     * or dies (AGENTS.md 52.18).  Desolate/castle grounds stay grayscale
+     * until budget allows their slots (documented follow-up). */
+    VBK_REG = 1;
+    ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
+        (glyph == '.' && world->tileset_kind == WORLD_TILESET_FOREST) ?
+        UI_COLOR_FIELD : UI_COLOR_NONE;
+    VBK_REG = 0;
 
     sx = (uint8_t)(col - world->scroll_x);
     sy = (uint8_t)(row - world->scroll_y);
