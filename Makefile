@@ -249,9 +249,10 @@ tiles-check:
 GENERATED_TILES_DIR = generated/tiles
 GENERATED_TILE_WALK = $(GENERATED_TILES_DIR)/tile_walk.h
 GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
-tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH)
+GENERATED_TILE_PALETTE = $(GENERATED_TILES_DIR)/tile_palette.h
+tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE)
 
-$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
 	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
 
 $(GENERATED_TILES_DIR):

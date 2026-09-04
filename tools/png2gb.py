@@ -118,25 +118,64 @@ def build_shade_map(img, asset, palette_name="canonical"):
     return shade_map
 
 
-def get_tile_shade_map(img, tile_x, tile_y):
-    px = img.load()
-    ox, oy = tile_x * TILE_SIZE, tile_y * TILE_SIZE
-    colors = sorted(list({px[ox + col, oy + row] for row in range(TILE_SIZE) for col in range(TILE_SIZE)}), key=lum, reverse=True)
-    if len(colors) <= 1:
+def _assign_remaining_shades(colors):
+    """Assign shade indices to a list of colors (already sorted brightest-first),
+    using the existing contrast-maximising skip pattern:
+      1 color  -> {0}
+      2 colors -> {0, 3}
+      3 colors -> {0, 2, 3}
+      4 colors -> {0, 1, 2, 3}
+    """
+    n = len(colors)
+    if n <= 1:
         return {colors[0]: 0}
-    elif len(colors) == 2:
+    elif n == 2:
         return {colors[0]: 0, colors[1]: 3}
-    elif len(colors) == 3:
+    elif n == 3:
         return {colors[0]: 0, colors[1]: 2, colors[2]: 3}
     else:
         return {colors[0]: 0, colors[1]: 1, colors[2]: 2, colors[3]: 3}
 
 
-def encode_tile(img, tile_x, tile_y, shade_map):
+def get_tile_shade_map(img, tile_x, tile_y, anchor_color=None):
+    """Build a {RGB_tuple: shade_index} map for one 8x8 tile.
+
+    If anchor_color is set (an RGB tuple), that color is pinned to index 0
+    regardless of luminance. Remaining colors are sorted by luminance
+    (brightest first) and assigned to the remaining indices using the
+    contrast-maximising skip pattern (e.g. 1 remaining -> {3},
+    2 remaining -> {2, 3}, 3 remaining -> {1, 2, 3}).
+    """
+    px = img.load()
+    ox, oy = tile_x * TILE_SIZE, tile_y * TILE_SIZE
+    unique = {px[ox + col, oy + row] for row in range(TILE_SIZE) for col in range(TILE_SIZE)}
+
+    if anchor_color is not None and anchor_color in unique:
+        # Pin anchor to index 0; sort and assign remaining colors
+        rest = sorted([c for c in unique if c != anchor_color], key=lum, reverse=True)
+        shade_map = {anchor_color: 0}
+        n = len(rest)
+        if n == 1:
+            shade_map[rest[0]] = 3
+        elif n == 2:
+            shade_map[rest[0]] = 2
+            shade_map[rest[1]] = 3
+        elif n == 3:
+            shade_map[rest[0]] = 1
+            shade_map[rest[1]] = 2
+            shade_map[rest[2]] = 3
+        return shade_map
+
+    # Default: sort all colors by luminance (brightest = index 0)
+    colors = sorted(list(unique), key=lum, reverse=True)
+    return _assign_remaining_shades(colors)
+
+
+def encode_tile(img, tile_x, tile_y, shade_map, anchor_color=None):
     """Encode one 8x8 tile block starting at (tile_x*8, tile_y*8) into
     16 bytes of GB 2bpp tile data."""
     if shade_map is None:
-        shade_map = get_tile_shade_map(img, tile_x, tile_y)
+        shade_map = get_tile_shade_map(img, tile_x, tile_y, anchor_color=anchor_color)
     px = img.load()
     out = bytearray()
     ox, oy = tile_x * TILE_SIZE, tile_y * TILE_SIZE
@@ -189,7 +228,16 @@ def format_c_array(name, all_tile_bytes, tile_count, raw_inc=False):
     return "\n".join(lines)
 
 
-def convert(path, name, palette_name="canonical", tile_coords=None, raw_inc=False):
+def parse_hex_color(s):
+    """Parse a hex color string like '#7bb660' or '7bb660' into an RGB tuple."""
+    s = s.lstrip('#')
+    if len(s) != 6:
+        raise ValueError(f"expected 6-digit hex color, got '{s}'")
+    return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+
+
+def convert(path, name, palette_name="canonical", tile_coords=None, raw_inc=False,
+            anchor_color=None):
     is_auto = (palette_name == "auto")
     img, tiles_x, tiles_y = load_and_validate(path, max_colors=MAX_COLORS, allow_per_tile=is_auto)
     shade_map = None if is_auto else build_shade_map(img, str(path), palette_name=palette_name)
@@ -201,12 +249,12 @@ def convert(path, name, palette_name="canonical", tile_coords=None, raw_inc=Fals
             parts = item.split(",")
             coords_list.append((int(parts[0]), int(parts[1])))
         for tx, ty in coords_list:
-            all_bytes += encode_tile(img, tx, ty, shade_map)
+            all_bytes += encode_tile(img, tx, ty, shade_map, anchor_color=anchor_color)
         tile_count = len(coords_list)
     else:
         for ty in range(tiles_y):
             for tx in range(tiles_x):
-                all_bytes += encode_tile(img, tx, ty, shade_map)
+                all_bytes += encode_tile(img, tx, ty, shade_map, anchor_color=anchor_color)
         tile_count = tiles_x * tiles_y
 
     return all_bytes, tile_count, format_c_array(name, all_bytes, tile_count, raw_inc=raw_inc)
@@ -217,17 +265,33 @@ def main():
     ap.add_argument("png", type=Path, help="source PNG")
     ap.add_argument("--name", default="tile_data", help="C array name")
     ap.add_argument("--palette", default="canonical", choices=["canonical", "gb_green", "auto"], help="palette mapping")
+    ap.add_argument("--anchor-color", default=None, metavar="HEX",
+                     help="pin this hex color (e.g. '#7bb660') to shade index 0 "
+                          "in every tile (requires --palette auto). Used to enforce "
+                          "harmonized CGB Color 0 across a tileset.")
     ap.add_argument("--tile-coords", default=None, help="space-separated x,y tile coordinates (e.g. '1,2 8,1 8,2 0,5')")
     ap.add_argument("--raw", action="store_true", help="output raw comma-separated byte lines suitable for #include inside an array initializer")
     ap.add_argument("-o", "--out", type=Path, help="write generated C snippet here (default: stdout)")
     args = ap.parse_args()
+
+    anchor_color = None
+    if args.anchor_color:
+        if args.palette != "auto":
+            print("png2gb: --anchor-color requires --palette auto", file=sys.stderr)
+            sys.exit(1)
+        try:
+            anchor_color = parse_hex_color(args.anchor_color)
+        except ValueError as e:
+            print(f"png2gb: --anchor-color: {e}", file=sys.stderr)
+            sys.exit(1)
 
     try:
         all_bytes, tile_count, c_src = convert(
             args.png, args.name,
             palette_name=args.palette,
             tile_coords=args.tile_coords,
-            raw_inc=args.raw
+            raw_inc=args.raw,
+            anchor_color=anchor_color
         )
     except Png2GbError as e:
         print(f"png2gb: {e.asset}: [{e.rule}] {e.detail}", file=sys.stderr)
