@@ -12,6 +12,7 @@ export interface TileDefinition {
   walkable: boolean;
   color: string;
   ascii?: string;
+  glyph?: string;
   image_url: string;
   category?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'wall' | 'nature' | 'building';
 }
@@ -36,6 +37,7 @@ export function parseTilesetJson(data: any): TilesetDefinition {
       walkable: !!t.walkable,
       color: t.color || (t.walkable ? '#88c070' : '#205838'),
       ascii: t.ascii || (t.walkable ? '.' : '#'),
+      glyph: (typeof t.glyph === 'string' && t.glyph.length === 1) ? t.glyph : undefined,
       image_url: t.image_url || `/tiles/${data.id}/${t.id}.png`,
       category: t.category || (t.walkable ? 'terrain' : 'terrain'),
     })),
@@ -85,6 +87,7 @@ export async function saveTilesetToServer(
             walkable: t.walkable,
             color: t.color,
             ascii: t.ascii,
+            ...(t.glyph ? { glyph: t.glyph } : {}),
             image_url: t.image_url,
             category: t.category,
           })),

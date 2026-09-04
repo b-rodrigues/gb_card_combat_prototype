@@ -97,7 +97,7 @@
         "actor_id": 0,
         "facing": "DOWN",
         "flags": [ "BLOCKING", "INTERACTABLE" ],
-        "visual": "M",
+        "visual": "C",
         "hp": 0,
         "max_hp": 0,
         "gold_reward": 0,

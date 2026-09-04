@@ -130,6 +130,7 @@
       "walkable": false,
       "color": "#376025",
       "ascii": "#",
+      "glyph": "T",
       "image_url": "/tiles/forest/forest_top_left_treetop.png",
       "category": "nature"
     },
@@ -140,6 +141,7 @@
       "walkable": false,
       "color": "#375d24",
       "ascii": "#",
+      "glyph": "T",
       "image_url": "/tiles/forest/forest_top_right_tree_top.png",
       "category": "nature"
     },
@@ -150,6 +152,7 @@
       "walkable": false,
       "color": "#78a658",
       "ascii": "#",
+      "glyph": "s",
       "image_url": "/tiles/forest/forest_top_left_tree_stump.png",
       "category": "nature"
     },
@@ -160,6 +163,7 @@
       "walkable": false,
       "color": "#749c52",
       "ascii": "#",
+      "glyph": "s",
       "image_url": "/tiles/forest/forest_top_right_tree_stump.png",
       "category": "nature"
     },
@@ -220,6 +224,7 @@
       "walkable": true,
       "color": "#6f9d5c",
       "ascii": ".",
+      "glyph": ",",
       "image_url": "/tiles/forest/forest_floor_with_stuff_walkable_1.png",
       "category": "terrain"
     },
@@ -230,6 +235,7 @@
       "walkable": true,
       "color": "#74a657",
       "ascii": ".",
+      "glyph": ",",
       "image_url": "/tiles/forest/forest_floor_with_stuff_walkable_2.png",
       "category": "terrain"
     },
@@ -240,17 +246,19 @@
       "walkable": true,
       "color": "#75af5b",
       "ascii": ".",
+      "glyph": ",",
       "image_url": "/tiles/forest/forest_floor_with_stuff_walkable_3.png",
       "category": "terrain"
     },
     {
-      "id": "forest_florr_with_stuff_walkable",
-      "label": "florr with stuff walkable",
+      "id": "forest_floor_with_stuff_walkable_4",
+      "label": "floor with stuff walkable 4",
       "gb_constant": "TILE_FOREST_24",
       "walkable": true,
       "color": "#75af5b",
       "ascii": ".",
-      "image_url": "/tiles/forest/forest_florr_with_stuff_walkable.png",
+      "glyph": ",",
+      "image_url": "/tiles/forest/forest_floor_with_stuff_walkable_4.png",
       "category": "terrain"
     },
     {
@@ -290,6 +298,7 @@
       "walkable": false,
       "color": "#66934a",
       "ascii": "#",
+      "glyph": "t",
       "image_url": "/tiles/forest/forest_bottom_left_treetrunk.png",
       "category": "nature"
     },
@@ -300,6 +309,7 @@
       "walkable": false,
       "color": "#68914a",
       "ascii": "#",
+      "glyph": "t",
       "image_url": "/tiles/forest/forest_bottom_right_tree_trunk.png",
       "category": "nature"
     },
@@ -310,6 +320,7 @@
       "walkable": false,
       "color": "#687c40",
       "ascii": "#",
+      "glyph": "s",
       "image_url": "/tiles/forest/forest_bottom_left_tree_stump.png",
       "category": "nature"
     },
@@ -320,6 +331,7 @@
       "walkable": false,
       "color": "#677b3f",
       "ascii": "#",
+      "glyph": "s",
       "image_url": "/tiles/forest/forest_bottom_right_tree_stump.png",
       "category": "nature"
     },
@@ -440,6 +452,7 @@
       "walkable": false,
       "color": "#808645",
       "ascii": "#",
+      "glyph": "O",
       "image_url": "/tiles/forest/forest_treasure_chest_forest.png",
       "category": "terrain"
     },
@@ -636,7 +649,7 @@
         "x": 8,
         "y": 1,
         "index": 24,
-        "tile": "forest_florr_with_stuff_walkable"
+        "tile": "forest_floor_with_stuff_walkable_4"
       },
       {
         "x": 9,

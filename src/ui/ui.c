@@ -519,6 +519,25 @@ static char ui_get_world_tile_glyph(uint8_t t)
  * anchored semantic g_ui_screen_buf (harness get_screen_buf) is filled for
  * visible cells.  Written directly -- not through set_bkg_tiles -- to avoid
  * pulling the GBDK .set_xy_* helpers into the non-bankable _HOME area. */
+/* CGB palette for a world cell, from its glyph vocabulary entry
+ * (docs/glyphs.md) and tileset kind.  Dedicated small-frame helper: the
+ * per-cell path avalanches on inline branches, so the decision lives here
+ * (2 params, early returns) and ui_draw_world_cell only pays one call.
+ * Tree canopy shares field-green, trunks/stumps take wood brown, rocks dim
+ * gray, walkable ground takes its tileset's ground color; everything else
+ * palette 0 (map changes and power-on attribute garbage stay invisible). */
+static uint8_t ui_cell_palette(uint8_t glyph, uint8_t kind)
+{
+    if (glyph == 'T') return UI_COLOR_FIELD;
+    if (glyph == 't' || glyph == 's') return UI_COLOR_WOOD;
+    if (glyph == 'R') return UI_COLOR_DIM;
+    if (glyph == '.' || glyph == ',') {
+        if (kind == WORLD_TILESET_FOREST) return UI_COLOR_FIELD;
+        if (kind == WORLD_TILESET_DESOLATE) return UI_COLOR_DIM;
+    }
+    return UI_COLOR_NONE;
+}
+
 static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
 {
     uint8_t t;
@@ -575,18 +594,17 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
 #endif
 
     /* CGB ground color (Game Boy Color first; DMG ignores attributes and
-     * keeps grayscale): forest walkable ground renders field-green,
-     * everything else explicitly palette 0 so map changes (and CGB power-on
-     * attribute garbage) never leave a stale tint.  Single comparison, no
-     * table, no calls: this cell path is where the fixed-bank budget lives
-     * or dies (AGENTS.md 52.18) -- a nested second arm avalanched +180B
-     * here, so desolate/castle grounds stay grayscale until a bigger
-     * budget refactor (documented follow-up). */
-    VBK_REG = 1;
-    ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
-        (glyph == '.' && world->tileset_kind == WORLD_TILESET_FOREST) ?
-        UI_COLOR_FIELD : UI_COLOR_NONE;
-    VBK_REG = 0;
+     * keeps grayscale): palette follows the glyph vocabulary
+     * (docs/glyphs.md).  A dedicated small-frame helper (not inline
+     * branches): this cell path avalanches on added locals/branches
+     * (measured +180B for a flat chain), while a 2-param helper compiles
+     * tight. */
+    {
+        VBK_REG = 1;
+        ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
+            ui_cell_palette((uint8_t)glyph, (uint8_t)world->tileset_kind);
+        VBK_REG = 0;
+    }
 
     sx = (uint8_t)(col - world->scroll_x);
     sy = (uint8_t)(row - world->scroll_y);

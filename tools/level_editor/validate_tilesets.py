@@ -68,6 +68,15 @@ def validate_tileset(path):
         t = by_id.get(exits[0].get("tile"), {})
         if not t.get("walkable", False):
             errors.append(f"{label}: exit tile '{exits[0].get('tile')}' is not walkable")
+    # Mandatory glyph coverage: every tile resolves a single-char glyph,
+    # either explicitly or via the walkable/category/exit derivation
+    # (see generate_tiles.py landscape_entries). Nothing is silently glyph-less.
+    for t in data.get("tiles", []):
+        g = t.get("glyph", "")
+        if g == "":
+            continue  # derived downstream; any walkable/category/exit tile resolves
+        if not isinstance(g, str) or len(g) != 1:
+            errors.append(f"{label}: tile '{t.get('id')}' has invalid glyph {g!r} (want one character)")
     ok = not errors
     if not ok:
         return False, errors, []

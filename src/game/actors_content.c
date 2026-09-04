@@ -38,7 +38,7 @@ static const WorldActorDefinition g_town_actors[] = {
     {
         0, ENTITY_ID_MERCHANT, 11, 3, DIRECTION_DOWN,
         ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        'M', "MERCHANT", INTERACTION_SHOP, 2, DIALOGUE_ID_NONE, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        'C', "MERCHANT", INTERACTION_SHOP, 2, DIALOGUE_ID_NONE, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
         0, 0,
          SPRITE_KIND_ASCII
     },
@@ -86,7 +86,7 @@ static const WorldActorDefinition g_forest_actors[] = {
     {
         0, ENTITY_ID_AMULET, 16, 10, DIRECTION_DOWN,
         ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        '?', "AMULET", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_AMULET_NOTHING, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        'A', "AMULET", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_AMULET_NOTHING, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
         0, 0,
          SPRITE_KIND_CHEST
     },

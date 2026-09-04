@@ -29,7 +29,7 @@ ENTITY_ID_MAP = {0: "NONE", 1: "PLAYER",
                  GAME_ID_BASE + 2: "GUARD", GAME_ID_BASE + 3: "SHOPKEEPER",
                  GAME_ID_BASE + 4: "BAT", GAME_ID_BASE + 5: "SLIME_LORD",
                  GAME_ID_BASE + 6: "MERCHANT", GAME_ID_BASE + 7: "AMULET",
-                 GAME_ID_BASE + 8: "WIZARD"}
+                 GAME_ID_BASE + 8: "WIZARD", GAME_ID_BASE + 9: "SIGNPOST"}
 INTERACTION_ID_MAP = {0: "NONE", 1: "DIALOGUE", 2: "COMBAT", 3: "SHOP", 4: "SAVE"}
 DIALOGUE_ID_MAP = {0: "NONE",
                    GAME_ID_BASE + 0: "MAYOR_GREETING",
@@ -87,6 +87,7 @@ EVENT_ID_MAP = {GAME_ID_BASE + 0: "TOWN_ARRIVAL",
 DIRECTION_MAP = {0: "UP", 1: "DOWN", 2: "LEFT", 3: "RIGHT"}
 
 # Static per-actor semantics resolved from the snapshot's actor ids.
+# Visuals mirror levels/*.json properties.visual (see docs/glyphs.md).
 ACTOR_INFO_MAP = {
     "PLAYER":      {"visual": "@", "hostile": False, "interaction": "NONE", "dialogue": "NONE", "battle": "NONE"},
     "SLIME":       {"visual": "E", "hostile": True,  "interaction": "COMBAT", "dialogue": "NONE", "battle": "SLIME"},
@@ -95,8 +96,10 @@ ACTOR_INFO_MAP = {
     "SHOPKEEPER":  {"visual": "S", "hostile": False, "interaction": "DIALOGUE", "dialogue": "SHOPKEEPER_GREETING", "battle": "NONE"},
     "BAT":         {"visual": "V", "hostile": True,  "interaction": "COMBAT", "dialogue": "NONE", "battle": "BAT"},
     "SLIME_LORD":  {"visual": "L", "hostile": True,  "interaction": "COMBAT", "dialogue": "NONE", "battle": "NONE"},
-    "MERCHANT":    {"visual": "M", "hostile": False, "interaction": "SHOP", "dialogue": "NONE", "battle": "NONE"},
-    "AMULET":      {"visual": "?", "hostile": False, "interaction": "DIALOGUE", "dialogue": "AMULET_NOTHING", "battle": "NONE"},
+    "MERCHANT":    {"visual": "C", "hostile": False, "interaction": "SHOP", "dialogue": "NONE", "battle": "NONE"},
+    "AMULET":      {"visual": "A", "hostile": False, "interaction": "DIALOGUE", "dialogue": "AMULET_NOTHING", "battle": "NONE"},
+    "WIZARD":      {"visual": "W", "hostile": False, "interaction": "SAVE", "dialogue": "NONE", "battle": "NONE"},
+    "SIGNPOST":    {"visual": "?", "hostile": False, "interaction": "DIALOGUE", "dialogue": "SIGNPOST", "battle": "NONE"},
 }
 
 # Fallback button masks.  At connect() these are overridden by the ROM's

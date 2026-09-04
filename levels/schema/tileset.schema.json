@@ -50,7 +50,13 @@
           },
           "ascii": {
             "type": "string",
-            "description": "ASCII representation character"
+            "description": "ASCII representation character (legacy display fallback; the ROM glyph comes from 'glyph' below)"
+          },
+          "glyph": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1,
+            "description": "Mandatory semantic glyph for this tile (e.g. T tree canopy, t trunk, s stump, O chest, R rock, ',' tufted ground). Drives the ROM text layer, the editor, and palette selection. See docs/glyphs.md for the registry. When absent, tools derive '.', '#', '>', '*' from walkable/category/exit."
           }
         }
       }

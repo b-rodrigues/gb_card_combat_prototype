@@ -160,6 +160,7 @@
       "walkable": false,
       "color": "#a29271",
       "ascii": "#",
+      "glyph": "O",
       "image_url": "/tiles/castle/castle_chest.png",
       "category": "terrain"
     },
