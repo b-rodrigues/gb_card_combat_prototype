@@ -245,6 +245,12 @@ atlas-check:
 tiles-check:
 	@python3 tools/level_editor/validate_tilesets.py tools/level_editor/tilesets/*.json
 
+# Palette manifest generation: PNG + tileset JSON -> generated/tiles/<tileset>.json
+# Single source of truth for CGB palettes (web editor + ROM compiler parity).
+# See docs/cgb_color_tiles.md §7 and tools/palette_compiler.py.
+manifest: tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_editor/tilesets/desolate_landscape.json tools/palette_compiler.py | $(GENERATED_TILES_DIR)
+	@python3 tools/palette_compiler.py
+
 # Tile-trait generation: manifests -> generated/tiles/tile_traits.h
 # (walk/glyph ranges + exit indices consumed by world.c, patrol_banked.c,
 # ui.c). Deterministic: rerunning reproduces the header byte-identically.
@@ -252,9 +258,9 @@ GENERATED_TILES_DIR = generated/tiles
 GENERATED_TILE_WALK = $(GENERATED_TILES_DIR)/tile_walk.h
 GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
 GENERATED_TILE_PALETTE = $(GENERATED_TILES_DIR)/tile_palette.h
-tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE)
+tiles: manifest $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE)
 
-$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): manifest tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
 	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
 
 $(GENERATED_TILES_DIR):

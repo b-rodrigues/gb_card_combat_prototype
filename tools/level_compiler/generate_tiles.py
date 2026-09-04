@@ -19,6 +19,10 @@ Glyph roles mirror the historic renderer exactly: the vram_block exit
 tile renders '>', category "object" (campfires) renders '*', walkable
 renders '.', everything else '#'.
 
+CGB palette lookup tables (tile_palette.h) are now sourced from the
+palette compiler manifests (generated/tiles/<tileset>.json) produced by
+tools/palette_compiler.py, ensuring web editor / ROM parity.
+
 Usage:
     python3 tools/level_compiler/generate_tiles.py --out generated/tiles/tile_traits.h
 """
@@ -36,10 +40,25 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from validate import load_tilesets
 
 WORLD_H = REPO_ROOT / "src" / "world" / "world.h"
+GENERATED_TILES_DIR = REPO_ROOT / "generated" / "tiles"
 
 # Frozen legacy walkables (no manifest covers them; never change).
 LEGACY_WALK_DOC = "TILE_FLOOR, TILE_EXIT, TILE_DESOLATE_FLOOR_00..03, " \
     "TILE_DESOLATE_FLOOR_PLAIN, TILE_DESOLATE_STAIRCASE (kept in ROM code)"
+
+
+def load_palette_manifest(tileset_id: str):
+    """Load palette manifest from generated/tiles/<tileset>.json.
+
+    Returns dict with 'tile_palettes' list, or None if not found.
+    """
+    manifest_path = GENERATED_TILES_DIR / f"{tileset_id}.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        return json.loads(manifest_path.read_text())
+    except Exception:
+        return None
 
 
 def load_tiletype_numbers():
@@ -257,8 +276,12 @@ def emit_palette(entries, tilesets, const_by_value):
     (0-7).  The runtime lookup is a single pointer-indexed read:
         pal = pal_tbl[tile_id - TILESET_BASE];
     No multiplication, no glyph intermediate, O(1).
+
+    Palette indices are sourced from palette compiler manifests
+    (generated/tiles/<tileset>.json) for web editor / ROM parity.
+    Falls back to glyph-based heuristic if manifest is missing.
     """
-    # Group entries by tileset
+    # Group entries by tileset (for fallback heuristic)
     kind_tiles = {}  # kind_id -> [(sheet_idx, glyph)]
     for ts_id, ts in sorted(tilesets.items()):
         if not ts.get("vram_block"):
@@ -292,31 +315,68 @@ def emit_palette(entries, tilesets, const_by_value):
     kind_id_map = {"forest": "FOREST", "desolate_landscape": "DESOLATE",
                    "castle": "CASTLE"}
 
+    # Glyph -> palette fallback (kept for transition / missing manifests)
+    GLYPH_PALETTE = {
+        'T': 3,   # UI_COLOR_FIELD  (forest canopy)
+        't': 5,   # UI_COLOR_WOOD   (tree trunk)
+        's': 5,   # UI_COLOR_WOOD   (stump)
+        'R': 7,   # UI_COLOR_DIM    (rock)
+        '*': 0,   # UI_COLOR_NONE   (campfire / object)
+        'O': 0,   # UI_COLOR_NONE   (chest)
+        '>': 0,   # UI_COLOR_NONE   (exit)
+    }
+    KIND_FLOOR_PALETTE = {
+        "forest":              3,  # UI_COLOR_FIELD
+        "desolate_landscape":  7,  # UI_COLOR_DIM
+        "castle":              0,  # UI_COLOR_NONE (stone floor)
+    }
+    TILE_PALETTE_OVERRIDES = {
+        "castle": {
+            6: 1,   # Curtain (red)
+            12: 5,  # Chair (wood)
+            13: 5,  # Table (wood)
+            14: 5,  # Chair (wood)
+            15: 6,  # Chest (gold)
+        },
+        "desolate_landscape": {
+            37: 1,  # Campfire frame 1 (fire)
+            38: 1,  # Campfire frame 2 (fire)
+            43: 6,  # Treasure chest (gold)
+        },
+    }
+
     for ts_id in ("forest", "desolate_landscape", "castle"):
         kind = kind_id_map.get(ts_id, ts_id.upper())
         tiles = kind_tiles.get(ts_id, [])
         if not tiles:
             continue
 
-        floor_pal = KIND_FLOOR_PALETTE.get(ts_id, 0)
-        overrides = TILE_PALETTE_OVERRIDES.get(ts_id, {})
-
-        pal_values = []
-        for idx, glyph in tiles:
-            if idx in overrides:
-                pal = overrides[idx]
-            elif glyph in ('.', ','):
-                pal = floor_pal
-            elif glyph in GLYPH_PALETTE:
-                pal = GLYPH_PALETTE[glyph]
-            else:
-                pal = 0  # UI_COLOR_NONE
-            pal_values.append(pal)
+        # Try to load manifest
+        manifest = load_palette_manifest(ts_id)
+        if manifest and "tile_palettes" in manifest:
+            pal_values = manifest["tile_palettes"]
+            source = "manifest"
+        else:
+            # Fallback to glyph-based heuristic
+            floor_pal = KIND_FLOOR_PALETTE.get(ts_id, 0)
+            overrides = TILE_PALETTE_OVERRIDES.get(ts_id, {})
+            pal_values = []
+            for idx, glyph in tiles:
+                if idx in overrides:
+                    pal = overrides[idx]
+                elif glyph in ('.', ','):
+                    pal = floor_pal
+                elif glyph in GLYPH_PALETTE:
+                    pal = GLYPH_PALETTE[glyph]
+                else:
+                    pal = 0  # UI_COLOR_NONE
+                pal_values.append(pal)
+            source = "heuristic"
 
         arr_name = f"g_tile_pal_{ts_id}"
         if ts_id == "desolate_landscape":
             arr_name = "g_tile_pal_desolate"
-        out.append(f"/* {kind} tileset: {len(pal_values)} tiles */")
+        out.append(f"/* {kind} tileset: {len(pal_values)} tiles (source: {source}) */")
         out.append(f"const uint8_t {arr_name}[{len(pal_values)}] = {{")
         # Format as rows of 16
         for row_start in range(0, len(pal_values), 16):
