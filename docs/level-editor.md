@@ -435,7 +435,9 @@ walkable property
 collision
 ```
 
-Then allow explicit overrides.
+Collision is derived, never stored: there is no `collision.overrides`
+section in the level format (removed — it had no compiler/ROM consumer).
+Walkability comes solely from the tileset manifest's `walkable` flag.
 
 ---
 
@@ -919,8 +921,15 @@ Rules:
   `reward_currency`, plus the original `entity_id`/`battle`/`ai`/...).
   `actor_id` is stable and unique across scenes: it drives persistent
   defeat tracking, so never renumber it.
+- Every scene row carries its compiled player spawn (`spawn_x/y/facing`
+  from `player.spawn`; facing accepts compass aliases).  `game_new_game`
+  and `world_init` read the FIELD row -- no hardcoded coordinates -- via
+  the branch-free banked helper `scene_spawn()` (bank-5 body
+  `scene_spawn_banked`, same pattern as `scene_load_tiles`), keeping the
+  fixed-bank `_CODE` budget intact (see AGENTS.md 52.18/55.5).
 - `decompile.py` merges compilable sections back into the JSON, preserving
-  editorial sections (`name`, `regions`, `player.spawn`), decoration
+  editorial sections (`name`, `regions`, spawn `animation_frames`, terrain
+  block `comment`s), decoration
   objects without an `entity_id`, and author art choices that compile to
   the same tile. Anything it cannot map is a loud error, never a silent
   invention. Known normalizations: terrain blocks roundtrip verbatim (one
@@ -966,3 +975,25 @@ source of truth for what each tile *is*, for the editor and the ROM alike:
 - Gates: `make tiles-check` (manifest validity), `make tiles` (regrow),
   full harness after any ROM-side consumption change (movement and
   rendering both read these tables).
+
+# Phase 17 — Editor↔disk fidelity (JSON is the source of truth both ways)
+
+The web editor must never be a stale snapshot of the JSON:
+
+- Levels/tilesets load from disk through the dev-server API (`GET
+  /api/levels`, `/api/level`, `/api/tilesets`, `/api/tileset`); the
+  bundled static imports in `App.tsx`/`Tileset.ts` are only the fallback
+  for built bundles served without the dev API.  Hand-edited JSON shows
+  up after a catalogue refresh, with no editor rebuild.
+- Saves write back the as-loaded terrain form (block rects stay block
+  rects, with `comment`s) unless the terrain was actually painted, in
+  which case the edited grid is emitted (the compiler accepts both;
+  `decompile.py` normalizes grids back to verbatim blocks).  View-only
+  saves are byte-stable.
+- `/api/save-level` maps editor screen ids to their real files
+  (`battle_default` → `screens/battle/default.json`, etc.); unknown ids
+  fall back to the battle/title heuristic.  All file APIs reject ids
+  outside `[A-Za-z0-9_]`.
+- There is no `collision.overrides` section: collision is derived solely
+  from the tileset manifest's `walkable` flag (it never had a
+  compiler/ROM consumer, so it was removed rather than carried).

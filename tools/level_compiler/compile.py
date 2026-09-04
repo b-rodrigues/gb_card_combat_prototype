@@ -56,6 +56,20 @@ TILESET_KIND_MAP = {
     "castle": "WORLD_TILESET_CASTLE",
 }
 
+# player.spawn facing spellings (schema allows compass aliases) to the
+# engine Direction enum.  The spawn is compiled into SceneDefinition so the
+# JSON is the single source of truth (see game_new_game).
+SPAWN_FACING_MAP = {
+    "UP": "DIRECTION_UP",
+    "NORTH": "DIRECTION_UP",
+    "DOWN": "DIRECTION_DOWN",
+    "SOUTH": "DIRECTION_DOWN",
+    "LEFT": "DIRECTION_LEFT",
+    "WEST": "DIRECTION_LEFT",
+    "RIGHT": "DIRECTION_RIGHT",
+    "EAST": "DIRECTION_RIGHT",
+}
+
 
 def load_level(path):
     """Load and parse level JSON."""
@@ -319,9 +333,12 @@ def emit_c_code(levels_by_id, tilesets):
         exits_ptr = f"&g_all_exits[{start_idx}]" if count > 0 else "0"
         tileset_kind = TILESET_KIND_MAP.get(lvl["map"]["tileset"], "WORLD_TILESET_FOREST")
         terrain_ptr = scene_terrain_symbols.get(sid, "0")
+        spawn = lvl.get("player", {}).get("spawn", {})
+        spawn_facing = SPAWN_FACING_MAP.get(
+            str(spawn.get("facing", "DOWN")).upper(), "DIRECTION_DOWN")
 
         scene_defs.append(
-            f"    {{ {map_id_enum + ',':<20s} {music_enum + ',':<18s} {width:2d}, {height:2d}, {exits_ptr + ',':<20s} {count}, {tileset_kind + ',':<24s} {terrain_ptr} }}"
+            f"    {{ {map_id_enum + ',':<20s} {music_enum + ',':<18s} {width:2d}, {height:2d}, {exits_ptr + ',':<20s} {count}, {tileset_kind + ',':<24s} {terrain_ptr + ',':<20s} {spawn.get('x', 0)}, {spawn.get('y', 0)}, {spawn_facing} }}"
         )
     output.append(",\n".join(scene_defs))
     output.append("};\n")

@@ -364,13 +364,13 @@
       "category": "enemy"
     },
     {
-      "id": "desolate_landscape_enemay_kobold_frame_2",
-      "label": "enemay kobold frame 2",
+      "id": "desolate_landscape_enemy_kobold_frame_2",
+      "label": "enemy kobold frame 2",
       "gb_constant": "TILE_DESOLATE_LANDSCAPE_36",
       "walkable": false,
       "color": "#806a76",
       "ascii": "#",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_enemay_kobold_frame_2.png",
+      "image_url": "/tiles/desolate_landscape/desolate_landscape_enemy_kobold_frame_2.png",
       "category": "enemy"
     },
     {
@@ -708,7 +708,7 @@
         "x": 4,
         "y": 2,
         "index": 36,
-        "tile": "desolate_landscape_enemay_kobold_frame_2"
+        "tile": "desolate_landscape_enemy_kobold_frame_2"
       },
       {
         "x": 5,

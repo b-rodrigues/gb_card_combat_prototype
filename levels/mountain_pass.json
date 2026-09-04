@@ -252,7 +252,7 @@
       "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
       "animation_frames": [
         "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
-        "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"
+        "desolate_landscape.desolate_landscape_enemy_kobold_frame_2"
       ],
       "position": { "x": 14, "y": 7 },
       "properties": {

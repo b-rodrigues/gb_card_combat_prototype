@@ -119,10 +119,11 @@ def main():
         if bp_addr and pb.memory[bp_addr] == 4:
             break
 
-    # Locate player in WRAM (same as capture_walkthrough.py)
+    # Locate player in WRAM (same as capture_walkthrough.py: FIELD spawn
+    # (17,7) per levels/field.json, facing LEFT)
     WRAM_BASE = 0xC000
     WRAM_SIZE = 0x2000
-    PLAYER_BOOT = bytes([4, 4, 10, 10, 1, 1, 1])
+    PLAYER_BOOT = bytes([17, 7, 10, 10, 1, 2, 1])
 
     pos_addr = [game_addr + 204]
 
@@ -214,7 +215,8 @@ def main():
           f"music clock stalled during SFX at window frames {stalled_sfx[:5]}")
 
     # Dismiss Title Screen (SCREEN_TITLE = 9) and Intro slides (SCREEN_INTRO = 10)
-    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at (4,4).
+    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at the FIELD spawn
+    # (17,7) from levels/field.json player.spawn.
     for _ in range(20):
         if pb.memory[game_addr] == 0:
             break

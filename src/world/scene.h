@@ -35,7 +35,9 @@ typedef enum {
 /* Data-driven scene definition.  Terrain generation is driven by banked
  * terrain_blocks; exit placement is applied automatically from the exits table.
  * width/height set the scene's tile bounds (<= WORLD_WIDTH/HEIGHT); the
- * overworld camera clamps its view window to them. */
+ * overworld camera clamps its view window to them.  spawn_x/spawn_y/spawn_facing
+ * is the player start compiled from the level JSON's player.spawn (the single
+ * source of truth; game_new_game reads the FIELD row). */
 typedef struct {
     MapId map_id;
     MusicTrack music;
@@ -45,6 +47,9 @@ typedef struct {
     uint8_t exit_count;
     WorldTilesetKind tileset;
     const SceneTerrainBlock *terrain_blocks;
+    uint8_t spawn_x;
+    uint8_t spawn_y;
+    uint8_t spawn_facing; /* Direction */
 } SceneDefinition;
 
 /* Look up a scene definition by its map id.
@@ -66,6 +71,15 @@ void scene_load_tiles(World *w, MapId map_id);
 
 /* Banked no-arg body (ROM bank 2) dispatched by scene_load_tiles(). */
 void scene_load_tiles_banked(void);
+
+/* Banked no-arg body (ROM bank 5) dispatched by scene_spawn(). */
+void scene_spawn_banked(void);
+
+/* Read a scene's compiled player spawn (x, y, facing) into the staging
+ * globals g_bk_byte_b/c/d.  Thin fixed-bank wrapper around scene_spawn_banked
+ * (branch-free by design: the fallback for bad map ids lives in the banked
+ * body, keeping the fixed-bank _CODE budget intact). */
+void scene_spawn(MapId map_id);
 
 #define scene_id_to_map(scene) ((MapId)(scene))
 #define map_to_scene_id(map) ((SceneId)(map))

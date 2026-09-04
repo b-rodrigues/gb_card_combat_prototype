@@ -54,7 +54,7 @@
       "id": "field_slime",
       "type": "enemy",
       "overworld_sprite": "forest.forest_enemy_kobold_frame_1",
-      "animation_frames": [ "forest.forest_enemy_kobold_frame_1", "forest.forest_enemay_kobold_frame_2" ],
+      "animation_frames": [ "forest.forest_enemy_kobold_frame_1", "forest.forest_enemy_kobold_frame_2" ],
       "position": { "x": 14, "y": 8 },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",

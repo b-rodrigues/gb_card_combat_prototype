@@ -224,13 +224,13 @@
       "category": "enemy"
     },
     {
-      "id": "castle_enemay_kobold_frame_2",
-      "label": "enemay kobold frame 2",
+      "id": "castle_enemy_kobold_frame_2",
+      "label": "enemy kobold frame 2",
       "gb_constant": "TILE_CASTLE_22",
       "walkable": true,
       "color": "#a79595",
       "ascii": ".",
-      "image_url": "/tiles/castle/castle_enemay_kobold_frame_2.png",
+      "image_url": "/tiles/castle/castle_enemy_kobold_frame_2.png",
       "category": "enemy"
     },
     {
@@ -414,7 +414,7 @@
         "x": 4,
         "y": 2,
         "index": 22,
-        "tile": "castle_enemay_kobold_frame_2"
+        "tile": "castle_enemy_kobold_frame_2"
       },
       {
         "x": 5,

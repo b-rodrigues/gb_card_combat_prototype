@@ -4,8 +4,9 @@ decompile.py - ROM tables back to level JSON (the vice-versa half).
 
 Reads src/game/scenes_content.c + src/game/actors_content.c (C tables, never
 the .gb binary) and merges the compilable sections back into levels/*.json,
-preserving editorial sections (name, regions, player.spawn, descriptions,
-decoration objects without an entity_id).
+preserving editorial sections (name, regions, spawn animation_frames,
+descriptions, terrain block comments, decoration objects without an
+entity_id).
 
 Lossy-by-design normalizations (all fixpoint-stable, all warned about):
 - terrain blocks are emitted VERBATIM (one JSON block per C block); the
@@ -66,21 +67,21 @@ CANONICAL_WALL = {
 SPRITE_FRAMES = {
     "desolate_landscape": {
         "KOBOLD": ["desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
-                   "desolate_landscape.desolate_landscape_enemay_kobold_frame_2"],
+                   "desolate_landscape.desolate_landscape_enemy_kobold_frame_2"],
         "BAT": ["desolate_landscape.desolate_landscape_enemy_bats_frame_1",
                 "desolate_landscape.desolate_landscape_enemy_bats_frame_2"],
         "CHEST": ["desolate_landscape.desolate_landscape_treasure_chest_desolate"],
     },
     "forest": {
         "KOBOLD": ["forest.forest_enemy_kobold_frame_1",
-                   "forest.forest_enemay_kobold_frame_2"],
+                   "forest.forest_enemy_kobold_frame_2"],
         "BAT": ["forest.forest_enemy_bats_frame_1",
                 "forest.forest_enemy_bats_frame_2"],
         "CHEST": ["forest.forest_treasure_chest_forest"],
     },
     "castle": {
         "KOBOLD": ["castle.castle_enemy_kobold_frame_1",
-                   "castle.castle_enemay_kobold_frame_2"],
+                   "castle.castle_enemy_kobold_frame_2"],
         "BAT": ["castle.castle_enemy_bat_frame_1",
                 "castle.castle_enemy_bat_frame_2"],
         "BOSS": ["castle.castle_top_left_boss",
@@ -369,9 +370,12 @@ def parse_scenes(scenes_text, name_to_value):
     scenes = []
     for row in split_row_groups(scenes_body):
         f = split_fields(row)
-        if len(f) != 8:
+        if len(f) != 11:
             raise DecompileError(f"scene row has {len(f)} fields: {row[:60]!r}")
         m = re.fullmatch(r"&g_all_exits\[(\d+)\]", f[4].strip())
+        facing = f[10].strip()
+        if facing not in FACING_REVERSE:
+            raise DecompileError(f"unknown spawn facing {facing!r}")
         scenes.append({
             "map": f[0].strip(),
             "music": f[1].strip(),
@@ -381,6 +385,9 @@ def parse_scenes(scenes_text, name_to_value):
             "exit_count": parse_int(f[5]),
             "tileset_kind": f[6].strip(),
             "terrain_sym": f[7].strip(),
+            "spawn_x": parse_int(f[8]),
+            "spawn_y": parse_int(f[9]),
+            "spawn_facing": FACING_REVERSE[facing],
         })
     terrain = {}
     for m in re.finditer(r"static const SceneTerrainBlock (s_\w+)\[\]", scenes_text):
@@ -502,11 +509,22 @@ def decompile_levels(levels_dir, write):
                 if tile_id is None:
                     tile_id = tile_value_to_id(b["tile"], tileset_id, const_by_value,
                                                gb_to_tileid, tileset_id)
-                terrain_blocks.append({
+                block_out = {
                     "x": b["x"], "y": b["y"],
                     "width": b["w"], "height": b["h"],
                     "tile": tile_id,
-                })
+                }
+                # Editorial comments live only in the JSON (the C tables
+                # cannot hold them): keep the author's comment when the
+                # rect matches, so decompile never erases documentation.
+                if key in old_rects:
+                    for b_old in old_terrain:
+                        if (b_old.get("x"), b_old.get("y"),
+                                b_old.get("width"), b_old.get("height")) == key \
+                                and b_old.get("comment"):
+                            block_out["comment"] = b_old["comment"]
+                            break
+                terrain_blocks.append(block_out)
         # Preserve design-only floor patches: old blocks resolving to
         # TILE_FLOOR compile to nothing (default background), so they have
         # no C counterpart, but dropping them would erase documented
@@ -540,6 +558,14 @@ def decompile_levels(levels_dir, write):
         level["map"]["width"] = sc["width"]
         level["map"]["height"] = sc["height"]
         level["map"]["map_id"] = sc["map"]
+
+        # -- player spawn: compiled into SceneDefinition, merged back so
+        # the JSON stays the single source of truth.  Editorial spawn keys
+        # the ROM cannot hold (animation_frames, ...) are preserved verbatim.
+        spawn = level.setdefault("player", {}).setdefault("spawn", {})
+        spawn["x"] = sc["spawn_x"]
+        spawn["y"] = sc["spawn_y"]
+        spawn["facing"] = sc["spawn_facing"]
 
         # -- exits
         old_exits = { (e.get("x"), e.get("y"), e.get("target_scene")): e

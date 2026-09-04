@@ -2127,6 +2127,12 @@ mirror the `banked_copy` pattern:
 First user: `src/battle/combo.c` (`combo_evaluate` wrapper) →
 `src/battle/combo_content.c` (`combo_evaluate_banked`, bank 2).  This
 relieved the fixed-bank budget enough for the battle HUD row work.
+Second user: `src/world/scene.c` (`scene_spawn` wrapper) →
+`src/world/scene_load.c` (`scene_spawn_banked`, bank 5, reads `g_scenes`
+directly): the compiled player spawn reaches fixed-bank callers through
+the `g_bk_byte_*` staging globals with no fixed-bank branching, which
+cleared a `_HOME` overflow that presented as a harness-wide guest spin
+(§52.18).
 
 ### 52.11.2 Battle HUD layout (rows)
 

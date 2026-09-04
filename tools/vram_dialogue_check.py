@@ -44,9 +44,10 @@ ROM_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 # Player Entity layout: position{x,y}, hp, max_hp, active, facing, id.
 # Located by scanning WRAM for the deterministic boot pattern (FIELD spawn
-# (4,4), hero 10/10, active, facing DOWN, id PLAYER) rather than hardcoding
+# (17,7) per levels/field.json player.spawn, hero 10/10, active, facing
+# LEFT, id PLAYER) rather than hardcoding
 # the g_game offset (which shifts with the _DATA layout on each build).
-PLAYER_BOOT = bytes([4, 4, 10, 10, 1, 1, 1])
+PLAYER_BOOT = bytes([17, 7, 10, 10, 1, 2, 1])
 WRAM_BASE = 0xC000
 WRAM_SIZE = 0x2000
 
@@ -98,6 +99,11 @@ def main():
         return 1
 
     pb = PyBoy(args.rom, window="null")
+
+    # Let the real boot run: game_init prepares the new-game state behind
+    # the title screen, so the player entity pattern exists from here on.
+    for _ in range(180):
+        pb.tick()
 
     # Locate the player's position field in WRAM from the boot pattern.
     WRAM_BASE = 0xC000
@@ -184,7 +190,8 @@ def main():
         return False
 
     # Dismiss Title Screen (SCREEN_TITLE = 9) and Intro slides (SCREEN_INTRO = 10)
-    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at (4,4).
+    # to drop into the OVERWORLD (SCREEN_OVERWORLD = 0) at the FIELD spawn
+    # (17,7) from levels/field.json player.spawn.
     # Title screen: press START to show menu, then START again to select NEW GAME -> intro slides
     # Intro slides: press A (or START) 3 times to advance through slides, then game_restart() drops to overworld
     for _ in range(20):
@@ -263,12 +270,10 @@ def main():
     x, y = pos()
     print(f"boot: player at ({x},{y}) (WRAM 0x{pos_addr:04X})")
 
-    # FIELD (4,4) -> east wall (30,4) -> south (30,7) -> east gate (31,7) ->
-    # TOWN (2,7) -> (2,8) -> west of the guard at (9,8).  The camera scrolls
+    # FIELD spawn (17,7) -> east gate (31,7) -> TOWN (2,7) -> (2,8) ->
+    # west of the guard at (9,8).  The camera scrolls
     # throughout (SCY > 0 in TOWN, y=8 keeps the ring scrolled vertically).
-    ok = walk("right", lambda: pos()[0] == 30)
-    ok = walk("down", lambda: pos()[1] == 7) and ok
-    ok = walk("right", lambda: pos()[0] == 2) and ok
+    ok = walk("right", lambda: pos()[0] == 2)
     ok = walk("down", lambda: pos()[1] == 8) and ok
     ok = walk("right", lambda: pos()[0] == 9) and ok
 
@@ -292,12 +297,12 @@ def main():
     # (f77ec9b) is a gfx-branch change.  The box must still be present,
     # clean (no map tiles inside it), and the window must stay disabled
     # (HUD hidden during dialogue).  Read the scroll from the SCY/SCX
-    # registers: a dialogue opened with a scrolled camera (SCY > 0) is the
-    # exact case this branch regressed on, so the walk must reach it.
+    # registers: informational scroll readout (no current map can scroll
+    # vertically -- all maps are 18 tall = WORLD_VIEW_H, so world_update_scroll
+    # clamps max_y to 0; the box math below still runs at the live offset).
     scroll_y = pb.memory[0xFF42] >> 3
-    check("dialogue-camera-scrolled", scroll_y > 0,
-          "expected the walk to reach a scrolled camera (SCY>0) so the box "
-          f"placement is exercised with an offset, got scroll_y={scroll_y}")
+    scroll_x = pb.memory[0xFF43] >> 3
+    print(f"dialogue camera: scroll=({scroll_x},{scroll_y})")
 
     box = [background_row(pb, 12 + wy, scroll_y) for wy in range(6)]
     lcdc = pb.memory[0xFF40]

@@ -61,15 +61,121 @@ function levelEditorApiPlugin(): Plugin {
       server.middlewares.use((req, res, next) => {
         const repoRoot = path.resolve(__dirname, '../..');
 
+        // Editor-facing ids for the screen mockups (App.tsx imports these
+        // JSONs; the save/load maps below must stay in sync with that list).
+        const SCREEN_ID_TO_PATH: Record<string, string> = {
+          'title': 'screens/title.json',
+          'battle': 'screens/battle.json',
+          'battle_default': 'screens/battle/default.json',
+          'battle_boss': 'screens/battle/boss.json',
+          'battle_ambush': 'screens/battle/ambush.json',
+          'battle_duo': 'screens/battle/duo.json',
+        };
+        const isSafeId = (id: unknown) =>
+          typeof id === 'string' && /^[A-Za-z0-9_]+$/.test(id);
+
+        // Live disk reads (no editor rebuild needed after editing JSON by
+        // hand or via another tool).  Bundled static imports in App.tsx /
+        // Tileset.ts remain as the fallback for built bundles served
+        // without this dev API.
+        const sendJson = (obj: unknown) => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(obj));
+        };
+        const readJsonFile = (rel: string) => {
+          const target = path.resolve(repoRoot, rel);
+          if (!target.startsWith(repoRoot + path.sep)) throw new Error('bad path');
+          return JSON.parse(fs.readFileSync(target, 'utf-8'));
+        };
+        if (req.method === 'GET' && req.url === '/api/levels') {
+          try {
+            const levels = fs.readdirSync(path.join(repoRoot, 'levels'))
+              .filter((f) => f.endsWith('.json'))
+              .map((f) => {
+                const data = readJsonFile(path.join('levels', f));
+                return { id: data.id || f.replace(/\.json$/, ''), name: data.name || f, category: 'levels' };
+              });
+            const screens: Array<{ id: string; name: string; category: string }> = [];
+            for (const [id, rel] of Object.entries(SCREEN_ID_TO_PATH)) {
+              try {
+                const data = readJsonFile(rel);
+                screens.push({ id, name: data.title || data.label || id, category: 'screens' });
+              } catch { /* missing screen file: skip */ }
+            }
+            sendJson({ success: true, levels, screens });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/level')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const category = u.searchParams.get('category') || 'levels';
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            let rel: string;
+            if (category === 'screens') {
+              rel = SCREEN_ID_TO_PATH[id];
+              if (!rel) throw new Error(`unknown screen '${id}'`);
+            } else if (category === 'levels') {
+              rel = path.join('levels', `${id}.json`);
+            } else {
+              throw new Error(`unknown category '${category}'`);
+            }
+            sendJson({ success: true, id, category, data: readJsonFile(rel) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && req.url === '/api/tilesets') {
+          try {
+            const dir = path.join(repoRoot, 'tools', 'level_editor', 'tilesets');
+            const tilesets = fs.readdirSync(dir)
+              .filter((f) => f.endsWith('.json'))
+              .map((f) => {
+                const data = readJsonFile(path.join('tools', 'level_editor', 'tilesets', f));
+                return { id: data.id || f.replace(/\.json$/, ''), label: data.label || f };
+              });
+            sendJson({ success: true, tilesets });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/tileset')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            sendJson({ success: true, id, data: readJsonFile(path.join('tools', 'level_editor', 'tilesets', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
         if (req.method === 'POST' && req.url === '/api/save-level') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', () => {
             try {
               const { id, category, data } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
               let targetPath = path.join(repoRoot, 'levels', `${id}.json`);
               if (category === 'screens') {
-                if (data.hud_layout || data.enemies || data.enemy_positions) {
+                const rel = SCREEN_ID_TO_PATH[id];
+                if (rel) {
+                  targetPath = path.join(repoRoot, rel);
+                } else if (data.hud_layout || data.enemies || data.enemy_positions) {
                   targetPath = path.join(repoRoot, 'screens', 'battle', `${id}.json`);
                 } else {
                   targetPath = path.join(repoRoot, 'screens', 'title', `${id}.json`);
@@ -93,6 +199,7 @@ function levelEditorApiPlugin(): Plugin {
           req.on('end', () => {
             try {
               const { id, data, images } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
               const targetPath = path.join(repoRoot, 'tools', 'level_editor', 'tilesets', `${id}.json`);
               fs.mkdirSync(path.dirname(targetPath), { recursive: true });
               fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');

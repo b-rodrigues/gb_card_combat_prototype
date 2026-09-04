@@ -53,3 +53,27 @@ void scene_load_tiles_banked(void)
         w->map[e->gate_y][e->gate_x] = TILE_EXIT;
     }
 }
+
+/* Banked body of scene_spawn() (see scene.c).  Same bank-5 residency as
+ * scene_load_tiles_banked: reads the spawn compiled from the level JSON's
+ * player.spawn directly out of g_scenes, so no fixed-bank code ever touches
+ * the scene table for this (the fixed-bank _CODE budget sits hard against
+ * 0x8000; see AGENTS.md 52.18/55.5).  Map id in g_bk_byte_a; spawn
+ * (x, y, facing) out via g_bk_byte_b/c/d.  Out-of-range maps yield the
+ * historic (4,4)/DOWN fallback.  Self-contained: no fixed-bank calls. */
+void scene_spawn_banked(void)
+{
+    MapId map_id = (MapId)g_bk_byte_a;
+    const SceneDefinition *def;
+
+    if (map_id > MAP_SOUTH_FIELD) {
+        g_bk_byte_b = 4;
+        g_bk_byte_c = 4;
+        g_bk_byte_d = (uint8_t)DIRECTION_DOWN;
+        return;
+    }
+    def = &g_scenes[map_id];
+    g_bk_byte_b = def->spawn_x;
+    g_bk_byte_c = def->spawn_y;
+    g_bk_byte_d = def->spawn_facing;
+}

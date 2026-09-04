@@ -8,6 +8,7 @@ import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
+import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
@@ -51,6 +52,12 @@ const EXISTING_LEVELS: ExistingLevelItem[] = [
 export const App: React.FC = () => {
   const [level, setLevel] = useState<EditorLevel>(() => levelDataToEditor(forestData as any));
   const [currentLevelId, setCurrentLevelId] = useState<string>('forest');
+  // Disk-backed catalogue (refreshed from /api/levels on mount and after
+  // saves, so hand-edited JSON shows up without an editor rebuild).
+  // Bundled static imports above remain the fallback when the dev API is
+  // unreachable (e.g. a built preview bundle).
+  const [levelItems, setLevelItems] = useState<ExistingLevelItem[]>(EXISTING_LEVELS);
+  const [diskLive, setDiskLive] = useState<boolean>(false);
 
   // Tool & Layer State
   const [activeTool, setActiveTool] = useState<ToolType>('brush');
@@ -90,11 +97,72 @@ export const App: React.FC = () => {
     }
   }, [notification]);
 
+  // Load the level catalogue + tilesets from disk once on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [items, changedTilesets] = await Promise.all([
+          fetchLevelList(),
+          refreshTilesetsFromServer().catch(() => [] as string[]),
+        ]);
+        if (cancelled) return;
+        const byId = new Map(EXISTING_LEVELS.map((l) => [l.id, l]));
+        const fresh: ExistingLevelItem[] = [];
+        for (const it of items) {
+          try {
+            const data = await fetchLevelData(it.category, it.id);
+            fresh.push({ id: it.id, name: it.name, data, category: it.category });
+          } catch {
+            const b = byId.get(it.id);
+            if (b) fresh.push(b);
+          }
+        }
+        for (const b of EXISTING_LEVELS) {
+          if (!fresh.some((f) => f.id === b.id)) fresh.push(b);
+        }
+        setLevelItems(fresh);
+        setDiskLive(true);
+        // Reload the boot level from disk so hand edits show immediately,
+        // and re-render with the refreshed tilesets.
+        const boot = fresh.find((f) => f.id === 'forest');
+        if (boot) {
+          setLevel(levelDataToEditor(boot.data));
+          setCurrentLevelId('forest');
+        } else if (changedTilesets.length > 0) {
+          setLevel((prev) => ({ ...prev }));
+        }
+      } catch {
+        // Dev API unreachable: keep the bundled snapshot.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleSaveToServer = async () => {
     setNotification({ message: 'Saving level to disk...', type: 'info' });
     const res = await saveLevelToServer(level);
     if (res.success) {
       setNotification({ message: `Successfully saved ${level.id} to ${res.path}!`, type: 'success' });
+      // Refresh the catalogue so newly created ids appear without a rebuild.
+      try {
+        const items = await fetchLevelList();
+        const known = new Set(levelItems.map((f) => f.id));
+        const added: ExistingLevelItem[] = [];
+        for (const it of items) {
+          if (!known.has(it.id)) {
+            try {
+              added.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category });
+            } catch {
+              // Leave it out; the next save retries.
+            }
+          }
+        }
+        if (added.length > 0) setLevelItems((prev) => [...prev, ...added]);
+        setDiskLive(true);
+      } catch {
+        // Catalogue refresh is best-effort; the save itself succeeded.
+      }
     } else {
       setNotification({ message: `Save failed: ${res.error}`, type: 'error' });
     }
@@ -198,16 +266,24 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [level, history, redoStack]);
 
-  // Select level from dropdown
-  const handleSelectLevel = (selectedId: string) => {
+  // Select level from dropdown (fresh disk content first, bundled fallback).
+  const handleSelectLevel = async (selectedId: string) => {
     if (selectedId === '__new__') {
       handleCreateNewLevel();
       return;
     }
 
-    const found = EXISTING_LEVELS.find((l) => l.id === selectedId);
+    const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
-      const parsed = levelDataToEditor(found.data);
+      let data = found.data;
+      if (diskLive) {
+        try {
+          data = await fetchLevelData(found.category || 'levels', selectedId);
+        } catch {
+          // Fall back to the catalogue snapshot.
+        }
+      }
+      const parsed = levelDataToEditor(data);
       pushState(parsed);
       setCurrentLevelId(selectedId);
       setSelectedEntityIndex(null);
@@ -226,20 +302,21 @@ export const App: React.FC = () => {
     setSelectedEntityIndex(null);
   };
 
-  // Drawing Actions
+  // Drawing Actions (all terrain mutations flag terrainDirty so the save
+  // path emits the edited grid instead of the as-loaded block form).
   const handleTilePainted = (x: number, y: number, tileId: string) => {
     if (level.grid[y]?.[x] === tileId) return;
     const newGrid = level.grid.map((row, ry) =>
       ry === y ? row.map((col, rx) => (rx === x ? tileId : col)) : [...row]
     );
-    pushState({ ...level, grid: newGrid });
+    pushState({ ...level, grid: newGrid, terrainDirty: true });
   };
 
   const handleRectPainted = (rx: number, ry: number, rw: number, rh: number, tileId: string) => {
     const newGrid = level.grid.map((row, y) =>
       row.map((col, x) => (x >= rx && x < rx + rw && y >= ry && y < ry + rh ? tileId : col))
     );
-    pushState({ ...level, grid: newGrid });
+    pushState({ ...level, grid: newGrid, terrainDirty: true });
   };
 
   const handleClonePatternCaptured = (pattern: string[][]) => {
@@ -284,7 +361,7 @@ export const App: React.FC = () => {
         return col;
       })
     );
-    pushState({ ...level, grid: newGrid });
+    pushState({ ...level, grid: newGrid, terrainDirty: true });
   };
 
   const handleDuplicateSelectedEntity = () => {
@@ -331,7 +408,7 @@ export const App: React.FC = () => {
       queue.push([cx, cy - 1]);
     }
 
-    pushState({ ...level, grid: newGrid });
+    pushState({ ...level, grid: newGrid, terrainDirty: true });
   };
 
   // Spawn Move
@@ -425,7 +502,9 @@ export const App: React.FC = () => {
       }
     }
 
-    pushState({ ...level, ...updates, grid: newGrid });
+    // A resize rebuilds the grid (dirty); pure meta edits keep the form.
+    const resized = newW !== level.width || newH !== level.height;
+    pushState({ ...level, ...updates, grid: newGrid, terrainDirty: level.terrainDirty || resized });
   };
 
   // Validate Logic
@@ -580,20 +659,20 @@ export const App: React.FC = () => {
             onChange={(e) => handleSelectLevel(e.target.value)}
           >
             <optgroup label="Overworld Levels">
-              {EXISTING_LEVELS.filter((l) => l.category === 'levels').map((lvl) => (
+              {levelItems.filter((l) => l.category === 'levels').map((lvl) => (
                 <option key={lvl.id} value={lvl.id}>
                   {lvl.name} ({lvl.id}.json)
                 </option>
               ))}
             </optgroup>
             <optgroup label="Screens">
-              {EXISTING_LEVELS.filter((l) => l.category === 'screens').map((lvl) => (
+              {levelItems.filter((l) => l.category === 'screens').map((lvl) => (
                 <option key={lvl.id} value={lvl.id}>
                   {lvl.name} (screens/{lvl.id}.json)
                 </option>
               ))}
             </optgroup>
-            {!EXISTING_LEVELS.some((l) => l.id === currentLevelId) && (
+            {!levelItems.some((l) => l.id === currentLevelId) && (
               <optgroup label="Current Level">
                 <option value={currentLevelId}>
                   {level.name || currentLevelId} ({currentLevelId}.json)
@@ -688,7 +767,9 @@ export const App: React.FC = () => {
             <TilesetPalette
               tilesetId={level.tileset}
               selectedTileId={selectedTileId}
-              onSelectTileset={(ts) => pushState({ ...level, tileset: ts })}
+              // Switching tilesets re-prefixes every tile on save, so the
+              // stored block form (pinned to the old tileset) is stale.
+              onSelectTileset={(ts) => pushState({ ...level, tileset: ts, terrainDirty: true })}
               onSelectTile={setSelectedTileId}
             />
           </aside>

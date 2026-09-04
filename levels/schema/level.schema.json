@@ -90,24 +90,6 @@
         }
       }
     },
-    "collision": {
-      "type": "object",
-      "description": "Optional explicit collision overrides",
-      "properties": {
-        "overrides": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["x", "y", "walkable"],
-            "properties": {
-              "x": { "type": "integer" },
-              "y": { "type": "integer" },
-              "walkable": { "type": "boolean" }
-            }
-          }
-        }
-      }
-    },
     "player": {
       "type": "object",
       "required": ["spawn"],

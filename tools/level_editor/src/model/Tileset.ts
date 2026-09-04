@@ -23,7 +23,7 @@ export interface TilesetDefinition {
   tiles: TileDefinition[];
 }
 
-function parseTilesetJson(data: any): TilesetDefinition {
+export function parseTilesetJson(data: any): TilesetDefinition {
   return {
     id: data.id,
     label: data.label || data.id,

@@ -42,16 +42,22 @@ export interface MapMetadata {
   map_id?: string;
 }
 
+export interface TerrainBlock {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  tile: string;
+  comment?: string;
+}
+
 export interface LevelData {
   id: string;
   name: string;
   map: MapMetadata;
   layers: {
-    terrain: string[][] | Array<{ x: number; y: number; width: number; height: number; tile: string }>;
-    blocks?: Array<{ x: number; y: number; width: number; height: number; tile: string }>;
-  };
-  collision?: {
-    overrides?: Array<{ x: number; y: number; walkable: boolean }>;
+    terrain: string[][] | TerrainBlock[];
+    blocks?: TerrainBlock[];
   };
   player: {
     spawn: PlayerSpawn;
@@ -70,6 +76,15 @@ export interface EditorLevel {
   music: string;
   mapId: string;
   grid: string[][]; // tile names, e.g. "tree", "floor"
+  // Terrain representation fidelity (JSON is the source of truth both
+  // ways): the grid above is the editing model, but on save the level is
+  // written back in the form it was loaded in -- unless the terrain was
+  // actually painted (terrainDirty), in which case the edited grid is
+  // emitted (the compiler accepts both forms; decompile normalizes grids
+  // back to verbatim blocks).  View-only saves are therefore byte-stable.
+  terrainSource: 'blocks' | 'grid';
+  terrainBlocks: TerrainBlock[];
+  terrainDirty: boolean;
   spawn: PlayerSpawn;
   exits: LevelExit[];
   objects: LevelObject[];
@@ -198,6 +213,9 @@ export function titleScreenToEditor(data: any): EditorLevel {
     music: 'MUSIC_TITLE',
     mapId: 'SCREEN_TITLE',
     grid,
+    terrainSource: 'grid',
+    terrainBlocks: [],
+    terrainDirty: false,
     spawn: { x: data.menu?.caret_x ?? 3, y: data.menu?.first_row ?? 10, facing: 'RIGHT' },
     exits: [],
     objects,
@@ -288,6 +306,9 @@ export function battleScreenToEditor(data: any): EditorLevel {
     music: 'MUSIC_BATTLE',
     mapId: 'SCREEN_BATTLE',
     grid,
+    terrainSource: 'grid',
+    terrainBlocks: [],
+    terrainDirty: false,
     spawn: { x: data.hud_layout?.caret_x ?? 2, y: data.hud_layout?.timer_row ?? 15, facing: 'RIGHT' },
     exits: [],
     objects,
@@ -343,6 +364,9 @@ export function createEmptyEditorLevel(id: string = 'new_scene', tilesetId: stri
     music: 'MUSIC_OVERWORLD',
     mapId: `MAP_${id.toUpperCase()}`,
     grid,
+    terrainSource: 'grid',
+    terrainBlocks: [],
+    terrainDirty: false,
     spawn: { x: Math.floor(width / 2), y: Math.floor(height / 2), facing: 'DOWN' },
     exits: [],
     objects: [],
@@ -374,6 +398,8 @@ export function levelDataToEditor(data: any): EditorLevel {
   }
 
   const rawTerrain = data.layers?.terrain;
+  let terrainSource: 'blocks' | 'grid' = 'grid';
+  let terrainBlocks: TerrainBlock[] = [];
   if (Array.isArray(rawTerrain) && rawTerrain.length > 0) {
     if (Array.isArray(rawTerrain[0])) {
       // 2D grid format
@@ -386,8 +412,11 @@ export function levelDataToEditor(data: any): EditorLevel {
         }
       }
     } else {
-      // Block format
-      const blocks = rawTerrain as Array<{ x: number; y: number; width: number; height: number; tile: string }>;
+      // Block format: expand into the editing grid but keep the original
+      // blocks (with comments) so an untouched save writes them back verbatim.
+      terrainSource = 'blocks';
+      const blocks = rawTerrain as TerrainBlock[];
+      terrainBlocks = blocks.map((b) => ({ ...b }));
       for (const b of blocks) {
         const cleanTile = b.tile.includes('.') ? b.tile.split('.')[1] : b.tile;
         for (let cy = b.y; cy < Math.min(h, b.y + b.height); cy++) {
@@ -408,6 +437,9 @@ export function levelDataToEditor(data: any): EditorLevel {
     music: data.map.music || 'MUSIC_OVERWORLD',
     mapId: data.map.map_id || `MAP_${(data.id || 'scene').toUpperCase()}`,
     grid,
+    terrainSource,
+    terrainBlocks,
+    terrainDirty: false,
     spawn: data.player?.spawn || { x: Math.floor(w / 2), y: Math.floor(h / 2), facing: 'DOWN' },
     exits: data.exits || [],
     objects: data.objects || [],
@@ -458,7 +490,12 @@ export function editorToLevelData(lvl: EditorLevel): any {
       map_id: lvl.mapId
     },
     layers: {
-      terrain: lvl.grid.map(row => row.map(t => `${lvl.tileset}.${t}`))
+      // Write back the as-loaded form unless the terrain was painted, so
+      // view-only saves never reformat the committed files (see
+      // terrainSource/terrainDirty above).
+      terrain: (!lvl.terrainDirty && lvl.terrainSource === 'blocks')
+        ? lvl.terrainBlocks.map((b) => ({ ...b }))
+        : lvl.grid.map(row => row.map(t => `${lvl.tileset}.${t}`))
     },
     player: {
       spawn: lvl.spawn

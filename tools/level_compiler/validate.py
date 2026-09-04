@@ -169,6 +169,15 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
     sp_x = spawn_info.get("x", -1)
     sp_y = spawn_info.get("y", -1)
 
+    # The spawn is compiled into SceneDefinition (game_new_game reads the
+    # FIELD row), so the facing spelling must map to a Direction enum.
+    spawn_facing = str(spawn_info.get("facing", "DOWN")).upper()
+    if spawn_facing not in ("UP", "DOWN", "LEFT", "RIGHT",
+                            "NORTH", "SOUTH", "WEST", "EAST"):
+        errors.append(f"Player spawn facing '{spawn_info.get('facing')}' is unknown "
+                      f"(want UP/DOWN/LEFT/RIGHT or a compass alias)")
+        collision_ok = False
+
     if sp_x < 0 or sp_x >= width or sp_y < 0 or sp_y >= height:
         errors.append(f"Player spawn ({sp_x}, {sp_y}) is outside map bounds ({width}x{height})")
         collision_ok = False

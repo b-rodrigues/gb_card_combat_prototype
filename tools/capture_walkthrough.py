@@ -66,9 +66,10 @@ OUT = os.path.join(REPO, "screenshots")
 
 # Player Entity layout: position{x,y}, hp, max_hp, active, facing, id.
 # Located by scanning WRAM for the deterministic boot pattern (FIELD spawn
-# (4,4), hero 10/10, active, facing DOWN, id PLAYER) rather than hardcoding
+# (17,7) per levels/field.json player.spawn, hero 10/10, active, facing
+# LEFT, id PLAYER) rather than hardcoding
 # the g_game offset (which shifts with the _DATA layout on each build).
-PLAYER_BOOT = bytes([4, 4, 10, 10, 1, 1, 1])
+PLAYER_BOOT = bytes([17, 7, 10, 10, 1, 2, 1])
 WRAM_BASE = 0xC000
 WRAM_SIZE = 0x2000
 
@@ -332,9 +333,9 @@ def main():
     print(f"boot: player at ({x},{y}) (WRAM 0x{pos_addr:04X})")
     shoot(pb, "00-boot-field")
 
-    # FIELD (4,4) -> scrolled camera (x ~22, SCX > 0) -> east wall (30,4) ->
-    # south (30,7) -> east gate (31,7) -> TOWN (2,7) -> (2,8) -> west of the
-    # guard at (9,8).  The camera scrolls horizontally on FIELD (32 wide) and
+    # FIELD spawn (17,7) per levels/field.json -> scrolled camera (x ~22,
+    # SCX > 0) -> east wall (30,7) -> east gate (31,7) -> TOWN (2,7) ->
+    # (2,8) -> west of the guard at (9,8).  The camera scrolls horizontally on FIELD (32 wide) and
     # vertically in TOWN (18 tall), so the dialogue box is exercised with a
     # scrolled camera.
     ok = walk("right", lambda: pos()[0] >= 22)
@@ -477,14 +478,27 @@ def main():
 
     x, y = pos2()
     print(f"battle walk: boot at ({x},{y})")
-    # FIELD (4,4) -> down to row 8 -> right to (13,8) -> right into the
-    # hostile slime at (14,8), which resolves to an encounter on commit.
+    # FIELD spawn (17,7) -> down to row 8, then westward into the hostile
+    # slime patrolling x13-16 around (14,8).  The bump lands wherever the
+    # patrol currently stands -- host-timing lossiness shifts the exact
+    # collision cell between runs -- so the goal is the encounter itself
+    # (DECK: on the BG tilemap), not a fixed tile.  Sweep back east if the
+    # walk overshoots past the patrol box without engaging.
     ok = walk2("down", lambda: pos2()[1] == 8)
-    ok = walk2("right", lambda: pos2()[0] == 13) and ok
-    check("walk: reached the slime", ok)
-    if not ok:
+    engaged = any("DECK:" in r for r in bg_text(pb))
+    for _ in range(60):
+        if engaged:
+            break
+        if pos2()[0] <= 12:
+            press2("right", settle=24)
+        else:
+            press2("left", settle=24)
+        engaged = any("DECK:" in r for r in bg_text(pb))
+    check("walk: reached the slime", ok and engaged)
+    if not engaged:
         print("warning: walk did not reach the slime; sampling anyway")
-    press2("right", settle=40)
+    for _ in range(40):
+        pb.tick()
     shoot(pb, "09-battle", need="DECK:")
 
     # Select card with A, then execute combo with SELECT (damage dealt)
@@ -534,8 +548,11 @@ def main():
                     break
         return is_goal()
 
-    # FIELD (4,4) -> right to col 12 -> up to row 1 -> up into north gate (12,0)
-    ok = walk3("right", lambda: pos3()[0] == 12)
+    # FIELD spawn (17,7) -> up to row 6 (clear of the slime's patrol box
+    # around (14,8)) -> left to col 12 -> up to row 1 -> up into north
+    # gate (12,0)
+    ok = walk3("up", lambda: pos3()[1] == 6)
+    ok = walk3("left", lambda: pos3()[0] == 12) and ok
     ok = walk3("up", lambda: pos3()[1] == 1) and ok
     check("walk: reached forest gate", ok)
     step3("up")

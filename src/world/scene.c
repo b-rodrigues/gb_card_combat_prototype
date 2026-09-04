@@ -57,3 +57,16 @@ void scene_load_tiles(World *w, MapId map_id)
     g_bk_byte_a = (uint8_t)map_id;
     banked_call_run();
 }
+
+/* scene_spawn() is a fixed-bank wrapper around the banked body in
+ * src/world/scene_load.c (ROM bank 5).  The wrapper stages the map id into
+ * the _DATA globals (banked.c) and runs the banked no-arg function through
+ * the WRAM banked-call trampoline (crt0.s); the spawn comes back in
+ * g_bk_byte_b/c/d. */
+void scene_spawn(MapId map_id)
+{
+    g_bk_call_bank = 5;
+    g_bk_call_target = (uint16_t)&scene_spawn_banked;
+    g_bk_byte_a = (uint8_t)map_id;
+    banked_call_run();
+}

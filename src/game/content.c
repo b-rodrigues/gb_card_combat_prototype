@@ -4,6 +4,7 @@
 #include "event.h"
 #include "dialogue.h"
 #include "actor.h"
+#include "scene.h"
 #include "rpg/party.h"
 #include "rpg/deck.h"
 #include "rpg/loot.h"
@@ -43,9 +44,14 @@ void game_new_game(GameState *state)
     game_state_zero(state);
 
     state->scene.scene_id = SCENE_FIELD;
-    state->scene.player_x = 4;
-    state->scene.player_y = 4;
-    state->scene.player_facing = (uint8_t)DIRECTION_DOWN;
+    /* Player start is compiled from levels/field.json player.spawn (the
+     * single source of truth).  scene_spawn() runs the banked table read;
+     * the fallback for bad map ids lives in that banked body, so this
+     * fixed-bank call site stays branch-free (fixed-bank _CODE budget). */
+    scene_spawn(MAP_FIELD);
+    state->scene.player_x = g_bk_byte_b;
+    state->scene.player_y = g_bk_byte_c;
+    state->scene.player_facing = g_bk_byte_d;
 
     state->party.count = 1;
     state->party.members[0].id = CHARACTER_HERO;

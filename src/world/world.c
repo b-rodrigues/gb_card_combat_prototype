@@ -72,7 +72,14 @@ void world_update_scroll(World *w)
 void world_init(World *w, const GameState *state)
 {
     if (!w) return;
-    entity_init(&w->player, ENTITY_ID_PLAYER, 4, 4, 10, 10);
+    /* Runtime player position seeds from the canonical state (which
+     * game_new_game fills from levels/field.json player.spawn, the single
+     * source of truth).  Never hardcode coordinates here: scene_sync_from_world
+     * copies the runtime position back into GameState every frame, so a
+     * hardcoded value would silently overwrite the authored spawn. */
+    entity_init(&w->player, ENTITY_ID_PLAYER,
+                state->scene.player_x, state->scene.player_y, 10, 10);
+    w->player.facing = (Direction)state->scene.player_facing;
     world_load_map(w, MAP_FIELD, state);
 }
 
