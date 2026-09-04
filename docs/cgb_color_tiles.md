@@ -170,6 +170,27 @@ If a future "per-scene CRAM loading" pass blindly reprograms all 8 palettes when
 
 ## 4. ELI5: How Graphics Actually Get Into the Game
 
+### The 7 Steps: From Drawing to Screen
+
+1. **Draw the art as a PNG**
+   Put your artwork in `assets/` (e.g. `assets/forest-tile.png`). It has to be a grid of 8x8 tiles (Game Boy hardware only understands 8x8 chunks), and each individual 8x8 tile can use at most 4 colors — that's a hardware limit, not a style choice.
+2. **Convert it with `png2gb.py`**
+   Run `tools/png2gb.py` on the PNG. It slices it into 8x8 tiles and packs each into Game Boy 2bpp format (2 bits per pixel = 4 shade indices per tile). Pick a palette mode: `canonical` (grayscale), `gb_green` (classic GB tint), or `auto` (currently: sorts each tile's own colors by brightness — this is the piece that needs the 'pin a color to index 0' fix mentioned above).
+3. **It becomes a `.inc`/`.h` file in `src/gfx/`**
+   The output lands as a generated header, e.g. `src/gfx/rpg_forest_world_tiles.inc` — this is what actually gets compiled into the ROM. `make gfx` regenerates all of these from the `assets/` PNGs automatically, and CI fails if a committed `.inc` drifts from its source PNG.
+4. **Register the tile in a tileset manifest**
+   If it's a world tile (not a sprite), add an entry to the matching JSON in `tools/level_editor/tilesets/` (`forest.json`, `castle.json`, etc.) with its `gb_constant`, `walkable` flag, and `glyph` (the single ASCII character that drives both the ROM's text-mode display and — today — its color, per `docs/glyphs.md`).
+5. **Place it in a level and compile**
+   Use the web level editor (or hand-edit `levels/*.json`) to place the tile on a map, then run `tools/level_compiler/compile.py` — it turns the JSON into `SceneTerrainBlock` C data in `src/game/scenes_content.c`.
+6. **Color comes from the glyph, not the tile**
+   At render time, `ui_cell_palette()` in `src/ui/ui.c` maps the tile's glyph (`T`, `t`, `s`, `R`, etc.) to one of the 8 shared CGB palette slots in `cgb_bg_palettes`. New glyphs need a new branch here to get color — otherwise they render in palette 0 (grayscale) by default. Remember: slots 1/2/4/6 also double as battle-status colors, so don't repurpose them for a new terrain hue without checking that collision.
+7. **Build and check it on real timing**
+   Run `make` to build the ROM. Use `tools/verify_oam.py`, the screenshot harness, or the pyboy-based dev tools to actually look at it — CGB palette bugs (like the beige-box seam) usually only show up visually, not in a compile.
+
+---
+
+### The Hardware Analogy: The Coloring Book
+
 Think of the Game Boy Color screen as an interactive coloring book. Creating the final picture requires four distinct parts working together:
 
 ```
@@ -185,7 +206,7 @@ Think of the Game Boy Color screen as an interactive coloring book. Creating the
                                                                            [Final Colored Screen]
 ```
 
-### 1. The Rubber Stamps (Tile Patterns in VRAM Bank 0)
+#### 1. The Rubber Stamps (Tile Patterns in VRAM Bank 0)
 The artist creates 8×8 pixel shapes: a treetop curve, a piece of bark, a patch of grass.
 On the cartridge, these shapes don't have any real color! They are molded like rubber stamps with **4 shades of grey ink**:
 - Shade 0 (lightest / background)
@@ -193,23 +214,23 @@ On the cartridge, these shapes don't have any real color! They are molded like r
 - Shade 2 (dark tone)
 - Shade 3 (black / deepest shadow)
 
-### 2. The Floorplan (The Tilemap at `0x9800`)
+#### 2. The Floorplan (The Tilemap at `0x9800`)
 The Game Boy has a 32×32 grid called the Tilemap. It tells the hardware:
 - *"Put Rubber Stamp #12 at square (3, 3)."* (The treetop)
 - *"Put Rubber Stamp #28 at square (3, 4)."* (The tree trunk)
 
-### 3. The Crayon Boxes (Palettes in CRAM)
+#### 3. The Crayon Boxes (Palettes in CRAM)
 The Game Boy Color has a small shelf called CRAM that can only hold **8 small boxes of crayons**.
 Each box contains exactly **4 crayons**:
 - **Crayon Box 3 (Field)**: [Grass Green, Forest Green, Deep Forest Green, Black]
 - **Crayon Box 5 (Wood)**:  [Light Beige, Light Brown, Medium Brown, Dark Brown]
 
-### 4. The Coloring Instructions (Attributes in VRAM Bank 1)
+#### 4. The Coloring Instructions (Attributes in VRAM Bank 1)
 Behind the stamp grid lies a second sheet called the Attribute Map. For each square, it specifies:
 - *"Color Stamp #12 using Crayon Box 3 (Field)."*
 - *"Color Stamp #28 using Crayon Box 5 (Wood)."*
 
-### Why Does the Tree Trunk Get an Ugly Beige Box?
+#### Why Does the Tree Trunk Get an Ugly Beige Box?
 Look at what happens to the tree trunk stamp:
 1. The rubber stamp for the tree trunk contains the brown bark, but its bottom corners also have a bit of **grass** where the trunk meets the lawn.
 2. The computer saw that the grass was the brightest part of that stamp, so it marked the grass as **Shade 0**, and the tree bark as **Shade 2 and 3**.
@@ -218,7 +239,7 @@ Look at what happens to the tree trunk stamp:
 5. So the Game Boy colors the grass around the trunk with **Beige**, while the rest of the lawn was colored with **Grass Green** from Crayon Box 3!
 6. **Result**: A visible beige rectangular box surrounds the trunk.
 
-### Why Can't We Just Put 50 Colors on Screen Like a Modern PC?
+#### Why Can't We Just Put 50 Colors on Screen Like a Modern PC?
 1. An 8×8 rubber stamp can only touch **ONE Crayon Box** at a time. You cannot use Box 3 for the top half of a tile and Box 5 for the bottom half.
 2. If you want an 8×8 tile to have both green leaves and brown bark, you must create a Crayon Box that contains **both green and brown crayons**.
 3. You only have 8 boxes for the whole background, so they must be shared smartly.
