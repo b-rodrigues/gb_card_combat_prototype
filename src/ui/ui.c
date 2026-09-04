@@ -619,7 +619,7 @@ void ui_draw_actors_sprites(const World *world)
      * The banked body writes directly into shadow OAM (WRAM, always
      * mapped) and hides inactive/BOSS actors. */
     castle = (world->tileset_kind == WORLD_TILESET_CASTLE);
-    g_bk_call_bank = 3;
+    g_bk_call_bank = 4;
     g_bk_call_target = (uint16_t)&ui_actors_sprites_banked;
     g_bk_ptr_a = (void *)world;
     g_bk_byte_a = castle;
@@ -682,7 +682,7 @@ void ui_draw_world_map(const World *world)
 
     /* Ensure active scene's tileset is loaded into VRAM Block 1 (slots 128..255) */
     ui_load_tileset((uint8_t)world->tileset_kind);
-    ui_set_cram_palette(1);
+    ui_set_cram_palette((uint8_t)world->tileset_kind);
 
     /* Populate the entire 32-column x 18-row background ring during LCD-safe
      * full map redraw. Field: all 32 x 18 cells. Smaller maps: col 20..31 are

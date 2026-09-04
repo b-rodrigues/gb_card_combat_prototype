@@ -23,7 +23,9 @@ UGE2SOURCE = uge2source
 
 INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle -I$(SRC_DIR)/input -I$(SRC_DIR)/audio -I$(SRC_DIR)/ui -I$(SRC_DIR)/debug -I$(SRC_DIR)/screens -I$(SRC_DIR)/game -Ilib/hUGEDriver/include -I$(GENERATED_MUSIC_DIR) -I$(GENERATED_SFX_DIR) -I$(GENERATED_TILES_DIR)
 
-SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
+ALL_SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
+BANK5_EARLY_SRCS = $(SRC_DIR)/world/scene_load.c
+SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events);
@@ -252,7 +254,7 @@ GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
 GENERATED_TILE_PALETTE = $(GENERATED_TILES_DIR)/tile_palette.h
 tiles: $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE)
 
-$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
 	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
 
 $(GENERATED_TILES_DIR):

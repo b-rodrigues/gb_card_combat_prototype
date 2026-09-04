@@ -229,7 +229,23 @@ GLYPH_PALETTE = {
 KIND_FLOOR_PALETTE = {
     "forest":              3,  # UI_COLOR_FIELD
     "desolate_landscape":  7,  # UI_COLOR_DIM
-    "castle":              0,  # UI_COLOR_NONE (grayscale for now)
+    "castle":              0,  # UI_COLOR_NONE (stone floor)
+}
+
+# Per-tile sheet-index overrides for specific object/accent tiles
+TILE_PALETTE_OVERRIDES = {
+    "castle": {
+        6: 1,   # Curtain (red)
+        12: 5,  # Chair (wood)
+        13: 5,  # Table (wood)
+        14: 5,  # Chair (wood)
+        15: 6,  # Chest (gold)
+    },
+    "desolate_landscape": {
+        37: 1,  # Campfire frame 1 (fire)
+        38: 1,  # Campfire frame 2 (fire)
+        43: 6,  # Treasure chest (gold)
+    },
 }
 
 
@@ -283,10 +299,13 @@ def emit_palette(entries, tilesets, const_by_value):
             continue
 
         floor_pal = KIND_FLOOR_PALETTE.get(ts_id, 0)
+        overrides = TILE_PALETTE_OVERRIDES.get(ts_id, {})
 
         pal_values = []
         for idx, glyph in tiles:
-            if glyph in ('.', ','):
+            if idx in overrides:
+                pal = overrides[idx]
+            elif glyph in ('.', ','):
                 pal = floor_pal
             elif glyph in GLYPH_PALETTE:
                 pal = GLYPH_PALETTE[glyph]

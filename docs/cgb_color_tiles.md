@@ -11,7 +11,7 @@ This document analyzes how background color currently flows through the engine, 
 | **Is stuff missing to achieve full-color tiles?** | **YES** | Missing: automated CGB palette extraction from PNGs, per-tile attribute mapping in manifests/level compiler, per-scene dynamic CRAM loading, and level editor palette support. |
 | **Do we need a palette?** | **YES** | CGB hardware requires up to 8 background palettes in CRAM, each containing 4 colors (15-bit RGB555). We specifically need **per-scene palette sets** rather than the single global set currently used. |
 | **Is it hardcoded?** | **YES** | All 8 CGB BG palettes are hardcoded into a single compile-time array (`cgb_bg_palettes[8][4]` in `src/ui/ui_color_banked.c`). Furthermore, palette assignment per tile is hardcoded via an ASCII character glyph heuristic in `ui_cell_palette()`. |
-| **What do?** | **ROADMAP** | 1. **[DONE]** Add `--anchor-color` to `png2gb.py` to pin the scene backdrop to index 0.<br>2. **[DONE]** Build palette compiler/exporter in `generate_tiles.py` to emit `tile_palette.h`.<br>3. **[DONE]** Replace ASCII glyph heuristic with direct ROM `g_tile_pal_*` lookup.<br>4. **[DONE]** Address double-booking collision via screen-transition CRAM reloading (`ui_set_cram_palette`).<br>5. **[TODO]** Introduce per-scene CRAM palette sets for distinct scene aesthetics (Castle, Desolate).<br>6. **[TODO]** Establish single-source JSON manifest for web editor canvas color preview. |
+| **What do?** | **ROADMAP** | 1. **[DONE]** Add `--anchor-color` to `png2gb.py` to pin the scene backdrop to index 0.<br>2. **[DONE]** Build palette compiler/exporter in `generate_tiles.py` to emit `tile_palette.h`.<br>3. **[DONE]** Replace ASCII glyph heuristic with direct ROM `g_tile_pal_*` lookup.<br>4. **[DONE]** Address double-booking collision via screen-transition CRAM reloading (`ui_set_cram_palette`).<br>5. **[DONE]** Introduce per-scene CRAM palette sets for distinct scene aesthetics (Castle, Desolate).<br>6. **[TODO]** Establish single-source JSON manifest for web editor canvas color preview. |
 
 ---
 
@@ -168,10 +168,14 @@ Because `ui_cell_palette` relies on ASCII characters:
 
 ## 4. Structural Gaps in the Current Codebase
 
-### Gap 1: Exactly One Global Palette Set, Not One Per Tileset [PARTIALLY RESOLVED / TODO]
+### Gap 1: Exactly One Global Palette Set, Not One Per Tileset [DONE]
 Originally, `src/ui/ui_color_banked.c` defined a single `cgb_bg_palettes[8][4]` array programmed once at boot.
-- **Current State**: We now have dual CRAM sets in Bank 5 (`cgb_bg_palettes` for battle/UI and `cgb_bg_palettes_overworld` for overworld) switched dynamically via `ui_set_cram_palette()`.
-- **Remaining [TODO]**: Distinct per-tileset CRAM sets for Castle (`cgb_bg_palettes_castle`) and Desolate Landscape (`cgb_bg_palettes_desolate`).
+- **Resolution [DONE]**: We now have dedicated CRAM palette sets in Bank 5 for each world tileset:
+  - `cgb_bg_palettes_forest` (Forest, Field, Town) with grass green backdrop (`#7bb660`)
+  - `cgb_bg_palettes_desolate` (Mountain Pass, South Field) with slate rock backdrop (`#938da1`)
+  - `cgb_bg_palettes_castle` (Castle Bastion) with light stone backdrop (`#d7d7d7`)
+  - `cgb_bg_palettes` (Battle/Status/Card UI) with crisp white backdrop
+  These are dynamically reloaded via `ui_set_cram_palette(world->tileset_kind)` during LCD-safe map loads and screen transitions.
 
 ### Gap 2: Tileset JSON `color` Field is Cosmetic Only [DONE]
 Previously, the `"color"` field in `tilesets/*.json` was only used for web preview swatches.
@@ -333,21 +337,14 @@ VBK_REG = 0;
 - Instant $O(1)$ lookup with no ASCII glyph guessing.
 - Complete separation of terrain presentation from collision logic.
 
-### Pillar 4: Safe CRAM Write Timing & Screen Transition Reloading [PARTIALLY DONE / TODO: Per-Scene CRAM Sets]
+### Pillar 4: Safe CRAM Write Timing & Screen Transition Reloading [DONE]
 To guarantee reliable execution across real hardware and emulators without Mode 3 corruption or slot collisions:
 1. **Screen Transitions (Overworld <-> Battle) [DONE]**:
    - When entering battle, reload CRAM with the canonical UI / Status / Card palettes (`cgb_bg_palettes`).
-   - When returning to the overworld, reload CRAM with the active scene's terrain palettes (`ui_set_cram_palette(1)`).
-2. **Scene Transitions (LCD-off / Full Screen Wipe) [TODO: Per-Scene CRAM Sets]**:
-   - When changing maps in `world_change_map()`, palette loading must be gated through the transition wipe (where `ui_sprite_begin_transition()` has already hidden sprites and the LCD is blanked or safely transitioning).
-   - Use the existing BCPS/BCPD write pattern from `ui_init()`:
-     ```c
-     BCPS_REG = (uint8_t)(0x80 | (p << 3));   /* auto-increment, palette p */
-     for (c = 0; c < 8; c++) {
-         BCPD_REG = palette_bytes[c];
-     }
-     ```
-   - Alternatively, GBDK's `set_bkg_palette()` wraps this same operation. Either approach works but the codebase must be internally consistent.
+   - When returning to the overworld, reload CRAM with the active scene's terrain palettes (`ui_set_cram_palette((uint8_t)world->tileset_kind)`).
+2. **Scene Transitions (LCD-off / Full Screen Wipe) [DONE]**:
+   - When changing maps in `world_change_map()` / `ui_draw_world_map()`, palette loading is gated through the LCD-off full-draw window (`ui_set_cram_palette((uint8_t)world->tileset_kind)`), loading the tileset's harmonized CRAM set without Mode 3 bus conflicts.
+   - Uses direct `BCPS_REG` / `BCPD_REG` streaming in Bank 5 (`ui_load_cram_banked()`).
 3. **Harness Safety [DONE]**:
    - In harness mode (`g_harness_mode`), VBlank waits are bypassed; loading with LCD off ensures instantaneous, deterministic execution in tests.
 

@@ -39,9 +39,9 @@ extern uint8_t g_is_cgb;
 /* Chest pickup sprite (single-frame art loaded into both anim slots). */
 #define CHEST_SPRITE_TILE_ID     94u
 
-/* Bank-3 no-arg body behind ui_draw_actors_sprites(): writes each active
+/* Bank-4 no-arg body behind ui_draw_actors_sprites(): writes each active
  * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)
- * and the castle boss 2x2 background block.  Lives in bank 3 to keep the
+ * and the castle boss 2x2 background block.  Lives in bank 4 to keep the
  * fixed bank under 0x8000. */
 void ui_actors_sprites_banked(void);
 
