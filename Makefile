@@ -88,23 +88,23 @@ gfx:
 	# ── Forest tileset (assets/forest-tile.png, 16 cols × 3 rows) ────────
 	# Full 48-tile world sheet (g_tileset_forest)
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_world_tiles \
-		--palette auto \
+		--palette auto --anchor-color "#7bb660" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_world_tiles.inc
 	# Floor tile: col 0, row 2
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_floor \
-		--palette auto --tile-coords "0,2" \
+		--palette auto --anchor-color "#7bb660" --tile-coords "0,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_floor.inc
 	# Treetop tile: col 12, row 0
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_tree \
-		--palette auto --tile-coords "12,0" \
+		--palette auto --anchor-color "#7bb660" --tile-coords "12,0" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_tree.inc
 	# Exit tile: col 8, row 2
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_exit \
-		--palette auto --tile-coords "8,2" \
+		--palette auto --anchor-color "#7bb660" --tile-coords "8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_exit.inc
 	# Stump tiles TL,TR,BL,BR + mini (BR repeated): cols 14-15, rows 0-1
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_stumps \
-		--palette auto --tile-coords "14,0 15,0 14,1 15,1 15,1" \
+		--palette auto --anchor-color "#7bb660" --tile-coords "14,0 15,0 14,1 15,1 15,1" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
 	# Sprite tiles from forest-tile.png
 	@python3 tools/png2gb.py assets/forest-tile.png --name forest_hero_sprite_tile \
@@ -130,11 +130,11 @@ gfx:
 	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
 	# Full 48-tile world sheet (g_tileset_desolate)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
-		--palette auto \
+		--palette auto --anchor-color "#938da1" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_world_tiles.inc
 	# 41-tile subset for scene terrain lookup (rows 0–2, cols 0–8 on row 2)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
-		--palette auto --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
+		--palette auto --anchor-color "#938da1" --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
 	# Sprite tiles from desolate_landscape.png
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
@@ -149,7 +149,7 @@ gfx:
 	# ── Castle tileset (assets/castle-tile.png, 9 cols × 3 rows) ─────────
 	# Full 27-tile world sheet (g_tileset_castle)
 	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
-		--palette auto --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
+		--palette auto --anchor-color "#d7d7d7" --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
 	# Sprite tiles from castle-tile.png
 	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
 		--palette auto --tile-coords "5,2 6,2" \
