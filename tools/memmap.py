@@ -150,6 +150,8 @@ def main():
         "_ending_content_render": "ending screen render (bank 4)",
         "_game_over_content_render": "game over screen render (bank 4)",
         "_item_screen_render_banked": "item screen render (bank 2)",
+        "_ui_load_cram_banked": "CGB CRAM palette loader (bank 5)",
+        "_ui_load_tileset_banked": "tileset VRAM & palette loader (bank 5)",
     }
     print()
     print("Banked target address validation")

@@ -102,6 +102,10 @@ void oam_dma_init(void);
 
 void ui_init(void);
 void ui_clear_screen(void);
+void ui_set_cram_palette(uint8_t overworld);
+void ui_load_cram_banked(void);
+void ui_load_tileset_banked(void);
+extern uint8_t g_active_tile_palette[48];
 
 /* Toggle LCDC bit 7 directly (harness-safe: no GBDK display_off VBlank
  * wait).  Full-screen redraws span several display sweeps and cannot fit

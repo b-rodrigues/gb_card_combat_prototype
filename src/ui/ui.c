@@ -4,6 +4,7 @@
 #include "scene.h"
 #include "card.h"
 #include "rpg/status.h"
+#include "banked.h"
 #include <gb/gb.h>
 #include <gb/cgb.h>
 #include <gbdk/console.h>
@@ -17,6 +18,16 @@ char g_ui_screen_buf[18][21];
  * tilemap is never overwritten with palette bytes.  Read from the banked
  * battle renderer too (WRAM, always mapped). */
 uint8_t g_is_cgb;
+uint8_t g_active_tile_palette[48];
+
+void ui_set_cram_palette(uint8_t overworld)
+{
+    if (!g_is_cgb) return;
+    g_bk_call_bank = 5;
+    g_bk_call_target = (uint16_t)&ui_load_cram_banked;
+    g_bk_byte_a = overworld;
+    banked_call_run();
+}
 
 #ifdef DEBUG_BUILD
 /* Mirror of the background tilemap ring (0x9800), written alongside every
@@ -37,11 +48,7 @@ static int8_t s_loaded_tileset = -1;
  * rendering module (ui_battle_content.c) so it must be extern. */
 uint8_t ui_font_tile_base;
 
-/* Background palette ramps live in bank 3 (ui_color_banked.c); ui_init()
- * banked_copies them into WRAM to program BCPS.  Index 0 = grayscale,
- * 1-2 = effect colors (fire red / ice blue), 3 = field green, 4 = poison,
- * 5-6 = wood/gold, 7 = dim. */
-extern const palette_color_t cgb_bg_palettes[8][4];
+
 
 /* Player-sprite ramp: entry 3 (the hero ink color) is light grey so the
  * hero is visible against the white floor on CGB. */
@@ -152,18 +159,8 @@ void ui_init(void)
     g_is_cgb = (p == 0xFE && VBK_REG == 0xFF);
     VBK_REG = 0;
 
-    /* Program all 8 BG palettes unconditionally (harmless on DMG, where
-     * BCPS/BCPD are unmapped no-ops): 0 = gray, 1 = fire, 2 = iron/ice,
-     * 3 = heal, 4 = poison, 5 = wood, 6 = gold, 7 = dim. */
-    banked_copy(3, g_ui_screen_buf, cgb_bg_palettes, 64);
-    for (p = 0; p < 8; p++) {
-        const uint8_t *ramp = (const uint8_t *)g_ui_screen_buf + ((uint16_t)p << 3);
-        uint8_t c;
-        BCPS_REG = (uint8_t)(0x80 | (p << 3));
-        for (c = 0; c < 8; c++) {
-            BCPD_REG = ramp[c];
-        }
-    }
+    /* Program all 8 BG palettes via banked loader in Bank 5. */
+    ui_set_cram_palette(0);
     OCPS_REG = 0x80;
     for (p = 0; p < 8; p++) {
         OCPD_REG = ((const uint8_t *)cgb_sprite_palette)[p];
@@ -461,39 +458,13 @@ void ui_format_int(int16_t value, char *out)
 
 void ui_load_tileset(uint8_t tileset)
 {
-    uint8_t p;
-    const uint8_t *src = 0;
-    uint8_t tile_count = 0;
-
     if (s_loaded_tileset == (int8_t)tileset) return;
     s_loaded_tileset = (int8_t)tileset;
 
-    switch (tileset) {
-        case WORLD_TILESET_FOREST:
-            src = g_tileset_forest;
-            tile_count = 48;
-            break;
-        case WORLD_TILESET_DESOLATE:
-            src = g_tileset_desolate;
-            tile_count = 48;
-            break;
-        case WORLD_TILESET_CASTLE:
-            src = g_tileset_castle;
-            tile_count = 27;
-            break;
-        default:
-            src = g_tileset_forest;
-            tile_count = 48;
-            break;
-    }
-
-    if (src && tile_count > 0) {
-        for (p = 0; p < tile_count; p += 3) {
-            uint8_t count = (uint8_t)((p + 3 <= tile_count) ? 3 : (tile_count - p));
-            banked_copy(5, g_ui_screen_buf, src + ((uint16_t)p << 4), (uint16_t)count << 4);
-            set_bkg_data((uint8_t)(RPG_TILE_BASE_WORLD + p), count, (const uint8_t *)g_ui_screen_buf);
-        }
-    }
+    g_bk_call_bank = 5;
+    g_bk_call_target = (uint16_t)&ui_load_tileset_banked;
+    g_bk_byte_a = tileset;
+    banked_call_run();
 }
 
 static char ui_get_world_tile_glyph(uint8_t t)
@@ -526,8 +497,11 @@ static char ui_get_world_tile_glyph(uint8_t t)
  * Tree canopy shares field-green, trunks/stumps take wood brown, rocks dim
  * gray, walkable ground takes its tileset's ground color; everything else
  * palette 0 (map changes and power-on attribute garbage stay invisible). */
-static uint8_t ui_cell_palette(uint8_t glyph, uint8_t kind)
+static uint8_t ui_cell_palette(uint8_t tile_idx, uint8_t glyph, uint8_t kind)
 {
+    if (tile_idx >= 128 && (uint8_t)(tile_idx - 128) < 48) {
+        return g_active_tile_palette[(uint8_t)(tile_idx - 128)];
+    }
     if (glyph == 'T') return UI_COLOR_FIELD;
     if (glyph == 't' || glyph == 's') return UI_COLOR_WOOD;
     if (glyph == 'R') return UI_COLOR_DIM;
@@ -602,7 +576,7 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     {
         VBK_REG = 1;
         ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
-            ui_cell_palette((uint8_t)glyph, (uint8_t)world->tileset_kind);
+            ui_cell_palette(tile_idx, (uint8_t)glyph, (uint8_t)world->tileset_kind);
         VBK_REG = 0;
     }
 
@@ -708,6 +682,7 @@ void ui_draw_world_map(const World *world)
 
     /* Ensure active scene's tileset is loaded into VRAM Block 1 (slots 128..255) */
     ui_load_tileset((uint8_t)world->tileset_kind);
+    ui_set_cram_palette(1);
 
     /* Populate the entire 32-column x 18-row background ring during LCD-safe
      * full map redraw. Field: all 32 x 18 cells. Smaller maps: col 20..31 are
@@ -815,6 +790,7 @@ void ui_draw_battle_full(const Battle *battle)
     if (!battle) return;
 
     ui_clear_screen();
+    ui_set_cram_palette(0);
     /* Battle enemy art (screens/enemy_types.json) loads here, inside the
      * LCD-off full-draw window: one banked call resolves art per enemy,
      * streams 12 tiles per slot into VRAM, and caches art for the

@@ -261,6 +261,7 @@ $(GENERATED_TILES_DIR):
 # Consumers rebuild when the generated headers change (they are untracked).
 $(BUILD_DIR)/world/world.o $(BUILD_DIR)/world/patrol_banked.o $(BUILD_DIR)/debug/world/world.o $(BUILD_DIR)/debug/world/patrol_banked.o: $(GENERATED_TILE_WALK)
 $(BUILD_DIR)/ui/ui.o $(BUILD_DIR)/debug/ui/ui.o: $(GENERATED_TILE_GLYPH)
+$(BUILD_DIR)/game/tiles_content.o $(BUILD_DIR)/debug/game/tiles_content.o: $(GENERATED_TILE_PALETTE)
 
 # Toolchain self-check: every required native binary must not only resolve
 # but EXECUTE (a broken file shadowing the real one fails at exec time with

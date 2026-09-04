@@ -294,14 +294,15 @@ def emit_palette(entries, tilesets, const_by_value):
                 pal = 0  # UI_COLOR_NONE
             pal_values.append(pal)
 
-        arr_name = f"kTilePal{kind.capitalize()}"
+        arr_name = f"g_tile_pal_{ts_id}"
+        if ts_id == "desolate_landscape":
+            arr_name = "g_tile_pal_desolate"
         out.append(f"/* {kind} tileset: {len(pal_values)} tiles */")
+        out.append(f"const uint8_t {arr_name}[{len(pal_values)}] = {{")
         # Format as rows of 16
         for row_start in range(0, len(pal_values), 16):
             chunk = pal_values[row_start:row_start+16]
             vals = ", ".join(str(v) for v in chunk)
-            if row_start == 0:
-                out.append(f"static const uint8_t {arr_name}[] = {{")
             out.append(f"    {vals},  /* {row_start:2d}..{row_start+len(chunk)-1:2d} */")
         out.append("};")
         out.append("")
