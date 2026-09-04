@@ -163,6 +163,26 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
     if tiles_ok and tileset:
         passed.append("Tiles valid")
 
+    # 2b. Default ground check (single source of truth for unpainted cells)
+    default_walkable = level_data.get("default_walkable", "")
+    if not default_walkable:
+        # Implicit rule: first tile with 'plain' in manifest order.
+        for t in (tileset or {}).get("tiles", []):
+            if "plain" in t.get("id", ""):
+                default_walkable = "%s.%s" % (tileset_id, t["id"])
+                break
+    if not default_walkable:
+        errors.append("No default_walkable field and no 'plain' tile in tileset '%s'" % tileset_id)
+    else:
+        short = default_walkable.split(".")[-1]
+        tile_map = {t["id"]: t for t in (tileset or {}).get("tiles", [])}
+        if short not in tile_map:
+            errors.append("default_walkable tile '%s' is not in tileset '%s'" % (default_walkable, tileset_id))
+        elif not tile_map[short].get("walkable", True):
+            errors.append("default_walkable tile '%s' is not walkable" % default_walkable)
+        else:
+            passed.append("Default ground valid")
+
     # 3. Collision & Player Spawn Check
     collision_ok = True
     spawn_info = level_data.get("player", {}).get("spawn", {})

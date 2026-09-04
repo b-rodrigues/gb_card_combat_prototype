@@ -2,6 +2,7 @@
   "id": "forest",
   "name": "Whispering Forest",
   "map": { "width": 20, "height": 18, "tileset": "forest", "music": "MUSIC_FOREST", "map_id": "MAP_FOREST" },
+  "default_walkable": "forest.forest_plain_floor_1",
   "layers": {
     "terrain": [
       { "x": 1, "y": 1, "width": 1, "height": 1, "tile": "forest.forest_top_left_corner_wall" },

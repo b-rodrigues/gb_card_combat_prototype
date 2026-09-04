@@ -579,8 +579,9 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
      * everything else explicitly palette 0 so map changes (and CGB power-on
      * attribute garbage) never leave a stale tint.  Single comparison, no
      * table, no calls: this cell path is where the fixed-bank budget lives
-     * or dies (AGENTS.md 52.18).  Desolate/castle grounds stay grayscale
-     * until budget allows their slots (documented follow-up). */
+     * or dies (AGENTS.md 52.18) -- a nested second arm avalanched +180B
+     * here, so desolate/castle grounds stay grayscale until a bigger
+     * budget refactor (documented follow-up). */
     VBK_REG = 1;
     ((volatile uint8_t *)0x9800)[(row & 31) * 32 + (col & 31)] =
         (glyph == '.' && world->tileset_kind == WORLD_TILESET_FOREST) ?

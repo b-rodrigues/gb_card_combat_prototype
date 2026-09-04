@@ -134,11 +134,11 @@ def verify_hostile_sprites(sess):
     check("forest amulet renders as chest OAM tile (94|95)",
           1, (94 <= chest <= 95))
     # The background cell underneath must be plain forest floor
-    # (VRAM tile 128 + 0), not the '?' ASCII glyph: glyph suppression
-    # for OAM-rendered statics.
+    # (VRAM tile 128 + 32, the level's default_walkable), not the '?'
+    # ASCII glyph: glyph suppression for OAM-rendered statics.
     mirror = sess.get_symbol("g_tilemap_mirror")
     check("amulet background cell is floor, not '?'",
-          128, mirror_at(sess, mirror, 16, 10))
+          160, mirror_at(sess, mirror, 16, 10))
 
     print("== Hostile sprite tiles (south_field kobold / bat) ==")
     south = load_scenario(sess, "south_field_boot.json")

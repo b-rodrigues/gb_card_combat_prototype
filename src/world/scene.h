@@ -47,6 +47,7 @@ typedef struct {
     uint8_t spawn_x;
     uint8_t spawn_y;
     uint8_t spawn_facing; /* Direction */
+    uint8_t default_tile; /* TileType for unpainted cells (default_walkable) */
 } SceneDefinition;
 
 /* Look up a scene definition by its map id.

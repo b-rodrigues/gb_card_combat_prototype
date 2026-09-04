@@ -26,7 +26,7 @@ void scene_load_tiles_banked(void)
     for (y = 0; y < w->height; y++) {
         uint8_t *row = w->map[y];
         for (x = 0; x < w->width; x++) {
-            row[x] = (x == 0 || x == (uint8_t)(w->width - 1) || y == 0 || y == (uint8_t)(w->height - 1)) ? TILE_WALL : TILE_FLOOR;
+            row[x] = (x == 0 || x == (uint8_t)(w->width - 1) || y == 0 || y == (uint8_t)(w->height - 1)) ? TILE_WALL : def->default_tile;
         }
     }
 

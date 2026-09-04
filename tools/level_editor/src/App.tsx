@@ -500,7 +500,13 @@ export const App: React.FC = () => {
 
     if (newW !== level.width || newH !== level.height) {
       const ts = getTileset(level.tileset);
-      const defaultFloor = ts.tiles.find((t: TileDefinition) => t.walkable)?.id || ts.tiles[0]?.id || 'floor';
+      const dwShort = level.defaultWalkable?.includes('.')
+        ? level.defaultWalkable.split('.')[1]
+        : level.defaultWalkable;
+      const defaultFloor = (dwShort && ts.tiles.some((t: TileDefinition) => t.id === dwShort))
+        ? dwShort
+        : (ts.tiles.find((t: TileDefinition) => t.id.includes('plain'))?.id
+          || ts.tiles.find((t: TileDefinition) => t.walkable)?.id || ts.tiles[0]?.id || 'floor');
       newGrid = [];
       for (let y = 0; y < newH; y++) {
         const row: string[] = [];

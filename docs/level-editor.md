@@ -997,6 +997,11 @@ The web editor must never be a stale snapshot of the JSON:
 - There is no `collision.overrides` section: collision is derived solely
   from the tileset manifest's `walkable` flag (it never had a
   compiler/ROM consumer, so it was removed rather than carried).
+- `default_walkable` names the ground tile for unpainted cells, declared
+  once per level (elsewhere: first `plain` tile in manifest order).  The
+  editor fill, the compiler expansion, the ROM fallback (a `SceneDefinition`
+  field materialized at scene load, like spawn), and the parity gate all
+  use this one field; `decompile.py` preserves it verbatim.
 - WYSIWYG parity (`make parity`, `tools/parity_check.py`): the ROM must
   show what the editor shows for the same JSON — whole-map VRAM tile
   parity per map (terrain expanded from JSON, indices via the manifest

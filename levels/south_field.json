@@ -8,6 +8,7 @@
     "music": "MUSIC_DESOLATE_LANDSCAPE",
     "map_id": "MAP_SOUTH_FIELD"
   },
+  "default_walkable": "desolate_landscape.desolate_landscape_plain_floor_1",
   "layers": {
     "terrain": [
       {

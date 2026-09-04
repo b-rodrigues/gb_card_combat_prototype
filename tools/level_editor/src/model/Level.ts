@@ -76,6 +76,9 @@ export interface EditorLevel {
   music: string;
   mapId: string;
   grid: string[][]; // tile names, e.g. "tree", "floor"
+  // Level's default_walkable (ground for unpainted cells), preserved
+  // verbatim through load/save round-trips.
+  defaultWalkable?: string;
   // Terrain representation fidelity (JSON is the source of truth both
   // ways): the grid above is the editing model, but on save the level is
   // written back in the form it was loaded in -- unless the terrain was
@@ -345,12 +348,16 @@ export function battleScreenToEditor(data: any): EditorLevel {
 export function createEmptyEditorLevel(id: string = 'new_scene', tilesetId: string = 'forest', width: number = 20, height: number = 18): EditorLevel {
   const grid: string[][] = [];
   const tileset = getTileset(tilesetId);
-  const defaultFloor = tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
+  // Fresh maps fill with the plain ground (first tile with 'plain' in the
+  // id), matching the level JSON default_walkable rule.  Tiles without any
+  // plain tile fall back to the first walkable tile.
+  const plainFloor = tileset.tiles.find(t => t.id.includes('plain'))?.id
+    || tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
 
   for (let y = 0; y < height; y++) {
     const row: string[] = [];
     for (let x = 0; x < width; x++) {
-      row.push(defaultFloor);
+      row.push(plainFloor);
     }
     grid.push(row);
   }
@@ -367,6 +374,7 @@ export function createEmptyEditorLevel(id: string = 'new_scene', tilesetId: stri
     terrainSource: 'grid',
     terrainBlocks: [],
     terrainDirty: false,
+    defaultWalkable: `${tilesetId}.${plainFloor}`,
     spawn: { x: Math.floor(width / 2), y: Math.floor(height / 2), facing: 'DOWN' },
     exits: [],
     objects: [],
@@ -386,7 +394,16 @@ export function levelDataToEditor(data: any): EditorLevel {
   const h = data.map?.height || 18;
   const tilesetId = data.map?.tileset || 'forest';
   const tileset = getTileset(tilesetId);
-  const defaultFloor = tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
+  // Gap fill follows the level's default_walkable (else first plain tile,
+  // else first walkable): the same ground the ROM renders for unpainted
+  // cells, so the canvas matches the game.
+  const dwShort = typeof data.default_walkable === 'string' && data.default_walkable.includes('.')
+    ? data.default_walkable.split('.')[1]
+    : data.default_walkable;
+  const defaultFloor = (dwShort && tileset.tiles.some(t => t.id === dwShort))
+    ? dwShort
+    : (tileset.tiles.find(t => t.id.includes('plain'))?.id
+      || tileset.tiles.find(t => t.walkable)?.id || tileset.tiles[0]?.id || 'floor');
 
   const grid: string[][] = [];
   for (let y = 0; y < h; y++) {
@@ -400,8 +417,14 @@ export function levelDataToEditor(data: any): EditorLevel {
   const rawTerrain = data.layers?.terrain;
   let terrainSource: 'blocks' | 'grid' = 'grid';
   let terrainBlocks: TerrainBlock[] = [];
-  if (Array.isArray(rawTerrain) && rawTerrain.length > 0) {
-    if (Array.isArray(rawTerrain[0])) {
+  if (Array.isArray(rawTerrain)) {
+    if (rawTerrain.length === 0) {
+      // Empty list is the blocks form with zero blocks (not an empty
+      // grid): untouched saves write it back verbatim instead of
+      // materializing a full default-floor grid.
+      terrainSource = 'blocks';
+      terrainBlocks = [];
+    } else if (Array.isArray(rawTerrain[0])) {
       // 2D grid format
       const rawGrid = rawTerrain as string[][];
       for (let y = 0; y < Math.min(h, rawGrid.length); y++) {
@@ -440,6 +463,7 @@ export function levelDataToEditor(data: any): EditorLevel {
     terrainSource,
     terrainBlocks,
     terrainDirty: false,
+    defaultWalkable: typeof data.default_walkable === 'string' ? data.default_walkable : undefined,
     spawn: data.player?.spawn || { x: Math.floor(w / 2), y: Math.floor(h / 2), facing: 'DOWN' },
     exits: data.exits || [],
     objects: data.objects || [],
@@ -489,6 +513,8 @@ export function editorToLevelData(lvl: EditorLevel): any {
       music: lvl.music,
       map_id: lvl.mapId
     },
+    // Preserved verbatim: the single source of truth for unpainted cells.
+    ...(lvl.defaultWalkable ? { default_walkable: lvl.defaultWalkable } : {}),
     layers: {
       // Write back the as-loaded form unless the terrain was painted, so
       // view-only saves never reformat the committed files (see

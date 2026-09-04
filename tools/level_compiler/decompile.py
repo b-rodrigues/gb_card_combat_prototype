@@ -370,12 +370,19 @@ def parse_scenes(scenes_text, name_to_value):
     scenes = []
     for row in split_row_groups(scenes_body):
         f = split_fields(row)
-        if len(f) != 11:
+        if len(f) != 12:
             raise DecompileError(f"scene row has {len(f)} fields: {row[:60]!r}")
         m = re.fullmatch(r"&g_all_exits\[(\d+)\]", f[4].strip())
         facing = f[10].strip()
         if facing not in FACING_REVERSE:
             raise DecompileError(f"unknown spawn facing {facing!r}")
+        try:
+            default_tile = parse_int(f[11].strip())
+        except DecompileError:
+            name = f[11].strip()
+            if name not in name_to_value:
+                raise DecompileError(f"unknown TileType {name!r}")
+            default_tile = name_to_value[name]
         scenes.append({
             "map": f[0].strip(),
             "music": f[1].strip(),
@@ -388,6 +395,7 @@ def parse_scenes(scenes_text, name_to_value):
             "spawn_x": parse_int(f[8]),
             "spawn_y": parse_int(f[9]),
             "spawn_facing": FACING_REVERSE[facing],
+            "default_tile": default_tile,
         })
     terrain = {}
     for m in re.finditer(r"static const SceneTerrainBlock (s_\w+)\[\]", scenes_text):
@@ -566,6 +574,25 @@ def decompile_levels(levels_dir, write):
         spawn["x"] = sc["spawn_x"]
         spawn["y"] = sc["spawn_y"]
         spawn["facing"] = sc["spawn_facing"]
+
+        # -- default ground: compiled into SceneDefinition.default_tile.
+        # Keep the author's spelling when it compiles to the same TileType
+        # value (like music/tileset spellings); otherwise write the
+        # canonical tileset.tile_id.
+        if sc["default_tile"] is not None:
+            keep = False
+            dw = level.get("default_walkable", "")
+            if dw:
+                tinfo = tile_dict.get(dw.split(".")[-1])
+                if tinfo:
+                    gb = map_base_tile_const(tinfo.get("gb_constant", "TILE_WALL"), tinfo)
+                    if name_to_value.get(gb) == sc["default_tile"]:
+                        keep = True
+            if not keep:
+                tile_id = tile_value_to_id(sc["default_tile"], tileset_id,
+                                           const_by_value, gb_to_tileid,
+                                           tileset_id)
+                level["default_walkable"] = tile_id
 
         # -- exits
         old_exits = { (e.get("x"), e.get("y"), e.get("target_scene")): e

@@ -77,6 +77,25 @@ def load_level(path):
         return json.load(f)
 
 
+def first_plain_tile(tileset_id, tileset):
+    """First tile id with 'plain' in the name (manifest order)."""
+    for t in tileset.get("tiles", []):
+        if "plain" in t.get("id", ""):
+            return "%s.%s" % (tileset_id, t["id"])
+    return None
+
+
+def level_default_tile(level_data, tilesets):
+    """The level's ground tile for unpainted cells: the explicit
+    default_walkable field, else the first plain tile in manifest order."""
+    tileset_id = level_data["map"]["tileset"]
+    tileset = tilesets.get(tileset_id, {})
+    explicit = level_data.get("default_walkable", "")
+    if explicit:
+        return explicit
+    return first_plain_tile(tileset_id, tileset) or ""
+
+
 def resolve_tiles(level_data, tileset):
     """Resolve semantic tile IDs to C constants."""
     tile_dict = {t["id"]: t for t in tileset.get("tiles", [])}
@@ -336,9 +355,14 @@ def emit_c_code(levels_by_id, tilesets):
         spawn = lvl.get("player", {}).get("spawn", {})
         spawn_facing = SPAWN_FACING_MAP.get(
             str(spawn.get("facing", "DOWN")).upper(), "DIRECTION_DOWN")
+        default_tile = level_default_tile(lvl, tilesets)
+        tile_dict = resolve_tiles(lvl, tilesets.get(lvl["map"]["tileset"], {}))
+        default_info = tile_dict.get(default_tile.split(".")[-1], {})
+        default_const = map_base_tile_const(
+            default_info.get("gb_constant", "TILE_FLOOR"), default_info)
 
         scene_defs.append(
-            f"    {{ {map_id_enum + ',':<20s} {music_enum + ',':<18s} {width:2d}, {height:2d}, {exits_ptr + ',':<20s} {count}, {tileset_kind + ',':<24s} {terrain_ptr + ',':<20s} {spawn.get('x', 0)}, {spawn.get('y', 0)}, {spawn_facing} }}"
+            f"    {{ {map_id_enum + ',':<20s} {music_enum + ',':<18s} {width:2d}, {height:2d}, {exits_ptr + ',':<20s} {count}, {tileset_kind + ',':<24s} {terrain_ptr + ',':<20s} {spawn.get('x', 0)}, {spawn.get('y', 0)}, {spawn_facing + ',':<16s} {default_const} }}"
         )
     output.append(",\n".join(scene_defs))
     output.append("};\n")

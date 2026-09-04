@@ -43,11 +43,27 @@ TILESET_DIR = REPO_ROOT / "tools" / "level_editor" / "tilesets"
 # Generic wall-glyph fallback per tileset (mirrors rpg_lookup_tile_id '#';
 # the engine perimeter rule paints map borders TILE_WALL before exits).
 VRAM_BASE = 128
-DEFAULT_FLOOR_INDEX = {
-    "forest": 0,
-    "desolate_landscape": 32,
-    "castle": 18,
-}
+
+
+def first_plain_tile(tileset_id, tileset):
+    for t in tileset.get("tiles", []):
+        if "plain" in t.get("id", ""):
+            return "%s.%s" % (tileset_id, t["id"])
+    return None
+
+
+def level_default_index(level, tilesets):
+    """Resolve the level's default_walkable to a VRAM block index."""
+    tileset_id = level["map"]["tileset"]
+    tileset = tilesets[tileset_id]
+    dw = level.get("default_walkable") or ""
+    if not dw:
+        dw = first_plain_tile(tileset_id, tileset) or ""
+    short = dw.split(".")[-1]
+    for e in tileset.get("vram_block", {}).get("tiles", []):
+        if e.get("tile") == short:
+            return VRAM_BASE + e.get("index")
+    raise ValueError("%s: default ground '%s' has no vram index" % (level["id"], dw))
 WALL_FALLBACK_INDEX = {
     "forest": 1,
     "desolate_landscape": 1,
@@ -129,6 +145,11 @@ def expected_grid(level, tilesets):
     w = level["map"]["width"]
     h = level["map"]["height"]
     painted = expand_terrain(level)
+    try:
+        default_idx = level_default_index(level, tilesets)
+    except ValueError as e:
+        fail(str(e))
+        return {}, set()
     grid = {}
     for y in range(h):
         for x in range(w):
@@ -141,7 +162,7 @@ def expected_grid(level, tilesets):
                 grid[(x, y)] = VRAM_BASE + WALL_FALLBACK_INDEX[tileset_id]
                 continue
             else:
-                grid[(x, y)] = VRAM_BASE + DEFAULT_FLOOR_INDEX[tileset_id]
+                grid[(x, y)] = default_idx
                 continue
             info = by_id.get(short)
             if info is None:
