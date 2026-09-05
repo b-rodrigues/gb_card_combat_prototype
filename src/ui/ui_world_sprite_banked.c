@@ -53,22 +53,23 @@ static uint8_t spr_axis_px(const WorldActorRuntime *a, uint8_t axis)
     return px;
 }
 
-/* SPRITE_KIND_* -> OAM tile/prop.  Single source for both loops below;
- * the chest shares the kobold/bat convention (CHEST_SPRITE_TILE_ID holds
- * the 1-frame art in both anim slots, so + anim stays uniform). */
+/* SPRITE_KIND_* -> OAM tile/prop.  Single source for both loops below.
+ * Bats use the grey ramp (black bodies); kobolds and chests use the brown
+ * wood palette (OBJ palette 2); the chest art is 1 frame in both anim
+ * slots, so + anim stays uniform. */
 static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
                                uint8_t anim, uint8_t *prop)
 {
     switch (kind) {
         case SPRITE_KIND_KOBOLD:
-            *prop = 1;
+            *prop = 2;
             return (uint8_t)(KOBOLD_SPRITE_TILE_ID + anim);
         case SPRITE_KIND_BAT:
-            *prop = 1;
+            *prop = 0;
             return (uint8_t)((castle ? BAT_CASTLE_SPRITE_TILE_ID
                                      : BAT_DESOLATE_SPRITE_TILE_ID) + anim);
         case SPRITE_KIND_CHEST:
-            *prop = 1;
+            *prop = 2;
             return (uint8_t)(CHEST_SPRITE_TILE_ID + anim);
         case SPRITE_KIND_BOSS:
         case SPRITE_KIND_TILE: /* background-art: cell owns the visuals */
