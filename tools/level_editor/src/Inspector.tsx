@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
@@ -90,6 +90,82 @@ interface InspectorProps {
   onUpdateRegion: (index: number, region: LevelRegion) => void;
   onDeleteRegion: (index: number) => void;
 }
+
+// BGM preview files rendered by tools/render_music_preview.py
+// (make music-preview) into tools/level_editor/public/audio/.
+// Chiptune-only tracks (OVERWORLD/TITLE/VICTORY) have no preview.
+const MUSIC_PREVIEW_FILES: Record<string, string> = {
+  MUSIC_BATTLE: '/audio/battle.wav',
+  MUSIC_DESOLATE: '/audio/desolate_landscape.wav',
+  MUSIC_DESOLATE_LANDSCAPE: '/audio/desolate_landscape.wav',
+  MUSIC_FOREST: '/audio/forest.wav',
+  MUSIC_BOSS: '/audio/boss_fight.wav',
+  MUSIC_TOWN: '/audio/village.wav',
+  MUSIC_DUNGEON: '/audio/castle.wav',
+};
+
+const MusicPreviewToggle: React.FC<{ music: string; levelId: string }> = ({
+  music,
+  levelId,
+}) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const file = MUSIC_PREVIEW_FILES[music] || null;
+
+  // Stop when switching levels or unmounting.
+  useEffect(() => {
+    setPlaying(false);
+    if (audioRef.current) audioRef.current.pause();
+  }, [levelId]);
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      if (audio) audio.pause();
+    };
+  }, []);
+
+  // Follow BGM-track changes while playing.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !playing) return;
+    if (file) {
+      audio.src = file;
+      audio.play().catch(() => setPlaying(false));
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [music]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio || !file) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.src = file;
+      audio.loop = true;
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  };
+
+  return (
+    <div className="music-preview-row" style={{ marginTop: '6px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <button
+        className="btn btn-sm"
+        onClick={toggle}
+        disabled={!file}
+        title={file ? (playing ? 'Stop BGM preview' : 'Preview this level\'s BGM track') : 'No preview for chiptune tracks'}
+      >
+        {playing ? '⏹ Stop' : '▶ Preview'}
+      </button>
+      {!file && <span className="hint-text">no preview (chiptune track)</span>}
+      <audio ref={audioRef} loop preload="none" />
+    </div>
+  );
+};
 
 export const Inspector: React.FC<InspectorProps> = ({
   level,
@@ -281,8 +357,9 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="MUSIC_DESOLATE_LANDSCAPE">MUSIC_DESOLATE_LANDSCAPE (desolate_landscape.uge)</option>
                 <option value="MUSIC_FOREST">MUSIC_FOREST (Forest.uge)</option>
                 <option value="MUSIC_BOSS">MUSIC_BOSS (Boss fight.uge)</option>
-              </select>
-            </div>
+                </select>
+                <MusicPreviewToggle music={level.music} levelId={level.id} />
+              </div>
             <div className="form-group">
               <label>Engine Map ID</label>
               <input

@@ -72,6 +72,10 @@ lib/hUGEDriver/src/hUGEDriver.asm ────────┘
      extern const hUGESong_t song_<track_name>;
      ```
    * Hook into `audio_play_music()` in `src/audio/audio.c` using `huge_music_play(&song_<track_name>)`.
+4. **Editor preview**:
+   * Re-run `make music-preview` to re-render `tools/level_editor/public/audio/<track_name>.wav`
+     (`tools/render_music_preview.py`: driver-faithful approximation from the generated song C).
+   * The level editor's Inspector BGM row plays it via a ▶ toggle. The ROM mix stays authoritative.
 
 ---
 

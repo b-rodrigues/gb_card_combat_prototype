@@ -106,7 +106,10 @@ the eye toggles each layer's canvas visibility without deleting anything.
 
 `⚙️ Map Info` tab: Scene ID, Scene Name, Width/Height (engine bounds
 4–40 wide, 4–24 tall), BGM Track (entries name their `.uge` source, e.g.
-`MUSIC_DUNGEON (castle.uge)`), Engine Map ID.
+`MUSIC_DUNGEON (castle.uge)`), Engine Map ID. Under the BGM dropdown, the
+`▶ Preview` button plays the level's track (a rendered WAV approximation —
+the ROM's hUGEDriver mix stays authoritative); switching levels while it
+plays switches the preview, and chiptune-only tracks show no preview.
 
 Special tabs appear on mockup screens: `⚔️ Battle HUD` (row/column layout
 of banner, enemies, hero, deck, combo, cards, timer) and `👑 Title Studio`
@@ -153,3 +156,5 @@ View-only saves never reformat committed files.
   the header dropdown).
 * **CI-only failures.** Run scenarios with `make test-harness JOBS=4`
   locally to match CI's 4 workers before pushing.
+* **BGM preview is stale after editing a `.uge`.** Re-run
+  `make music-preview` to re-render `tools/level_editor/public/audio/`.

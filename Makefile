@@ -55,7 +55,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music sfx level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music music-preview sfx level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -374,6 +374,22 @@ $(GENERATED_MUSIC_DIR)/village.c: assets/music/Village.uge tools/compile_music.p
 
 $(GENERATED_MUSIC_DIR)/castle.c: assets/music/castle.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_castle "$@"
+
+# WAV previews for the level editor's BGM toggle (Inspector Map Info).
+# Rendered from the generated song C by tools/render_music_preview.py
+# (driver-faithful approximation, not the ROM mix). Explicit target so
+# song builds stay fast; re-run after changing any assets/music/*.uge.
+MUSIC_PREVIEW_DIR = tools/level_editor/public/audio
+MUSIC_PREVIEW_WAVS = $(MUSIC_PREVIEW_DIR)/battle.wav $(MUSIC_PREVIEW_DIR)/desolate_landscape.wav $(MUSIC_PREVIEW_DIR)/forest.wav $(MUSIC_PREVIEW_DIR)/boss_fight.wav $(MUSIC_PREVIEW_DIR)/village.wav $(MUSIC_PREVIEW_DIR)/castle.wav
+
+music-preview: music $(MUSIC_PREVIEW_WAVS)
+	@echo "Music previews up to date in $(MUSIC_PREVIEW_DIR)"
+
+$(MUSIC_PREVIEW_DIR)/%.wav: $(GENERATED_MUSIC_DIR)/%.c tools/render_music_preview.py | $(MUSIC_PREVIEW_DIR)
+	python3 tools/render_music_preview.py $*
+
+$(MUSIC_PREVIEW_DIR):
+	mkdir -p $(MUSIC_PREVIEW_DIR)
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)
