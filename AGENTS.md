@@ -2666,6 +2666,17 @@ The non-bankable `_HOME` area must stay below `0x8000` (CPU addresses
 track the budget in the roadmap; every substantial feature should be checked
 against `make memmap`.
 
+## 55.6 VRAM / palette ownership across screens
+
+World tile art lives in VRAM block 1 (slots 128+) and battle enemy art
+overwrites the same slots: any screen that writes block-1 VRAM must be
+followed by a tileset reload before the next overworld redraw
+(`ui_invalidate_tileset()` on overworld entry covers all return paths).
+Likewise `ui_lcd_off()` wipes every CGB tile attribute to palette 0, so any
+screen drawn over the live world (dialogue) must redraw the world (tilemap
++ attribute spans), not just stamp its own box.  `make verify-oam`
+executes both regressions (battle VRAM restore, dialogue palette restore).
+
 ---
 
 # 56. Headless Screenshot Walkthrough Capture
@@ -2750,6 +2761,7 @@ the commit/PR without booting anything.
 09-battle            slime encounter (battle screen)
 10-battle-attack     after a player attack (damage dealt)
 11-battle-run        after fleeing (result line)
+11-battle-aftermath  overworld after leaving the fight (VRAM restore)
 12-wizard-save       save menu at the wizard
 13-wizard-saved      after saving to Slot 1
 14-forest-arrived    FOREST gate arrival after Walk B

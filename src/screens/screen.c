@@ -72,6 +72,13 @@ void screen_change(Game *g, ScreenId screen)
     g->prev_screen = old_screen;
     g->screen = screen;
 
+    /* Screens that own VRAM block-1 art (battle enemy art shares slots
+     * 128+ with world tiles) must not leak it into the next overworld
+     * redraw: force a tileset reload there. */
+    if (screen == SCREEN_OVERWORLD) {
+        ui_invalidate_tileset();
+    }
+
     telemetry_emit(EVENT_SCREEN_CHANGED, (uint8_t)old_screen, (uint8_t)screen, 0, 0);
     game_render_reset(g);
 }

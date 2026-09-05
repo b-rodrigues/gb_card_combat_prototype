@@ -109,6 +109,17 @@ def mirror_at(sess, mirror_addr, x, y):
     return sess._memread(mirror_addr + (y & 31) * 32 + (x & 31))
 
 
+def vram_attr_at(sess, x, y):
+    """True CGB attribute byte for tilemap cell (x, y), read from VRAM
+    bank 1 via VBK switching (paused core: safe).  The WRAM attr mirror is
+    NOT used here: ui_lcd_off()'s wipe clears VRAM attrs without touching
+    the mirror, so the mirror reads stale-nonzero right after a wipe."""
+    sess._memwrite(0xFF4F, 1)
+    val = sess._memread(0x9800 + (y & 31) * 32 + (x & 31))
+    sess._memwrite(0xFF4F, 0)
+    return val
+
+
 def verify_hostile_sprites(sess):
     """Regression net for the Chunk-2 data-driven overworld sprite pipeline
     (SPRITE_KIND_* decoded in the bank-3 pass): hostile actors must render
@@ -273,27 +284,48 @@ def verify_steady_battle_frame(sess):
 
 
 def verify_dialogue_transition(sess):
-    """Dialogue must not wipe the world behind the box (the map is already
-    on screen from the overworld) and the sprite must stay visible behind
-    the box.  The Mayor sits at (10,5); the scenario boots the player at
-    (9,5) facing RIGHT, so a single A press engages him and starts the
-    dialogue within that frame.  Arm a breakpoint at ui_draw_world_full
-    before the press: the dialogue-entry render must NOT reach it."""
-    print("== Dialogue entry (mayor): box over the world, no wipe ==")
+    """Dialogue redraws the world behind the box on entry (the map is
+    already on screen from the overworld, but ui_lcd_off() wipes every CGB
+    tile attribute to palette 0, so only a full redraw re-applies per-tile
+    palettes -- skipping it turned the whole screen gray for the dialogue).
+    The Mayor sits at (10,5); the scenario boots the player at (9,5)
+    facing RIGHT, so a single A press engages him and starts the dialogue
+    within that frame.  Arm a breakpoint at ui_draw_world_full before the
+    press: the dialogue-entry render must reach it (checked by continuing
+    past the frame-entry pause).  The sprite stays visible behind the box."""
+    print("== Dialogue entry (mayor): redrawn world + box, colors kept ==")
     initial = load_scenario(sess, "mayor_dialogue.json")["initial_state"]
     sess.load_scenario(initial)
     sess.step(1)
 
-    gr_addr = sess.get_symbol("game_render")
     full_addr = sess.get_symbol("ui_draw_world_full")
-    sess._cmd(f"break 0x{full_addr:04X}")
+    brk = sess._cmd(f"break 0x{full_addr:04X}")
+    if b"Added breakpoint" not in brk:
+        raise RuntimeError(f"ui_draw_world_full break not armed: {brk!r}")
 
     sess.press("A")
-    pc = sess._read_pc()
-    check("dialogue entry: world NOT redrawn behind the box", gr_addr, pc)
+    # press() leaves us paused at the frame-entry breakpoint; continue
+    # through the frame: the dialogue render must hit ui_draw_world_full.
+    sess._cmd("frame", timeout=5.0)
+    check("dialogue entry: world redrawn behind the box",
+          full_addr, sess._read_pc())
+    # Continue past the redraw breakpoint to the next frame entry: the
+    # redraw (tilemap + CGB attrs + palettes) has now fully executed.
+    sess._cmd("c", timeout=10.0)
 
     snap = sess.snapshot()
     check("dialogue entry: dialogue is active", True, snap.get("dialogue_active"))
+
+    # CGB attributes must be re-applied, not left at the lcd_off wipe
+    # (all-zero = grayscale).  Count nonzero attrs over the visible map
+    # with true VRAM reads (the WRAM mirror goes stale across the wipe).
+    nonzero = 0
+    for y in range(18):
+        for x in range(20):
+            if vram_attr_at(sess, x, y) not in (None, 0):
+                nonzero += 1
+    check("dialogue entry: CGB attrs re-applied (nonzero count)",
+          True, nonzero > 20)
 
     # Sprite stays visible behind the box at the player's position (9,5),
     # camera (0,0) -> OAM y=5*8+16=56, x=9*8+8=80.
@@ -323,12 +355,55 @@ def verify_scene_transition(sess):
           (72, 27), shadow_oam(sess))
 
 
+def verify_battle_vram_restore(sess):
+    """Battle enemy art shares VRAM tiles 128+ with the world tileset, so
+    leaving a fight must reload the world tiles: ui_load_tileset's cache
+    used to suppress the reload and the overworld came back as garbage
+    until a scene change.  screen_change() now invalidates the cache on
+    every overworld entry.  mGBA reads VRAM directly here (paused at the
+    frame-entry breakpoint, i.e. VBlank, so no PPU access restriction).
+    Hash tiles 128..139 (12 enemy-art slots x 16 B at 0x8800): overworld
+    bytes -> different in battle (proves the clobber is exercised) ->
+    identical again after the flee exit."""
+    print("== Battle exit: world VRAM tile data restored ==")
+    sess.load_scenario(load_scenario(sess, "first_encounter.json"))
+    sess.step(2)
+
+    def vram_tiles():
+        return bytes(b if b is not None else 0
+                     for i in range(12 * 16)
+                     for b in (sess._memread(0x8800 + i),))
+
+    before = vram_tiles()
+    sess.hold("RIGHT", 10)
+    sess.step(2)
+    during = vram_tiles()
+    check("battle clobbers world VRAM tiles (test exercises the bug)",
+          True, during != before)
+
+    # Flee (B with an empty hand) and leave the result screen, then let
+    # the overworld redraw + tileset reload settle.
+    for _ in range(6):
+        sess.press("B")
+        sess.step(2)
+        sess.press("A")
+        sess.step(2)
+        if sess.snapshot().get("game_state") == "OVERWORLD":
+            break
+    check("fled battle: back to overworld", "OVERWORLD",
+          sess.snapshot().get("game_state"))
+    sess.step(2)
+    check("overworld return: world VRAM tiles restored",
+          before, vram_tiles())
+
+
 def main():
     # Each section uses its own session so the extra breakpoints armed by
     # the checks (begin_transition, ui_draw_world_full) never contaminate
     # another section's frame stepping or VBlank reads.
     for label, fn in (("battle", verify_battle_transition),
                       ("battle steady frame", verify_steady_battle_frame),
+                      ("battle VRAM restore", verify_battle_vram_restore),
                       ("scene", verify_scene_transition),
                       ("dialogue", verify_dialogue_transition),
                       ("hostile sprites", verify_hostile_sprites),

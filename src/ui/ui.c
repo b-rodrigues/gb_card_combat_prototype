@@ -485,6 +485,15 @@ void ui_load_tileset(uint8_t tileset)
     banked_call_run();
 }
 
+/* Drop the VRAM tileset cache so the next overworld redraw reloads tile
+ * art unconditionally.  Battle enemy art shares VRAM slots 128+ with world
+ * tiles, so every return to the overworld must reload (ui_load_tileset's
+ * cache would otherwise keep the stale battle art on screen). */
+void ui_invalidate_tileset(void)
+{
+    s_loaded_tileset = -1;
+}
+
 static char ui_get_world_tile_glyph(uint8_t t)
 {
     if (t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {

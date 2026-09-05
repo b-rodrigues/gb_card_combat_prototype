@@ -26,6 +26,7 @@ Four sessions, each starting from a fresh boot (fresh persistent state):
     09-battle            slime encounter (battle screen)
     10-battle-attack     after a player attack (damage dealt)
     11-battle-run        after fleeing (result line)
+    11-battle-aftermath  overworld after leaving the fight (VRAM restore)
 
   Walk C (forest):
     14-forest-arrived    FOREST gate arrival
@@ -509,6 +510,26 @@ def main():
     # Defense turn or next selection
     press2("a", settle=20)
     shoot(pb, "11-battle-run", check_title=False)
+
+    # Leave the fight and prove the overworld return.  Frame 11 sits in
+    # DEFENSE TURN, where B is inert: A selects the defend, SELECT executes
+    # it (blocked: hero takes no damage), back at PLAYER TURN a single B
+    # flees (empty combo), and A leaves the FLED result screen.  Either a
+    # flee or a victory exit runs the overworld redraw + tileset reload,
+    # which is what this frame is for (post-battle VRAM restore).  The
+    # one-tile up/down walk both verifies control and restores the row-8
+    # position before capturing.
+    press2("a", settle=20)
+    press2("select", settle=40)
+    press2("b", settle=20)
+    press2("a", settle=20)
+    exited = walk2("up", lambda: pos2()[1] == 7)
+    check("walk: left the battle", exited)
+    if exited:
+        walk2("down", lambda: pos2()[1] == 8)
+    for _ in range(30):
+        pb.tick()
+    shoot(pb, "11-battle-aftermath", check_title=False)
     pb.stop()
 
     # ─────────────────────────────────────────────────────────────
