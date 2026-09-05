@@ -29,18 +29,29 @@
                 url = "https://github.com/gbdk-2020/gbdk-2020/releases/download/${gbdkVersion}/gbdk-linux64.tar.gz";
                 sha256 = "0slw2ag8ljgcb6v8qz35f3k3zm8y9nc0j451cgnval7q086ar5xp";
               };
-              gbdkSupport = pkgs.stdenv.mkDerivation {
-                pname = "gbdk-support";
-                version = gbdkVersion;
-                src = gbdkSource;
-                buildPhase = ''
-                  make -C gbdk-support
-                '';
-                installPhase = ''
-                  mkdir -p $out/bin
-                  cp -r gbdk-support/build/bin/* $out/bin/
-                '';
-              };
+              gbdkSupport =
+                let
+                  tools = [ "lcc" "ihxcheck" "bankpack" "png2asset"
+                            "gbcompress" "makecom" "makebin"
+                            "png2hicolorgb" "romusage" ];
+                  buildList = builtins.concatStringsSep " " tools;
+                in
+                pkgs.stdenv.mkDerivation {
+                  pname = "gbdk-support";
+                  version = gbdkVersion;
+                  src = gbdkSource;
+                  buildPhase = ''
+                    for d in ${buildList}; do
+                      make -C gbdk-support/$d TARGETDIR=$out --no-print-directory
+                    done
+                  '';
+                  installPhase = ''
+                    mkdir -p $out/bin
+                    for d in ${buildList}; do
+                      cp gbdk-support/$d/$d $out/bin/
+                    done
+                  '';
+                };
             in
             pkgs.stdenv.mkDerivation {
               pname = "gbdk";
