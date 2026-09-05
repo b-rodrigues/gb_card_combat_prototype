@@ -317,6 +317,7 @@ make test-scenario SCENARIO=town_arrival
 - [`docs/memory-budget.md`](docs/memory-budget.md) — ROM and WRAM memory budgets.
 - [`docs/graphics.md`](docs/graphics.md) — Graphics conversion pipeline (`png2gb.py`) and tile layout.
 - [`docs/level-editor.md`](docs/level-editor.md) — Visual level editor & compiler architecture specification.
+- [`docs/level-editor-tutorial.md`](docs/level-editor-tutorial.md) — Level editor tutorial: first level, tools/layers reference, troubleshooting.
 - [`docs/testing.md`](docs/testing.md) — Testing strategy and harness usage.
 - [`docs/roadmap.md`](docs/roadmap.md) — Known gaps and future work.
 
