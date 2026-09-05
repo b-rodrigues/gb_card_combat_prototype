@@ -1,8 +1,19 @@
 {
   description = "Nix Game Boy LLM Development Kit";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://cache.nixos.org"
+      "https://rstats-on-nix.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "rstats-on-nix.cachix.org-1:vdiiVgocg6WeJrODIqdprZRUrhi1JzhBnXv7aWI6+F0="
+    ];
+  };
+
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:rstats-on-nix/nixpkgs/2026-09-04";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -103,14 +114,27 @@
               };
             };
 
+        # Wheel ABI must match pkgs.python3 (nixpkgs 2026-08-05 ships 3.14,
+        # rstats-on-nix 2026-09-04 ships 3.13). Pick per (python, arch).
+        pyTag = "cp${builtins.replaceStrings ["."] [""] pkgs.python3.pythonVersion}";
         pyboyWheel =
-          if system == "aarch64-linux" then {
-            url = "https://files.pythonhosted.org/packages/ae/d7/adef77aa6ab916032e8dda5ec112daf42cf0c0767067caed5321f9b71069/pyboy-2.7.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl";
-            hash = "sha256-T98YnkB1DqcybVGUwOxGuvNmUgftL8nxWO4+8FgA0Ho=";
-          } else {
-            url = "https://files.pythonhosted.org/packages/51/da/ce77683a235cbbf797c8eab25bd6dceabfd2c5109d75e06abbf7b27ff174/pyboy-2.7.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl";
-            hash = "sha256-ivS1WtgnCzawDo0fnThu7Of3I1EYcuN+8twdR1bQnfc=";
-          };
+          if pyTag == "cp313" then
+            if system == "aarch64-linux" then {
+              url = "https://files.pythonhosted.org/packages/8f/cd/21129161d2e25dc8b851b3c13375c3388dfc55c6f58f7a19726d0326161e/pyboy-2.7.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl";
+              hash = "sha256-ajL6y3fKc0Mo0IwAoT2iEXCE920osHevWXnduUQQQyI=";
+            } else {
+              url = "https://files.pythonhosted.org/packages/d4/1c/084ca1c56ed0ba45cf9ea2493698bf96e70e25881c760d83d15ac7ff9b20/pyboy-2.7.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl";
+              hash = "sha256-/PKa6ZjCfWPz1lmLzPurOJ70HE+lNbSsFXEbqQls8jk=";
+            }
+          else if pyTag == "cp314" then
+            if system == "aarch64-linux" then {
+              url = "https://files.pythonhosted.org/packages/ae/d7/adef77aa6ab916032e8dda5ec112daf42cf0c0767067caed5321f9b71069/pyboy-2.7.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl";
+              hash = "sha256-T98YnkB1DqcybVGUwOxGuvNmUgftL8nxWO4+8FgA0Ho=";
+            } else {
+              url = "https://files.pythonhosted.org/packages/51/da/ce77683a235cbbf797c8eab25bd6dceabfd2c5109d75e06abbf7b27ff174/pyboy-2.7.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl";
+              hash = "sha256-ivS1WtgnCzawDo0fnThu7Of3I1EYcuN+8twdR1bQnfc=";
+            }
+          else throw "pyboy: no wheel pinned for python ${pyTag} on ${system}";
 
         pyboy = pkgs.python3.pkgs.buildPythonPackage rec {
           pname = "pyboy";

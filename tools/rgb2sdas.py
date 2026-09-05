@@ -6,7 +6,7 @@ from optparse import OptionParser
 from struct import unpack, unpack_from, calcsize
 
 RGBDS_REVISION_LOW = 6
-RGBDS_REVISION_HIGH = 10
+RGBDS_REVISION_HIGH = 13
 
 WRAM0 = 0; VRAM = 1; ROMX = 2; ROM0 = 3; HRAM = 4; WRAMX = 5; SRAM = 6; OAM = 7
 SYM_LOCAL = 0; SYM_IMPORT = 1; SYM_EXPORT = 2
@@ -14,8 +14,12 @@ PATCH_BYTE = 0; PATCH_LE_WORD = 1; PATCH_LE_LONG = 2; PATCH_JR = 3
 
 rpnPlus = 0x00; rpnMinus = 0x01; rpnTimes = 0x02; rpnDiv = 0x03; rpnMod = 0x04; rpnNegate = 0x05; rpnExponent = 0x06; rpnOr = 0x10;
 rpnAnd = 0x11; rpnXor = 0x12; rpnComplement = 0x13; rpnBoolAnd = 0x21; rpnBoolOr = 0x22; rpnBoolNeg = 0x23; rpnEqual = 0x30; rpnNotEqual = 0x31;
-rpnGreater = 0x32; rpnLess = 0x33; rpnGreaterEqual = 0x34; rpnLessEqual = 0x35; rpnShl = 0x40; rpnShr = 0x41; rpnBankSymbol = 0x50; rpnBankSection = 0x51;
-rpnCurrentBank = 0x52; rpnSizeOfSection = 0x53; rpnStartOfSection = 0x54; rpnHramCheck = 0x60; rpnRstCheck = 0x61; rpnInteger = 0x80; rpnSymbol = 0x81
+rpnGreater = 0x32; rpnLess = 0x33; rpnGreaterEqual = 0x34; rpnLessEqual = 0x35; rpnShl = 0x40; rpnShr = 0x41; rpnShrUnsigned = 0x42;
+rpnBankSymbol = 0x50; rpnBankSection = 0x51;
+rpnCurrentBank = 0x52; rpnSizeOfSection = 0x53; rpnStartOfSection = 0x54; rpnSizeOfSectType = 0x55; rpnStartOfSectType = 0x56;
+rpnHramCheck = 0x60; rpnRstCheck = 0x61; rpnBitCheck = 0x62;
+rpnHigh = 0x70; rpnLow = 0x71; rpnBitWidth = 0x72; rpnTzCount = 0x73;
+rpnInteger = 0x80; rpnSymbol = 0x81
 
 class ByteStream(BytesIO):
     def read_record(self, fmt):
@@ -51,10 +55,11 @@ class RGBObject(object):
 
         nSymbols, nSections, nNodes = stream.read_record('<iii')
 
-        # read Nodes
+        # read Nodes (bit 7 of the type is the "quieted" flag added after
+        # rev 10, so mask it when testing for a REPT node)
         for i in range(nNodes):
             parentid, parentlineno, nodetype = stream.read_record('<iiB')
-            if (nodetype != 0):
+            if ((nodetype & 0x7f) != 0):
                 name, iter = stream.read_null_term(), None
             else:
                 name, iter = None, stream.read_array('<i', *stream.read_record('<i'))
@@ -71,12 +76,17 @@ class RGBObject(object):
             else:
                 self.Symbols.append({'Id': i, 'Name': name, 'SymType': symtype})
 
-        # read Sections
+        # read Sections (rev >= 11 prefixes each section with the NodeID and
+        # LineNo of its definition context)
         for i in range(nSections):
             name = stream.read_null_term()
-            size, secttype, org, bank, align, ofs = stream.read_record('<iBiiBi')
+            if (self.rev >= 11):
+                nodeid, linenum, size, secttype, org, bank, align, ofs = stream.read_record('<iiiBiiBi')
+            else:
+                nodeid, linenum = -1, -1
+                size, secttype, org, bank, align, ofs = stream.read_record('<iBiiBi')
 
-            sect = {'Id': i, 'Name': name, 'Size': size, 'SectType': secttype, 'Org': org, 'Bank': bank, 'Align': align, 'Ofs': ofs}
+            sect = {'Id': i, 'Name': name, 'NodeID': nodeid, 'LineNum': linenum, 'Size': size, 'SectType': secttype, 'Org': org, 'Bank': bank, 'Align': align, 'Ofs': ofs}
             self.Sections.append(sect)
 
             if (sect['SectType'] in [ROM0, ROMX]):
@@ -87,6 +97,15 @@ class RGBObject(object):
                     sourcefile, linenum, ofs, pcsectionid, pcoffset, patchtype, rpnsize = stream.read_record('<iiiiiBi')
                     rpn = self.decode_rpn(stream.read(rpnsize))
                     patches.append({'SourceFile': sourcefile, 'LineNum': linenum, 'Offset': ofs, 'PCSectionId': pcsectionid, 'PCOffset': pcoffset, 'PatchType': patchtype, 'RPN': rpn})
+
+        # read Assertions (parsed and discarded: the SDAS bridge carries no
+        # assertion info; rgblink evaluates them when linking)
+        if len(data) - stream.tell() >= 4:
+            nassertions, = stream.read_record('<i')
+            for i in range(nassertions):
+                anode, aline, aofs, apcsec, apco, atype, arpnsize = stream.read_record('<iiiiiBi')
+                self.decode_rpn(stream.read(arpnsize))
+                stream.read_null_term()
 
     def decode_rpn(self, data):
         result = []
@@ -106,10 +125,25 @@ class RGBObject(object):
                 itm['SizeOfSection'] = stream.read_null_term()
             elif tag == rpnStartOfSection:
                 itm['StartOfSection'] = stream.read_null_term()
+            elif tag in (rpnSizeOfSectType, rpnStartOfSectType, rpnBitCheck):
+                # BYTE operand: section-type value or instruction mask
+                itm['ByteValue'], = stream.read_record('B')
+            elif tag in (rpnHigh, rpnLow, rpnBitWidth, rpnTzCount):
+                pass
             elif tag == rpnInteger:
                 itm['IntValue'], = stream.read_record('<i')
             elif tag == rpnSymbol:
                 itm['SymbolId'], = stream.read_record('<i')
+            elif tag in (rpnPlus, rpnMinus, rpnTimes, rpnDiv, rpnMod,
+                         rpnNegate, rpnExponent, rpnOr, rpnAnd, rpnXor,
+                         rpnComplement, rpnBoolAnd, rpnBoolOr, rpnBoolNeg,
+                         rpnEqual, rpnNotEqual, rpnGreater, rpnLess,
+                         rpnGreaterEqual, rpnLessEqual, rpnShl, rpnShr,
+                         rpnShrUnsigned, rpnCurrentBank, rpnHramCheck,
+                         rpnRstCheck):
+                pass
+            else:
+                raise Exception('Unknown RPN tag: {:#04x}'.format(tag))
             result.append(itm)
         return result
 
@@ -250,13 +284,25 @@ def main(argv=None):
                     if (res):
                         RPN = patch['RPN']
                         if (patch['PatchType'] == PATCH_BYTE):
-                            if (((len(RPN) == 3) and ((RPN[1]['Tag'] != rpnInteger) or (RPN[2]['Tag'] != rpnAnd))) or
+                            if (((len(RPN) == 2) and (RPN[1]['Tag'] not in (rpnHigh, rpnLow))) or
+                                ((len(RPN) == 3) and ((RPN[1]['Tag'] != rpnInteger) or (RPN[2]['Tag'] != rpnAnd))) or
                                 ((len(RPN) == 5) and ((RPN[1]['Tag'] != rpnInteger) or (RPN[2]['Tag'] != rpnShr) or (RPN[3]['Tag'] != rpnInteger) or (RPN[4]['Tag'] != rpnAnd))) or
-                                (not len(RPN) in [3, 5])):
+                                (not len(RPN) in [2, 3, 5])):
                                 raise Exception('Unsupported RPN expression in byte patch')
 
                             symbol = obj.Symbols[RPN[0]['SymbolId']]
-                            if len(RPN) == 3:
+                            if len(RPN) == 2:
+                                # RGBDS >= 0.9 emits HIGH()/LOW() as dedicated
+                                # RPN ops; SDAS relocation selects the byte
+                                # (09 = low, 89 = high) like the legacy
+                                # AND/SHR forms below.
+                                if RPN[1]['Tag'] == rpnHigh:
+                                    rcode = '89'
+                                else:
+                                    rcode = '09'
+                                f.write(bytes('T {:02X} {:02X} 00 {:02X} {:02X} 00\n'.format(lo(PC), hi(PC), lo(symbol['Value']), hi(symbol['Value'])), 'ascii'))
+                                f.write(bytes('R 00 00 {:02X} {:02X} {:s} 03 {:02X} {:02X}\n'.format(lo(section['Id']), hi(section['Id']), rcode, lo(symbol['SectionId']), hi(symbol['SectionId'])), 'ascii'))
+                            elif len(RPN) == 3:
                                 f.write(bytes('T {:02X} {:02X} 00 {:02X} {:02X} 00\n'.format(lo(PC), hi(PC), lo(symbol['Value']), hi(symbol['Value'])), 'ascii'))
                                 f.write(bytes('R 00 00 {:02X} {:02X} 09 03 {:02X} {:02X}\n'.format(lo(section['Id']), hi(section['Id']), lo(symbol['SectionId']), hi(symbol['SectionId'])), 'ascii'))
                             elif len(RPN) == 5:

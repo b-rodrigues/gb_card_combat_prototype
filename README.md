@@ -142,6 +142,18 @@ nix develop
 
 All build tools, compilers, emulators, and test runners are automatically provided.
 
+> The flake declares extra binary caches (`cache.nixos.org`,
+> `rstats-on-nix.cachix.org`). Nix does not apply flake-provided
+> substituters/keys silently, so accept them on first run:
+>
+> ```bash
+> nix develop --accept-flake-config
+> ```
+>
+> Afterwards plain `nix develop` works. (Permanent alternative:
+> `accept-flake-config = true` in your *local* `nix.conf` — not required
+> for this repo.)
+
 ### 2. Primary Make Targets
 
 | Target | Description | Output |
@@ -173,7 +185,7 @@ The repository includes a web-based visual level editor and an automated compile
 
 Node.js and npm are provided directly by the project's Nix flake (`flake.nix`).
 
-Enter the Nix development shell:
+Enter the Nix development shell (first run needs `--accept-flake-config`, see Quick Start):
 
 ```bash
 nix develop

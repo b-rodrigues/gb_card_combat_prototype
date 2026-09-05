@@ -11,7 +11,7 @@ This directory holds the source `.uge` (hUGETracker) files for the Game Boy RPG 
 * **Tracker**: [hUGETracker](https://nickfa.ro/huge-tracker/) (v1.0.11+).
 * **CLI Converter**: `uge2source` (packaged in the Nix environment).
 * **Driver**: [hUGEDriver](https://github.com/SuperDisk/hUGEDriver) (v1.0+).
-* **Object Bridge**: `tools/rgb2sdas.py` (converts RGBDS 0.10.x objects to SDAS format for GBDK-4 linking).
+* **Object Bridge**: `tools/rgb2sdas.py` (converts RGBDS objects, rev 6–13 / RGBDS 0.5.x–1.0.x, to SDAS format for GBDK-4 linking).
 
 All tools are provided deterministically via `nix develop`.
 
