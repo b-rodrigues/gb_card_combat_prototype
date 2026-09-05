@@ -441,21 +441,23 @@ body {
 
 .tiles-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
 }
 
 .tile-btn {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  padding: 6px;
+  padding: 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all 0.15s;
+  min-width: 0;
 }
 
 .tile-btn:hover {
@@ -491,14 +493,18 @@ body {
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  align-items: center;
 }
 
 .tile-name {
   font-size: 11px;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #ff7b72;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .tile-tag {
