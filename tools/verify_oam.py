@@ -120,6 +120,24 @@ def vram_attr_at(sess, x, y):
     return val
 
 
+def wait_vblank(sess, tries=3):
+    """Pause at a VBlank boundary: VRAM is only readable outside scanout
+    modes 2/3 (real HW blocks it; mGBA returns 0xFF).  step() pauses at the
+    game_render breakpoint, whose scanout phase shifts with boot timing
+    across runs (§52.17) -- usually mid-scanout, so step-paused VRAM reads
+    come back all-0xFF (indistinguishable from blanked tiles, and
+    all-nonzero for attribute reads, passing vacuously).  mGBA `frame`
+    instead pauses at VBlank start (LY=144), where every VRAM byte reads
+    true.  Returns True in VBlank, False if the bound is hit (callers fail
+    loudly instead of asserting on blocked reads)."""
+    for _ in range(tries):
+        sess._cmd("frame", timeout=10.0)
+        ly = sess._memread(0xFF44)
+        if ly is not None and ly >= 144:
+            return True
+    return False
+
+
 def verify_hostile_sprites(sess):
     """Regression net for the Chunk-2 data-driven overworld sprite pipeline
     (SPRITE_KIND_* decoded in the bank-3 pass): hostile actors must render
@@ -318,7 +336,10 @@ def verify_dialogue_transition(sess):
 
     # CGB attributes must be re-applied, not left at the lcd_off wipe
     # (all-zero = grayscale).  Count nonzero attrs over the visible map
-    # with true VRAM reads (the WRAM mirror goes stale across the wipe).
+    # with true VRAM reads (the WRAM mirror goes stale across the wipe),
+    # gated on VBlank: mid-scanout every attr reads back 0xFF (nonzero)
+    # and the check would pass vacuously.
+    check("dialogue VRAM read in VBlank", True, wait_vblank(sess))
     nonzero = 0
     for y in range(18):
         for x in range(20):
@@ -374,9 +395,11 @@ def verify_battle_vram_restore(sess):
                      for i in range(12 * 16)
                      for b in (sess._memread(0x8800 + i),))
 
+    check("pre-battle VRAM read in VBlank", True, wait_vblank(sess))
     before = vram_tiles()
     sess.hold("RIGHT", 10)
     sess.step(2)
+    check("battle VRAM read in VBlank", True, wait_vblank(sess))
     during = vram_tiles()
     check("battle clobbers world VRAM tiles (test exercises the bug)",
           True, during != before)
@@ -393,6 +416,7 @@ def verify_battle_vram_restore(sess):
     check("fled battle: back to overworld", "OVERWORLD",
           sess.snapshot().get("game_state"))
     sess.step(2)
+    check("return VRAM read in VBlank", True, wait_vblank(sess))
     check("overworld return: world VRAM tiles restored",
           before, vram_tiles())
 
