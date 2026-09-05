@@ -1,20 +1,40 @@
-# Game Boy Card Combat Prototype & LLM-First Development Template
+# Kaartenheld — Game Boy Demo
 
-A deterministic, Nix-based Game Boy development template targeting authentic Nintendo Game Boy (DMG) and Game Boy Color (CGB) hardware constraints, with a playable **Baten Kaitos–inspired card combat** vertical slice.
+**Kaartenheld** (Luxembourgish for "Card Hero") is an upcoming top-down adventure game for the Nintendo Game Boy by **FroBlo Studios**, a two-person indie team of inexperienced-but-relentless developers.
 
-This repository serves as a **reusable template and foundation for Game Boy RPG development**, designed from the ground up to demonstrate and enable **LLM-first game development feasibility**. AI coding agents can build, execute, inspect, test, and debug gameplay loops through deterministic, machine-readable interfaces without requiring a human to manually play through the game or interpret the screen.
+This repository contains the playable **demo** for Kaartenheld: a top-down adventure with a deck-building card combat system in which you build **poker hands to trigger combos**, explore the world, and grow your deck — with **no traditional RPG mechanics**: no equipment, no levels, no XP. Your power is entirely determined by the cards you carry.
+
+Every combat victory rewards you with a **new random card**: add it to your deck, or sell it.
+
+## How It Is Made
+
+Kaartenheld is built with a deliberately split creative process:
+
+- **Art and music are entirely human-made** — every sprite, tileset, and track is crafted by hand by FroBlo Studios.
+- **The code is written by AI coding agents** — an LLM-first development workflow in which agents build, test, and debug the game through a deterministic, machine-readable harness (see the technical documentation below).
+- **Levels are authored in a bespoke level editor** built specifically for this game, which compiles directly into the game's build pipeline.
+
+## The Game
+
+- **Top-down adventure**: explore tile-based maps, talk to characters, follow the story.
+- **Card combat**: battles are fought with a 20-card deck; you play cards from a 5-card hand.
+- **Poker combos**: the values of the cards in your hand form poker hands — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND — and stronger hands mean stronger effects. Ring cards act as jokers, substituting any value.
+- **No RPG grind**: there is no equipment and no leveling. Deck composition is your entire progression.
+- **Loot cards**: every victory drops a procedurally generated card (names, values, riders, rarity tiers). Keep it, build it into your deck, or sell it to a merchant for ECUs, the in-game currency.
+- **Status effects**: POISON, BURN, and FREEZE ride on card hits with stacking rules and per-round ticks.
+- **Persistence**: battery-backed SRAM save/load with slots.
+
+## About FroBlo Studios
+
+FroBlo Studios is two inexperienced indie developers making a Game Boy game the hard way: authentic hardware constraints, a fully reproducible Nix toolchain, and an AI-agent-first development workflow (more on that below).
 
 ---
 
-## What This Repository Is
+## Development & Technical Documentation
 
-1. **An LLM-First Retro Development Template**: A full Game Boy RPG codebase engineered for automated agent development. Every subsystem provides semantic observability, deterministic state injection, frame-level control, and automated assertion testing.
-2. **A Reusable Game Boy RPG Foundation**: A generic, modular RPG engine cleanly separated from game content. When creating a new RPG, developers or AI agents can define new maps, actors, dialogue, cards, quests, and combat mechanics in `src/game/` without rewriting engine primitives.
-3. **A Hardware-Accurate, Production-Grade Toolchain**: Zero host dependency drift via Nix flakes, targeting GBDK-4 (`lcc`), RGBDS (`rgbasm`, `rgblink`, `rgbfix`), and verified across SameBoy and mGBA.
+The following sections cover how this repository is engineered and tested.
 
----
-
-## LLM-First Development Architecture
+### LLM-First Development Architecture
 
 Developing Game Boy games with AI agents requires solving retro hardware opacity: LLMs cannot reliably play real-time games with a joypad or interpret low-resolution pixels.
 
@@ -37,7 +57,7 @@ Host-Side AI Agent / Test Runner (Python)
     └──────────────────────────────────────────────┘
 ```
 
-### Key LLM-First Capabilities
+#### Key LLM-First Capabilities
 
 - **Declarative Scenario Fixtures**: 159 deterministic scenarios in `tools/scenarios/tests/*.json` that configure map coordinates, story flags, party stats, decks, hands, inventory, and enemy states before running scripted inputs.
 - **Parallel Test Harness**: Runs test scenarios concurrently across host CPU cores (`make test-harness JOBS=16`), achieving over 7x speedup compared to serial execution.
@@ -48,17 +68,15 @@ Host-Side AI Agent / Test Runner (Python)
 
 See [`docs/DEBUG_PROTOCOL.md`](docs/DEBUG_PROTOCOL.md) and [`AGENTS.md`](AGENTS.md) for full protocol and operational contracts.
 
----
+### Engine Features
 
-## Engine Features & Vertical Slice
-
-The repository includes a complete, playable vertical slice proving all core RPG systems:
+The codebase includes a complete, playable vertical slice proving all core systems:
 
 - **World & Overworld**:
   - Tile-based maps with smooth sub-tile hardware scrolling;
   - Collision detection, walkability allowlists, and warp gates;
   - Persistent actors, NPC patrolling, and proximity interaction.
-- **Card Combat** (Baten Kaitos–inspired, see [`docs/card-battle.md`](docs/card-battle.md)):
+- **Card Combat** (see [`docs/card-battle.md`](docs/card-battle.md)):
   - Attack/defend phases with a 5-card hand drawn from a 20-card deck;
   - Number-based **poker-style combos**: the hand you make determines the tier — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND;
   - **Ring cards act as jokers**, substituting any value;
@@ -78,17 +96,12 @@ The repository includes a complete, playable vertical slice proving all core RPG
   - Dialogue player with multi-step choices and branch conditions;
   - Scripted quest system with multi-stage state tracking;
   - Global story flags and variables.
-- **RPG State & Progression**:
-  - Party stats, leveling, and XP progression;
-  - Shop system with per-shop stock and currency handling.
 - **Persistence**:
   - Battery-backed SRAM save/load with versioned formats and slot management.
 - **Audio Architecture**:
   - Hardware Timer-driven music clock (`TIMA` overflow ISR) running at fixed 256 Hz tempo regardless of main loop load or LCD redraws.
 
----
-
-## Engine vs. Game Content Separation
+### Engine vs. Game Content Separation
 
 The codebase strictly enforces the separation of generic engine primitives from game-specific data:
 
@@ -120,9 +133,7 @@ src/
 
 When creating a new game from this template, developers and agents modify `src/game/` while leaving the engine subsystems in `src/core/`, `src/world/`, `src/rpg/`, and `src/ui/` untouched.
 
----
-
-## Hardware & Toolchain
+### Hardware & Toolchain
 
 - **Target Hardware**: Nintendo Game Boy (DMG) / Game Boy Color (CGB)
 - **C Toolchain**: GBDK-4 (`lcc` / SDCC)
@@ -130,29 +141,15 @@ When creating a new game from this template, developers and agents modify `src/g
 - **Environment**: Nix flakes (100% reproducible, zero host dependencies)
 - **Development Emulator**: SameBoy & mGBA
 
----
+### Quick Start
 
-## Quick Start
-
-### 1. Enter the Nix Development Shell
+#### 1. Enter the Nix Development Shell
 
 ```bash
 nix develop
 ```
 
 All build tools, compilers, emulators, and test runners are automatically provided.
-
-> The flake declares extra binary caches (`cache.nixos.org`,
-> `rstats-on-nix.cachix.org`). Nix does not apply flake-provided
-> substituters/keys silently, so accept them on first run:
->
-> ```bash
-> nix develop --accept-flake-config
-> ```
->
-> Afterwards plain `nix develop` works. (Permanent alternative:
-> `accept-flake-config = true` in your *local* `nix.conf` — not required
-> for this repo.)
 
 ### 2. Primary Make Targets
 
@@ -296,18 +293,16 @@ Run a single scenario with full diagnostic trace:
 make test-scenario SCENARIO=town_arrival
 ```
 
----
+### Documentation
 
-## Documentation
-
-### Protocol & Agent Contracts
+#### Protocol & Agent Contracts
 
 - [`AGENTS.md`](AGENTS.md) — Operational contract and rules for AI coding agents.
 - [`docs/DEBUG_PROTOCOL.md`](docs/DEBUG_PROTOCOL.md) — Authoritative debug protocol and LLM state inspection contract.
 - [`docs/dev-harness.md`](docs/dev-harness.md) — Deterministic scenario design and emulator bridge.
 - [`docs/LLM_AGENT_GUIDE.md`](docs/LLM_AGENT_GUIDE.md) — Practical guide for agents working in this repo.
 
-### Architecture & Engineering
+#### Architecture & Engineering
 
 - [`docs/architecture.md`](docs/architecture.md) — Subsystem architecture and dependency direction.
 - [`docs/game-vs-engine.md`](docs/game-vs-engine.md) — Engine/game layer boundary rules.
@@ -321,7 +316,7 @@ make test-scenario SCENARIO=town_arrival
 - [`docs/testing.md`](docs/testing.md) — Testing strategy and harness usage.
 - [`docs/roadmap.md`](docs/roadmap.md) — Known gaps and future work.
 
-### Gameplay Design
+#### Gameplay Design
 
 - [`docs/card-battle.md`](docs/card-battle.md) — Card combat design: attack/defend phases, card roles, timer.
 - [`docs/combo-system.md`](docs/combo-system.md) — Combo tiers, ring jokers, effect and status architecture.

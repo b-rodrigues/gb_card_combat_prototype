@@ -14,7 +14,7 @@ Source
 - houses and various thing: https://nemozhlyve.itch.io/2bit-tileset
 - Combat is original art by Putosaure
 
-Assets made by Putosaure are licensed under the [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/):
+Assets made by Florent Bérault are licensed under the [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/):
 
 - desolate_landscape.png
 - assets/music/Battle BGM.uge
