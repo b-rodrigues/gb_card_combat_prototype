@@ -71,6 +71,7 @@ static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
             *prop = 1;
             return (uint8_t)(CHEST_SPRITE_TILE_ID + anim);
         case SPRITE_KIND_BOSS:
+        case SPRITE_KIND_TILE: /* background-art: cell owns the visuals */
             *prop = 0;
             return 0;
         default: /* SPRITE_KIND_ASCII */
@@ -134,8 +135,9 @@ void ui_actors_sprites_banked(void)
         }
         d = &g_static_actors[i];
         if (d->sprite_kind == SPRITE_KIND_ASCII ||
-            d->sprite_kind == SPRITE_KIND_BOSS) {
-            e[0] = 0;  /* glyph path / boss block own these */
+            d->sprite_kind == SPRITE_KIND_BOSS ||
+            d->sprite_kind == SPRITE_KIND_TILE) {
+            e[0] = 0;  /* glyph / boss / background-art actors own these */
             continue;
         }
         tile = sprite_tile_for((uint8_t)d->sprite_kind, d->visual,

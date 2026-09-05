@@ -313,7 +313,7 @@ def emit_palette(entries, tilesets, const_by_value):
     out.append("")
 
     kind_id_map = {"forest": "FOREST", "desolate_landscape": "DESOLATE",
-                   "castle": "CASTLE"}
+                   "castle": "CASTLE", "village": "VILLAGE"}
 
     # Glyph -> palette fallback (kept for transition / missing manifests)
     GLYPH_PALETTE = {
@@ -345,7 +345,7 @@ def emit_palette(entries, tilesets, const_by_value):
         },
     }
 
-    for ts_id in ("forest", "desolate_landscape", "castle"):
+    for ts_id in ("forest", "desolate_landscape", "castle", "village"):
         kind = kind_id_map.get(ts_id, ts_id.upper())
         tiles = kind_tiles.get(ts_id, [])
         if not tiles:
@@ -407,14 +407,14 @@ def main(argv):
     # exit indices per tileset kind (WORLD_TILESET_* numbering lives in
     # scene.h; 2 = FOREST, 14 = DESOLATE, 15 = CASTLE).
     kind_of = {"forest": "FOREST", "desolate_landscape": "DESOLATE",
-               "castle": "CASTLE"}
+               "castle": "CASTLE", "village": "VILLAGE"}
     exit_idx = {}
     for ts_id, kind in kind_of.items():
         ts = tilesets.get(ts_id, {})
         for e in ts.get("vram_block", {}).get("tiles", []):
             if e.get("exit"):
                 exit_idx[kind] = e["index"]
-    for kind in ("FOREST", "DESOLATE", "CASTLE"):
+    for kind in ("FOREST", "DESOLATE", "CASTLE", "VILLAGE"):
         if kind not in exit_idx:
             print(f"generate_tiles: no exit marked for {kind}", file=sys.stderr)
             return 1

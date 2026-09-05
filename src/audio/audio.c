@@ -193,6 +193,8 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_forest);
     } else if (track == MUSIC_BOSS) {
         huge_music_play(&song_boss_fight);
+    } else if (track == MUSIC_TOWN) {
+        huge_music_play(&song_village);
     }
 
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when

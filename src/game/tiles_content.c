@@ -61,6 +61,19 @@ const palette_color_t cgb_bg_palettes_castle[8][4] = {
     /* 7 dim shadow*/{ RGB8(215,215,215), RGB8(130,130,130), RGB8(86,86,86),  RGB8(35,35,35)  }
 };
 
+/* Village palette set: Anchor color 0 is dirt (#b6a27e -> RGB8(182,162,126))
+ * across outdoor nature palettes. */
+const palette_color_t cgb_bg_palettes_village[8][4] = {
+    /* 0 gray */     { RGB8(182,162,126), RGB8(200,200,200), RGB8(125,125,125),RGB8(30,30,30)  },
+    /* 1 fire */     { RGB8(182,162,126), RGB8(255,196,96),  RGB8(220,110,32), RGB8(90,40,10)  },
+    /* 2 iron */     { RGB8(182,162,126), RGB8(150,160,180), RGB8(85,105,130), RGB8(35,45,60)  },
+    /* 3 dirt floor */{ RGB8(182,162,126), RGB8(140,120,88),  RGB8(96,78,52),  RGB8(48,36,24)  },
+    /* 4 foliage */  { RGB8(182,162,126), RGB8(140,150,90),  RGB8(70,110,50),  RGB8(20,50,20)  },
+    /* 5 wood */     { RGB8(182,162,126), RGB8(150,105,60),  RGB8(95,62,32),   RGB8(38,24,10)  },
+    /* 6 cream */    { RGB8(182,162,126), RGB8(241,207,145), RGB8(200,160,90), RGB8(120,85,40) },
+    /* 7 dim */      { RGB8(182,162,126), RGB8(158,148,128), RGB8(100,88,66),  RGB8(42,36,26)  }
+};
+
 /* Backward compatibility alias */
 #define cgb_bg_palettes_overworld cgb_bg_palettes_forest
 
@@ -75,6 +88,9 @@ void ui_load_cram_banked(void)
             break;
         case WORLD_TILESET_CASTLE:
             pal_data = (const uint8_t *)cgb_bg_palettes_castle;
+            break;
+        case WORLD_TILESET_VILLAGE:
+            pal_data = (const uint8_t *)cgb_bg_palettes_village;
             break;
         case WORLD_TILESET_FOREST:
         case 1: /* Legacy overworld mode */
@@ -111,6 +127,12 @@ const uint8_t g_tileset_castle[432] = {
 #include "gfx/rpg_castle_tiles.inc"
 };
 
+const uint8_t g_tileset_village[768] = {
+    /* 48 village tiles (768 bytes): Walls, dirt floors, houses, wells,
+     * roofs, NPC art, and the stairs exit tile */
+#include "gfx/rpg_village_world_tiles.inc"
+};
+
 const uint8_t g_intrepid_font_tiles[1536] = {
 #include "gfx/intrepid_font_tiles.inc"
 };
@@ -140,6 +162,11 @@ void ui_load_tileset_banked(void)
             src = g_tileset_castle;
             pal_src = g_tile_pal_castle;
             tile_count = 27;
+            break;
+        case WORLD_TILESET_VILLAGE:
+            src = g_tileset_village;
+            pal_src = g_tile_pal_village;
+            tile_count = 48;
             break;
         default:
             src = g_tileset_forest;

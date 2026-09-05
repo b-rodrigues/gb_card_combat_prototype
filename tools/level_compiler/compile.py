@@ -51,6 +51,7 @@ SCENE_ENUM_MAP = {
 
 TILESET_KIND_MAP = {
     "forest": "WORLD_TILESET_FOREST",
+    "village": "WORLD_TILESET_VILLAGE",
     "desolate_landscape": "WORLD_TILESET_DESOLATE",
     "desolate": "WORLD_TILESET_DESOLATE",
     "castle": "WORLD_TILESET_CASTLE",
@@ -480,6 +481,10 @@ def resolve_sprite_kind(obj):
         return "SPRITE_KIND_KOBOLD"
     if "ENTITY_ID_BAT" in ent:
         return "SPRITE_KIND_BAT"
+    if ent in ("ENTITY_ID_MAYOR", "ENTITY_ID_GUARD",
+               "ENTITY_ID_SHOPKEEPER", "ENTITY_ID_MERCHANT",
+               "ENTITY_ID_WIZARD"):
+        return "SPRITE_KIND_TILE"
     return "SPRITE_KIND_ASCII"
 
 

@@ -51,13 +51,14 @@ GENERATED_DIR = REPO_ROOT / "generated" / "tiles"
 TILE_SIZE = 8
 
 # Tilesets to process
-TILESETS = ["forest", "castle", "desolate_landscape"]
+TILESETS = ["forest", "castle", "desolate_landscape", "village"]
 
 # PNG mapping
 PNG_MAP = {
     "forest": "forest-tile.png",
     "castle": "castle-tile.png",
     "desolate_landscape": "desolate_landscape.png",
+    "village": "village-tile.png",
 }
 
 # Fixed CGB palettes from src/game/tiles_content.c (RGB8 format -> 0-255)
@@ -117,6 +118,24 @@ FIXED_PALETTES = {
         # Palette 7: dim shadow
         [(215, 215, 215), (130, 130, 130), (86, 86, 86), (35, 35, 35)],
     ],
+    "village": [
+        # Palette 0: gray (stone / stairs / well) - harmonized Color 0 = dirt
+        [(182, 162, 126), (200, 200, 200), (125, 125, 125), (30, 30, 30)],
+        # Palette 1: fire (campfire / torch braziers) - harmonized Color 0 = dirt
+        [(182, 162, 126), (255, 196, 96), (220, 110, 32), (90, 40, 10)],
+        # Palette 2: iron (reserved cool tones) - harmonized Color 0 = dirt
+        [(182, 162, 126), (150, 160, 180), (85, 105, 130), (35, 45, 60)],
+        # Palette 3: dirt floor - UI_COLOR_FIELD (the ground anchor ramp)
+        [(182, 162, 126), (140, 120, 88), (96, 78, 52), (48, 36, 24)],
+        # Palette 4: foliage (hedges / sprouts) - harmonized Color 0 = dirt
+        [(182, 162, 126), (140, 150, 90), (70, 110, 50), (20, 50, 20)],
+        # Palette 5: wood (houses / barrels / merchant) - UI_COLOR_WOOD
+        [(182, 162, 126), (150, 105, 60), (95, 62, 32), (38, 24, 10)],
+        # Palette 6: cream / gold (roof shingles, house walls)
+        [(182, 162, 126), (241, 207, 145), (200, 160, 90), (120, 85, 40)],
+        # Palette 7: dim (soft shading)
+        [(182, 162, 126), (158, 148, 128), (100, 88, 66), (42, 36, 26)],
+    ],
 }
 
 # Scene anchor colors (Color 0 of outdoor palettes)
@@ -124,6 +143,7 @@ ANCHOR_COLORS = {
     "forest": "#7bb660",           # grass green (RGB: 120, 176, 96)
     "desolate_landscape": "#938da1",  # slate rock (RGB: 147, 141, 161)
     "castle": "#d7d7d7",           # light stone (RGB: 215, 215, 215)
+    "village": "#b6a27e",          # dirt floor (RGB: 182, 162, 126)
 }
 
 # Palette names for documentation in manifest
@@ -136,6 +156,9 @@ PALETTE_NAMES = {
     ],
     "castle": [
         "stone", "curtain", "iron", "moss_green", "poison", "wood_furn", "gold", "dim_shadow"
+    ],
+    "village": [
+        "gray", "fire", "iron", "dirt_floor", "foliage", "wood", "cream", "dim"
     ],
 }
 
@@ -213,6 +236,7 @@ DEFAULT_FLOOR_PALETTES = {
     "forest": 3,              # field (greens) - UI_COLOR_FIELD
     "desolate_landscape": 7,  # slate rock - UI_COLOR_DIM
     "castle": 0,              # stone (light gray) - UI_COLOR_NONE
+    "village": 3,             # dirt floor - UI_COLOR_FIELD
 }
 
 

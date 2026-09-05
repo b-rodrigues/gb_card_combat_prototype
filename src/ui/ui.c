@@ -480,7 +480,8 @@ static char ui_get_world_tile_glyph(uint8_t t)
     }
     if ((t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) ||
         (t >= TILE_FOREST_00 && t <= TILE_FOREST_47) ||
-        (t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26))
+        (t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) ||
+        (t >= TILE_VILLAGE_00 && t <= TILE_VILLAGE_47))
         return tile_landscape_glyph(t);
     return (t < 8) ? g_sem_map[t] : '.';
 }
@@ -542,7 +543,8 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
             WorldTilesetKind ets = world->tileset_kind;
             uint8_t ex = (ets == WORLD_TILESET_DESOLATE) ? TILESET_EXIT_DESOLATE :
                          (ets == WORLD_TILESET_FOREST) ? TILESET_EXIT_FOREST :
-                         (ets == WORLD_TILESET_CASTLE) ? TILESET_EXIT_CASTLE : 2;
+                         (ets == WORLD_TILESET_CASTLE) ? TILESET_EXIT_CASTLE :
+                         (ets == WORLD_TILESET_VILLAGE) ? TILESET_EXIT_VILLAGE : 2;
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + ex);
         } else if (world->tileset_kind == WORLD_TILESET_DESOLATE &&
             t >= TILE_DESOLATE_WALL_00 && t <= TILE_DESOLATE_STAIRCASE) {
@@ -560,6 +562,10 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
                    t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) {
             uint8_t c_idx = (uint8_t)(t - TILE_CASTLE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + c_idx);
+        } else if (world->tileset_kind == WORLD_TILESET_VILLAGE &&
+                   t >= TILE_VILLAGE_00 && t <= TILE_VILLAGE_47) {
+            uint8_t v_idx = (uint8_t)(t - TILE_VILLAGE_00);
+            tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + v_idx);
         } else {
             uint8_t lookup_id = rpg_lookup_tile_id(world->tileset_kind, glyph);
             tile_idx = lookup_id ? lookup_id : (uint8_t)(ui_font_tile_base + (uint8_t)(glyph - ' '));

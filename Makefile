@@ -33,7 +33,7 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
@@ -156,6 +156,12 @@ gfx:
 	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
 		--palette auto --tile-coords "5,2 6,2" \
 		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
+	# ── Village tileset (assets/village-tile.png, 16 cols × 3 rows) ────────
+	# Full 48-tile world sheet (g_tileset_village).  Arranged in SheetIndex
+	# order (the tileset JSON's vram_block section numbering = scanning order).
+	@python3 tools/png2gb.py assets/village-tile.png --name rpg_village_world_tiles \
+		--palette auto --anchor-color "#b6a27e" \
+		--raw -o $(GFX_OUT_DIR)/rpg_village_world_tiles.inc
 
 
 
@@ -227,6 +233,12 @@ extract-tiles:
 		--gb-tileset-kind WORLD_TILESET_CASTLE \
 		--output-dir tools/level_editor/public/tiles/castle \
 		--output-json tools/level_editor/tilesets/castle.json
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/village-tile.png --csv assets/village-tileset-description.csv \
+		--tileset-id village --label "Oakhaven Village" \
+		--gb-tileset-kind WORLD_TILESET_VILLAGE \
+		--output-dir tools/level_editor/public/tiles/village \
+		--output-json tools/level_editor/tilesets/village.json
 
 # NOTE: extract-tiles is intentionally NOT a dependency here.
 # The tileset JSON files (tools/level_editor/tilesets/*.json) are the sole
@@ -248,7 +260,7 @@ tiles-check:
 # Palette manifest generation: PNG + tileset JSON -> generated/tiles/<tileset>.json
 # Single source of truth for CGB palettes (web editor + ROM compiler parity).
 # See docs/cgb_color_tiles.md §7 and tools/palette_compiler.py.
-manifest: tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_editor/tilesets/desolate_landscape.json tools/palette_compiler.py | $(GENERATED_TILES_DIR)
+manifest: tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/village.json tools/palette_compiler.py | $(GENERATED_TILES_DIR)
 	@python3 tools/palette_compiler.py
 
 # Tile-trait generation: manifests -> generated/tiles/tile_traits.h
@@ -260,7 +272,7 @@ GENERATED_TILE_GLYPH = $(GENERATED_TILES_DIR)/tile_glyph.h
 GENERATED_TILE_PALETTE = $(GENERATED_TILES_DIR)/tile_palette.h
 tiles: manifest $(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE)
 
-$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): manifest tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
+$(GENERATED_TILE_WALK) $(GENERATED_TILE_GLYPH) $(GENERATED_TILE_PALETTE): manifest tools/level_editor/tilesets/desolate_landscape.json tools/level_editor/tilesets/forest.json tools/level_editor/tilesets/castle.json tools/level_editor/tilesets/village.json tools/level_compiler/generate_tiles.py | $(GENERATED_TILES_DIR)
 	python3 tools/level_compiler/generate_tiles.py --out "$(GENERATED_TILES_DIR)"
 
 $(GENERATED_TILES_DIR):
@@ -356,6 +368,9 @@ $(GENERATED_MUSIC_DIR)/forest.c: assets/music/Forest.uge tools/compile_music.py 
 
 $(GENERATED_MUSIC_DIR)/boss_fight.c: assets/music/Boss\ fight.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_boss_fight "$@"
+
+$(GENERATED_MUSIC_DIR)/village.c: assets/music/Village.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 6 song_village "$@"
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)

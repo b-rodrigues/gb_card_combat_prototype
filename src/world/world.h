@@ -10,6 +10,7 @@
  * scene.h picks it up through this header. */
 typedef enum {
     WORLD_TILESET_FOREST   = 2,
+    WORLD_TILESET_VILLAGE  = 12,
     WORLD_TILESET_DESOLATE = 14,
     WORLD_TILESET_CASTLE   = 15
 } WorldTilesetKind;
@@ -159,6 +160,58 @@ typedef enum {
     TILE_CASTLE_24 = 80,
     TILE_CASTLE_25 = 81,
     TILE_CASTLE_26 = 82,
+
+    /* Village Landscape tiles: 48 tiles in sheet scan order (0..47),
+     * mapping 1:1 to the 48-tile village VRAM block (RPG_TILE_BASE_WORLD).
+     * TILE_VILLAGE_<i> renders VRAM block i. value = 83 + i. */
+    TILE_VILLAGE_00 = 83,
+    TILE_VILLAGE_01 = 84,
+    TILE_VILLAGE_02 = 85,
+    TILE_VILLAGE_03 = 86,
+    TILE_VILLAGE_04 = 87,
+    TILE_VILLAGE_05 = 88,
+    TILE_VILLAGE_06 = 89,
+    TILE_VILLAGE_07 = 90,
+    TILE_VILLAGE_08 = 91,
+    TILE_VILLAGE_09 = 92,
+    TILE_VILLAGE_10 = 93,
+    TILE_VILLAGE_11 = 94,
+    TILE_VILLAGE_12 = 95,
+    TILE_VILLAGE_13 = 96,
+    TILE_VILLAGE_14 = 97,
+    TILE_VILLAGE_15 = 98,
+    TILE_VILLAGE_16 = 99,
+    TILE_VILLAGE_17 = 100,
+    TILE_VILLAGE_18 = 101,
+    TILE_VILLAGE_19 = 102,
+    TILE_VILLAGE_20 = 103,
+    TILE_VILLAGE_21 = 104,
+    TILE_VILLAGE_22 = 105,
+    TILE_VILLAGE_23 = 106,
+    TILE_VILLAGE_24 = 107,
+    TILE_VILLAGE_25 = 108,
+    TILE_VILLAGE_26 = 109,
+    TILE_VILLAGE_27 = 110,
+    TILE_VILLAGE_28 = 111,
+    TILE_VILLAGE_29 = 112,
+    TILE_VILLAGE_30 = 113,
+    TILE_VILLAGE_31 = 114,
+    TILE_VILLAGE_32 = 115,
+    TILE_VILLAGE_33 = 116,
+    TILE_VILLAGE_34 = 117,
+    TILE_VILLAGE_35 = 118,
+    TILE_VILLAGE_36 = 119,
+    TILE_VILLAGE_37 = 120,
+    TILE_VILLAGE_38 = 121,
+    TILE_VILLAGE_39 = 122,
+    TILE_VILLAGE_40 = 123,
+    TILE_VILLAGE_41 = 124,
+    TILE_VILLAGE_42 = 125,
+    TILE_VILLAGE_43 = 126,
+    TILE_VILLAGE_44 = 127,
+    TILE_VILLAGE_45 = 128,
+    TILE_VILLAGE_46 = 129,
+    TILE_VILLAGE_47 = 130,
     /* Desolate landscape */
     TILE_DESOLATE_WALL_00    = 141,
     TILE_DESOLATE_WALL_01    = 142,
@@ -269,7 +322,9 @@ typedef enum {
     SPRITE_KIND_KOBOLD = 1, /* 2-frame slime-as-kobold OBJ sprite */
     SPRITE_KIND_BAT = 2,    /* 2-frame per-map bat OBJ sprite */
     SPRITE_KIND_BOSS = 3,   /* 2x2 castle boss drawn as background tiles */
-    SPRITE_KIND_CHEST = 4   /* 1-frame pickup chest OBJ sprite (statics) */
+    SPRITE_KIND_CHEST = 4,  /* 1-frame pickup chest OBJ sprite (statics) */
+    SPRITE_KIND_TILE = 5    /* background-art actor: cell shows its tileset
+                               map tile (NPC art), no OAM sprite */
 } ActorSpriteKind;
 
 /* Mutable runtime state for a spawned World Actor.  Static actor
