@@ -147,77 +147,55 @@
           };
         };
 
-        hugetracker =
-          if system == "aarch64-linux" then
-            pkgs.stdenv.mkDerivation rec {
-              pname = "hugetracker";
-              version = "1.0.11";
+        # uge2source CLI built from source on all Linux arches.
+        # The old x86_64-only prebuilt hUGETracker-*-linux.zip is x86_64-only,
+        # pulls in the full GUI closure (gtk2/pango/cairo/SDL2), and ships a
+        # stale bundled rgbasm. Building the tiny CLI from source via
+        # fpc/lazarus works identically on x86_64-linux and aarch64-linux and
+        # lets rgbasm-huge track nixpkgs rgbds like the rest of the toolchain.
+        hugetracker = pkgs.stdenv.mkDerivation rec {
+          pname = "hugetracker";
+          version = "1.0.11";
 
-              src = pkgs.fetchzip {
-                url = "https://github.com/SuperDisk/hUGETracker/archive/refs/tags/v${version}.tar.gz";
-                sha256 = "010qva5qqmrg3h5dmhmi4in2y2i1fas4197bjc0vjjx71szn1vln";
-              };
+          src = pkgs.fetchzip {
+            url = "https://github.com/SuperDisk/hUGETracker/archive/refs/tags/v${version}.tar.gz";
+            sha256 = "010qva5qqmrg3h5dmhmi4in2y2i1fas4197bjc0vjjx71szn1vln";
+          };
 
-              nativeBuildInputs = [ pkgs.fpc pkgs.lazarus ];
+          nativeBuildInputs = [ pkgs.fpc pkgs.lazarus ];
 
-              buildPhase = ''
-                HOME=$TMPDIR lazbuild --lazarusdir=${pkgs.lazarus}/share/lazarus --build-mode=Release src/uge2source/uge2source.lpi
-              '';
+          buildPhase = ''
+            runHook preBuild
+            HOME=$TMPDIR lazbuild --lazarusdir=${pkgs.lazarus}/share/lazarus --build-mode=Release src/uge2source/uge2source.lpi
+            runHook postBuild
+          '';
 
-              installPhase = ''
-                mkdir -p $out/bin
-                cp src/uge2source/uge2source $out/bin/uge2source
-                ln -s ${pkgs.rgbds}/bin/rgbasm $out/bin/rgbasm-huge
-              '';
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/bin
+            # lazbuild --build-mode=Release links to
+            # src/uge2source/Release/uge2source, but the exact output dir
+            # varies with lazarus version/build mode, so locate it instead
+            # of hardcoding one path.
+            bin=$(find src/uge2source -maxdepth 2 -type f -name uge2source -print -quit)
+            if [ -z "$bin" ]; then
+              echo "hugetracker: uge2source binary not found under src/uge2source" >&2
+              find src/uge2source -maxdepth 3 -ls >&2
+              exit 1
+            fi
+            cp "$bin" $out/bin/uge2source
+            chmod +x $out/bin/uge2source
+            ln -s ${pkgs.rgbds}/bin/rgbasm $out/bin/rgbasm-huge
+            runHook postInstall
+          '';
 
-              meta = with pkgs.lib; {
-                description = "A music tracker for the Nintendo Game Boy (uge2source CLI)";
-                homepage = "https://github.com/SuperDisk/hUGETracker";
-                license = licenses.gpl3Only;
-                platforms = platforms.linux;
-              };
-            }
-          else
-            pkgs.stdenv.mkDerivation rec {
-              pname = "hugetracker";
-              version = "1.0.11";
-
-              src = pkgs.fetchzip {
-                url = "https://github.com/SuperDisk/hUGETracker/releases/download/v${version}/hUGETracker-${version}-linux.zip";
-                sha256 = "0nbgm80nwy78hz9hy3z181h39ahj4swgqcpx9317361pvvj58dl9";
-                stripRoot = false;
-              };
-
-              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-              buildInputs = with pkgs; [
-                stdenv.cc.cc.lib
-                fontconfig
-                pango
-                cairo
-                atk
-                gtk2-x11
-                gdk-pixbuf
-                glib
-                libx11
-                SDL2
-              ];
-
-              installPhase = ''
-                mkdir -p $out/bin $out/share/hugetracker
-                cp -r * $out/share/hugetracker/
-                ln -s $out/share/hugetracker/hUGETracker $out/bin/hUGETracker
-                ln -s $out/share/hugetracker/hUGETracker $out/bin/hugetracker
-                ln -s $out/share/hugetracker/uge2source $out/bin/uge2source
-                ln -s $out/share/hugetracker/rgbasm $out/bin/rgbasm-huge
-              '';
-
-              meta = with pkgs.lib; {
-                description = "A music tracker for the Nintendo Game Boy";
-                homepage = "https://github.com/SuperDisk/hUGETracker";
-                license = licenses.gpl3Only;
-                platforms = platforms.linux;
-              };
-            };
+          meta = with pkgs.lib; {
+            description = "A music tracker for the Nintendo Game Boy (uge2source CLI)";
+            homepage = "https://github.com/SuperDisk/hUGETracker";
+            license = licenses.gpl3Only;
+            platforms = platforms.linux;
+          };
+        };
       in
       {
         packages.gbdk = gbdk;
