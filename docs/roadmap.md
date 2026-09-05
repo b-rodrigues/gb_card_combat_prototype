@@ -1284,6 +1284,16 @@ Missing:
 * status effects;
 * richer rewards (XP/leveling from battle, loot);
 * flee chance / consequences.
+* **data-driven battle HUD (Option B):** `screens/battle/*.json` compiles to
+  `BattleScreenDef` (enemy positions, HUD rows, timer), but no `src/` file
+  reads the table — `ui_battle_content.c` hardcodes rows (banner 0, HP 1,
+  names 2, art 3-4, cursor 5, hero 6, deck/AP 7, combo 13, cards 14,
+  markers 15, desc 16, timer 16), column step 7, and timer/energy/hand-size
+  `#define`s, and nothing selects the ambush/duo/boss variants.  The level
+  editor preview now mirrors the hardcoded ROM geometry and marks
+  `hud_layout` editing reserved.  Wiring the renderer to the table touches
+  layout-sensitive bank-3 code (§52.19): needs new OAM/semantic scenarios,
+  the full harness, and `make verify-oam` before/after.
 
 ### 9.1 Deck management UI — DONE
 

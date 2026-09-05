@@ -267,26 +267,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       return;
     }
 
-    // ── BATTLE SCREEN AUTHENTIC RENDERER (matching assets/battle_screen_mockup.jpg) ──
+    // ── BATTLE SCREEN AUTHENTIC RENDERER ──
+    // Geometry mirrors the ROM's hardcoded battle layout
+    // (src/ui/ui_battle_content.c: banner 0, HP 1, names 2, art 3-4,
+    // cursor 5, hero 6, deck/AP 7, combo 13, cards 14, markers 15,
+    // desc 16, timer 16; enemy columns at k*7).  The battle JSON
+    // hud_layout is compiled but not read by the ROM (reserved), so the
+    // preview intentionally ignores it.
     if (level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle'))) {
-      const layout = level.battleHudLayout || {};
-      const bannerRow = layout.turn_banner_row ?? 0;
-      const enemyHpRow = layout.enemy_hp_row ?? 1;
-      const enemySpriteRow = layout.enemy_sprite_row ?? 2;
-      const enemyCursorRow = layout.enemy_cursor_row ?? 4;
-      const heroLabelRow = layout.hero_label_row ?? 6;
-      const heroLabelCol = layout.hero_label_col ?? 1;
-      const heroHpRow = layout.hero_hp_row ?? 6;
-      const heroHpCol = layout.hero_hp_col ?? 13;
-      const deckRow = layout.deck_row ?? 7;
-      const deckCol = layout.deck_col ?? 1;
-      const apRow = layout.ap_row ?? 7;
-      const apCol = layout.ap_col ?? 13;
-      const comboRow = layout.combo_row ?? 9;
-      const cardsRow = layout.cards_row ?? 10;
-      const cardCursorRow = layout.card_cursor_row ?? 14;
-      const cardDescRow = layout.card_desc_row ?? 15;
-      const timerRow = layout.timer_row ?? 16;
+      const bannerRow = 0;
+      const enemyHpRow = 1;
+      const enemySpriteRow = 3;
+      const enemyCursorRow = 5;
+      const heroLabelRow = 6;
+      const heroLabelCol = 1;
+      const heroHpRow = 6;
+      const heroHpCol = 13;
+      const deckRow = 7;
+      const deckCol = 1;
+      const apRow = 7;
+      const apCol = 13;
+      const comboRow = 13;
+      const cardsRow = 14;
+      const cardCursorRow = 15;
+      const cardDescRow = 16;
+      const timerRow = 16;
 
       // 1. Crisp white background
       ctx.fillStyle = '#ffffff';
@@ -406,11 +411,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.textBaseline = 'middle';
         ctx.fillText('⬆', canvasWidth / 2, by + bh + tileSize * 0.45);
       } else {
-        const enemyCols = [
-          layout.enemy_col_start ?? 1,
-          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7),
-          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7) * 2,
-        ];
+        // ROM columns are k*7 (ui_battle_content.c battle_draw_enemy_columns).
+        const enemyCols = [0, 7, 14];
         const enemyHps = ['10/10', '10/10', '02/10'];
 
         enemyCols.forEach((colX, idx) => {
@@ -603,8 +605,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.fillText('Sword: physical', 1 * tileSize, (cardDescRow + 0.5) * tileSize);
 
       // 10. Rows 16–17: Turn Timer Bar
-      const timerWidthCols = layout.timer_width ?? 11;
-      const barX = (layout.timer_col ?? 0) * tileSize;
+      const timerWidthCols = 20;
+      const barX = 0 * tileSize;
       const barY = timerRow * tileSize;
       const barW = timerWidthCols * tileSize;
       const barH = 1.9 * tileSize;
