@@ -87,7 +87,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           style={{ background: '#27ae60', color: '#fff', fontWeight: 'bold' }}
           onClick={onRunGame}
           disabled={isRunning || isCompiling}
-          title="Launch Game Boy ROM in PyBoy emulator"
+          title="Launch release Game Boy ROM in emulator (rebuilds if stale)"
         >
           {isRunning ? '⏳ Launching...' : '▶️ Run Game (PyBoy)'}
         </button>

@@ -60,8 +60,10 @@ hand-edited JSON shows up without rebuilding the editor.
    (`⬇️ Export` downloads a copy instead.)
 8. **Compile & run.** `🔨 Compile ROM` saves, runs the level/screen
    compilers, and builds `build/rpg_card_proto_debug.gb`. Then
-   `▶️ Run Game` launches it on your desktop emulator. If the ROM is stale
-   (level JSON newer than the build), the button warns you — compile first.
+   `▶️ Run Game` launches the **release** ROM (`build/rpg_card_proto.gb`)
+   on your desktop emulator, rebuilding it first if your content is newer.
+   (Compile ROM builds debug for the harness; Run Game plays release for
+   true game feel.)
 
 You now have a playable map. The proof gate for real work is the harness:
 
@@ -149,8 +151,9 @@ View-only saves never reformat committed files.
 * **Validation: spawn on a solid tile.** Move the spawn (spawn layer) or
   paint walkable ground under it; toggle the Collision overlay to see
   blocked tiles in red.
-* **Run Game warns about a stale ROM.** You saved after the last compile —
-  hit `🔨 Compile ROM` again first.
+* **Run Game takes a while the first time.** It plays the release ROM
+  and rebuilds it when your content is newer than the build — subsequent
+  runs launch instantly. (Use `🔨 Compile ROM` for debug/harness builds.)
 * **Exit leads nowhere / wrong landing.** Re-check Target Scene id spelling
   and Target Spawn X/Y against the destination map.
 * **My `.json` edit vanished.** You pressed Save/Compile afterwards, which

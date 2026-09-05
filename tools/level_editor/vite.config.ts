@@ -280,26 +280,17 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'POST' && req.url === '/api/run-game') {
-          runInToolchain('which sameboy mgba pyboy 2>&1', (err, stdout) => {
-            const lines = stdout.split('\n').map(l => l.trim()).filter(l => l && !l.includes('no ') && !l.includes('warning'));
-            const emu = lines[0] || 'pyboy';
-            const romPath = path.join(repoRoot, 'build', 'rpg_card_proto_debug.gb');
-            const hasDirectTools = (() => {
-              try {
-                execSync(`${emu} --help 2>&1`, { stdio: 'ignore' });
-                return true;
-              } catch {
-                return false;
-              }
-            })();
+          // Run Game always plays the RELEASE ROM (the debug ROM's
+          // per-frame harness work makes it feel sluggish in play).
+          const romPath = path.join(repoRoot, 'build', 'rpg_card_proto.gb');
+          const contentDirs = ['levels', 'screens',
+            path.join('tools', 'level_editor', 'tilesets')];
 
-            // Staleness probe: content JSON newer than the debug ROM means
-            // Run Game would launch a stale build (it does not save/compile).
-            let stale: string[] = [];
+          // Staleness probe: content JSON newer than the release ROM means
+          // the build is stale; a missing ROM must be built, not launched.
+          const findStale = (): string[] => {
             try {
               const romMtime = fs.statSync(romPath).mtimeMs;
-              const contentDirs = ['levels', 'screens',
-                path.join('tools', 'level_editor', 'tilesets')];
               const fresh: string[] = [];
               const scan = (dir: string) => {
                 for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -314,24 +305,56 @@ function levelEditorApiPlugin(): Plugin {
               for (const d of contentDirs) {
                 try { scan(path.join(repoRoot, d)); } catch { /* missing dir: ignore */ }
               }
-              stale = fresh.sort().slice(0, 8);
+              return fresh.sort().slice(0, 8);
             } catch {
-              stale = ['<rom missing: compile first>'];
+              return ['<rom missing: building release>'];
             }
+          };
 
-            try {
-              const child = hasDirectTools
-                ? spawn(emu, [romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' })
-                : spawn(getNixBin() || 'nix', ['develop', '--command', emu, romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' });
+          const launch = () => {
+            runInToolchain('which sameboy mgba pyboy 2>&1', (err, stdout) => {
+              const lines = stdout.split('\n').map(l => l.trim()).filter(l => l && !l.includes('no ') && !l.includes('warning'));
+              const emu = lines[0] || 'pyboy';
+              const hasDirectTools = (() => {
+                try {
+                  execSync(`${emu} --help 2>&1`, { stdio: 'ignore' });
+                  return true;
+                } catch {
+                  return false;
+                }
+              })();
 
-              child.unref();
+              try {
+                const child = hasDirectTools
+                  ? spawn(emu, [romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' })
+                  : spawn(getNixBin() || 'nix', ['develop', '--command', emu, romPath], { cwd: repoRoot, detached: true, stdio: 'ignore' });
+
+                child.unref();
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, emulator: path.basename(emu), message: `Launched ${path.basename(emu)} on desktop (release ROM)`, stale: [] }));
+              } catch (spawnErr: any) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: spawnErr.message }));
+              }
+            });
+          };
+
+          if (findStale().length === 0) {
+            launch();
+            return;
+          }
+          // Missing or stale release ROM: build it first, then launch.
+          runInToolchain('make release', ((err: any, stdout: string, stderr: string) => {
+            if (err || !fs.existsSync(romPath)) {
+              console.error('Release build error:', err && err.message);
+              if (stderr) console.error('Release stderr:\n' + stderr);
+              const combinedError = [stderr, stdout, err && err.message].filter(Boolean).join('\n\n');
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, emulator: path.basename(emu), message: `Launched ${path.basename(emu)} on desktop`, stale }));
-            } catch (spawnErr: any) {
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: false, error: spawnErr.message }));
+              res.end(JSON.stringify({ success: false, error: combinedError || 'release ROM missing and rebuild failed' }));
+              return;
             }
-          });
+            launch();
+          }) as any);
           return;
         }
 
