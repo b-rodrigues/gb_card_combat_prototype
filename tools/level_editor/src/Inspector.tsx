@@ -274,8 +274,8 @@ export const Inspector: React.FC<InspectorProps> = ({
               >
                 <option value="MUSIC_OVERWORLD">MUSIC_OVERWORLD</option>
                 <option value="MUSIC_TITLE">MUSIC_TITLE</option>
-                <option value="MUSIC_TOWN">MUSIC_TOWN</option>
-                <option value="MUSIC_DUNGEON">MUSIC_DUNGEON</option>
+                <option value="MUSIC_TOWN">MUSIC_TOWN (Village.uge)</option>
+                <option value="MUSIC_DUNGEON">MUSIC_DUNGEON (castle.uge)</option>
                 <option value="MUSIC_BATTLE">MUSIC_BATTLE</option>
                 <option value="MUSIC_DESOLATE">MUSIC_DESOLATE</option>
                 <option value="MUSIC_DESOLATE_LANDSCAPE">MUSIC_DESOLATE_LANDSCAPE (desolate_landscape.uge)</option>

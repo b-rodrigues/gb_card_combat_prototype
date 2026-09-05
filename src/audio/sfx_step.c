@@ -1,15 +1,15 @@
-#pragma bank 6
+#pragma bank 7
 
 #include <gb/gb.h>
 #include <stdint.h>
 #include "sfx_tables.h"
 
-/* ── Transcribed-SFX stepper (bank-6 body) ───────────────────────────
- * Dispatched inline from audio_update() with bank 6 selected (same
- * select-6/call/restore-1 discipline as huge_music_update, which also
- * runs in the timer ISR).  Reads the generated tables in-bank plus the
- * WRAM cursor state owned by audio.c, so fixed code pays no
- * generic-pointer or struct-multiply costs (AGENTS.md §52.18).
+/* ── Transcribed-SFX stepper (bank-7 body) ───────────────────────────
+ * Dispatched inline from audio_update() with bank 7 selected (select-7/
+ * call/restore-1; the music path uses bank 6 separately in the same ISR).
+ * Reads the generated tables in-bank plus the WRAM cursor state owned by
+ * audio.c, so fixed code pays no generic-pointer or struct-multiply costs
+ * (AGENTS.md §52.18).
  * Returns nonzero when the table end is reached; the fixed-bank caller
  * then silences the used voices and unmutes their music channels. */
 

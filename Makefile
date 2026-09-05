@@ -33,7 +33,7 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
@@ -371,6 +371,9 @@ $(GENERATED_MUSIC_DIR)/boss_fight.c: assets/music/Boss\ fight.uge tools/compile_
 
 $(GENERATED_MUSIC_DIR)/village.c: assets/music/Village.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_village "$@"
+
+$(GENERATED_MUSIC_DIR)/castle.c: assets/music/castle.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 6 song_castle "$@"
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)

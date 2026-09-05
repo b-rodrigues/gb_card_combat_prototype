@@ -27,6 +27,14 @@ def main():
             name, start, size, nbytes = m.groups()
             if name in ("_CODE", "_HOME", "_INITIALIZER", "_DATA"):
                 areas[name] = (int(start, 16), int(size, 16), int(nbytes))
+            elif re.fullmatch(r"_CODE_[0-9]+", name):
+                # Switchable ROM bank content: each bank is 16 KB.  An
+                # overfull bank makes rgblink spill into the next bank and
+                # silently corrupt it (bank 6 music overflowed ~1 KB into
+                # bank 7's icon table when song_castle was added) -- fail
+                # here instead.  Tracked separately so the fixed-area logic
+                # above is untouched.
+                areas[name] = (int(start, 16), int(size, 16), int(nbytes))
 
     # The RAM-resident banked trampolines (crt0.s) are byte-copied at boot
     # into fixed-size WRAM buffers (g_banked_tramp[64], g_banked_call_tramp[64]
@@ -96,6 +104,22 @@ def main():
     else:
         print("_DATA : (not found)")
         ok = False
+
+    print()
+    print("Switchable ROM bank size checks (16 KB each)")
+    print("--------------------------------------------")
+    bank_names = sorted((n for n in areas if re.fullmatch(r"_CODE_[0-9]+", n)),
+                        key=lambda n: int(n.rsplit("_", 1)[1]))
+    if not bank_names:
+        print("(no banked areas found)")
+        ok = False
+    for name in bank_names:
+        start, size, nbytes = areas[name]
+        headroom = 0x4000 - size
+        status = "OK" if size <= 0x4000 else "VIOLATION (spills into next bank)"
+        if size > 0x4000:
+            ok = False
+        print(f"{name:<26} : {size:>6} B  headroom: {headroom:>5} B  [{status}]")
 
     print()
     print("RAM-resident trampoline size checks")

@@ -65,5 +65,56 @@ src = re.sub(r"static const hUGEDutyInstr_t duty_instruments\[\] = \{\s*\};",
 src = re.sub(r"static const hUGEWaveInstr_t wave_instruments\[\] = \{\s*\};",
               "static const hUGEWaveInstr_t wave_instruments[1] = {{0, 0, 0, 0, 0}};", src)
 
+# Deduplicate byte-identical pattern arrays.  uge2source emits one C array
+# per tracker pattern slot, so a repeated section (e.g. Forest.uge P2/P6)
+# lands in ROM twice.  Merging identical arrays is playback-identical: the
+# driver reads the same byte stream through the rewritten order references.
+# Bank 6 (driver + songs) is full, so every byte counts.  Runs on every
+# song; songs without duplicates come out byte-identical.  If a future
+# uge2source changes the P-name scheme the pass finds nothing and no-ops
+# (a resulting bank overflow then fails loudly in make memmap).
+def dedup_patterns(src):
+    pat_re = re.compile(r"static const unsigned char (P\d+)\[\] = \{(.*?)\};", re.S)
+    defs = [(m.group(1), m.group(2)) for m in pat_re.finditer(src)]
+    if not defs:
+        return src
+    canon = {}
+    seen = {}
+    canon_sizes = {}
+    for name, body in defs:
+        nums = re.findall(r"\d+", body)
+        key = ",".join(nums)
+        if key in seen:
+            canon[name] = seen[key]
+            canon_sizes[name] = len(nums)
+        else:
+            seen[key] = name
+    if not canon:
+        return src
+    for old in canon:
+        src = re.sub(r"static const unsigned char " + old + r"\[\] = \{.*?\};\s*",
+                      "", src, count=1, flags=re.S)
+    for old, new in canon.items():
+        src = re.sub(r"(?<![A-Za-z0-9_])" + old + r"(?![A-Za-z0-9_])", new, src)
+    # Verify: every P-name referenced from the order tables must still be
+    # defined (guards against a regex/toolchain mismatch corrupting them).
+    # itDutySxx/itNoiseSxx tables share the P-prefix namespace, so only
+    # order-array references are checked.
+    defined = set(m.group(1) for m in pat_re.finditer(src))
+    order_refs = set()
+    for m in re.finditer(r"order\d+\[\] = \{(.*?)\};", src, re.S):
+        order_refs.update(re.findall(r"(?<![A-Za-z0-9_])P\d+(?![A-Za-z0-9_])", m.group(1)))
+    missing = order_refs - defined
+    if missing:
+        print(f"compile_music.py: error: dedup left dangling references: {sorted(missing)}",
+              file=sys.stderr)
+        sys.exit(4)
+    saved = sum(canon_sizes.values())
+    print(f"compile_music.py: dedup merged {sorted(canon)} saving ~{saved} pattern bytes",
+          file=sys.stderr)
+    return src
+
+src = dedup_patterns(src)
+
 with open(out_c, "w", encoding="utf-8") as f:
     f.write(src)

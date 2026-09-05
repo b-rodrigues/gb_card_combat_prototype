@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "castle",
-    "music": "MUSIC_DESOLATE_LANDSCAPE",
+    "music": "MUSIC_DUNGEON",
     "map_id": "MAP_CASTLE"
   },
   "default_walkable": "castle.castle_plain_floor",

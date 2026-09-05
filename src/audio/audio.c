@@ -18,7 +18,11 @@ static uint8_t note_index = 0;
  * CH4 renders verbatim.  When hUGEDriver music is active, the used music
  * channels are muted during SFX playback and unmuted at the table end. */
 #define SFX_NONE 0xFF
-/* Cursor state shared with the bank-6 stepper (src/audio/sfx_step.c):
+/* ROM bank holding the transcribed-SFX stepper body + tables
+ * (src/audio/sfx_step.c, generated/sfx/sfx_tables.c).  Bank 6 holds the
+ * driver + six tracker songs and is full, so SFX live in bank 7. */
+#define SFX_STEP_BANK 7
+/* Cursor state shared with the bank-7 stepper (src/audio/sfx_step.c):
  * plain WRAM globals, readable from any bank. */
 /* Harness-visible trigger log (AGENTS.md 53.7: semantic, not transport):
  * per-trigger SFX telemetry would flood the 32-entry gameplay ring and
@@ -91,13 +95,11 @@ static const uint8_t lacrimosa_notes[32] = {
     5, 4, 3, 4,  3, 1, 1, 0
 };
 
-/* Battle: Vivaldi's "Summer" Presto (Four Seasons, RV 315 3rd mvt.) - legacy fallback */
-static const uint8_t summer_notes[32] = {
-    5, 5, 7, 7,  8, 8, 9, 9,
-    9, 10, 11, 8, 12, 8, 6, 6,
-    7, 7, 6, 6,  5, 5, 13, 13,
-    5, 6, 7, 8,  11, 10, 9, 0
-};
+/* Battle, town, dungeon, and boss themes play as tracker songs
+ * (song_battle, song_village, song_castle, song_boss_fight): they keep no
+ * chiptune fallback table.  While a tracker song is active audio_update()
+ * returns through the huge path before reaching the tables below, so the
+ * slots stay 0 and a stray lookup falls silent. */
 
 /* Victory: 4-note rising fanfare (D4 G4 A4 D5) + closing rest,
  * one-shot -- plays once then falls silent until the next track
@@ -113,28 +115,6 @@ static const uint8_t victory_notes[VICTORY_NOTE_COUNT] = {
 static const uint8_t title_notes[16] = {
     1, 4, 6, 8,  6, 4, 1, 0,
     13, 6, 5, 3,  1, 3, 4, 0
-};
-
-/* Town: warm, comfortable major-ish melody (F/C-ish), a friendly hub. */
-static const uint8_t town_notes[24] = {
-    4, 5, 6, 5,  4, 1, 3, 5,
-    4, 3, 4, 5,  6, 5, 4, 3,
-    4, 4, 5, 6,  8, 6, 5, 0
-};
-
-/* Dungeon / castle: tense, close, minor, with an ominous downward turn. */
-static const uint8_t dungeon_notes[24] = {
-    2, 2, 13, 2,  4, 4, 2, 2,
-    13, 13, 11, 13,  4, 2, 13, 2,
-    1, 1, 2, 1,  4, 5, 4, 0
-};
-
-/* Boss: rapid, driving, urgent -- a fast ostinato against a rising answer. */
-static const uint8_t boss_notes[32] = {
-    2, 2, 13, 2,  4, 4, 2, 2,
-    13, 13, 11, 13,  5, 5, 13, 5,
-    5, 5, 4, 5,  6, 6, 5, 6,
-    8, 8, 6, 8,  4, 2, 13, 0
 };
 
 static void play_note(uint16_t freq)
@@ -195,6 +175,8 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_boss_fight);
     } else if (track == MUSIC_TOWN) {
         huge_music_play(&song_village);
+    } else if (track == MUSIC_DUNGEON) {
+        huge_music_play(&song_castle);
     }
 
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
@@ -212,14 +194,14 @@ MusicTrack audio_get_current_track(void)
  * directly.  len is the note count; loops wrap via mask/compare,
  * VICTORY (one_shot) falls silent after its last note. */
 static const uint8_t *const s_track_notes[MUSIC_FOREST + 1] = {
-    0, lacrimosa_notes, summer_notes, victory_notes,
-    title_notes, town_notes, dungeon_notes, boss_notes, 0, 0
+    0, lacrimosa_notes, 0, victory_notes,
+    title_notes, 0, 0, 0, 0, 0
 };
 static const uint8_t s_track_len[MUSIC_FOREST + 1] = {
-    0, 32, 32, VICTORY_NOTE_COUNT, 16, 24, 24, 32, 0, 0
+    0, 32, 0, VICTORY_NOTE_COUNT, 16, 0, 0, 0, 0, 0
 };
 static const uint8_t s_track_ticks[MUSIC_FOREST + 1] = {
-    0, 43, 17, VICTORY_TICKS_PER_NOTE, 60, 40, 30, 12, 0, 0
+    0, 43, 0, VICTORY_TICKS_PER_NOTE, 60, 0, 0, 0, 0, 0
 };
 
 void audio_update(void)
@@ -232,13 +214,13 @@ void audio_update(void)
 #endif
 
     /* Step the transcribed SFX at the 64 Hz tracker rate through the
-     * bank-6 stepper body (same inline select-6/call/restore-1 discipline
-     * as huge_music_update, which also runs in this ISR). At the table
+     * bank-7 stepper body (inline select-7/call/restore-1; the music path
+     * below selects bank 6 separately in the same ISR). At the table
      * end the used voices are silenced and their music channels unmuted. */
     if (sfx_id <= SFX_BLOCK) {
         if (++sfx_div >= 4) {
             sfx_div = 0;
-            *(volatile uint8_t *)0x2000 = HUGE_MUSIC_BANK;
+            *(volatile uint8_t *)0x2000 = SFX_STEP_BANK;
             if (sfx_step_tick()) {
                 if (sfx_muted & 0x01) {
                     NR22_REG = 0x00;

@@ -35,8 +35,9 @@ lib/hUGEDriver/src/hUGEDriver.asm ────────┘
 ### Key Components
 
 1. **ROM Bank 6 Placement**:
-   * All converted `.uge` songs and the hUGEDriver engine code reside in **ROM Bank 6** (`_CODE_6`).
+   * The hUGEDriver engine code and all converted `.uge` songs reside in **ROM Bank 6** (`_CODE_6`). The driver reads song bytes through the mapped ROM window, so songs cannot live anywhere else.
    * This strictly preserves the fixed 32 KB Bank 0/1 memory budget (`_CODE`/`_HOME`).
+   * Bank 6 is full: the transcribed-SFX step tables + stepper live in **ROM Bank 7** (`_CODE_7`), selected by the timer ISR around `sfx_step_tick()`. `make memmap` fails on any bank over 16 KB.
 2. **Timer-Driven Tick Rate (64 Hz)**:
    * Game audio runs on the hardware **Timer interrupt** (TIMA overflow at 256 Hz, see `AGENTS.md` §35).
    * `audio_update()` in `src/audio/audio.c` divides the 256 Hz timer clock by 4 to tick `hUGE_dosound()` at a steady **64 Hz** (`huge_music_update()`), regardless of visual rendering, screen wipes, or CPU load.
@@ -60,10 +61,11 @@ lib/hUGEDriver/src/hUGEDriver.asm ────────┘
 2. **Build Rule**:
    * Save the file under `assets/music/<track_name>.uge`.
    * In the `Makefile`, add a rule to generate the C source into `generated/music/`:
-     ```makefile
-     $(GENERATED_MUSIC_DIR)/<track_name>.c: assets/music/<track_name>.uge | $(GENERATED_MUSIC_DIR)
-     	$(UGE2SOURCE) "$<" -b 6 song_<track_name> "$@"
-     ```
+      ```makefile
+      $(GENERATED_MUSIC_DIR)/<track_name>.c: assets/music/<track_name>.uge | $(GENERATED_MUSIC_DIR)
+      	$(UGE2SOURCE) "$<" -b 6 song_<track_name> "$@"
+      ```
+      (Bank 6 holds driver + all songs; SFX tables/stepper live in bank 7.)
 3. **C Code Binding**:
    * Declare the song in `src/audio/huge_music_data.h`:
      ```c
@@ -88,7 +90,7 @@ tools/transcribe_sfx.py  (driver-faithful emulation at 64 Hz ticks:
 note rows, instrument loads, subpattern jumps/transposes/portamento,
 arpeggio, CH4 polys, tempo, length timer)
        ▼
-generated/sfx/sfx_tables.c  [#pragma bank 6: per-voice step arrays]
+ generated/sfx/sfx_tables.c  [#pragma bank 7: per-voice step arrays]
 generated/sfx/sfx_index.c   [fixed bank: 7 voice-presence bytes]
 ```
 
@@ -119,6 +121,6 @@ generated/sfx/sfx_index.c   [fixed bank: 7 voice-presence bytes]
   `tools/verify_music.py` checks 5a–5d (trigger, completion, content
   hold, no stall).
 * Fixed-bank cost is kept under `0x8000` by structure: the voice tables
-  and stepper body live in bank 6; fixed bank holds only the 7 presence
+  and stepper body live in bank 7; fixed bank holds only the 7 presence
   bytes plus trigger/dispatch (`make memmap` gates this).
 

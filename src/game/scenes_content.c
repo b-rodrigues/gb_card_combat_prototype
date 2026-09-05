@@ -177,6 +177,6 @@ const SceneDefinition g_scenes[] = {
     { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[3],     1, WORLD_TILESET_VILLAGE,   s_town_terrain,      2, 7, DIRECTION_RIGHT, TILE_VILLAGE_06 },
     { MAP_FOREST,          MUSIC_FOREST,      20, 18, &g_all_exits[4],     1, WORLD_TILESET_FOREST,    s_forest_terrain,    12, 10, DIRECTION_UP,    TILE_FOREST_32 },
     { MAP_MOUNTAIN_PASS,   MUSIC_DESOLATE,    20, 18, &g_all_exits[5],     2, WORLD_TILESET_DESOLATE,  s_mountain_pass_terrain, 12, 10, DIRECTION_UP,    TILE_DESOLATE_LANDSCAPE_32 },
-    { MAP_CASTLE,          MUSIC_DESOLATE,    20, 18, &g_all_exits[7],     1, WORLD_TILESET_CASTLE,    s_castle_terrain,    10, 10, DIRECTION_UP,    TILE_CASTLE_18 },
+    { MAP_CASTLE,          MUSIC_DUNGEON,     20, 18, &g_all_exits[7],     1, WORLD_TILESET_CASTLE,    s_castle_terrain,    10, 10, DIRECTION_UP,    TILE_CASTLE_18 },
     { MAP_SOUTH_FIELD,     MUSIC_DESOLATE,    20, 18, &g_all_exits[8],     2, WORLD_TILESET_DESOLATE,  s_south_field_terrain, 12, 1, DIRECTION_DOWN,  TILE_DESOLATE_LANDSCAPE_32 }
 };

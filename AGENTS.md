@@ -1334,8 +1334,9 @@ Audio transitions must emit telemetry.
 Soundtrack tracks authored in **hUGETracker** (`.uge`, e.g. `assets/music/Battle BGM.uge`) are compiled to C via `uge2source` into `generated/music/` and driven by **hUGEDriver**:
 
 * **ROM Bank 6 Isolation**:
-  * Both the driver assembly (`lib/hUGEDriver/src/hUGEDriver.asm` via `tools/rgb2sdas.py -b 6`) and converted track data (`#pragma bank 6`) live strictly in **ROM Bank 6**.
+  * The driver assembly (`lib/hUGEDriver/src/hUGEDriver.asm` via `tools/rgb2sdas.py -b 6`) and all converted track data (`#pragma bank 6`, seven songs) live in **ROM Bank 6**.  The driver reads song bytes through the mapped ROM window, so songs cannot live anywhere else.
   * This keeps the fixed Bank 0/1 memory budget (`_CODE`/`_HOME`) clean and prevents ROM0 overflow.
+  * Bank 6 is full (16224/16384 B): the transcribed-SFX step tables plus stepper (`generated/sfx/sfx_tables.c`, `src/audio/sfx_step.c`, `#pragma bank 7`) live in **ROM Bank 7** alongside the icon table.  The timer ISR selects bank 7 around `sfx_step_tick()` and bank 6 around `hUGE_dosound()`; muting targets bank 6 (driver code + state).  Do NOT add another song to bank 6 -- `make memmap` fails on any `_CODE_N` over 16 KB.
 * **Tick Division (64 Hz from 256 Hz Timer)**:
   * The hardware timer ISR (`src/crt0.s`) calls `audio_update()` at **256 Hz**.
   * `huge_music_update()` divides this rate by 4 (`++divider >= 4`), stepping `hUGE_dosound()` at a steady **64 Hz** tracker clock.
