@@ -18,9 +18,9 @@ function probeTools(): { ok: boolean; detail: { [k: string]: string } } {
       detail[t] = 'runs';
     } catch (e: any) {
       // execSync throws on nonzero exit too; what matters is whether
-      // the binary launched at all (status !== 127 and no ENOENT/ENOEXEC).
+      // the binary launched at all (status !== 127/126 and no ENOENT/ENOEXEC/Exec format error).
       const msg = String((e && e.message) || e);
-      if (/ENOENT|ENOEXEC|command not found|not recognized/i.test(msg) || e.status === 127) {
+      if (/ENOENT|ENOEXEC|Exec format error|command not found|not recognized/i.test(msg) || e.status === 127 || e.status === 126) {
         detail[t] = `MISSING/BROKEN (${msg.split('\n')[0]})`;
         ok = false;
       } else {
@@ -31,8 +31,9 @@ function probeTools(): { ok: boolean; detail: { [k: string]: string } } {
   try {
     execSync('rgbasm-huge --help 2>&1 || rgbasm --help 2>&1', { stdio: 'ignore' });
     detail['rgbasm'] = 'runs';
-  } catch {
-    detail['rgbasm'] = 'MISSING/BROKEN (neither rgbasm-huge nor rgbasm runs)';
+  } catch (e: any) {
+    const msg = String((e && e.message) || e);
+    detail['rgbasm'] = `MISSING/BROKEN (${msg.split('\n')[0]})`;
     ok = false;
   }
   return { ok, detail };
@@ -264,9 +265,12 @@ function levelEditorApiPlugin(): Plugin {
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
           runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
-              console.error('Compile error:', err.message, stderr);
+              console.error('Compile error:', err.message);
+              if (stderr) console.error('Compile stderr:\n' + stderr);
+              if (stdout) console.error('Compile stdout:\n' + stdout);
+              const combinedError = [stderr, stdout, err.message].filter(Boolean).join('\n\n');
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: false, error: stderr || err.message, log: stdout, attempts: attempts || [] }));
+              res.end(JSON.stringify({ success: false, error: combinedError || err.message, log: stdout, attempts: attempts || [] }));
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: true, log: stdout, romPath: 'build/rpg_card_proto_debug.gb' }));

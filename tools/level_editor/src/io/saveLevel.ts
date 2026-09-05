@@ -28,7 +28,11 @@ export async function compileRom(): Promise<{ success: boolean; log?: string; ro
     const res = await fetch('/api/compile-rom', { method: 'POST' });
     const data = await res.json();
     if (!res.ok || !data.success) {
-      throw new Error(data.error || `Compile failed with status ${res.status}`);
+      return {
+        success: false,
+        error: data.error || `Compile failed with status ${res.status}`,
+        log: data.log
+      };
     }
     return data;
   } catch (err: any) {
