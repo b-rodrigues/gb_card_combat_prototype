@@ -16,6 +16,56 @@ const SceneExit g_all_exits[] = {
     { 12, 11, 12, 10, SCENE_MOUNTAIN_PASS, '>' }
 };
 
+static const SceneTerrainBlock s_field_terrain[] = {
+    { 0, 0, 1, 1, TILE_FOREST_00 },
+    { 1, 0, 3, 1, TILE_FOREST_03 },
+    { 4, 0, 2, 1, TILE_FOREST_01 },
+    { 6, 0, 6, 1, TILE_FOREST_02 },
+    { 12, 0, 1, 18, TILE_FOREST_32 },
+    { 13, 0, 2, 1, TILE_FOREST_01 },
+    { 15, 0, 5, 1, TILE_FOREST_02 },
+    { 20, 0, 2, 1, TILE_FOREST_01 },
+    { 22, 0, 4, 1, TILE_FOREST_03 },
+    { 26, 0, 5, 1, TILE_FOREST_01 },
+    { 31, 0, 1, 1, TILE_FOREST_05 },
+    { 0, 1, 1, 2, TILE_FOREST_09 },
+    { 1, 1, 11, 16, TILE_FOREST_32 },
+    { 13, 1, 18, 16, TILE_FOREST_32 },
+    { 31, 1, 1, 1, TILE_FOREST_08 },
+    { 31, 2, 1, 3, TILE_FOREST_07 },
+    { 0, 3, 1, 2, TILE_FOREST_11 },
+    { 0, 5, 1, 1, TILE_FOREST_09 },
+    { 31, 5, 1, 2, TILE_FOREST_08 },
+    { 0, 6, 1, 1, TILE_FOREST_11 },
+    { 0, 7, 1, 2, TILE_FOREST_09 },
+    { 31, 7, 1, 1, TILE_FOREST_32 },
+    { 31, 8, 1, 1, TILE_FOREST_08 },
+    { 0, 9, 1, 1, TILE_FOREST_10 },
+    { 31, 9, 1, 1, TILE_FOREST_06 },
+    { 0, 10, 1, 3, TILE_FOREST_11 },
+    { 31, 10, 1, 1, TILE_FOREST_08 },
+    { 31, 11, 1, 3, TILE_FOREST_06 },
+    { 0, 13, 1, 3, TILE_FOREST_10 },
+    { 31, 14, 1, 1, TILE_FOREST_07 },
+    { 31, 15, 1, 1, TILE_FOREST_08 },
+    { 0, 16, 1, 1, TILE_FOREST_11 },
+    { 31, 16, 1, 1, TILE_FOREST_07 },
+    { 0, 17, 1, 1, TILE_FOREST_16 },
+    { 1, 17, 2, 1, TILE_FOREST_18 },
+    { 3, 17, 4, 1, TILE_FOREST_20 },
+    { 7, 17, 5, 1, TILE_FOREST_19 },
+    { 13, 17, 2, 1, TILE_FOREST_19 },
+    { 15, 17, 2, 1, TILE_FOREST_17 },
+    { 17, 17, 1, 1, TILE_FOREST_19 },
+    { 18, 17, 2, 1, TILE_FOREST_17 },
+    { 20, 17, 1, 1, TILE_FOREST_18 },
+    { 21, 17, 4, 1, TILE_FOREST_19 },
+    { 25, 17, 1, 1, TILE_FOREST_18 },
+    { 26, 17, 5, 1, TILE_FOREST_20 },
+    { 31, 17, 1, 1, TILE_FOREST_26 },
+    { 0, 0, 0, 0, 0 }
+};
+
 static const SceneTerrainBlock s_town_terrain[] = {
     { 0, 0, 1, 1, TILE_VILLAGE_00 },
     { 1, 0, 18, 1, TILE_VILLAGE_01 },
@@ -173,7 +223,7 @@ static const SceneTerrainBlock s_south_field_terrain[] = {
 };
 
 const SceneDefinition g_scenes[] = {
-    { MAP_FIELD,           MUSIC_FOREST,      32, 18, &g_all_exits[0],     3, WORLD_TILESET_FOREST,    0,                   17, 7, DIRECTION_LEFT,  TILE_FOREST_32 },
+    { MAP_FIELD,           MUSIC_FOREST,      32, 18, &g_all_exits[0],     3, WORLD_TILESET_FOREST,    s_field_terrain,     17, 7, DIRECTION_LEFT,  TILE_FOREST_32 },
     { MAP_TOWN,            MUSIC_TOWN,        20, 18, &g_all_exits[3],     1, WORLD_TILESET_VILLAGE,   s_town_terrain,      2, 7, DIRECTION_RIGHT, TILE_VILLAGE_06 },
     { MAP_FOREST,          MUSIC_FOREST,      20, 18, &g_all_exits[4],     1, WORLD_TILESET_FOREST,    s_forest_terrain,    12, 10, DIRECTION_UP,    TILE_FOREST_32 },
     { MAP_MOUNTAIN_PASS,   MUSIC_DESOLATE,    20, 18, &g_all_exits[5],     2, WORLD_TILESET_DESOLATE,  s_mountain_pass_terrain, 12, 10, DIRECTION_UP,    TILE_DESOLATE_LANDSCAPE_32 },
