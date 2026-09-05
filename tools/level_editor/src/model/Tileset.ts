@@ -3,6 +3,7 @@ import combatJson from '../../tilesets/combat.json';
 import forestJson from '../../tilesets/forest.json';
 import desolateLandscapeJson from '../../tilesets/desolate_landscape.json';
 import intrepidJson from '../../tilesets/intrepid.json';
+import villageJson from '../../tilesets/village.json';
 
 export interface TileDefinition {
   id: string;
@@ -14,7 +15,7 @@ export interface TileDefinition {
   ascii?: string;
   glyph?: string;
   image_url: string;
-  category?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'wall' | 'nature' | 'building';
+  category?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'wall' | 'nature' | 'building' | 'exit';
 }
 
 export interface TilesetDefinition {
@@ -50,6 +51,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   forest: parseTilesetJson(forestJson),
   desolate_landscape: parseTilesetJson(desolateLandscapeJson),
   intrepid: parseTilesetJson(intrepidJson),
+  village: parseTilesetJson(villageJson),
 };
 
 export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
@@ -57,8 +59,12 @@ export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
 export const TILESET_DESOLATE_LANDSCAPE = BUILTIN_TILESETS.desolate_landscape;
 export const TILESET_INTREPID = BUILTIN_TILESETS.intrepid;
+export const TILESET_VILLAGE = BUILTIN_TILESETS.village;
 
 export function getTileset(id: string): TilesetDefinition {
+  if (!BUILTIN_TILESETS[id]) {
+    console.warn(`[Tileset] unknown tileset '${id}', falling back`);
+  }
   return BUILTIN_TILESETS[id] || BUILTIN_TILESETS.desolate_landscape || BUILTIN_TILESETS.forest;
 }
 

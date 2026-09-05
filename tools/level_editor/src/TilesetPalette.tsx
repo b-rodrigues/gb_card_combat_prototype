@@ -17,6 +17,9 @@ export const TilesetPalette: React.FC<TilesetPaletteProps> = ({
   categoryFilter = 'all',
 }) => {
   const currentTileset: TilesetDefinition = BUILTIN_TILESETS[tilesetId] || BUILTIN_TILESETS.forest;
+  if (!BUILTIN_TILESETS[tilesetId]) {
+    console.warn(`[TilesetPalette] unknown tileset '${tilesetId}', falling back to forest`);
+  }
 
   const filteredTiles = currentTileset.tiles.filter((tile: TileDefinition) => {
     if (categoryFilter === 'all') return true;

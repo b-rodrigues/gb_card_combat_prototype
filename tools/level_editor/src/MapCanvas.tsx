@@ -70,6 +70,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [isCapturingClone, setIsCapturingClone] = useState(false);
 
   const tileset: TilesetDefinition = BUILTIN_TILESETS[level.tileset] || BUILTIN_TILESETS.forest;
+  if (!BUILTIN_TILESETS[level.tileset]) {
+    console.warn(`[MapCanvas] unknown tileset '${level.tileset}', falling back to forest`);
+  }
   const defaultFloorTile = tileset.tiles.find((t) => t.walkable)?.id || tileset.tiles[0]?.id || 'floor';
   const tileMap = new Map<string, TileDefinition>();
   tileset.tiles.forEach((t) => tileMap.set(t.id, t));
@@ -87,38 +90,48 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Pre-load tile images for all tiles across all tilesets
+  // Pre-load tile images for all tiles across all tilesets.
+  // Re-runs when the registry gains ids at runtime (refreshTilesetsFromServer
+  // injects disk tilesets after mount); already-loaded images are kept so the
+  // canvas never flashes back to fallback colors.
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  const tilesetIdsKey = Object.keys(BUILTIN_TILESETS).sort().join(',');
   useEffect(() => {
-    const imgMap = new Map<string, HTMLImageElement>();
-    const tilesWithScope: { scopedId: string; url: string }[] = [];
-    Object.entries(BUILTIN_TILESETS).forEach(([tsId, ts]) => {
-      ts.tiles.forEach((t) => {
-        tilesWithScope.push({ scopedId: `${tsId}.${t.id}`, url: t.image_url });
+    setTileImages((prev) => {
+      const imgMap = new Map<string, HTMLImageElement>(prev);
+      const tilesWithScope: { scopedId: string; url: string }[] = [];
+      Object.entries(BUILTIN_TILESETS).forEach(([tsId, ts]) => {
+        ts.tiles.forEach((t) => {
+          const scopedId = `${tsId}.${t.id}`;
+          if (!imgMap.has(scopedId)) {
+            tilesWithScope.push({ scopedId, url: t.image_url });
+          }
+        });
       });
-    });
+      if (tilesWithScope.length === 0) return prev;
 
-    let loadedCount = 0;
-    tilesWithScope.forEach((item) => {
-      const img = new Image();
-      img.src = item.url;
-      img.onload = () => {
-        loadedCount++;
+      let loadedCount = 0;
+      tilesWithScope.forEach((item) => {
+        const img = new Image();
+        img.src = item.url;
+        img.onload = () => {
+          loadedCount++;
+          imgMap.set(item.scopedId, img);
+          if (loadedCount === tilesWithScope.length) {
+            setTileImages(new Map(imgMap));
+          }
+        };
+        img.onerror = () => {
+          loadedCount++;
+          if (loadedCount === tilesWithScope.length) {
+            setTileImages(new Map(imgMap));
+          }
+        };
         imgMap.set(item.scopedId, img);
-        if (loadedCount === tilesWithScope.length) {
-          setTileImages(new Map(imgMap));
-        }
-      };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === tilesWithScope.length) {
-          setTileImages(new Map(imgMap));
-        }
-      };
-      imgMap.set(item.scopedId, img);
+      });
+      return new Map(imgMap);
     });
-    setTileImages(new Map(imgMap));
-  }, []);
+  }, [tilesetIdsKey]);
 
   // Convert mouse pixel coordinates to tile coordinates
   const getTileCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
