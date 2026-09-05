@@ -262,13 +262,18 @@ export function battleScreenToEditor(data: any): EditorLevel {
     : [];
 
   enemiesList.forEach((e: any, idx: number) => {
+    // Enemy objects keep the JSON's true x/y: saves write positions back
+    // verbatim, so a no-touch save must not move them (the old 3+idx*5
+    // placement rewrote enemy_positions x on every save).
+    const ex = typeof e.x === 'number' ? e.x : 3 + idx * 5;
+    const ey = typeof e.y === 'number' ? e.y : (2 + idx);
     objects.push({
       id: `battle_enemy_${idx + 1}`,
       type: 'enemy',
       overworld_sprite: 'desolate_landscape.desolate_kobold_01',
       battle_sprite: (e.label || 'slime').toLowerCase(),
       battle_name: e.label || `ENEMY ${idx + 1}`,
-      position: { x: 3 + idx * 5, y: e.y !== undefined ? e.y : (2 + idx) },
+      position: { x: ex, y: ey },
       properties: {
         entity_id: `ENTITY_ID_${(e.label || 'SLIME').toUpperCase()}`,
         display_name: `${e.label || 'ENEMY'} (${e.hp || 10}/${e.max_hp || 10} HP)`,

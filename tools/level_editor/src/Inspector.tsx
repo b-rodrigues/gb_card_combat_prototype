@@ -375,8 +375,19 @@ export const Inspector: React.FC<InspectorProps> = ({
           <div className="inspector-section">
             <h4>⚔️ Battle Screen HUD Layout</h4>
             <p className="hint-text">
-              Configure row and column coordinates for every battle screen HUD element (matches <code>assets/battle_screen_mockup.jpg</code>).
+              Reserved: the ROM battle renderer uses hardcoded rows/columns
+              (see <code>src/ui/ui_battle_content.c</code>), so these values
+              save to <code>battle.json</code> but do not change the game
+              yet. The canvas preview shows the real ROM layout.
             </p>
+            {Array.isArray((level.originalScreenData as any)?.enemies) && (
+              <p className="hint-text">
+                This file uses the legacy <code>enemies</code> list (labels
+                + HP): enemy dragging does not save for it, and labels/HP
+                are not editable here. Convert to <code>enemy_positions</code>
+                to enable position editing.
+              </p>
+            )}
 
             {/* Turn Banner */}
             <div className="form-group">
