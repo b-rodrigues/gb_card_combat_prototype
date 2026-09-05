@@ -29,7 +29,7 @@ hand-edited JSON shows up without rebuilding the editor.
 | Area | What it does |
 |---|---|
 | Header level dropdown | Switch levels (`Overworld Levels`) and mockup screens (`Screens`: title, battle variants). `➕ + New Level...` creates one. |
-| Toolbar (top) | File actions (New, Load, Save, Export), `🔨 Compile ROM`, `▶️ Run Game`, Validate, LLM View, tile importer; then paint tools, undo/redo, Grid/Collision toggles, zoom. |
+| Toolbar (top) | File actions (New, Load, Save, Export), `🔨 Compile ROM`, `▶️ Run Game`, Validate, LLM View, `🔊 SFX` sound test, tile importer; then paint tools, undo/redo, Grid/Collision toggles, zoom. |
 | Tileset Palette (left) | Tileset dropdown + tile buttons. Each tile shows a `Walk` (walkable) or `Solid` tag. Click to select the brush tile. |
 | Canvas (center) | The map. Paint here. The footer always shows `Cursor: (x, y)`, the tile id under the cursor, dimensions, and zoom. |
 | Inspector (right) | Tabs: context-sensitive entity editor, `📑 Layers`, `⚙️ Map Info`, plus `⚔️ Battle HUD` / `👑 Title Studio` on screen levels. |
@@ -115,6 +115,9 @@ Special tabs appear on mockup screens: `⚔️ Battle HUD` (row/column layout
 of banner, enemies, hero, deck, combo, cards, timer) and `👑 Title Studio`
 (logo, artwork, prompt, credits, menu) on title screens.
 
+The toolbar `🔊 SFX` button opens a sound-test panel with rendered previews
+of all 7 sound effects (`make sfx-preview` re-renders them).
+
 ## 6. Tilesets & the tile importer
 
 The palette's `🎨 Import/Review Tiles` button opens the Tileset Reviewer:
@@ -158,3 +161,5 @@ View-only saves never reformat committed files.
   locally to match CI's 4 workers before pushing.
 * **BGM preview is stale after editing a `.uge`.** Re-run
   `make music-preview` to re-render `tools/level_editor/public/audio/`.
+* **Sound-test previews are stale after editing an SFX `.uge`.** Re-run
+  `make sfx-preview` (`tools/level_editor/public/audio/sfx/`).

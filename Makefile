@@ -55,7 +55,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_O
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music music-preview sfx level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -390,6 +390,21 @@ $(MUSIC_PREVIEW_DIR)/%.wav: $(GENERATED_MUSIC_DIR)/%.c tools/render_music_previe
 
 $(MUSIC_PREVIEW_DIR):
 	mkdir -p $(MUSIC_PREVIEW_DIR)
+
+# WAV previews for the level editor's sound-test modal (toolbar 🔊 SFX).
+# Rendered from the transcribed tables by tools/render_sfx_preview.py.
+# Explicit target; re-run after changing any assets/sfx/*.uge.
+SFX_PREVIEW_DIR = tools/level_editor/public/audio/sfx
+SFX_PREVIEW_WAVS = $(SFX_PREVIEW_DIR)/cursor.wav $(SFX_PREVIEW_DIR)/confirm.wav $(SFX_PREVIEW_DIR)/select.wav $(SFX_PREVIEW_DIR)/back.wav $(SFX_PREVIEW_DIR)/attack.wav $(SFX_PREVIEW_DIR)/hit.wav $(SFX_PREVIEW_DIR)/block.wav
+
+sfx-preview: sfx $(SFX_PREVIEW_WAVS)
+	@echo "SFX previews up to date in $(SFX_PREVIEW_DIR)"
+
+$(SFX_PREVIEW_DIR)/%.wav: $(GENERATED_SFX_DIR)/sfx_tables.c tools/render_sfx_preview.py | $(SFX_PREVIEW_DIR)
+	python3 tools/render_sfx_preview.py $*
+
+$(SFX_PREVIEW_DIR):
+	mkdir -p $(SFX_PREVIEW_DIR)
 
 $(GENERATED_MUSIC_DIR):
 	mkdir -p $(GENERATED_MUSIC_DIR)

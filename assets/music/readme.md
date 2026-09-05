@@ -116,7 +116,7 @@ generated/sfx/sfx_index.c   [fixed bank: 7 voice-presence bytes]
   envelope in the `.uge` and regenerate — do not hand-edit the tables.
 * Runtime: `audio_play_sfx()` (ids unchanged, ~20 existing call sites)
   mutes exactly the voices each SFX uses, steps the tables from the
-  timer ISR through the bank-6 body `sfx_step_tick()`, then silences and
+  timer ISR through the bank-7 body `sfx_step_tick()`, then silences and
   unmutes. Triggers do NOT emit gameplay telemetry: per-trigger events
   would flood the 32-entry ring and evict gameplay events scenarios
   assert on. Instead each trigger bumps `g_sfx_played_count` and sets
@@ -124,6 +124,9 @@ generated/sfx/sfx_index.c   [fixed bank: 7 voice-presence bytes]
   via the `sfx_count` / `sfx_last` scenario assertions;
   `tools/verify_music.py` checks 5a–5d (trigger, completion, content
   hold, no stall).
+* Previews: `make sfx-preview` renders `tools/level_editor/public/audio/sfx/*.wav`
+  (`tools/render_sfx_preview.py`, emulated register state) for the editor's
+  toolbar sound-test panel. The ROM synth mix stays authoritative.
 * Fixed-bank cost is kept under `0x8000` by structure: the voice tables
   and stepper body live in bank 7; fixed bank holds only the 7 presence
   bytes plus trigger/dispatch (`make memmap` gates this).

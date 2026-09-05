@@ -26,6 +26,7 @@ interface ToolbarProps {
   onLoad: () => void;
   onValidate: () => void;
   onDescribe: () => void;
+  onSoundTest: () => void;
   onNew: () => void;
   isTilesetReviewerOpen?: boolean;
   onToggleTilesetReviewer?: () => void;
@@ -53,6 +54,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onLoad,
   onValidate,
   onDescribe,
+  onSoundTest,
   onNew,
   clonePattern,
   onClearClone,
@@ -94,6 +96,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </button>
         <button className="btn btn-accent" onClick={onDescribe} title="Generate LLM Semantic Description">
           🤖 LLM View
+        </button>
+        <button className="btn" onClick={onSoundTest} title="Preview sound effects">
+          🔊 SFX
         </button>
         <button className="btn" onClick={onDownload} title="Export / Download JSON file">
           ⬇️ Export

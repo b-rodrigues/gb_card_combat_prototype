@@ -12,6 +12,7 @@ import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
+import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
 import forestData from '../../../levels/forest.json';
@@ -82,6 +83,7 @@ export const App: React.FC = () => {
   // Modals
   const [showValidateModal, setShowValidateModal] = useState<boolean>(false);
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
+  const [showSoundTestModal, setShowSoundTestModal] = useState<boolean>(false);
   const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
@@ -733,6 +735,7 @@ export const App: React.FC = () => {
           }}
           onValidate={() => setShowValidateModal(true)}
           onDescribe={() => setShowDescribeModal(true)}
+          onSoundTest={() => setShowSoundTestModal(true)}
           onNew={handleCreateNewLevel}
           clonePattern={clonePattern}
           onClearClone={() => {
@@ -917,6 +920,11 @@ export const App: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Sound Test Modal */}
+      {showSoundTestModal && (
+        <SfxTesterModal onClose={() => setShowSoundTestModal(false)} />
       )}
 
       {/* LLM Description Modal */}
