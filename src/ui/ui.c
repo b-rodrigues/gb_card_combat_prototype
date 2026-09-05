@@ -53,13 +53,15 @@ uint8_t ui_font_tile_base;
 
 
 
-/* Player-sprite ramp: entry 3 (the hero ink color) is light grey so the
- * hero is visible against the white floor on CGB. */
+/* Player-sprite ramp: entry 3 is the ink color (hero outlines, ASCII
+ * actor glyphs) and stays black, matching the tileset art and the DMG
+ * OBP0=0xE4 mapping.  Floors are mid-tone dirt/grass, so black ink keeps
+ * full 4-shade contrast (AGENTS.md 38.2) without washing out. */
 static const palette_color_t cgb_sprite_palette[4] = {
     RGB8(255, 255, 255),
     RGB8(170, 170, 170),
     RGB8(85, 85, 85),
-    RGB8(170, 170, 170)
+    RGB8(0, 0, 0)
 };
 
 /* Orange sprite palette for kobolds */
