@@ -9,6 +9,11 @@
 #include "battle_data.h"
 #include "game_ids.h"
 
+/* Hero overworld sprite data (shared, type-owned) */
+const uint8_t g_hero_ow_tile = 100;
+const uint8_t g_hero_ow_frames = 2;
+const uint8_t g_hero_ow_palette = 2;
+
 static const EnemyTypeDef g_enemy_type_bat = {
     "bat",
     "Bat",
@@ -101,4 +106,4 @@ const EnemyTypeDef* const g_enemy_types[4] = {
 };
 const uint8_t g_enemy_type_count = 4;
 
-const uint8_t g_enemy_ow_tile_count = 4;
+const uint8_t g_enemy_ow_tile_count = 6;

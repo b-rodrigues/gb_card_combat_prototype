@@ -45,12 +45,17 @@ DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 # never be renumbered once committed (append new sets at the end).
 from compose_battle_sprites import TILE_COORDS, BLANK_COORD
 from compose_enemy_sprites import TILE_COORDS as ENEMY_TILE_COORDS
+from compose_hero_sprites import TILE_COORDS as HERO_TILE_COORDS
 
 # Shared overworld enemy OAM base (must match ENEMY_OW_BASE in src/ui/ui.h).
 # Blob: concatenated per-enemy frames in sorted enemy-id order; OAM ids
 # 128+ alias BG tiles, so the blob must stay below 128 (clear error below).
 ENEMY_OW_BASE = 100
 ENEMY_OW_LIMIT = 128
+
+# Hero overworld is always first in the OW blob at ENEMY_OW_BASE (100).
+# Hero has 1-2 frames; enemies follow after.
+HERO_OW_MAX_FRAMES = 2
 
 
 def load_combat_art():
@@ -360,15 +365,34 @@ def build_battle_screens_output(battle_screens, enemy_types):
     return "\n".join(lines)
 
 
-def ow_blob_layout(enemy_types):
+def ow_blob_layout(enemy_types, hero_json=None):
     """Shared overworld blob layout: returns (offsets, cells) where offsets
-    maps enemy id -> blob tile offset and cells is the ordered tile-name
-    list (sorted enemy-id order, append-only stability).  Returns (None,
-    None) on budget overflow (error already printed)."""
-    et_ids = sorted(enemy_types.keys())
+    maps id -> blob tile offset and cells is the ordered tile-name
+    list (hero first, then sorted enemy-id order, append-only stability).  
+    Returns (None, None) on budget overflow (error already printed)."""
+    # Hero always comes first
     offsets = {}
     cells = []
     at = 0
+    
+    if hero_json is not None:
+        hero_ow = hero_json.get('overworld') or None
+        if hero_ow is not None:
+            names = hero_ow.get('cells', [])
+            if not (1 <= len(names) <= 2):
+                print("WARNING: hero: overworld.cells has %d entries, need 1-2" % len(names))
+            for name in names:
+                if name not in HERO_TILE_COORDS:
+                    print("WARNING: hero: unknown overworld tile '%s'" % name)
+            pal = hero_json['overworld'].get('palette', 0)
+            if not (0 <= pal <= 7):
+                print("WARNING: hero: overworld.palette %s out of 0-7" % pal)
+            offsets['hero'] = at
+            cells.extend(names)
+            at += len(names)
+    
+    # Then enemies in sorted order
+    et_ids = sorted(enemy_types.keys())
     for et_id in et_ids:
         ow = (enemy_types[et_id].get('overworld') or None)
         if ow is None:
@@ -386,14 +410,14 @@ def ow_blob_layout(enemy_types):
         cells.extend(names)
         at += len(names)
     if ENEMY_OW_BASE + at > ENEMY_OW_LIMIT:
-        print("ERROR: overworld enemy blob needs %d OAM tiles, budget is %d (base %d, limit %d)"
+        print("ERROR: overworld blob needs %d OAM tiles, budget is %d (base %d, limit %d)"
               % (at, ENEMY_OW_LIMIT - ENEMY_OW_BASE, ENEMY_OW_BASE, ENEMY_OW_LIMIT), file=sys.stderr)
         return None, None
     return offsets, cells
 
 
-def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
-    """Generate C code for enemy type definitions."""
+def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero_json=None):
+    """Generate C code for enemy type definitions + hero data."""
     lines = []
 
     lines.append("/**")
@@ -408,11 +432,31 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
     lines.append('#include "game_ids.h"')
     lines.append("")
 
+    # Hero data (first in OW blob)
+    lines.append("/* Hero overworld sprite data (shared, type-owned) */")
+    if hero_json is not None:
+        hero_ow = hero_json.get('overworld') or None
+        if hero_ow is not None:
+            names = hero_ow.get('cells', [])
+            pal = hero_json['overworld'].get('palette', 0)
+            lines.append("const uint8_t g_hero_ow_tile = %d;" % ENEMY_OW_BASE)
+            lines.append("const uint8_t g_hero_ow_frames = %d;" % len(hero_ow.get('cells', [])))
+            lines.append("const uint8_t g_hero_ow_palette = %d;" % hero_json['overworld'].get('palette', 0))
+        else:
+            lines.append("const uint8_t g_hero_ow_tile = 0xFF;")
+            lines.append("const uint8_t g_hero_ow_frames = 0;")
+            lines.append("const uint8_t g_hero_ow_palette = 0;")
+    else:
+        lines.append("const uint8_t g_hero_ow_tile = 0xFF;")
+        lines.append("const uint8_t g_hero_ow_frames = 0;")
+        lines.append("const uint8_t g_hero_ow_palette = 0;")
+    lines.append("")
+
     # Enemy type definitions
     cat_map = {'minion': 0, 'elite': 1, 'boss': 2}
 
     et_ids = sorted(enemy_types.keys())
-    ow_offsets, _ow_cells = ow_blob_layout(enemy_types)
+    ow_offsets, _ow_cells = ow_blob_layout(enemy_types, None)  # hero handled separately
     if ow_offsets is None:
         return None
     for et_id in et_ids:
@@ -472,7 +516,14 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
     lines.append("const uint8_t g_enemy_type_count = %d;" % len(et_ids))
     lines.append("")
     # Shared overworld blob size (tiles) for the ui_init OAM stream.
-    _ow_total = len(_ow_cells) if _ow_cells is not None else 0
+    # Includes hero tiles + enemy tiles
+    _ow_hero = 0
+    if hero_json is not None:
+        hero_ow = hero_json.get('overworld') or None
+        if hero_ow is not None:
+            _ow_hero = len(hero_ow.get('cells', []))
+    _ow_enemy = len(_ow_cells) if _ow_cells is not None else 0
+    _ow_total = _ow_enemy + _ow_hero
     lines.append("const uint8_t g_enemy_ow_tile_count = %d;" % _ow_total)
     lines.append("")
 
@@ -505,6 +556,14 @@ def main(args=None):
     # The emitter is positional: refuse to run on a drifted struct.
     if not check_battle_struct_order():
         return 1
+
+    # Load hero.json for OW blob
+    hero_json = None
+    hero_path = REPO_ROOT / "screens" / "hero.json"
+    if hero_json is None and hero_path.exists():
+        with open(hero_path) as f:
+            hero_json = json.load(f)
+
     if args.gfx_coords:
         coords = []
         for sid in art_order:
@@ -527,6 +586,38 @@ def main(args=None):
             path = Path(json_file)
             data = validate_enemy_type(path, art_sets)
             enemy_types[data['id']] = data
+
+        # Load hero.json
+        hero_path = REPO_ROOT / "screens" / "hero.json"
+        hero_json = None
+        if hero_path.exists():
+            with open(hero_path) as f:
+                hero_json = json.load(f)
+            # Validate hero.json
+            required = ['id', 'name', 'start_hp', 'start_gold', 'starter_deck', 'overworld']
+            for field in required:
+                if field not in hero_json:
+                    print("WARNING: hero.json: missing required field '%s'" % field)
+            if hero_json.get('id') != 'hero':
+                print("WARNING: hero.json: id must be 'hero'")
+            if 'starter_deck' in hero_json:
+                if len(hero_json['starter_deck']) > 20:
+                    print("WARNING: hero.json: starter_deck has %d cards, max 20" % len(hero_json['starter_deck']))
+                for card in hero_json['starter_deck']:
+                    if not card.startswith('CARD_'):
+                        print("WARNING: hero.json: invalid card id '%s' (must start with CARD_)" % card)
+            if 'overworld' in hero_json:
+                ow = hero_json['overworld']
+                if not (1 <= len(ow.get('cells', [])) <= 2):
+                    print("WARNING: hero.json: overworld.cells has %d entries, need 1-2" % len(ow.get('cells', [])))
+                for name in ow.get('cells', []):
+                    if name not in HERO_TILE_COORDS:
+                        print("WARNING: hero.json: unknown overworld tile '%s'" % name)
+                pal = ow.get('palette', 0)
+                if not (0 <= pal <= 7):
+                    print("WARNING: hero.json: overworld.palette %s out of 0-7" % pal)
+        else:
+            print("WARNING: screens/hero.json not found")
 
         # Load all battle screens
         for json_file in sorted(glob.glob(str(REPO_ROOT / "screens" / "battle" / "*.json"))):
@@ -555,15 +646,28 @@ def main(args=None):
         return 0
 
     if args.ow_coords:
-        _offsets, names = ow_blob_layout(enemy_types)
+        _offsets, names = ow_blob_layout(enemy_types, hero_json)
         if names is None:
             return 1
-        print(" ".join("%d,%d" % ENEMY_TILE_COORDS[n] for n in names))
+        # Hero tiles use HERO_TILE_COORDS, enemy tiles use ENEMY_TILE_COORDS
+        coords = []
+        hero_cells = []
+        if hero_json is not None:
+            hero_ow = hero_json.get('overworld') or None
+            if hero_ow is not None:
+                hero_cells = hero_json['overworld'].get('cells', [])
+                for n in hero_cells:
+                    coords.append("%d,%d" % HERO_TILE_COORDS[n])
+        # Filter out hero cells from names list
+        for n in names:
+            if n not in hero_cells:
+                coords.append("%d,%d" % ENEMY_TILE_COORDS[n])
+        print(" ".join(coords))
         return 0
 
-    # Generate outputs
+# Generate outputs
     battle_screens_output = build_battle_screens_output(battle_screens, {})
-    enemy_types_output = build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets)
+    enemy_types_output = build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero_json)
     if enemy_types_output is None:
         return 1
 

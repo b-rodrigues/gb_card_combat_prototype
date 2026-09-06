@@ -15,6 +15,7 @@ import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
 import { CombatArtStudio } from './CombatArtStudio';
 import { EnemyManager } from './EnemyManager';
+import { HeroManager } from './HeroManager';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -92,6 +93,7 @@ export const App: React.FC = () => {
   // Enemies view (art-only): dropdown value 'enemy:<id>' swaps the main
   // area to the EnemyManager; the level underneath is left untouched.
   const [enemyView, setEnemyView] = useState<string | null>(null);
+  const [heroView, setHeroView] = useState<boolean>(false);
   const [enemyItems, setEnemyItems] = useState<Array<{ id: string; name: string }>>([]);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
@@ -305,6 +307,12 @@ export const App: React.FC = () => {
   const handleSelectLevel = async (selectedId: string) => {
     if (selectedId === '__new__') {
       handleCreateNewLevel();
+      return;
+    }
+    if (selectedId === 'hero') {
+      setHeroView(true);
+      setEnemyView(null);
+      setSelectedEntityIndex(null);
       return;
     }
     if (selectedId.startsWith('enemy:')) {
@@ -726,6 +734,11 @@ export const App: React.FC = () => {
                 </option>
               ))}
             </optgroup>
+            <optgroup label="Hero">
+              <option key="hero" value="hero">
+                Hero (art + stats + starter deck)
+              </option>
+            </optgroup>
             {!levelItems.some((l) => l.id === currentLevelId) && (
               <optgroup label="Current Level">
                 <option value={currentLevelId}>
@@ -819,7 +832,12 @@ export const App: React.FC = () => {
         )}
 
         <div className="main-content">
-          {enemyView ? (
+          {heroView ? (
+            <HeroManager
+              key="hero"
+              onOpenComposer={() => setShowCombatArt(true)}
+            />
+          ) : enemyView ? (
             <EnemyManager
               key={enemyView}
               initialId={enemyView}

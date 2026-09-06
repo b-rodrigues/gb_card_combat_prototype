@@ -3,6 +3,7 @@ import combatJson from '../../tilesets/combat.json';
 import enemiesJson from '../../tilesets/enemies.json';
 import forestJson from '../../tilesets/forest.json';
 import desolateLandscapeJson from '../../tilesets/desolate_landscape.json';
+import heroJson from '../../tilesets/hero.json';
 import intrepidJson from '../../tilesets/intrepid.json';
 import villageJson from '../../tilesets/village.json';
 
@@ -16,7 +17,7 @@ export interface TileDefinition {
   ascii?: string;
   glyph?: string;
   image_url: string;
-  category?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'wall' | 'nature' | 'building' | 'exit';
+  category?: 'enemy' | 'npc' | 'terrain' | 'ui' | 'object' | 'wall' | 'nature' | 'building' | 'exit' | 'hero';
 }
 
 export interface TilesetDefinition {
@@ -52,6 +53,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   enemies: parseTilesetJson(enemiesJson),
   forest: parseTilesetJson(forestJson),
   desolate_landscape: parseTilesetJson(desolateLandscapeJson),
+  hero: parseTilesetJson(heroJson),
   intrepid: parseTilesetJson(intrepidJson),
   village: parseTilesetJson(villageJson),
 };
@@ -59,6 +61,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
 export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
 export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 export const TILESET_ENEMIES = BUILTIN_TILESETS.enemies;
+export const TILESET_HERO = BUILTIN_TILESETS.hero;
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
 export const TILESET_DESOLATE_LANDSCAPE = BUILTIN_TILESETS.desolate_landscape;
 export const TILESET_INTREPID = BUILTIN_TILESETS.intrepid;
