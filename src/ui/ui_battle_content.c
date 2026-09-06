@@ -3,6 +3,7 @@
 
 #include "ui.h"
 #include "battle.h"
+#include "battle_data.h"
 #include "card.h"
 #include "banked.h"
 #include "rpg/status.h"
@@ -270,6 +271,8 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
     uint8_t base;
     uint8_t cx, cy;
     volatile uint8_t *dst;
+    /* Staged screen row (WRAM copy of the active BattleScreenDef). */
+    uint8_t art_row = g_battle_hud.rows[HUD_ENEMY_SPRITE];
 
     if (!blank && slot < MAX_BATTLE_ENEMIES &&
         g_battle_enemy_art[slot] != 0xFF) {
@@ -280,11 +283,11 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
                          frame * BATTLE_ART_FRAME_TILES);
         VBK_REG = 0;
         for (cy = 0; cy < 2; cy++) {
-            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(3 + cy) << 5) + x);
+            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(art_row + cy) << 5) + x);
             for (cx = 0; cx < BATTLE_ART_W; cx++) {
                 battle_vram_sync_write(dst, (uint8_t)(base + cy * BATTLE_ART_W + cx));
 #ifdef DEBUG_BUILD
-                g_tilemap_mirror[(3 + cy) * 32 + (x + cx)] =
+                g_tilemap_mirror[(art_row + cy) * 32 + (x + cx)] =
                     (uint8_t)(base + cy * BATTLE_ART_W + cx);
 #endif
                 dst++;
@@ -292,8 +295,8 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
         }
         /* CGB art color (no-op on DMG, which falls back to grayscale):
          * the loader cached one palette per enemy slot. */
-        battle_color_span(x, 3, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
-        battle_color_span(x, 4, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
+        battle_color_span(x, art_row, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
+        battle_color_span(x, (uint8_t)(art_row + 1), BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
         return;
     }
     /* Rows 3-4 are the art zone: no text path addresses them, so blanks
@@ -305,12 +308,12 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
         char *buf;
         VBK_REG = 0;
         for (cy = 0; cy < 2; cy++) {
-            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(3 + cy) << 5) + x);
-            buf = &g_ui_screen_buf[3 + cy][x];
+            dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(art_row + cy) << 5) + x);
+            buf = &g_ui_screen_buf[art_row + cy][x];
             for (cx = 0; cx < BATTLE_ART_W; cx++) {
                 battle_vram_sync_write(dst, space);
 #ifdef DEBUG_BUILD
-                g_tilemap_mirror[(3 + cy) * 32 + (x + cx)] = space;
+                g_tilemap_mirror[(art_row + cy) * 32 + (x + cx)] = space;
 #endif
                 *buf = ' ';
                 dst++;
@@ -318,19 +321,24 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
             }
         }
         /* Drop any previous art tint so blanks match surrounding text. */
-        battle_color_span(x, 3, BATTLE_ART_W, UI_COLOR_NONE);
-        battle_color_span(x, 4, BATTLE_ART_W, UI_COLOR_NONE);
+        battle_color_span(x, art_row, BATTLE_ART_W, UI_COLOR_NONE);
+        battle_color_span(x, (uint8_t)(art_row + 1), BATTLE_ART_W, UI_COLOR_NONE);
     }
 }
 
 static void battle_draw_enemy_columns(const volatile Battle *battle)
 {
-    uint8_t k, x = 0;
+    uint8_t k, x;
     const Combatant *e;
     bool blink_name = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) &&
                       (((battle->timer_ticks >> 4) & 1) == 0);
+    /* Staged rows/cols (WRAM copy of the active BattleScreenDef). */
+    uint8_t name_row = 2;
+    uint8_t hp_row = g_battle_hud.rows[HUD_ENEMY_HP];
+    uint8_t cur_row = g_battle_hud.rows[HUD_ENEMY_CURSOR];
 
-    for (k = 0; k < MAX_BATTLE_ENEMIES; k++, x = (uint8_t)(x + 7)) {
+    for (k = 0; k < MAX_BATTLE_ENEMIES; k++) {
+        x = g_battle_hud.pos[k][0];
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
             if (blink_name && k == battle->attacking_enemy_idx) {
@@ -343,39 +351,41 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             }
             battle_draw_enemy_art(x, k, battle,
                                   (uint8_t)(blink_name && k == battle->attacking_enemy_idx));
-            battle_draw_num2(x, 1, e->hp);
-            battle_put_char((uint8_t)(x + 2), 1, '/');
-            battle_draw_num2((uint8_t)(x + 3), 1, e->max_hp);
-            battle_put_char((uint8_t)(x + 5), 1, ' ');
+            battle_draw_num2(x, hp_row, e->hp);
+            battle_put_char((uint8_t)(x + 2), hp_row, '/');
+            battle_draw_num2((uint8_t)(x + 3), hp_row, e->max_hp);
+            battle_put_char((uint8_t)(x + 5), hp_row, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                battle_draw_text_line(x, 5, "  ^   ", 6);
+                battle_draw_text_line(x, cur_row, "  ^   ", 6);
                 continue;
             }
         } else {
-            battle_draw_text_line(x, 1, NULL, 6);
-            battle_draw_text_line(x, 2, NULL, 6);
+            battle_draw_text_line(x, hp_row, NULL, 6);
+            battle_draw_text_line(x, name_row, NULL, 6);
             battle_draw_enemy_art(x, k, battle, 1);
         }
-        battle_draw_text_line(x, 5, NULL, 6);
+        battle_draw_text_line(x, cur_row, NULL, 6);
     }
 }
 
 static void battle_draw_hero_row(const volatile Battle *battle)
 {
     volatile uint8_t *dst;
+    /* Staged rows (WRAM copy of the active BattleScreenDef). */
+    uint8_t hero_row = g_battle_hud.rows[HUD_HERO_LROW];
 
-    battle_draw_text_line(0, 6, "HERO        HP:", 15);
-    battle_color_span(0, 6, 4, battle_status_color(&s_battle_status[0]));
-    battle_draw_num2(15, 6, battle->player.hp);
-    battle_put_char(17, 6, '/');
-    battle_draw_num2(18, 6, battle->player.max_hp);
+    battle_draw_text_line(0, hero_row, "HERO        HP:", 15);
+    battle_color_span(0, hero_row, 4, battle_status_color(&s_battle_status[0]));
+    battle_draw_num2(15, hero_row, battle->player.hp);
+    battle_put_char(17, hero_row, '/');
+    battle_draw_num2(18, hero_row, battle->player.max_hp);
 
     /* Stream Heart icon at col 11 into VRAM (in front of HP:) */
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)6 << 5) + 11);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)hero_row << 5) + 11);
     VBK_REG = 0;
     battle_vram_sync_write(dst, UI_TILE_HEART);
-    battle_color_span(11, 6, 1, UI_COLOR_FIRE);
+    battle_color_span(11, hero_row, 1, UI_COLOR_FIRE);
 }
 
 /* AP shown in the badge during a decision phase: the phase pool minus the
@@ -401,23 +411,25 @@ static uint8_t battle_energy_display(const volatile Battle *b)
 static void battle_draw_deck_line(const volatile Battle *battle)
 {
     volatile uint8_t *dst;
+    /* Staged row (WRAM copy of the active BattleScreenDef). */
+    uint8_t deck_row = g_battle_hud.rows[HUD_DECK_ROW];
 
-    battle_draw_text_line(0, 7, " DECK:      AP:", 15);
-    battle_draw_num2(7, 7,
+    battle_draw_text_line(0, deck_row, " DECK:      AP:", 15);
+    battle_draw_num2(7, deck_row,
                      (uint8_t)(battle->deck.count - battle->deck.draw_idx));
-    battle_draw_num2(15, 7, battle_energy_display(battle));
-    battle_put_char(17, 7, '/');
-    battle_draw_num2(18, 7, BATTLE_ENERGY_PER_TURN);
+    battle_draw_num2(15, deck_row, battle_energy_display(battle));
+    battle_put_char(17, deck_row, '/');
+    battle_draw_num2(18, deck_row, BATTLE_ENERGY_PER_TURN);
 
     /* Stream Deck icon at col 0 and Lightning Bolt icon at col 11 into VRAM */
     VBK_REG = 0;
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 0);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)deck_row << 5) + 0);
     battle_vram_sync_write(dst, UI_TILE_DECK);
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)7 << 5) + 11);
+    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)deck_row << 5) + 11);
     battle_vram_sync_write(dst, UI_TILE_BOLT);
 
-    battle_color_span(0, 7, 1, UI_COLOR_IRON);
-    battle_color_span(11, 7, 1, UI_COLOR_GOLD);
+    battle_color_span(0, deck_row, 1, UI_COLOR_IRON);
+    battle_color_span(11, deck_row, 1, UI_COLOR_GOLD);
 }
 
 /* Tier display names (docs/combo-system.md hand table).  Rows live in
@@ -493,13 +505,15 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
      * are added/removed and blanks once the hand resolves -- executed
      * results announce via the banner instead of sticking around. */
     const char *name = battle_combo_pending_name(battle);
+    /* Staged row (WRAM copy of the active BattleScreenDef). */
+    uint8_t combo_row = g_battle_hud.rows[HUD_COMBO_ROW];
 
-    battle_draw_text_line(0, 13, "COMBO:", 6);
+    battle_draw_text_line(0, combo_row, "COMBO:", 6);
     if (name[0] != '\0') {
-        battle_draw_text_line(7, 13, " ", 1);
-        battle_draw_text_line(8, 13, name, 12);
+        battle_draw_text_line(7, combo_row, " ", 1);
+        battle_draw_text_line(8, combo_row, name, 12);
     } else {
-        battle_draw_text_line(7, 13, NULL, 13);
+        battle_draw_text_line(7, combo_row, NULL, 13);
     }
 }
 
@@ -518,6 +532,9 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     uint8_t cc   = battle->combo_count;
     uint8_t cur  = battle->cursor_pos;
     uint8_t sel[BATTLE_HAND_SIZE];
+    /* Staged rows (WRAM copy of the active BattleScreenDef). */
+    uint8_t cards_row = g_battle_hud.rows[HUD_CARDS_ROW];
+    uint8_t mark_row  = g_battle_hud.rows[HUD_CARD_CUR_ROW];
 
     for (k = 0; k < BATTLE_HAND_SIZE; k++) {
         sel[k] = (k < cc) ? battle->selected_indices[k] : 0xFF;
@@ -539,20 +556,20 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             }
         }
         uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
-        battle_draw_card_at(col, 14, ctype, cvalue, cstat, is_heal);
+        battle_draw_card_at(col, cards_row, ctype, cvalue, cstat, is_heal);
         /* Color the icon + power digit by the card's material and elemental effect.
          * Poison grey-out (status.h): greyed player cards render dim. */
         ccolor = battle_card_color(ctype, cstat, is_heal);
         if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
             ccolor = UI_COLOR_DIM;
         }
-        battle_color_span(col, 14, 3, ccolor);
+        battle_color_span(col, cards_row, 3, ccolor);
         if (i == cur) {
-            battle_put_char((uint8_t)(col + 1), 15, '^');
-            battle_color_span((uint8_t)(col + 1), 15, 1, 0);
+            battle_put_char((uint8_t)(col + 1), mark_row, '^');
+            battle_color_span((uint8_t)(col + 1), mark_row, 1, 0);
         } else {
-            battle_put_char((uint8_t)(col + 1), 15, s_sel_marker);
-            battle_color_span((uint8_t)(col + 1), 15, 1,
+            battle_put_char((uint8_t)(col + 1), mark_row, s_sel_marker);
+            battle_color_span((uint8_t)(col + 1), mark_row, 1,
                               (s_sel_marker != ' ') ? ccolor : 0);
         }
     }
@@ -618,6 +635,10 @@ void ui_update_battle_banked(void)
     uint8_t d;
     const char *turn_banner = "";
     const char *desc_msg = "";
+    /* Staged rows/width (WRAM copy of the active BattleScreenDef). */
+    uint8_t banner_row = g_battle_hud.rows[HUD_BANNER_ROW];
+    uint8_t timer_w    = g_battle_hud.rows[HUD_TIMER_W];
+    uint8_t desc_row   = g_battle_hud.rows[HUD_CARD_DSC_ROW];
 
     if (!battle) return;
     d = battle->dirty ? battle->dirty : BATTLE_DIRTY_ALL;
@@ -651,7 +672,7 @@ void ui_update_battle_banked(void)
         }
     }
 
-    if (d & BATTLE_DIRTY_BANNER) battle_draw_banner_line(0, turn_banner, 20);
+    if (d & BATTLE_DIRTY_BANNER) battle_draw_banner_line(banner_row, turn_banner, timer_w);
     if (d & (BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BLINK)) battle_draw_enemy_columns(battle);
     if (d & BATTLE_DIRTY_HERO) {
         battle_draw_hero_row(battle);
@@ -659,7 +680,7 @@ void ui_update_battle_banked(void)
     }
     if (d & BATTLE_DIRTY_COMBO) battle_draw_battle_combo(battle);
     if (d & BATTLE_DIRTY_HAND) battle_draw_battle_hand(battle);
-    if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, 16, desc_msg, 20);
+    if (d & BATTLE_DIRTY_DESC) battle_draw_text_line(0, desc_row, desc_msg, timer_w);
     if (d & BATTLE_DIRTY_MSG) {
         if (battle->msg_id == 4) {
             /* Loot reveal (docs/loot.md §34.5): three-line centered block

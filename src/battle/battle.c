@@ -5,11 +5,12 @@
 #include "rpg/cards.h"
 #include "rpg/deck.h"
 #include "rpg/effects.h"
+#include "rpg/loot.h"
 #include "rpg/status.h"
-#include "rng.h"
 #include "rpg/loot.h"
 #include "game/game_ids.h"
 #include "content.h"
+#include "battle_data.h"
 #include <string.h>
 
 /* Per-enemy battle art (see battle.h): uninitialized WRAM arrays (bss, so
@@ -18,6 +19,11 @@
 uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+
+/* Active battle screen layout (see battle_data.h): uninitialized WRAM
+ * (bss); staged from the bank-4 BattleScreenDef by game_battle_hud_load()
+ * at every battle entry, read by the bank-3 renderer. */
+BattleHudCache g_battle_hud;
 
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
@@ -104,6 +110,14 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     b->dirty = BATTLE_DIRTY_ALL;
 
     status_reset_battle();
+
+    /* Stage the active screen's layout (rows/cols/positions) into WRAM
+     * for the bank-3 renderer.  Game layer picks the screen by battle
+     * type (boss vs standard); engine never names screens itself. */
+    g_bk_byte_a = b->enemy_battle_id;
+    g_bk_call_bank = 4;
+    g_bk_call_target = (uint16_t)&battle_hud_load_banked;
+    banked_call_run();
 
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }

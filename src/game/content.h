@@ -32,6 +32,16 @@ ScreenId game_screen_after_victory(const Game *g);
  * Uses the isolated loot RNG only -- never consumes the shared stream. */
 uint8_t game_loot_drop(uint8_t battle_type);
 
+/* Pick the battle screen (screens/battle JSON id) for a battle type and
+ * stage its layout (positions + HUD rows) into the WRAM g_battle_hud cache
+ * for the bank-3 renderer.  Boss fights use the boss screen, everything
+ * else the standard screen.  Called by battle_start on every battle entry. */
+void game_battle_hud_load(uint8_t battle_type);
+
+/* Banked body (bank 4): loads the active battle screen's HUD layout from
+ * g_battle_screens into WRAM g_battle_hud.  Called via banked_call_run(). */
+void battle_hud_load_banked(void);
+
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
 void game_dialogue_register(void);

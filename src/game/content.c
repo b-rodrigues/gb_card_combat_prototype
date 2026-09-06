@@ -10,6 +10,7 @@
 #include "rpg/loot.h"
 #include "core/game.h"
 #include "banked.h"
+#include "battle_data.h"
 
 #define HERO_START_HP    10
 #define HERO_START_GOLD  20
@@ -85,6 +86,17 @@ void game_new_game(GameState *state)
     deck_add_card(&state->cards, CARD_IRON_SWORD);
 }
 
+/* Thin fixed-bank wrapper: stages the battle type and dispatches to the
+ * bank-4 body (battle_hud_load_banked) which does the actual id-scan and
+ * WRAM copy.  This keeps the bulky id-scan + copy logic out of the fixed
+ * bank (fixes _HOME overflow). */
+void game_battle_hud_load(uint8_t battle_type)
+{
+    g_bk_byte_a = battle_type;
+    g_bk_call_bank = 4;
+    g_bk_call_target = (uint16_t)&battle_hud_load_banked;
+    banked_call_run();
+}
 void game_on_level_up(GameState *state, ProgressionTarget target,
                       const ProgressionAddResult *result)
 {
