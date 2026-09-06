@@ -25,12 +25,31 @@ LAYOUT = [
     [None, None, None],
 ]
 
-sheet = Image.new('RGB', (24, 64), (255, 255, 255))
-for y, row in enumerate(LAYOUT):
-    for x, name in enumerate(row):
-        if name is None:
-            continue
-        im = Image.open('%s/%s.png' % (PUB, name)).convert('RGB')
-        sheet.paste(im.resize((8, 8), Image.NEAREST), (x * 8, y * 8))
-sheet.save('assets/battle_sprites.png')
-print('wrote assets/battle_sprites.png')
+# Tile-name -> sheet (x, y): the single source of truth for combat-art
+# cell addressing.  battle_compile.py imports this (no side effects) to
+# resolve screens/combat_art/*.json cells; new tiles are added here plus
+# their curated PNGs (Phase 3 meta-tile composer extends this table).
+TILE_COORDS = {}
+for _y, _row in enumerate(LAYOUT):
+    for _x, _name in enumerate(_row):
+        if _name is not None:
+            TILE_COORDS[_name] = (_x, _y)
+
+# The all-white cell (row 7) pads partial art (bat is 3x1 per frame).
+BLANK_COORD = (0, 7)
+
+
+def main():
+    sheet = Image.new('RGB', (24, 64), (255, 255, 255))
+    for y, row in enumerate(LAYOUT):
+        for x, name in enumerate(row):
+            if name is None:
+                continue
+            im = Image.open('%s/%s.png' % (PUB, name)).convert('RGB')
+            sheet.paste(im.resize((8, 8), Image.NEAREST), (x * 8, y * 8))
+    sheet.save('assets/battle_sprites.png')
+    print('wrote assets/battle_sprites.png')
+
+
+if __name__ == '__main__':
+    main()

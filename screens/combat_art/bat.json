@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema/combat_art.schema.json",
+  "id": "bat",
+  "label": "Bat",
+  "order": 1,
+  "width": 3,
+  "height": 2,
+  "palette": 7,
+  "frame0": [
+    "bat_0_left", "bat_0_body", "bat_0_right",
+    null, null, null
+  ],
+  "frame1": [
+    "bat_1_left", "bat_1_body", "bat_1_right",
+    null, null, null
+  ]
+}

@@ -31,32 +31,78 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 sys.path.insert(0, str(SCRIPT_DIR))
+sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 
-# Battle-sprite art sets.  Each set is (frame0_cells, frame1_cells, palette,
-# width, height): 2 frames of WxH sheet cells into assets/battle_sprites.png
-# (3 cols x 8 rows; see tools/compose_battle_sprites.py).  Single-frame sets
-# repeat frame 0.  The Makefile gfx rule emits the header in this same order,
-# so art set N lives at tile offset N*12 in battle_enemy_art.h.
-# BLANK is the all-white cell that pads 3x1 art (bat) to 3x2 slots.
-# Each set also names its CGB battle palette (ui_color_* indices in ui.h):
-# slime = poison emerald, bat = dim gray, boss = fire red.  DMG hardware
-# ignores attributes and falls back to grayscale via BGP 0xE4.
-BLANK = (0, 7)
-ART_SETS = {
-    "slime": ([(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
-              [(0, 2), (1, 2), (2, 2), (0, 1), (1, 1), (2, 1)], 4, 3, 2),
-    "bat": ([(0, 3), (1, 3), (2, 3), BLANK, BLANK, BLANK],
-            [(0, 4), (1, 4), (2, 4), BLANK, BLANK, BLANK], 7, 3, 2),
-    "boss": ([(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)],
-             [(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)], 1, 3, 2),
-}
-ART_ORDER = ["slime", "bat", "boss"]
-ART_CELLS_PER_SET = 12
+# Combat-art sets (screens/combat_art/*.json) replace the old hardcoded
+# ART_SETS table: each set names curated sheet tiles per frame plus its
+# dimensions and CGB palette.  Tile names resolve through
+# compose_battle_sprites.TILE_COORDS (null = the all-white blank cell).
+# The Makefile gfx rule emits battle_enemy_art.h in set-order via
+# --gfx-coords, so blob offset N*tiles is stable and art set order must
+# never be renumbered once committed (append new sets at the end).
+from compose_battle_sprites import TILE_COORDS, BLANK_COORD
 
 
-def validate_enemy_type(path: Path) -> dict:
+def load_combat_art():
+    """Load and validate screens/combat_art/*.json.  Returns (sets, order,
+    offsets): sets keyed by id, order = ids sorted by explicit order field,
+    offsets = blob tile offset per set id."""
+    sets = {}
+    pattern = str(REPO_ROOT / "screens" / "combat_art" / "*.json")
+    for json_file in sorted(glob.glob(pattern)):
+        path = Path(json_file)
+        with open(path) as f:
+            data = json.load(f)
+        sid = data.get('id', path.stem)
+        for field in ['order', 'width', 'height', 'palette', 'frame0']:
+            if field not in data:
+                print("WARNING: %s: missing required field '%s'" % (path.name, field))
+        w, h = data.get('width', 0), data.get('height', 0)
+        if not (1 <= w <= 6):
+            print("WARNING: %s: width %d must be 1-6" % (path.name, w))
+        if not (1 <= h <= 4):
+            print("WARNING: %s: height %d must be 1-4" % (path.name, h))
+        for frame in ['frame0', 'frame1']:
+            cells = data.get(frame)
+            if cells is None:
+                continue
+            if len(cells) != w * h:
+                print("WARNING: %s: %s has %d cells, need width*height=%d"
+                      % (path.name, frame, len(cells), w * h))
+            for name in cells:
+                if name is not None and name not in TILE_COORDS:
+                    print("WARNING: %s: unknown combat tile '%s'" % (path.name, name))
+        if sid in sets:
+            print("WARNING: %s: duplicate combat art id '%s'" % (path.name, sid))
+        sets[sid] = data
+    order = sorted(sets.keys(), key=lambda k: sets[k].get('order', 0))
+    seen_orders = [sets[k].get('order', 0) for k in order]
+    if len(set(seen_orders)) != len(seen_orders):
+        print("WARNING: duplicate combat art order values %s" % seen_orders)
+    # Blob offsets (tiles): frame0 cells then frame1 cells per set.
+    offsets = {}
+    at = 0
+    for sid in order:
+        offsets[sid] = at
+        w, h = sets[sid]['width'], sets[sid]['height']
+        at += 2 * w * h
+    return sets, order, offsets
+
+
+def set_frame_cells(entry, frame):
+    """Resolved sheet cells for a set frame: frame1 defaults to frame0."""
+    cells = entry.get(frame)
+    if cells is None:
+        cells = entry['frame0']
+    out = []
+    for name in cells:
+        out.append(BLANK_COORD if name is None else TILE_COORDS[name])
+    return out
+
+
+def validate_enemy_type(path: Path, art_ids) -> dict:
     """Validate and return an enemy type JSON."""
     with open(path) as f:
         data = json.load(f)
@@ -107,8 +153,8 @@ def validate_enemy_type(path: Path) -> dict:
     # Validate battle-sprite art selection (null = text fallback)
     sprite = data.get('sprite')
     if sprite is not None:
-        if not isinstance(sprite, dict) or sprite.get('art') not in ART_SETS:
-            print("WARNING: %s: sprite.art '%s' not in %s" % (path.name, (sprite or {}).get('art'), sorted(ART_SETS)))
+        if not isinstance(sprite, dict) or sprite.get('art') not in art_ids:
+            print("WARNING: %s: sprite.art '%s' not in %s" % (path.name, (sprite or {}).get('art'), sorted(art_ids)))
         elif sprite.get('frames') not in (1, 2):
             print("WARNING: %s: sprite.frames '%s' must be 1 or 2" % (path.name, sprite.get('frames')))
 
@@ -257,7 +303,7 @@ def build_battle_screens_output(battle_screens, enemy_types):
     return "\n".join(lines)
 
 
-def build_enemy_types_output(enemy_types):
+def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
     """Generate C code for enemy type definitions."""
     lines = []
 
@@ -281,16 +327,19 @@ def build_enemy_types_output(enemy_types):
         et = enemy_types[et_id]
         sprite = et.get('sprite') or {}
         art_id = sprite.get('art')
-        try:
-            art_index = ART_ORDER.index(art_id)
-            art_palette = ART_SETS[art_id][2]
-            art_w = ART_SETS[art_id][3]
-            art_h = ART_SETS[art_id][4]
-        except ValueError:
-            art_index = 0xFF  # text fallback: no battle art
-            art_palette = 0
-            art_w = 0
-            art_h = 0
+        art_index = 0xFF  # text fallback: no battle art
+        art_palette = 0
+        art_w = 0
+        art_h = 0
+        art_offset = 0
+        if art_id in art_sets:
+            art_index = art_order.index(art_id)
+            art_palette = art_sets[art_id]['palette']
+            art_w = art_sets[art_id]['width']
+            art_h = art_sets[art_id]['height']
+            art_offset = art_offsets[art_id]
+        elif art_id is not None:
+            print("WARNING: %s: sprite.art '%s' has no combat art set" % (et_id, art_id))
         art_frames = sprite.get('frames', 0) if art_index != 0xFF else 0
         lines.append("static const EnemyTypeDef g_enemy_type_%s = {" % et['id'])
         lines.append('    %s,' % c_escape(et['id']))
@@ -306,7 +355,8 @@ def build_enemy_types_output(enemy_types):
         lines.append('    %d,' % art_frames)
         lines.append('    %d,' % art_palette)
         lines.append('    %d,' % art_w)
-        lines.append('    %d' % art_h)
+        lines.append('    %d,' % art_h)
+        lines.append('    %d' % art_offset)
         lines.append("};")
         lines.append("")
 
@@ -335,8 +385,21 @@ def main(args=None):
                         help="Only validate JSON, don't emit C")
     parser.add_argument("--check", action="store_true",
                         help="Do not write; exit nonzero if fresh output differs from the files")
+    parser.add_argument("--gfx-coords", action="store_true",
+                        help="Print the png2gb --tile-coords string for battle_enemy_art.h (set order, frame0 then frame1 per set) and exit")
 
     args = parser.parse_args(args)
+
+    # Combat art sets back every enemy-type sprite.art reference.
+    art_sets, art_order, art_offsets = load_combat_art()
+    if args.gfx_coords:
+        coords = []
+        for sid in art_order:
+            for frame in ['frame0', 'frame1']:
+                for (x, y) in set_frame_cells(art_sets[sid], frame):
+                    coords.append("%d,%d" % (x, y))
+        print(" ".join(coords))
+        return 0
 
     output_dir = Path(args.output) if args.output else REPO_ROOT / "src" / "game"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -349,7 +412,7 @@ def main(args=None):
         # Load all enemy types
         for json_file in sorted(glob.glob(str(REPO_ROOT / "screens" / "enemy_types" / "*.json"))):
             path = Path(json_file)
-            data = validate_enemy_type(path)
+            data = validate_enemy_type(path, art_sets)
             enemy_types[data['id']] = data
 
         # Load all battle screens
@@ -365,7 +428,7 @@ def main(args=None):
             battle_screens[data['id']] = data
         for json_file in args.enemy_type:
             path = Path(json_file)
-            data = validate_enemy_type(path)
+            data = validate_enemy_type(path, art_sets)
             enemy_types[data['id']] = data
 
     if not enemy_types:
@@ -380,7 +443,7 @@ def main(args=None):
 
     # Generate outputs
     battle_screens_output = build_battle_screens_output(battle_screens, {})
-    enemy_types_output = build_enemy_types_output(enemy_types)
+    enemy_types_output = build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets)
 
     # Write battle_screens.c
     battle_screens_path = output_dir / "battle_screens.c"

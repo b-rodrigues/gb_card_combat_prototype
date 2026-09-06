@@ -53,11 +53,12 @@ typedef struct EnemyTypeDef {
     const char *battle_id;
     uint8_t gold_reward;
     uint8_t reward_currency;
-    uint8_t art_index;  // battle art set (0=slime,1=bat,2=boss), 0xFF = text fallback
+    uint8_t art_index;  // battle art set (order position in screens/combat_art), 0xFF = text fallback
     uint8_t art_frames;  // animation frames (1..2, 0 when art_index is 0xFF)
     uint8_t art_palette;  // CGB battle palette (ui_color_* index; DMG ignores)
     uint8_t art_w;  // combat art width in tiles (3 for the built-in sets; up to 6)
     uint8_t art_h;  // combat art height in tiles (2 for the built-in sets; up to 4)
+    uint16_t art_offset;  // blob tile offset of this set's frame0 in battle_enemy_art.h
 } EnemyTypeDef;
 
 /* WRAM cache for the active battle screen's HUD layout.

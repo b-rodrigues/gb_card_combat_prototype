@@ -122,12 +122,12 @@ gfx:
 		--palette auto --tile-coords "11,2" \
 		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
 	# ── Battle enemy art (assets/battle_sprites.png, 3 cols × 8 rows) ────
-	# 36 tiles: 3 art sets × 12 cells (2 frames × 3x2).  Order MUST match
-	# ART_ORDER in tools/screen_compiler/battle_compile.py (slime, bat,
-	# boss); art set N lives at tile offset N*12 in battle_enemy_art.h.
+	# Cell order comes from screens/combat_art/*.json (set order, frame0
+	# then frame1 per set); the compiler also emits per-set blob offsets
+	# into battle_types.c, so the loader needs no fixed set size.
 	# Sheet layout: see tools/compose_battle_sprites.py.
 	@python3 tools/png2gb.py assets/battle_sprites.png --name battle_enemy_art \
-		--palette auto --tile-coords "0,0 1,0 2,0 0,1 1,1 2,1 0,2 1,2 2,2 0,1 1,1 2,1 0,3 1,3 2,3 0,7 0,7 0,7 0,4 1,4 2,4 0,7 0,7 0,7 0,5 1,5 2,5 0,6 1,6 2,6 0,5 1,5 2,5 0,6 1,6 2,6" \
+		--palette auto --tile-coords "$$(python3 tools/screen_compiler/battle_compile.py --gfx-coords)" \
 		-o $(GFX_OUT_DIR)/battle_enemy_art.h
 	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
 	# Full 48-tile world sheet (g_tileset_desolate)

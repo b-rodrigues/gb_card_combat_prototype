@@ -1,0 +1,13 @@
+{
+  "$schema": "../schema/combat_art.schema.json",
+  "id": "boss",
+  "label": "Boss",
+  "order": 2,
+  "width": 3,
+  "height": 2,
+  "palette": 1,
+  "frame0": [
+    "boss_horns_left", "boss_horns_mid", "boss_horns_right",
+    "boss_head_left", "boss_head_mid", "boss_head_right"
+  ]
+}

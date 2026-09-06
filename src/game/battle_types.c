@@ -23,7 +23,8 @@ static const EnemyTypeDef g_enemy_type_bat = {
     2,
     7,
     3,
-    2
+    2,
+    12
 };
 
 static const EnemyTypeDef g_enemy_type_slime = {
@@ -40,7 +41,8 @@ static const EnemyTypeDef g_enemy_type_slime = {
     2,
     4,
     3,
-    2
+    2,
+    0
 };
 
 static const EnemyTypeDef g_enemy_type_slime_lord = {
@@ -57,7 +59,8 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     1,
     1,
     3,
-    2
+    2,
+    24
 };
 
 static const EnemyTypeDef g_enemy_type_wolf = {
@@ -71,6 +74,7 @@ static const EnemyTypeDef g_enemy_type_wolf = {
     15,
     CURRENCY_ID_GOLD,
     255,
+    0,
     0,
     0,
     0,

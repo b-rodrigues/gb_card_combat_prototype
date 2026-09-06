@@ -32,7 +32,6 @@
 
 #define BATTLE_ART_VRAM_BASE 128u
 #define BATTLE_ART_VRAM_TILES 128u
-#define BATTLE_ART_SET_BYTES 192u
 #define BATTLE_ART_MAX_W 6u
 #define BATTLE_ART_MAX_H 4u
 
@@ -45,6 +44,7 @@ void battle_art_load_banked(void)
     uint8_t art_palette = 0;
     uint8_t art_w = 3;
     uint8_t art_h = 2;
+    uint16_t art_offset = 0;
     uint8_t base;
     uint8_t i, k;
     uint8_t match;
@@ -76,6 +76,7 @@ void battle_art_load_banked(void)
                 art_palette = t->art_palette;
                 art_w = t->art_w;
                 art_h = t->art_h;
+                art_offset = t->art_offset;
                 break;
             }
         }
@@ -105,8 +106,9 @@ void battle_art_load_banked(void)
             g_battle_enemy_art[k] = 0xFF;
             continue;
         }
-        /* Set offset without multiply: art_index * 192 = (idx<<7)+(idx<<6). */
-        src = &battle_enemy_art[((uint16_t)art_index << 7) + ((uint16_t)art_index << 6)];
+        /* Blob source without multiply: tiles -> bytes is a shift, and
+         * the compiler already resolved the set's blob tile offset. */
+        src = &battle_enemy_art[(uint16_t)(art_offset << 4)];
         dst = (volatile uint8_t *)(0x8000u + ((uint16_t)base << 4));
         n = (uint16_t)cost << 4;
         while (n--) {
