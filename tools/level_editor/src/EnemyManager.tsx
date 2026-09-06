@@ -26,6 +26,7 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
   const [ow, setOw] = useState<OwDraft | null>(null);
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState('');
+  const [enemyRows, setEnemyRows] = useState<Record<string, { art: string; frames: number; category: string; dirty: boolean }>>({});
 
   const owTiles = (BUILTIN_TILESETS.enemies?.tiles || []).filter((t) => t.category === 'enemy');
   const tileUrl = (id: string) => {
@@ -74,6 +75,22 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
     }
   };
 
+  const saveEnemyRow = async (id: string) => {
+    const row = enemyRows[id];
+    if (!row) return;
+    try {
+      const full = await fetchEnemyType(id);
+      if (row.art) full.sprite = { art: row.art, frames: row.frames };
+      else full.sprite = null;
+      full.category = row.category;
+      await saveEnemyType(id, full);
+      setEnemyRows((prev) => ({ ...prev, [id]: { ...row, dirty: false } }));
+      setStatus(`saved screens/enemy_types/${id}.json — run make screens to recompile`);
+    } catch (e: any) {
+      setStatus(`save failed: ${e.message}`);
+    }
+  };
+
   const setCell = (idx: number, id: string) => {
     setOw((prev) => {
       const cells = ((prev && prev.cells) || []).slice();
@@ -99,13 +116,27 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
         <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Enemies (by type)</div>
         {enemies.map((e) => (
           <div key={e.id}>
-            <button style={{ width: '100%', fontWeight: e.id === activeId ? 'bold' : 'normal' }} onClick={() => setActiveId(e.id)}>
-              {e.label} <span style={{ fontSize: 11, color: '#666' }}>({e.category})</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button style={{ width: '100%', fontWeight: e.id === activeId ? 'bold' : 'normal', textAlign: 'left', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 2 }} onClick={() => setActiveId(e.id)}>
+                {e.label}
+              </button>
+              <select
+                value={enemyRows[e.id]?.category ?? e.category}
+                onChange={(ev) => {
+                  const category = ev.target.value as 'minion' | 'elite' | 'boss';
+                  setEnemyRows((prev) => ({ ...prev, [e.id]: { art: prev[e.id]?.art ?? e.art ?? '', frames: prev[e.id]?.frames ?? 1, category, dirty: true } }));
+                }}
+                style={{ fontSize: 10, padding: '1px 4px', background: '#fff', border: '1px solid #ccc', borderRadius: 3 }}
+              >
+                <option value="minion">Minion</option>
+                <option value="elite">Elite</option>
+                <option value="boss">Boss</option>
+              </select>
+            </div>
           </div>
         ))}
         <div style={{ fontSize: 12, color: '#555', marginTop: 8 }}>
-          New types are raw JSON for now: add <code>screens/enemy_types/&lt;id&gt;.json</code> and it appears here.
+          New types are raw JSON for now: add <code>{'screens/enemy_types/<id>.json'}</code> and it appears here.
         </div>
       </div>
 
@@ -167,6 +198,32 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
           </div>
 
           <div>
+            <h3 style={{ margin: '0 0 4px' }}>Category</h3>
+            <div style={{ fontSize: 13 }}>
+              <select
+                value={active.category}
+                onChange={async (ev) => {
+                  const category = ev.target.value as 'minion' | 'elite' | 'boss';
+                  setEnemyRows((prev) => ({ ...prev, [active.id]: { art: prev[active.id]?.art ?? active.art ?? '', frames: prev[active.id]?.frames ?? 1, category, dirty: true } }));
+                  try {
+                    const full = await fetchEnemyType(active.id);
+                    full.category = category;
+                    await saveEnemyType(active.id, full);
+                    setEnemyRows((prev) => ({ ...prev, [active.id]: { art: prev[active.id]?.art ?? active.art ?? '', frames: prev[active.id]?.frames ?? 1, category, dirty: false } }));
+                    setStatus(`saved screens/enemy_types/${active.id}.json — run make screens to recompile`);
+                  } catch (err: any) {
+                    setStatus(`save failed: ${err.message}`);
+                  }
+                }}
+              >
+                <option value="minion">Minion</option>
+                <option value="elite">Elite</option>
+                <option value="boss">Boss</option>
+              </select>
+            </div>
+            <div style={{ fontSize: 12, color: '#555', margin: '4px 0 8px' }}>
+              Category determines battle screen filtering (screens/battle/*.json allowed_categories).
+            </div>
             <button onClick={save} disabled={!dirty}>Save enemy{dirty ? ' *' : ''}</button>
             {status && <div style={{ marginTop: 8, fontSize: 13 }}>{status}</div>}
           </div>
