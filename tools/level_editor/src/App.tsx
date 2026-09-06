@@ -321,6 +321,7 @@ export const App: React.FC = () => {
       return;
     }
     setEnemyView(null);
+    setHeroView(false);
 
     const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
