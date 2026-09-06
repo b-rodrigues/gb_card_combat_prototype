@@ -24,7 +24,10 @@ static const EnemyTypeDef g_enemy_type_bat = {
     7,
     3,
     2,
-    12
+    12,
+    100,
+    2,
+    0
 };
 
 static const EnemyTypeDef g_enemy_type_slime = {
@@ -42,7 +45,10 @@ static const EnemyTypeDef g_enemy_type_slime = {
     4,
     3,
     2,
-    0
+    0,
+    102,
+    2,
+    2
 };
 
 static const EnemyTypeDef g_enemy_type_slime_lord = {
@@ -60,7 +66,10 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     1,
     3,
     2,
-    24
+    24,
+    255,
+    0,
+    0
 };
 
 static const EnemyTypeDef g_enemy_type_wolf = {
@@ -78,6 +87,9 @@ static const EnemyTypeDef g_enemy_type_wolf = {
     0,
     0,
     0,
+    0,
+    255,
+    0,
     0
 };
 
@@ -88,3 +100,5 @@ const EnemyTypeDef* const g_enemy_types[4] = {
     &g_enemy_type_wolf,
 };
 const uint8_t g_enemy_type_count = 4;
+
+const uint8_t g_enemy_ow_tile_count = 4;

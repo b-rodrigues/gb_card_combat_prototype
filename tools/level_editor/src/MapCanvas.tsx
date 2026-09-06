@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { BUILTIN_TILESETS, TileDefinition, TilesetDefinition } from './model/Tileset';
-import { SHEET_TILE_NAMES, COMBAT_TILE_URL, fetchCombatArtList, fetchCombatArtSet, fetchEnemyTypeList } from './io/combatArt';
+import { SHEET_TILE_NAMES, COMBAT_TILE_URL, fetchCombatArtList, fetchCombatArtSet, fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 import { ToolType } from './Toolbar';
 import { EditLayer } from './LayerPanel';
 
@@ -102,6 +102,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [combatSets, setCombatSets] = useState<Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>>(new Map());
   const [enemyArtByName, setEnemyArtByName] = useState<Map<string, string>>(new Map());
   const [combatImgs, setCombatImgs] = useState<Map<string, HTMLImageElement>>(new Map());
+  /* Shared overworld enemy sprites (UPPER name -> cells): type-owned art
+   * wins over per-instance sprite names, mirroring the ROM. */
+  const [enemyOwByName, setEnemyOwByName] = useState<Map<string, string[]>>(new Map());
+  const [owImgs, setOwImgs] = useState<Map<string, HTMLImageElement>>(new Map());
   useEffect(() => {
     fetchCombatArtList().then(async (items) => {
       const m = new Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>();
@@ -113,15 +117,38 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       }
       setCombatSets(m);
     }).catch(() => undefined);
-    fetchEnemyTypeList().then((types) => {
+    fetchEnemyTypeList().then(async (types) => {
       const e = new Map<string, string>();
-      types.forEach((t) => {
+      const o = new Map<string, string[]>();
+      const needed = new Set<string>();
+      for (const t of types) {
         if (t.art) {
           e.set(t.label.toUpperCase(), t.art);
           e.set(t.id.toUpperCase(), t.art);
         }
-      });
+        try {
+          const full = await fetchEnemyType(t.id);
+          const cells = (full.overworld && full.overworld.cells) || [];
+          if (cells.length > 0) {
+            o.set(t.id.toUpperCase(), cells);
+            o.set(t.label.toUpperCase(), cells);
+            cells.forEach((c: string) => needed.add(c));
+          }
+        } catch { /* keep others */ }
+      }
       setEnemyArtByName(e);
+      setEnemyOwByName(o);
+      const imgs = new Map<string, HTMLImageElement>();
+      let done = 0;
+      const names = [...needed];
+      if (names.length === 0) return;
+      names.forEach((name) => {
+        const img = new Image();
+        img.src = `/tiles/enemies/${name}.png`;
+        const fin = () => { done++; imgs.set(name, img); if (done === names.length) setOwImgs(new Map(imgs)); };
+        img.onload = fin;
+        img.onerror = fin;
+      });
     }).catch(() => undefined);
     const imgs = new Map<string, HTMLImageElement>();
     let done = 0;
@@ -988,11 +1015,29 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
           // Sprite image (animated or static) or fallback icon
           if (tileSize >= 16) {
+            // Type-owned overworld art wins (Enemies view): shared sprite
+            // everywhere this enemy appears, like the ROM.
+            let owDrawn = false;
+            if (obj.type === 'enemy') {
+              const props = (obj as any).properties || {};
+              const explicit = props.enemy_type ? String(props.enemy_type).toUpperCase() : '';
+              const ent = String(props.entity_id || '');
+              const conv = ent.startsWith('ENTITY_ID_') ? ent.slice('ENTITY_ID_'.length).toUpperCase() : '';
+              const cells = (explicit && enemyOwByName.get(explicit)) || (conv && enemyOwByName.get(conv)) || null;
+              if (cells && cells.length > 0) {
+                const cell = cells[animTick % cells.length];
+                const img = owImgs.get(cell);
+                if (img && img.complete && img.naturalWidth > 0) {
+                  ctx.drawImage(img, px + 4, py + 4, objW - 8, objH - 8);
+                  owDrawn = true;
+                }
+              }
+            }
             let spriteId: string | null = null;
-            if (obj.animation_frames && obj.animation_frames.length > 0) {
+            if (!owDrawn && obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
               spriteId = frameKey;
-            } else if (obj.overworld_sprite) {
+            } else if (!owDrawn && obj.overworld_sprite) {
               spriteId = obj.overworld_sprite;
             }
 

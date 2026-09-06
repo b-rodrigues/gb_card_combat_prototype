@@ -323,8 +323,11 @@ typedef enum {
     SPRITE_KIND_BAT = 2,    /* 2-frame per-map bat OBJ sprite */
     SPRITE_KIND_BOSS = 3,   /* 2x2 castle boss drawn as background tiles */
     SPRITE_KIND_CHEST = 4,  /* 1-frame pickup chest OBJ sprite (statics) */
-    SPRITE_KIND_TILE = 5    /* background-art actor: cell shows its tileset
+    SPRITE_KIND_TILE = 5,   /* background-art actor: cell shows its tileset
                                map tile (NPC art), no OAM sprite */
+    SPRITE_KIND_ENEMY = 6   /* per-enemy-type shared OAM sprite (append-only):
+                               art comes from the enemy-type row named by
+                               ow_type (0xFF = fall back to ASCII glyph) */
 } ActorSpriteKind;
 
 /* Mutable runtime state for a spawned World Actor.  Static actor
@@ -346,6 +349,8 @@ typedef struct {
     const char *display_name;    /* copied from the definition */
     uint8_t visual;              /* ASCII char: 'S', 'B', etc. */
     ActorSpriteKind sprite_kind; /* how this actor is drawn (from def) */
+    uint8_t ow_type;             /* enemy-type OAM index for SPRITE_KIND_ENEMY
+                                    (into g_enemy_types; 0xFF = ASCII fallback) */
     uint8_t spawn_x;             /* patrol anchor origin */
     uint8_t spawn_y;
     uint8_t ai_type;             /* ActorAiType */

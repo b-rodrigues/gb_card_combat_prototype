@@ -31,6 +31,7 @@ export interface EnemyTypeListItem {
   label: string;
   category: string;
   art: string | null;
+  ow: boolean;
 }
 
 /** Tiles present in the composed battle sheet (assets/battle_sprites.png).

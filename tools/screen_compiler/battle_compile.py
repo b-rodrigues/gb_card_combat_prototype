@@ -44,6 +44,13 @@ DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 # --gfx-coords, so blob offset N*tiles is stable and art set order must
 # never be renumbered once committed (append new sets at the end).
 from compose_battle_sprites import TILE_COORDS, BLANK_COORD
+from compose_enemy_sprites import TILE_COORDS as ENEMY_TILE_COORDS
+
+# Shared overworld enemy OAM base (must match ENEMY_OW_BASE in src/ui/ui.h).
+# Blob: concatenated per-enemy frames in sorted enemy-id order; OAM ids
+# 128+ alias BG tiles, so the blob must stay below 128 (clear error below).
+ENEMY_OW_BASE = 100
+ENEMY_OW_LIMIT = 128
 
 
 def load_combat_art():
@@ -353,6 +360,38 @@ def build_battle_screens_output(battle_screens, enemy_types):
     return "\n".join(lines)
 
 
+def ow_blob_layout(enemy_types):
+    """Shared overworld blob layout: returns (offsets, cells) where offsets
+    maps enemy id -> blob tile offset and cells is the ordered tile-name
+    list (sorted enemy-id order, append-only stability).  Returns (None,
+    None) on budget overflow (error already printed)."""
+    et_ids = sorted(enemy_types.keys())
+    offsets = {}
+    cells = []
+    at = 0
+    for et_id in et_ids:
+        ow = (enemy_types[et_id].get('overworld') or None)
+        if ow is None:
+            continue
+        names = ow.get('cells', [])
+        if not (1 <= len(names) <= 2):
+            print("WARNING: %s: overworld.cells has %d entries, need 1-2" % (et_id, len(names)))
+        for name in names:
+            if name not in ENEMY_TILE_COORDS:
+                print("WARNING: %s: unknown overworld tile '%s'" % (et_id, name))
+        pal = ow.get('palette', 0)
+        if not (0 <= pal <= 7):
+            print("WARNING: %s: overworld.palette %s out of 0-7" % (et_id, pal))
+        offsets[et_id] = at
+        cells.extend(names)
+        at += len(names)
+    if ENEMY_OW_BASE + at > ENEMY_OW_LIMIT:
+        print("ERROR: overworld enemy blob needs %d OAM tiles, budget is %d (base %d, limit %d)"
+              % (at, ENEMY_OW_LIMIT - ENEMY_OW_BASE, ENEMY_OW_BASE, ENEMY_OW_LIMIT), file=sys.stderr)
+        return None, None
+    return offsets, cells
+
+
 def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
     """Generate C code for enemy type definitions."""
     lines = []
@@ -373,7 +412,19 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
     cat_map = {'minion': 0, 'elite': 1, 'boss': 2}
 
     et_ids = sorted(enemy_types.keys())
+    ow_offsets, _ow_cells = ow_blob_layout(enemy_types)
+    if ow_offsets is None:
+        return None
     for et_id in et_ids:
+        ow = (enemy_types[et_id].get('overworld') or None)
+        if ow is not None and et_id in ow_offsets:
+            ow_tile = ENEMY_OW_BASE + ow_offsets[et_id]
+            ow_frames = len(ow.get('cells', []))
+            ow_palette = ow.get('palette', 0)
+        else:
+            ow_tile = 0xFF
+            ow_frames = 0
+            ow_palette = 0
         et = enemy_types[et_id]
         sprite = et.get('sprite') or {}
         art_id = sprite.get('art')
@@ -406,7 +457,10 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
         lines.append('    %d,' % art_palette)
         lines.append('    %d,' % art_w)
         lines.append('    %d,' % art_h)
-        lines.append('    %d' % art_offset)
+        lines.append('    %d,' % art_offset)
+        lines.append('    %d,' % ow_tile)
+        lines.append('    %d,' % ow_frames)
+        lines.append('    %d' % ow_palette)
         lines.append("};")
         lines.append("")
 
@@ -416,6 +470,10 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets):
         lines.append("    &g_enemy_type_%s," % eid)
     lines.append("};")
     lines.append("const uint8_t g_enemy_type_count = %d;" % len(et_ids))
+    lines.append("")
+    # Shared overworld blob size (tiles) for the ui_init OAM stream.
+    _ow_total = len(_ow_cells) if _ow_cells is not None else 0
+    lines.append("const uint8_t g_enemy_ow_tile_count = %d;" % _ow_total)
     lines.append("")
 
     return "\n".join(lines)
@@ -437,6 +495,8 @@ def main(args=None):
                         help="Do not write; exit nonzero if fresh output differs from the files")
     parser.add_argument("--gfx-coords", action="store_true",
                         help="Print the png2gb --tile-coords string for battle_enemy_art.h (set order, frame0 then frame1 per set) and exit")
+    parser.add_argument("--ow-coords", action="store_true",
+                        help="Print the png2gb --tile-coords string for enemy_ow_tiles.h (sorted enemy-id order) and exit")
 
     args = parser.parse_args(args)
 
@@ -494,9 +554,18 @@ def main(args=None):
               % (len(battle_screens), len(enemy_types)))
         return 0
 
+    if args.ow_coords:
+        _offsets, names = ow_blob_layout(enemy_types)
+        if names is None:
+            return 1
+        print(" ".join("%d,%d" % ENEMY_TILE_COORDS[n] for n in names))
+        return 0
+
     # Generate outputs
     battle_screens_output = build_battle_screens_output(battle_screens, {})
     enemy_types_output = build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets)
+    if enemy_types_output is None:
+        return 1
 
     # Write battle_screens.c
     battle_screens_path = output_dir / "battle_screens.c"

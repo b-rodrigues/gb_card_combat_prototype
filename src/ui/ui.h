@@ -38,6 +38,11 @@ extern uint8_t g_is_cgb;
 #define BAT_CASTLE_SPRITE_TILE_ID   92u
 /* Chest pickup sprite (single-frame art loaded into both anim slots). */
 #define CHEST_SPRITE_TILE_ID     94u
+/* Shared per-enemy overworld sprites (assets/enemy_sprites.png, base must
+ * match ENEMY_OW_BASE in tools/screen_compiler/battle_compile.py).  The
+ * blob holds concatenated per-enemy frames; ids 128+ alias BG tiles. */
+#define ENEMY_OW_BASE            100u
+#define ENEMY_OW_LIMIT           128u
 
 /* Bank-4 no-arg body behind ui_draw_actors_sprites(): writes each active
  * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)

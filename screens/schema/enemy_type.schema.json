@@ -7,7 +7,6 @@
   "additionalProperties": false,
   "required": ["id", "label", "category", "sprite", "name", "hp", "max_hp", "battle_id", "gold_reward", "reward_currency"],
   "properties": {
-    "id": {
       "type": "string",
       "pattern": "^[a-z_]+$",
       "description": "Unique identifier for this enemy type (lowercase, underscores only)."
@@ -39,6 +38,27 @@
         }
       },
       "required": ["art", "frames"],
+      "additionalProperties": false
+    },
+    "overworld": {
+      "type": ["object", "null"],
+      "description": "Shared overworld OAM sprite (one sprite for every world; the sheet background maps to transparent). Absent/null = legacy SPRITE_KIND rendering.",
+      "properties": {
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": { "type": "string" },
+          "description": "Compose-layout tile names (tools/compose_enemy_sprites.py LAYOUT); 1-2 animation frames."
+        },
+        "palette": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7,
+          "description": "CGB OAM palette index."
+        }
+      },
+      "required": ["cells", "palette"],
       "additionalProperties": false
     },
     "name": {

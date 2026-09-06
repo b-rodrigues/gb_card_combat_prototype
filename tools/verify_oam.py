@@ -174,17 +174,19 @@ def verify_hostile_sprites(sess):
     check("amulet background cell is floor, not '?'",
           160, mirror_at(sess, mirror, 16, 10))
 
-    print("== Hostile sprite tiles (south_field kobold / bat) ==")
+    print("== Hostile sprite tiles (south_field slime / bat) ==")
     south = load_scenario(sess, "south_field_boot.json")
     sess.load_scenario(south)
     sess.step(2)
     # Actor slot 0 (SLIME) = OAM entry 1; slot 1 (BAT) = OAM entry 2.
-    kobold = shadow_oam_slot_tile(sess, 1)
+    # Shared per-enemy sprites (ENEMY_OW_BASE 100): slime frames 102|103,
+    # bat frames 100|101 -- one transparent sprite per type, every world.
+    slime = shadow_oam_slot_tile(sess, 1)
     bat = shadow_oam_slot_tile(sess, 2)
-    check("south_field slime renders as kobold OAM tile (96|97)",
-          1, (96 <= kobold <= 97))
-    check("south_field bat renders as desolate bat OAM tile (88|89)",
-          1, (88 <= bat <= 89))
+    check("south_field slime renders as shared slime OAM tile (102|103)",
+          1, (102 <= slime <= 103))
+    check("south_field bat renders as shared bat OAM tile (100|101)",
+          1, (100 <= bat <= 101))
 
     print("== Boss sprite rendering (castle: bat + 2x2 boss block) ==")
     boss = load_scenario(sess, "boss_appears.json")
@@ -196,8 +198,8 @@ def verify_hostile_sprites(sess):
     # byte may hold a stale value from a prior actor in this slot, so assert
     # the semantic "not drawn as a sprite" via y==0 (hidden), not tile==0.
     boss_y = sess._memread(0xC000 + 4 * 2)  # entry 2 y byte
-    check("castle bat renders as castle bat OAM tile (92|93)",
-          1, (92 <= castle_bat <= 93))
+    check("castle bat renders as shared bat OAM tile (100|101)",
+          1, (100 <= castle_bat <= 101))
     check("boss is not hidden from OAM (y==0)",
           0, boss_y)
     # Boss 2x2 background block at (10,5): castle tile indices 7,8,16,17

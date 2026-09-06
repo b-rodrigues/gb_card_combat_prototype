@@ -149,6 +149,7 @@ function levelEditorApiPlugin(): Plugin {
             const items = listJsonDir('screens/enemy_types', (d, f) => ({
               id: d.id || f.replace(/\.json$/, ''), label: d.label || f,
               category: d.category || '', art: (d.sprite && d.sprite.art) || null,
+              ow: !!((d.overworld && d.overworld.cells && d.overworld.cells.length)),
             }));
             sendJson({ success: true, items });
           } catch (err: any) {

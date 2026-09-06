@@ -68,6 +68,8 @@ typedef struct {
     VariableId spawn_variable;   /* spawn only when this variable == spawn_value (0 = always) */
     int16_t spawn_value;
     ActorSpriteKind sprite_kind; /* how the overworld renders this actor */
+    uint8_t ow_type;             /* enemy-type OAM index for SPRITE_KIND_ENEMY
+                                    (into g_enemy_types; 0xFF = ASCII fallback) */
 } WorldActorDefinition;
 
 /* A per-map block of actor definitions.  The engine owns no scene content:

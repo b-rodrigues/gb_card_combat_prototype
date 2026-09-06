@@ -461,31 +461,57 @@ def main():
 
 """Resolve the overworld sprite kind for a level object from its editor
 sprite choice (overworld_sprite / animation_frames tile names) or its
-entity type.  Matching is by substring on the tileset-qualified tile ids:
-the editor names each hostile actor's sprite after its art, e.g.
-`desolate_landscape_enemy_kobold_frame_1`, `desolate_landscape_enemy_bats_*`,
-and the castle boss `castle_top_left_boss` (a 2x2 sprite)."""
+entity type.  Hostile art is type-owned (SPRITE_KIND_ENEMY via
+resolve_enemy_ow); this fallback only serves untyped objects (boss
+background, chests, NPC tiles, ASCII).  The old per-tileset kobold/bat
+substring branches are gone: every hostile resolves through its enemy
+type to one shared transparent sprite."""
 def resolve_sprite_kind(obj):
     frames = obj.get("animation_frames") or []
     names = " ".join(str(f) for f in frames) + " " + str(obj.get("overworld_sprite") or "")
-    for token, kind in (("kobold", "SPRITE_KIND_KOBOLD"),
-                        ("boss", "SPRITE_KIND_BOSS"),
-                        ("bat", "SPRITE_KIND_BAT"),
+    for token, kind in (("boss", "SPRITE_KIND_BOSS"),
                         ("chest", "SPRITE_KIND_CHEST")):
         if token in names:
             return kind
     ent = (obj.get("properties") or {}).get("entity_id", "")
     if "ENTITY_ID_SLIME_LORD" in ent:
         return "SPRITE_KIND_BOSS"
-    if "ENTITY_ID_SLIME" in ent:
-        return "SPRITE_KIND_KOBOLD"
-    if "ENTITY_ID_BAT" in ent:
-        return "SPRITE_KIND_BAT"
     if ent in ("ENTITY_ID_MAYOR", "ENTITY_ID_GUARD",
                "ENTITY_ID_SHOPKEEPER", "ENTITY_ID_MERCHANT",
                "ENTITY_ID_WIZARD"):
         return "SPRITE_KIND_TILE"
     return "SPRITE_KIND_ASCII"
+
+
+def load_enemy_types():
+    """screens/enemy_types/*.json keyed by id (sorted order matches the
+    ROM g_enemy_types table: battle_compile.py sorts the same way)."""
+    out = {}
+    pattern = str(REPO_ROOT / "screens" / "enemy_types" / "*.json")
+    for json_file in sorted(glob.glob(pattern)):
+        with open(json_file) as f:
+            data = json.load(f)
+        out[data.get('id', Path(json_file).stem)] = data
+    return out
+
+
+def resolve_enemy_ow(obj, enemy_ids):
+    """Enemy-type OAM index for a level object, or None for the legacy
+    SPRITE_KIND path.  Explicit properties.enemy_type wins; otherwise the
+    ENTITY_ID_X naming convention maps to enemy id x.  Only types with
+    shared overworld art (overworld.cells) resolve -- art-less types
+    (boss background, text fallback) keep their legacy kinds."""
+    props = obj.get("properties") or {}
+    want = props.get("enemy_type")
+    if not want:
+        ent = props.get("entity_id", "")
+        if ent.startswith("ENTITY_ID_"):
+            want = ent[len("ENTITY_ID_"):].lower()
+    if want and want in enemy_ids:
+        et = enemy_ids[want]
+        if (et.get("overworld") or None) and (et["overworld"].get("cells") or []):
+            return sorted(enemy_ids.keys()).index(want)
+    return None
 
 
 """Full-fidelity actor tables: every WorldActorDefinition row is generated
@@ -528,7 +554,7 @@ def actor_interaction(obj):
     return "INTERACTION_NONE"
 
 
-def emit_actor_row(obj):
+def emit_actor_row(obj, enemy_ids):
     props = obj.get("properties", {})
     pos = obj.get("position", {})
     ent = props.get("entity_id")
@@ -555,18 +581,27 @@ def emit_actor_row(obj):
     svar = props.get("quest_var", "0")
     sval = props.get("quest_val", 0)
     spk = resolve_sprite_kind(obj)
+    ow_idx = resolve_enemy_ow(obj, enemy_ids)
+    if ow_idx is not None:
+        # Type-owned art wins over per-instance sprite names: one shared
+        # transparent sprite everywhere this enemy appears.
+        spk = "SPRITE_KIND_ENEMY"
+        ow = str(ow_idx)
+    else:
+        ow = "0xFF"
     aid = props.get("actor_id", 0)
     line1 = f"        {aid}, {ent}, {x}, {y}, {facing},"
     line2 = f"        {flag_expr},"
     line3 = (f"        {visual}, {name}, {inter}, {shop}, {dlg}, {battle}, {ai}, "
              f"{hp}, {max_hp}, {gold}, {cur},")
     line4 = f"        {svar}, {sval},"
-    line5 = f"         {spk}"
+    line5 = f"         {spk}, {ow}"
     return "    {\n" + "\n".join([line1, line2, line3, line4, line5]) + "\n    },"
 
 
 def emit_actors_code(levels_by_id):
     """Generate complete src/game/actors_content.c."""
+    enemy_ids = load_enemy_types()
     ordered = [sid for sid in ACTOR_TABLE_ORDER if sid in levels_by_id]
     for sid in levels_by_id:
         if sid not in ordered:
@@ -590,7 +625,7 @@ def emit_actors_code(levels_by_id):
             props = obj.get("properties", {}) or {}
             if not props.get("entity_id"):
                 continue  # decoration object: no engine row
-            out.append(emit_actor_row(obj))
+            out.append(emit_actor_row(obj, enemy_ids))
         out.append("};\n")
     out.append("const WorldActorTable g_actor_tables[] = {")
     for sid in ordered:

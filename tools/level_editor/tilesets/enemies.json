@@ -1,0 +1,47 @@
+{
+  "id": "enemies",
+  "label": "Enemies (shared overworld sprites)",
+  "gb_tileset_kind": "WORLD_TILESET_ENEMIES",
+  "tiles": [
+    {
+      "id": "slime_f0",
+      "label": "Slime frame 0",
+      "gb_constant": "TILE_ENEMIES_SLIME_F0",
+      "walkable": false,
+      "color": "#72b847",
+      "ascii": "E",
+      "image_url": "/tiles/enemies/slime_f0.png",
+      "category": "enemy"
+    },
+    {
+      "id": "slime_f1",
+      "label": "Slime frame 1",
+      "gb_constant": "TILE_ENEMIES_SLIME_F1",
+      "walkable": false,
+      "color": "#72b847",
+      "ascii": "E",
+      "image_url": "/tiles/enemies/slime_f1.png",
+      "category": "enemy"
+    },
+    {
+      "id": "bat_f0",
+      "label": "Bat frame 0",
+      "gb_constant": "TILE_ENEMIES_BAT_F0",
+      "walkable": false,
+      "color": "#555555",
+      "ascii": "V",
+      "image_url": "/tiles/enemies/bat_f0.png",
+      "category": "enemy"
+    },
+    {
+      "id": "bat_f1",
+      "label": "Bat frame 1",
+      "gb_constant": "TILE_ENEMIES_BAT_F1",
+      "walkable": false,
+      "color": "#555555",
+      "ascii": "V",
+      "image_url": "/tiles/enemies/bat_f1.png",
+      "category": "enemy"
+    }
+  ]
+}

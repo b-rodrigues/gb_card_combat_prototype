@@ -9,10 +9,12 @@ import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
+import { fetchEnemyTypeList } from './io/combatArt';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
 import { CombatArtStudio } from './CombatArtStudio';
+import { EnemyManager } from './EnemyManager';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -87,6 +89,10 @@ export const App: React.FC = () => {
   const [showSoundTestModal, setShowSoundTestModal] = useState<boolean>(false);
   const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
   const [showCombatArt, setShowCombatArt] = useState<boolean>(false);
+  // Enemies view (art-only): dropdown value 'enemy:<id>' swaps the main
+  // area to the EnemyManager; the level underneath is left untouched.
+  const [enemyView, setEnemyView] = useState<string | null>(null);
+  const [enemyItems, setEnemyItems] = useState<Array<{ id: string; name: string }>>([]);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
   // Compilation & Run State
@@ -100,6 +106,22 @@ export const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
+  // Load the enemy catalogue for the Enemies dropdown group (best
+  // effort: the manager falls back to its own fetch when offline).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const items = await fetchEnemyTypeList();
+        if (cancelled) return;
+        setEnemyItems(items.map((e) => ({ id: e.id, name: e.label || e.id })));
+      } catch {
+        // Offline: EnemyManager shows its own load error.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Load the level catalogue + tilesets from disk once on mount.
   useEffect(() => {
@@ -285,6 +307,12 @@ export const App: React.FC = () => {
       handleCreateNewLevel();
       return;
     }
+    if (selectedId.startsWith('enemy:')) {
+      setEnemyView(selectedId.slice('enemy:'.length));
+      setSelectedEntityIndex(null);
+      return;
+    }
+    setEnemyView(null);
 
     const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
@@ -674,7 +702,7 @@ export const App: React.FC = () => {
           <select
             id="level-select-dropdown"
             className="level-select"
-            value={currentLevelId}
+            value={enemyView ? `enemy:${enemyView}` : currentLevelId}
             onChange={(e) => handleSelectLevel(e.target.value)}
           >
             <optgroup label="Overworld Levels">
@@ -688,6 +716,13 @@ export const App: React.FC = () => {
               {levelItems.filter((l) => l.category === 'screens').map((lvl) => (
                 <option key={lvl.id} value={lvl.id}>
                   {lvl.name} (screens/{lvl.id}.json)
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Enemies">
+              {enemyItems.map((e) => (
+                <option key={e.id} value={`enemy:${e.id}`}>
+                  {e.name} (enemy type)
                 </option>
               ))}
             </optgroup>
@@ -784,6 +819,14 @@ export const App: React.FC = () => {
         )}
 
         <div className="main-content">
+          {enemyView ? (
+            <EnemyManager
+              key={enemyView}
+              initialId={enemyView}
+              onOpenComposer={() => setShowCombatArt(true)}
+            />
+          ) : (
+          <>
           {/* Left Sidebar */}
           <aside className="sidebar-left">
             <TilesetPalette
@@ -877,6 +920,8 @@ export const App: React.FC = () => {
               onDeleteRegion={handleDeleteRegion}
             />
           </aside>
+          </>
+          )}
         </div>
       </div>
 

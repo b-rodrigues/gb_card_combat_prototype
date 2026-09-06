@@ -5,7 +5,9 @@
 #include "actor.h"
 #include "ui.h"
 #include "banked.h"
+#include "battle_data.h"
 #include "gfx/rpg_tile_lookup.h"
+#include "gfx/enemy_ow_tiles.h"
 
 /* ── Overworld actor sprites + castle boss background (bank-3 body) ──
  * The data-driven SPRITE_KIND_* OAM choice, the per-actor shadow-OAM write
@@ -56,9 +58,11 @@ static uint8_t spr_axis_px(const WorldActorRuntime *a, uint8_t axis)
 /* SPRITE_KIND_* -> OAM tile/prop.  Single source for both loops below.
  * Bats use the grey ramp (black bodies); kobolds and chests use the brown
  * wood palette (OBJ palette 2); the chest art is 1 frame in both anim
- * slots, so + anim stays uniform. */
+ * slots, so + anim stays uniform.  SPRITE_KIND_ENEMY reads the actor's
+ * enemy-type row (same bank: direct read) for its shared OAM base,
+ * frames, and palette; unknown rows fall back to the ASCII glyph. */
 static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
-                               uint8_t anim, uint8_t *prop)
+                                uint8_t anim, uint8_t ow_type, uint8_t *prop)
 {
     switch (kind) {
         case SPRITE_KIND_KOBOLD:
@@ -71,6 +75,19 @@ static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
         case SPRITE_KIND_CHEST:
             *prop = 2;
             return (uint8_t)(CHEST_SPRITE_TILE_ID + anim);
+        case SPRITE_KIND_ENEMY:
+            if (ow_type < g_enemy_type_count) {
+                const EnemyTypeDef *t = g_enemy_types[ow_type];
+                if (t->ow_tile != 0xFF) {
+                    *prop = t->ow_palette;
+                    if (t->ow_frames > 1) {
+                        return (uint8_t)(t->ow_tile + anim);
+                    }
+                    return t->ow_tile;
+                }
+            }
+            *prop = 0;
+            return (uint8_t)(ui_font_tile_base + (uint8_t)(visual - ' '));
         case SPRITE_KIND_BOSS:
         case SPRITE_KIND_TILE: /* background-art: cell owns the visuals */
             *prop = 0;
@@ -108,7 +125,7 @@ void ui_actors_sprites_banked(void)
         uint8_t px, py;
         if (a->active) {
             tile = sprite_tile_for((uint8_t)a->sprite_kind, a->visual,
-                                   castle, anim, &prop);
+                                   castle, anim, a->ow_type, &prop);
         }
         if (tile) {
             px = (uint8_t)(spr_axis_px(a, 0) - w->camera_px_x);
@@ -142,7 +159,7 @@ void ui_actors_sprites_banked(void)
             continue;
         }
         tile = sprite_tile_for((uint8_t)d->sprite_kind, d->visual,
-                               castle, anim, &prop);
+                               castle, anim, d->ow_type, &prop);
         if (!tile) {
             e[0] = 0;
             continue;

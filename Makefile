@@ -129,6 +129,14 @@ gfx:
 	@python3 tools/png2gb.py assets/battle_sprites.png --name battle_enemy_art \
 		--palette auto --tile-coords "$$(python3 tools/screen_compiler/battle_compile.py --gfx-coords)" \
 		-o $(GFX_OUT_DIR)/battle_enemy_art.h
+	# ── Shared overworld enemy sprites (assets/enemy_sprites.png) ──
+	# One transparent-background sprite per enemy type, shared by every
+	# world.  Cell order comes from screens/enemy_types overworld.cells
+	# (sorted enemy-id order); tiles load to OAM at ENEMY_OW_BASE (100).
+	# Sheet layout: see tools/compose_enemy_sprites.py.
+	@python3 tools/png2gb.py assets/enemy_sprites.png --name enemy_ow_tiles \
+		--palette auto --tile-coords "$$(python3 tools/screen_compiler/battle_compile.py --ow-coords)" \
+		-o $(GFX_OUT_DIR)/enemy_ow_tiles.h
 	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
 	# Full 48-tile world sheet (g_tileset_desolate)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \

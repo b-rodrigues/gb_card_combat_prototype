@@ -3,6 +3,7 @@ import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level'
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
+import { fetchEnemyTypeList } from './io/combatArt';
 
 const BOSS_9X9_TEMPLATES: Record<string, { name: string; tiles: string[][] }> = {
   giausar: {
@@ -226,6 +227,27 @@ export const Inspector: React.FC<InspectorProps> = ({
   const selectedExit = activeLayer === 'exits' && selectedEntityIndex !== null ? level.exits[selectedEntityIndex] : null;
   const selectedObject = activeLayer === 'objects' && selectedEntityIndex !== null ? level.objects[selectedEntityIndex] : null;
   const selectedRegion = activeLayer === 'regions' && selectedEntityIndex !== null ? level.regions[selectedEntityIndex] : null;
+
+  // Enemy types with shared overworld art (id -> id): placements of these
+  // types ignore per-instance sprite names (type-owned art wins in ROM).
+  const [owEnemyIds, setOwEnemyIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetchEnemyTypeList().then((items) => {
+      setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
+    }).catch(() => undefined);
+  }, []);
+  const selectedEnemyType = (() => {
+    if (!selectedObject || selectedObject.type !== 'enemy') return null;
+    const props = selectedObject.properties || {};
+    const explicit = props.enemy_type;
+    if (explicit && owEnemyIds.has(explicit)) return explicit;
+    const ent = props.entity_id || '';
+    if (ent.startsWith('ENTITY_ID_')) {
+      const conv = ent.slice('ENTITY_ID_'.length).toLowerCase();
+      if (owEnemyIds.has(conv)) return conv;
+    }
+    return null;
+  })();
 
   return (
     <div className="panel inspector-panel">
@@ -2200,6 +2222,12 @@ export const Inspector: React.FC<InspectorProps> = ({
                 {/* Sprite/Tile Configuration */}
                 <div className="inspector-section">
                   <h5>🎨 Sprite/Tile Configuration</h5>
+                  {selectedEnemyType && (
+                    <div style={{ fontSize: 12, background: '#eef6ee', border: '1px solid #9b9', padding: 6, marginBottom: 8 }}>
+                      Overworld art controlled by enemy type <code>{selectedEnemyType}</code> (Enemies view) — one
+                      shared sprite everywhere this enemy appears. Per-instance names below are ignored for it.
+                    </div>
+                  )}
                   
                   <div className="form-group">
                     <label>Overworld Sprite</label>

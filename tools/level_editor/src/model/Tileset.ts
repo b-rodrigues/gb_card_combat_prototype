@@ -1,5 +1,6 @@
 import castleJson from '../../tilesets/castle.json';
 import combatJson from '../../tilesets/combat.json';
+import enemiesJson from '../../tilesets/enemies.json';
 import forestJson from '../../tilesets/forest.json';
 import desolateLandscapeJson from '../../tilesets/desolate_landscape.json';
 import intrepidJson from '../../tilesets/intrepid.json';
@@ -48,6 +49,7 @@ export function parseTilesetJson(data: any): TilesetDefinition {
 export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   castle: parseTilesetJson(castleJson),
   combat: parseTilesetJson(combatJson),
+  enemies: parseTilesetJson(enemiesJson),
   forest: parseTilesetJson(forestJson),
   desolate_landscape: parseTilesetJson(desolateLandscapeJson),
   intrepid: parseTilesetJson(intrepidJson),
@@ -56,6 +58,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
 
 export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
 export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
+export const TILESET_ENEMIES = BUILTIN_TILESETS.enemies;
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
 export const TILESET_DESOLATE_LANDSCAPE = BUILTIN_TILESETS.desolate_landscape;
 export const TILESET_INTREPID = BUILTIN_TILESETS.intrepid;

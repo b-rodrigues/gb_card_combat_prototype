@@ -59,6 +59,9 @@ typedef struct EnemyTypeDef {
     uint8_t art_w;  // combat art width in tiles (3 for the built-in sets; up to 6)
     uint8_t art_h;  // combat art height in tiles (2 for the built-in sets; up to 4)
     uint16_t art_offset;  // blob tile offset of this set's frame0 in battle_enemy_art.h
+    uint8_t ow_tile;  // shared overworld OAM base tile (ENEMY_OW_BASE + blob offset), 0xFF = legacy SPRITE_KIND path
+    uint8_t ow_frames;  // overworld animation frames (1..2, 0 when ow_tile is 0xFF)
+    uint8_t ow_palette;  // CGB OAM palette index
 } EnemyTypeDef;
 
 /* WRAM cache for the active battle screen's HUD layout.
@@ -115,5 +118,7 @@ extern const uint8_t g_battle_screen_count;
 
 extern const EnemyTypeDef* const g_enemy_types[];
 extern const uint8_t g_enemy_type_count;
+/* Shared overworld enemy OAM blob size in tiles (for the ui_init stream). */
+extern const uint8_t g_enemy_ow_tile_count;
 
 #endif /* BATTLE_DATA_H */

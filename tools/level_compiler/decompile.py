@@ -42,7 +42,7 @@ from validate import validate_level, load_tilesets
 import compile as compiler
 from compile import (
     SCENE_ORDER, MAP_ENUM_MAP, SCENE_ENUM_MAP, TILESET_KIND_MAP,
-    REPO_ROOT as CREPO, resolve_sprite_kind,
+    REPO_ROOT as CREPO, resolve_sprite_kind, load_enemy_types,
 )
 
 SCENES_C = CREPO / "src" / "game" / "scenes_content.c"
@@ -276,8 +276,8 @@ def tile_value_to_id(value, tileset_id, const_by_value, gb_to_tileid, home_tiles
 
 def parse_actor_row(row):
     f = split_fields(row)
-    if len(f) not in (19, 20):
-        raise DecompileError(f"actor row has {len(f)} fields (want 19-20): {row[:60]!r}")
+    if len(f) not in (19, 20, 21):
+        raise DecompileError(f"actor row has {len(f)} fields (want 19-21): {row[:60]!r}")
     actor_id = parse_int(f[0])
     if actor_id < 0 or actor_id > 65535:
         raise DecompileError(f"actor_id out of range: {f[0]!r}")
@@ -306,7 +306,8 @@ def parse_actor_row(row):
         "reward_currency": f[16].strip(),
         "spawn_variable": f[17].strip(),
         "spawn_value": parse_int(f[18]),
-        "sprite_kind": f[19].strip() if len(f) == 20 else "SPRITE_KIND_ASCII",
+        "sprite_kind": f[19].strip() if len(f) >= 20 else "SPRITE_KIND_ASCII",
+        "ow_type": parse_int(f[20]) if len(f) >= 21 else 0xFF,
     }
 
 
@@ -337,10 +338,23 @@ def infer_type_and_props(row, warnings, ctx):
     return otype, props
 
 
-def canonical_sprite_refs(kind, tileset_id):
-    """SPRITE_KIND_* -> (overworld_sprite, [frames]) in this tileset."""
+def canonical_sprite_refs(kind, tileset_id, ow_type=0xFF):
+    """SPRITE_KIND_* -> (overworld_sprite, [frames]) in this tileset.
+    SPRITE_KIND_ENEMY resolves through the enemy-type row to the shared
+    enemies tileset (world-independent); every other kind uses the
+    per-tileset table as before."""
     if kind == "SPRITE_KIND_ASCII":
         return None, []
+    if kind == "SPRITE_KIND_ENEMY":
+        try:
+            enemy_map = load_enemy_types()
+            enemy_ids = sorted(enemy_map.keys())
+            et = enemy_map[enemy_ids[ow_type]]
+            cells = (et.get("overworld") or {}).get("cells", [])
+            refs = ["enemies.%s" % c for c in cells]
+            return (refs[0], refs) if refs else (None, [])
+        except Exception:
+            return None, []
     short = kind[len("SPRITE_KIND_"):]
     table = SPRITE_FRAMES.get(tileset_id, {})
     if short not in table:
@@ -675,10 +689,16 @@ def decompile_levels(levels_dir, write):
                              "properties": {"entity_id": r["entity_id"]}}
                     if resolve_sprite_kind(probe) == r["sprite_kind"]:
                         keep = True
+                    elif r["sprite_kind"] == "SPRITE_KIND_ENEMY":
+                        # Shared refs are the fixpoint: keep them, normalize
+                        # anything else to enemies.* on this pass.
+                        names = " ".join((obj.get("animation_frames") or []) + [obj.get("overworld_sprite") or ""])
+                        if names.startswith("enemies.") or " enemies." in names:
+                            keep = True
                 except Exception:
                     keep = False
             if not keep:
-                ov, frames = canonical_sprite_refs(r["sprite_kind"], tileset_id)
+                ov, frames = canonical_sprite_refs(r["sprite_kind"], tileset_id, r.get("ow_type", 0xFF))
                 if ov is None:
                     obj.pop("overworld_sprite", None)
                     obj.pop("animation_frames", None)
