@@ -176,10 +176,53 @@ static const BattleScreenDef g_battle_screen_duo = {
     3
 };
 
-const BattleScreenDef* const g_battle_screens[4] = {
+static const BattleScreenDef g_battle_screen_mimic = {
+    "mimic",
+    "Mimic Encounter",
+    1,
+    2,
+    {
+        { 7, 2 },
+        { 0, 0 },
+        { 0, 0 },
+    },
+    43,
+    17,
+    0,
+    1,
+    3,
+    5,
+    7,
+    7,
+    6,
+    1,
+    6,
+    13,
+    7,
+    1,
+    7,
+    13,
+    13,
+    14,
+    15,
+    16,
+    16,
+    0,
+    20,
+    3,
+    1,
+    7,
+    13,
+    1,
+    16,
+    3
+};
+
+const BattleScreenDef* const g_battle_screens[5] = {
     &g_battle_screen_ambush,
     &g_battle_screen_boss,
     &g_battle_screen_default,
     &g_battle_screen_duo,
+    &g_battle_screen_mimic,
 };
-const uint8_t g_battle_screen_count = 4;
+const uint8_t g_battle_screen_count = 5;

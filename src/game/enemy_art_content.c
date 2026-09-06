@@ -23,6 +23,8 @@ const char *game_battle_enemy_type_id(uint8_t battle_id)
             return "bat";
         case BATTLE_NONE:
             return "slime_lord";
+        case BATTLE_MIMIC:
+            return "mimic";
         default:
             return 0;
     }

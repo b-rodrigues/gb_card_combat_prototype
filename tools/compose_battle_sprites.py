@@ -22,6 +22,7 @@ LAYOUT = [
     ['bat_1_left', 'bat_1_body', 'bat_1_right'],
     ['boss_horns_left', 'boss_horns_mid', 'boss_horns_right'],
     ['boss_head_left', 'boss_head_mid', 'boss_head_right'],
+    ['mimic_body', None, None],
     [None, None, None],
 ]
 

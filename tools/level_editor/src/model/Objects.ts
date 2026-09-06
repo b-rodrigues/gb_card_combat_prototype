@@ -104,6 +104,21 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
     }
   },
   {
+    type: 'enemy',
+    label: 'Mimic (Chest Trap)',
+    defaultId: 'enemy_mimic',
+    color: '#8e44ad',
+    icon: '🎭',
+    defaultProps: {
+      display_name: 'CHEST',
+      battle: 'BATTLE_MIMIC',
+      ai: 'AI_NONE',
+      overworld_sprite: 'forest.forest_treasure_chest_forest',
+      battle_sprite: 'forest.forest_treasure_chest_forest',
+      battle_name: 'MIMIC'
+    }
+  },
+  {
     type: 'item',
     label: 'Item Pickup',
     defaultId: 'item_pickup',

@@ -34,7 +34,8 @@ typedef enum {
     BATTLE_NONE = 0,
     BATTLE_SLIME = 1,
     BATTLE_BAT = 2,
-    BATTLE_SLIME_TRIO = 3
+    BATTLE_SLIME_TRIO = 3,
+    BATTLE_MIMIC = 4
 } BattleId;
 
 /* Overworld autonomous patrol/AI behavior type. */

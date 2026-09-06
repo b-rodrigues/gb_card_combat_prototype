@@ -237,9 +237,9 @@ def validate_enemy_type(path: Path, art_ids) -> dict:
     sprite = data.get('sprite')
     if sprite is not None:
         if not isinstance(sprite, dict) or sprite.get('art') not in art_ids:
-            print("WARNING: %s: sprite.art '%s' not in %s" % (path.name, (sprite or {}).get('art'), sorted(art_ids)))
+            sys.stderr.write("WARNING: %s: sprite.art '%s' not in %s\n" % (path.name, (sprite or {}).get('art'), sorted(art_ids)))
         elif sprite.get('frames') not in (1, 2):
-            print("WARNING: %s: sprite.frames '%s' must be 1 or 2" % (path.name, sprite.get('frames')))
+            sys.stderr.write("WARNING: %s: sprite.frames '%s' must be 1 or 2\n" % (path.name, sprite.get('frames')))
 
     return data
 

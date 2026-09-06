@@ -57,7 +57,7 @@ static const WorldActorDefinition g_field_actors[] = {
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME_TRIO, AI_PATROL_CROSS, 10, 10, 5, CURRENCY_ID_GOLD,
         0, 0,
-         SPRITE_KIND_ENEMY, 1
+         SPRITE_KIND_ENEMY, 2
     },
     {
         0, ENTITY_ID_SIGNPOST, 2, 4, DIRECTION_DOWN,
@@ -74,7 +74,7 @@ static const WorldActorDefinition g_forest_actors[] = {
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 12, 12, 5, CURRENCY_ID_GOLD,
         0, 0,
-         SPRITE_KIND_ENEMY, 1
+         SPRITE_KIND_ENEMY, 2
     },
     {
         3, ENTITY_ID_BAT, 7, 4, DIRECTION_DOWN,
@@ -98,7 +98,7 @@ static const WorldActorDefinition g_mountain_pass_actors[] = {
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME_TRIO, AI_PATROL_CROSS, 16, 16, 5, CURRENCY_ID_GOLD,
         0, 0,
-         SPRITE_KIND_ENEMY, 1
+         SPRITE_KIND_ENEMY, 2
     },
 };
 
@@ -125,7 +125,7 @@ static const WorldActorDefinition g_south_field_actors[] = {
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 10, 10, 5, CURRENCY_ID_GOLD,
         0, 0,
-         SPRITE_KIND_ENEMY, 1
+         SPRITE_KIND_ENEMY, 2
     },
     {
         8, ENTITY_ID_BAT, 14, 10, DIRECTION_DOWN,
