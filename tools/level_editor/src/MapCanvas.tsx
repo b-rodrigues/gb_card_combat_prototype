@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { BUILTIN_TILESETS, TileDefinition, TilesetDefinition } from './model/Tileset';
+import { SHEET_TILE_NAMES, COMBAT_TILE_URL, fetchCombatArtList, fetchCombatArtSet, fetchEnemyTypeList } from './io/combatArt';
 import { ToolType } from './Toolbar';
 import { EditLayer } from './LayerPanel';
 
@@ -95,6 +96,43 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   // injects disk tilesets after mount); already-loaded images are kept so the
   // canvas never flashes back to fallback colors.
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  /* Combat-art meta-tiles (screens/combat_art/*.json) + enemy->set lookup
+   * for the battle preview.  Loaded once; empty maps = offline fallback
+   * (the preview keeps its drawn ellipse placeholders). */
+  const [combatSets, setCombatSets] = useState<Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>>(new Map());
+  const [enemyArtByName, setEnemyArtByName] = useState<Map<string, string>>(new Map());
+  const [combatImgs, setCombatImgs] = useState<Map<string, HTMLImageElement>>(new Map());
+  useEffect(() => {
+    fetchCombatArtList().then(async (items) => {
+      const m = new Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>();
+      for (const it of items) {
+        try {
+          const s = await fetchCombatArtSet(it.id);
+          m.set(it.id, { w: s.width, h: s.height, f0: s.frame0, f1: s.frame1 || s.frame0 });
+        } catch { /* keep other sets */ }
+      }
+      setCombatSets(m);
+    }).catch(() => undefined);
+    fetchEnemyTypeList().then((types) => {
+      const e = new Map<string, string>();
+      types.forEach((t) => {
+        if (t.art) {
+          e.set(t.label.toUpperCase(), t.art);
+          e.set(t.id.toUpperCase(), t.art);
+        }
+      });
+      setEnemyArtByName(e);
+    }).catch(() => undefined);
+    const imgs = new Map<string, HTMLImageElement>();
+    let done = 0;
+    SHEET_TILE_NAMES.forEach((name) => {
+      const img = new Image();
+      img.src = COMBAT_TILE_URL(name);
+      const fin = () => { done++; imgs.set(name, img); if (done === SHEET_TILE_NAMES.length) setCombatImgs(new Map(imgs)); };
+      img.onload = fin;
+      img.onerror = fin;
+    });
+  }, []);
   const tilesetIdsKey = Object.keys(BUILTIN_TILESETS).sort().join(',');
   useEffect(() => {
     setTileImages((prev) => {
@@ -423,24 +461,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           ctx.textAlign = 'center';
           ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
 
-          // Slime Sprite (Rows 2–3, 3x2 meta-tile)
+          // Combat-art meta-tile (screens/combat_art/*.json): resolve this
+          // slot's set through the enemy object's battle name, exactly how
+          // the ROM resolves art per enemy type.  Unmatched/offline slots
+          // keep the drawn placeholder below.
           const wobble = animTick % 2 === idx % 2 ? 1 : 0;
-          const slimeTop0 = tileImages.get('combat.slime_top_left');
-          const slimeTop1 = tileImages.get('combat.slime_top_mid');
-          const slimeTop2 = tileImages.get('combat.slime_top_right');
-          const slimeBot0 = wobble ? tileImages.get('combat.slime_anim_left') : tileImages.get('combat.slime_bottom_left');
-          const slimeBot1 = wobble ? tileImages.get('combat.slime_anim_mid') : tileImages.get('combat.slime_bottom_mid');
-          const slimeBot2 = wobble ? tileImages.get('combat.slime_anim_right') : tileImages.get('combat.slime_bottom_right');
+          const slotObjs = (level.objects || []).filter((o) => o.type === 'enemy');
+          const slotObj = slotObjs[idx];
+          const slotKey = ((slotObj && (slotObj.battle_name || (slotObj.properties && slotObj.properties.display_name))) || '').toUpperCase();
+          const slotSetId = enemyArtByName.get(slotKey);
+          const slotSet = slotSetId ? combatSets.get(slotSetId) : undefined;
+          const slotCells = slotSet ? (wobble ? slotSet.f1 : slotSet.f0) : [];
+          const canDrawArt = !!slotSet && slotCells.length === slotSet.w * slotSet.h &&
+            slotCells.every((c) => c === null || combatImgs.get(c));
 
-          if (slimeTop0 && slimeBot0) {
+          if (canDrawArt && slotSet) {
             const startX = colX * tileSize;
             const startY = enemySpriteRow * tileSize;
-            ctx.drawImage(slimeTop0, startX, startY, tileSize, tileSize);
-            if (slimeTop1) ctx.drawImage(slimeTop1, startX + tileSize, startY, tileSize, tileSize);
-            if (slimeTop2) ctx.drawImage(slimeTop2, startX + tileSize * 2, startY, tileSize, tileSize);
-            ctx.drawImage(slimeBot0, startX, startY + tileSize, tileSize, tileSize);
-            if (slimeBot1) ctx.drawImage(slimeBot1, startX + tileSize, startY + tileSize, tileSize, tileSize);
-            if (slimeBot2) ctx.drawImage(slimeBot2, startX + tileSize * 2, startY + tileSize, tileSize, tileSize);
+            for (let ay = 0; ay < slotSet.h; ay++) {
+              for (let ax = 0; ax < slotSet.w; ax++) {
+                const cell = slotCells[ay * slotSet.w + ax];
+                if (cell === null) continue;
+                const img = combatImgs.get(cell);
+                if (img) ctx.drawImage(img, startX + ax * tileSize, startY + ay * tileSize, tileSize, tileSize);
+              }
+            }
           } else {
             const sx = (colX + 0.3) * tileSize;
             const sy = (enemySpriteRow + 0.1) * tileSize;

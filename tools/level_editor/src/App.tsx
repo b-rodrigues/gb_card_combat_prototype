@@ -12,6 +12,7 @@ import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
+import { CombatArtStudio } from './CombatArtStudio';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -85,6 +86,7 @@ export const App: React.FC = () => {
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
   const [showSoundTestModal, setShowSoundTestModal] = useState<boolean>(false);
   const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
+  const [showCombatArt, setShowCombatArt] = useState<boolean>(false);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
   // Compilation & Run State
@@ -744,6 +746,8 @@ export const App: React.FC = () => {
           }}
           isTilesetReviewerOpen={showTilesetReviewer}
           onToggleTilesetReviewer={() => setShowTilesetReviewer((prev) => !prev)}
+          isCombatArtOpen={showCombatArt}
+          onToggleCombatArt={() => setShowCombatArt((prev) => !prev)}
         />
 
         {/* Notification Toast */}
@@ -986,6 +990,9 @@ export const App: React.FC = () => {
             });
           }}
         />
+      )}
+      {showCombatArt && (
+        <CombatArtStudio onClose={() => setShowCombatArt(false)} />
       )}
     </div>
   );

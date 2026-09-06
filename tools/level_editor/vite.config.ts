@@ -134,6 +134,90 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Enemy types + combat art sets (screens/enemy_types/*.json,
+        // screens/combat_art/*.json): catalogue, single reads, and saves
+        // for the battle-art studio.  New combat-art ids are appended by
+        // the client with an explicit order (blob offsets must stay
+        // stable, see battle_compile.py).
+        const listJsonDir = (relDir: string, pick: (d: any, f: string) => any) => {
+          return fs.readdirSync(path.join(repoRoot, relDir))
+            .filter((f) => f.endsWith('.json'))
+            .map((f) => pick(readJsonFile(path.join(relDir, f)), f));
+        };
+        if (req.method === 'GET' && req.url === '/api/enemy-types') {
+          try {
+            const items = listJsonDir('screens/enemy_types', (d, f) => ({
+              id: d.id || f.replace(/\.json$/, ''), label: d.label || f,
+              category: d.category || '', art: (d.sprite && d.sprite.art) || null,
+            }));
+            sendJson({ success: true, items });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/enemy-type')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            sendJson({ success: true, id, data: readJsonFile(path.join('screens', 'enemy_types', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && req.url === '/api/combat-art') {
+          try {
+            const items = listJsonDir('screens/combat_art', (d, f) => ({
+              id: d.id || f.replace(/\.json$/, ''), label: d.label || f,
+              order: d.order ?? 0, width: d.width ?? 0, height: d.height ?? 0,
+            }));
+            sendJson({ success: true, items });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/combat-art-set')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            sendJson({ success: true, id, data: readJsonFile(path.join('screens', 'combat_art', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && (req.url === '/api/save-enemy-type' || req.url === '/api/save-combat-art')) {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, data } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+              const subdir = req.url === '/api/save-enemy-type' ? 'enemy_types' : 'combat_art';
+              const targetPath = path.join(repoRoot, 'screens', subdir, `${id}.json`);
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         if (req.method === 'GET' && req.url === '/api/tilesets') {
           try {
             const dir = path.join(repoRoot, 'tools', 'level_editor', 'tilesets');

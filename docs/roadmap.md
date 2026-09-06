@@ -1298,6 +1298,23 @@ Missing:
   181/181 harness, `make test`, `make verify-oam`, `make memmap` OK
   (`make lint` has one pre-existing `rng_next` warning in untouched
   `battle.c` status code).
+* **combat-art meta-tiles — DONE (ROM + compiler + editor):** enemies draw
+  combat art from data, not hardcoded sets.  `screens/combat_art/*.json`
+  declares named WxH sets (tiles, dims, palette, order;
+  `combat_art.schema.json`); `battle_compile.py` emits blob offsets +
+  dims into `battle_types.c` and the gfx `--tile-coords` order, replacing
+  the hardcoded `ART_SETS`/Makefile coord literal (`battle_enemy_art.h`
+  regenerates byte-identical).  The ROM loader stages per-slot geometry +
+  cumulative VRAM bases (128-tile budget cap, text fallback past it) and
+  the bank-3 stamper draws WxH from the cache with mult-free arithmetic
+  (8-bit `*` would pull mult routines into fixed `_CODE`, §52.18).  Art
+  resolves per battle through the game layer
+  (`game_battle_enemy_type_id`, bank 4, same-bank call: fixed bank pays
+  nothing).  The Combat Art Studio (editor toolbar) composes meta-tiles up
+  to 6x4 from sheet tiles with frame-0/1, assigns combat art per enemy
+  type, and the battle preview renders real meta-tiles per slot.  New sets
+  append at the end (blob offsets stay stable).  Validated: 181/181
+  harness, `make test`, `make verify-oam`, `make memmap` OK.
 
 ### 9.1 Deck management UI — DONE
 
