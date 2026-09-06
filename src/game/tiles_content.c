@@ -161,7 +161,7 @@ void ui_load_tileset_banked(void)
         case WORLD_TILESET_CASTLE:
             src = g_tileset_castle;
             pal_src = g_tile_pal_castle;
-            tile_count = 27;
+            tile_count = 16;
             break;
         case WORLD_TILESET_VILLAGE:
             src = g_tileset_village;

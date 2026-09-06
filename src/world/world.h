@@ -149,17 +149,6 @@ typedef enum {
     TILE_CASTLE_13 = 69,
     TILE_CASTLE_14 = 70,
     TILE_CASTLE_15 = 71,
-    TILE_CASTLE_16 = 72,
-    TILE_CASTLE_17 = 73,
-    TILE_CASTLE_18 = 74,
-    TILE_CASTLE_19 = 75,
-    TILE_CASTLE_20 = 76,
-    TILE_CASTLE_21 = 77,
-    TILE_CASTLE_22 = 78,
-    TILE_CASTLE_23 = 79,
-    TILE_CASTLE_24 = 80,
-    TILE_CASTLE_25 = 81,
-    TILE_CASTLE_26 = 82,
 
     /* Village Landscape tiles: 48 tiles in sheet scan order (0..47),
      * mapping 1:1 to the 48-tile village VRAM block (RPG_TILE_BASE_WORLD).

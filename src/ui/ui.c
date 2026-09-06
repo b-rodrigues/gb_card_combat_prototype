@@ -509,10 +509,10 @@ static char ui_get_world_tile_glyph(uint8_t t)
         if ((t >= TILE_DESOLATE_FLOOR_00 && t <= TILE_DESOLATE_FLOOR_03) || t == TILE_DESOLATE_FLOOR_PLAIN) return '.';
         return '#';
     }
-    if ((t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) ||
-        (t >= TILE_FOREST_00 && t <= TILE_FOREST_47) ||
-        (t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) ||
-        (t >= TILE_VILLAGE_00 && t <= TILE_VILLAGE_47))
+if ((t >= TILE_DESOLATE_LANDSCAPE_00 && t <= TILE_DESOLATE_LANDSCAPE_47) ||
+            (t >= TILE_FOREST_00 && t <= TILE_FOREST_47) ||
+            (t >= TILE_CASTLE_00 && t <= TILE_CASTLE_15) ||
+            (t >= TILE_VILLAGE_00 && t <= TILE_VILLAGE_47))
         return tile_landscape_glyph(t);
     return (t < 8) ? g_sem_map[t] : '.';
 }
@@ -590,7 +590,7 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
             uint8_t f_idx = (uint8_t)(t - TILE_FOREST_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + f_idx);
         } else if (world->tileset_kind == WORLD_TILESET_CASTLE &&
-                   t >= TILE_CASTLE_00 && t <= TILE_CASTLE_26) {
+                   t >= TILE_CASTLE_00 && t <= TILE_CASTLE_15) {
             uint8_t c_idx = (uint8_t)(t - TILE_CASTLE_00);
             tile_idx = (uint8_t)(RPG_TILE_BASE_WORLD + c_idx);
         } else if (world->tileset_kind == WORLD_TILESET_VILLAGE &&
