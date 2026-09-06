@@ -5,50 +5,36 @@
 #include "battle_data.h"
 #include "actor.h"
 #include "banked.h"
+#include "content.h"
 #include "gfx/battle_enemy_art.h"
 #include <gb/gb.h>
 
-/* Battle art loader + resolver (ROM bank 4).  Runs once per battle entry
- * from ui_draw_battle_full() (LCD-off window) via the WRAM trampoline with
- * g_bk_ptr_a = Battle*.  Self-contained: reads the enemy-type tables and
- * the art header directly (same bank), writes VRAM with a hand loop (never
- * calls fixed-bank lib functions while the content bank is selected), and
- * caches per-enemy art in the WRAM globals for the bank-3 stamper.
+/* Battle art loader (ROM bank 4).  Runs once per battle entry from
+ * ui_draw_battle_full() (LCD-off window) via the WRAM trampoline with
+ * g_bk_ptr_a = Battle*.  Self-contained: resolves the battle's
+ * enemy-type row through the game layer's same-bank mapping, reads the
+ * enemy-type tables and the art header directly (same bank), writes
+ * VRAM with a hand loop (never calls fixed-bank lib functions while
+ * the content bank is selected), and caches per-slot art + geometry in
+ * the WRAM globals for the bank-3 stamper.
  *
- * Art selection stays data-driven: type_for_battle() only picks WHICH
- * enemy-type row (engine BattleIds, mirroring enemy_deck_content.c); the
- * art_index/art_frames come from the compiled enemy-type row, so editing
- * an enemy's sprite JSON changes the ROM result.
- * Trios share their base type's art; BATTLE_NONE combat means the boss.
- * Unknown battle ids resolve to 0xFF (text fallback, blank art rows).
+ * Art selection stays data-driven: every combatant shares its battle's
+ * enemy-type row (encounters engage clones of one actor), so the row's
+ * art_index/art_frames/art_palette/art_w/art_h drive all slots; editing
+ * an enemy's sprite JSON changes the ROM result with no code change.
+ * Unknown battles resolve to 0xFF (text fallback, blank art zones).
  *
- * VRAM layout: slot k loads 12 tiles (2 frames x 3x2) at BG base
- * 128 + 12*k (BATTLE_ART_VRAM_BASE, kept in sync with the stamper in
- * ui_battle_content.c).  World tiles normally living at 128+ are
- * stale-unused during battle and reloaded by ui_load_tileset() on the
- * overworld return path. */
+ * VRAM layout: slot k loads frames*W*H tiles at cumulative tile bases
+ * from BATTLE_ART_VRAM_BASE (128).  World tiles normally living at 128+
+ * are stale-unused during battle and reloaded by ui_load_tileset() on
+ * the overworld return path.  Total art is capped at the 128 tiles from
+ * 128..255: slots past the budget fall back to text. */
 
 #define BATTLE_ART_VRAM_BASE 128u
-#define BATTLE_ART_SLOT_TILES 12u
-#define BATTLE_ART_SET_TILES 12u
+#define BATTLE_ART_VRAM_TILES 128u
 #define BATTLE_ART_SET_BYTES 192u
-
-static const char *type_for_battle(uint8_t battle_id)
-{
-    if (battle_id == BATTLE_BAT) return "bat";
-    if (battle_id == BATTLE_NONE) return "slime_lord";
-    return "slime";
-}
-
-static uint8_t streq(const char *a, const char *b)
-{
-    uint8_t i = 0;
-    while (1) {
-        if (a[i] != b[i]) return 0;
-        if (a[i] == 0) return 1;
-        i++;
-    }
-}
+#define BATTLE_ART_MAX_W 6u
+#define BATTLE_ART_MAX_H 4u
 
 void battle_art_load_banked(void)
 {
@@ -57,40 +43,84 @@ void battle_art_load_banked(void)
     uint8_t art_index = 0xFF;
     uint8_t art_frames = 0;
     uint8_t art_palette = 0;
+    uint8_t art_w = 3;
+    uint8_t art_h = 2;
+    uint8_t base;
     uint8_t i, k;
+    uint8_t match;
     uint16_t n;
+    uint8_t cost;
     const uint8_t *src;
     volatile uint8_t *dst;
 
     if (!b) return;
 
-    want = type_for_battle(b->enemy_battle_id);
-    for (i = 0; i < g_enemy_type_count; i++) {
-        const EnemyTypeDef *t = g_enemy_types[i];
-        if (streq(want, t->id)) {
-            art_index = t->art_index;
-            art_frames = t->art_frames;
-            art_palette = t->art_palette;
-            break;
+    /* One shared row for the whole battle (clone encounters): the game
+     * layer names the row id for this battle (same-bank plain call),
+     * then the row is found by id scan over the compiled table. */
+    want = game_battle_enemy_type_id(b->enemy_battle_id);
+    if (want != 0) {
+        for (i = 0; i < g_enemy_type_count; i++) {
+            const EnemyTypeDef *t = g_enemy_types[i];
+            match = 1;
+            for (k = 0; ; k++) {
+                if (t->id[k] != want[k]) {
+                    match = 0;
+                    break;
+                }
+                if (want[k] == '\0') break;
+            }
+            if (match) {
+                art_index = t->art_index;
+                art_frames = t->art_frames;
+                art_palette = t->art_palette;
+                art_w = t->art_w;
+                art_h = t->art_h;
+                break;
+            }
         }
     }
+    if (art_w == 0 || art_w > BATTLE_ART_MAX_W) art_w = 3;
+    if (art_h == 0 || art_h > BATTLE_ART_MAX_H) art_h = 2;
+    if (art_frames == 0 || art_frames > 2) art_frames = 1;
 
     VBK_REG = 0;
+    base = BATTLE_ART_VRAM_BASE;
     for (k = 0; k < b->enemy_count && k < MAX_BATTLE_ENEMIES; k++) {
         g_battle_enemy_art[k] = art_index;
         g_battle_enemy_art_frames[k] = art_frames;
         g_battle_enemy_art_pal[k] = art_palette;
+        g_battle_enemy_art_w[k] = art_w;
+        g_battle_enemy_art_h[k] = art_h;
+        g_battle_enemy_art_base[k] = 0;
         if (art_index == 0xFF) continue;
-        src = &battle_enemy_art[(uint16_t)art_index * BATTLE_ART_SET_BYTES];
-        dst = (volatile uint8_t *)(0x8000u + (uint16_t)((uint8_t)(BATTLE_ART_VRAM_BASE + k * BATTLE_ART_SLOT_TILES) << 4));
-        n = BATTLE_ART_SET_BYTES;
+        /* Tile cost without multiply (8-bit * pulls mult routines into
+         * fixed _CODE, §52.18): cost = w*h*frames via repeated addition
+         * (h <= 4, frames <= 2). */
+        cost = art_w;
+        for (i = 1; i < art_h; i++) cost = (uint8_t)(cost + art_w);
+        if (art_frames > 1) cost = (uint8_t)(cost + cost);
+        if ((uint16_t)base + cost > BATTLE_ART_VRAM_BASE + BATTLE_ART_VRAM_TILES) {
+            /* Past the art budget: text fallback for this slot. */
+            g_battle_enemy_art[k] = 0xFF;
+            continue;
+        }
+        /* Set offset without multiply: art_index * 192 = (idx<<7)+(idx<<6). */
+        src = &battle_enemy_art[((uint16_t)art_index << 7) + ((uint16_t)art_index << 6)];
+        dst = (volatile uint8_t *)(0x8000u + ((uint16_t)base << 4));
+        n = (uint16_t)cost << 4;
         while (n--) {
             *dst++ = *src++;
         }
+        g_battle_enemy_art_base[k] = base;
+        base = (uint8_t)(base + cost);
     }
     for (; k < MAX_BATTLE_ENEMIES; k++) {
         g_battle_enemy_art[k] = 0xFF;
         g_battle_enemy_art_frames[k] = 0;
         g_battle_enemy_art_pal[k] = 0;
+        g_battle_enemy_art_w[k] = 3;
+        g_battle_enemy_art_h[k] = 2;
+        g_battle_enemy_art_base[k] = 0;
     }
 }

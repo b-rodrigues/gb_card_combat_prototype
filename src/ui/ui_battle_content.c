@@ -242,16 +242,14 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 /* Enemy battle-sprite stamper.  Layout (hud_layout in the battle screen
  * JSON: enemy_hp_row 1, enemy_sprite_row 3, enemy_cursor_row 5; names stay on
  * row 2): HP numbers above, 3x2 art on rows 3-4, target caret below.
- * Art tiles live at BG base 128 + 12*slot (loaded by the bank-4 loader at
- * battle entry); frame selects from the battle clock, masked by the type's
- * frame count (single-frame art holds frame 0).  blank!=0 forces text
- * blanks (dead slots, blink telegraph) instead of art.  Art cells bypass
- * the semantic screen buffer: art is presentation, and text never addresses
- * rows 3-4, so unconditional VRAM writes are safe. */
-#define BATTLE_ART_VRAM_BASE 128u
-#define BATTLE_ART_SLOT_TILES 12u
-#define BATTLE_ART_FRAME_TILES 6u
-#define BATTLE_ART_W 3u
+ * Art tiles live at per-slot VRAM bases from tile 128 (loaded by the
+ * bank-4 loader at battle entry); frame selects from the battle clock,
+ * masked by the type's frame count (single-frame art holds frame 0).
+ * blank!=0 forces text blanks (dead slots, blink telegraph) instead of
+ * art.  Art cells bypass the semantic screen buffer: art is presentation,
+ * and the blank path clears the same footprint it stamps, so
+ * unconditional VRAM writes are safe.  Taller art may cover text rows
+ * below; enemies draw before hero/deck, so HUD text redraws on top. */
 
 #ifdef DEBUG_BUILD
 /* WRAM tilemap mirror (ui.c): screen coords == ring coords in battle
@@ -263,6 +261,9 @@ extern uint8_t g_tilemap_mirror[32 * 32];
 extern uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
 
 static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
                                   const volatile Battle *battle, uint8_t blank)
@@ -270,47 +271,64 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
     uint8_t frame = 0;
     uint8_t base;
     uint8_t cx, cy;
+    uint8_t w, h, ftiles, t;
     volatile uint8_t *dst;
     /* Staged screen row (WRAM copy of the active BattleScreenDef). */
     uint8_t art_row = g_battle_hud.rows[HUD_ENEMY_SPRITE];
+
+    /* Staged per-slot geometry (WRAM, written by the bank-4 art loader);
+     * clamped defensively so a corrupt cache can never run the loops
+     * off the tilemap. */
+    w = (slot < MAX_BATTLE_ENEMIES) ? g_battle_enemy_art_w[slot] : 3;
+    h = (slot < MAX_BATTLE_ENEMIES) ? g_battle_enemy_art_h[slot] : 2;
+    if (w == 0 || w > 6) w = 3;
+    if (h == 0 || h > 4) h = 2;
 
     if (!blank && slot < MAX_BATTLE_ENEMIES &&
         g_battle_enemy_art[slot] != 0xFF) {
         if (g_battle_enemy_art_frames[slot] > 1) {
             frame = (uint8_t)((battle->timer_ticks >> 4) & 1);
         }
-        base = (uint8_t)(BATTLE_ART_VRAM_BASE + slot * BATTLE_ART_SLOT_TILES +
-                         frame * BATTLE_ART_FRAME_TILES);
+        base = g_battle_enemy_art_base[slot];
+        /* Frame tile math without multiply (8-bit * pulls mult routines
+         * into fixed _CODE, §52.18): frame rows are contiguous, so one
+         * running tile counter covers the whole WxH stamp. */
+        ftiles = 0;
+        for (cx = 0; cx < h; cx++) ftiles = (uint8_t)(ftiles + w);
+        t = base;
+        if (frame) t = (uint8_t)(t + ftiles);
         VBK_REG = 0;
-        for (cy = 0; cy < 2; cy++) {
+        for (cy = 0; cy < h; cy++) {
             dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(art_row + cy) << 5) + x);
-            for (cx = 0; cx < BATTLE_ART_W; cx++) {
-                battle_vram_sync_write(dst, (uint8_t)(base + cy * BATTLE_ART_W + cx));
+            for (cx = 0; cx < w; cx++) {
+                battle_vram_sync_write(dst, t);
 #ifdef DEBUG_BUILD
-                g_tilemap_mirror[(art_row + cy) * 32 + (x + cx)] =
-                    (uint8_t)(base + cy * BATTLE_ART_W + cx);
+                g_tilemap_mirror[(art_row + cy) * 32 + (x + cx)] = t;
 #endif
+                t++;
                 dst++;
             }
         }
         /* CGB art color (no-op on DMG, which falls back to grayscale):
          * the loader cached one palette per enemy slot. */
-        battle_color_span(x, art_row, BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
-        battle_color_span(x, (uint8_t)(art_row + 1), BATTLE_ART_W, g_battle_enemy_art_pal[slot]);
+        for (cy = 0; cy < h; cy++) {
+            battle_color_span(x, (uint8_t)(art_row + cy), w, g_battle_enemy_art_pal[slot]);
+        }
         return;
     }
-    /* Rows 3-4 are the art zone: no text path addresses them, so blanks
-     * are unconditional direct writes.  Routing through battle_draw_text_line
-     * would hit its skip-guard (semantic buffer already holds spaces while
-     * VRAM still shows a dead enemy's tiles) and leave stale art behind. */
+    /* The art zone is the staged footprint: no text path addresses it, so
+     * blanks are unconditional direct writes.  Routing through
+     * battle_draw_text_line would hit its skip-guard (semantic buffer
+     * already holds spaces while VRAM still shows a dead enemy's tiles)
+     * and leave stale art behind. */
     {
         uint8_t space = ui_font_tile_base;
         char *buf;
         VBK_REG = 0;
-        for (cy = 0; cy < 2; cy++) {
+        for (cy = 0; cy < h; cy++) {
             dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(art_row + cy) << 5) + x);
             buf = &g_ui_screen_buf[art_row + cy][x];
-            for (cx = 0; cx < BATTLE_ART_W; cx++) {
+            for (cx = 0; cx < w; cx++) {
                 battle_vram_sync_write(dst, space);
 #ifdef DEBUG_BUILD
                 g_tilemap_mirror[(art_row + cy) * 32 + (x + cx)] = space;
@@ -321,8 +339,9 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
             }
         }
         /* Drop any previous art tint so blanks match surrounding text. */
-        battle_color_span(x, art_row, BATTLE_ART_W, UI_COLOR_NONE);
-        battle_color_span(x, (uint8_t)(art_row + 1), BATTLE_ART_W, UI_COLOR_NONE);
+        for (cy = 0; cy < h; cy++) {
+            battle_color_span(x, (uint8_t)(art_row + cy), w, UI_COLOR_NONE);
+        }
     }
 }
 

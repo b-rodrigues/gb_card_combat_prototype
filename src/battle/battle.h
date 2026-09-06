@@ -101,12 +101,16 @@ typedef struct {
 extern uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
 
 /* Banked battle-art loader (src/battle/battle_art_banked.c, ROM bank 4):
- * g_bk_ptr_a = Battle*.  Resolves each enemy's art from the enemy-type
- * tables, loads 12 tiles per slot into VRAM, caches art in the WRAM
- * globals above.  Dispatched once per battle entry from
- * ui_draw_battle_full() (LCD-off window). */
+ * g_bk_ptr_a = Battle*.  Resolves the battle's enemy-type row through
+ * the game layer, loads each slot's WxH art tiles into VRAM from
+ * cumulative bases, and caches art + geometry in the WRAM globals
+ * above.  Dispatched once per battle entry from ui_draw_battle_full()
+ * (LCD-off window). */
 void battle_art_load_banked(void);
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,

@@ -34,11 +34,11 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 
-# Battle-sprite art sets.  Each set is 12 sheet cells (2 frames x 3x2) into
-# assets/battle_sprites.png (3 cols x 8 rows; see tools/compose_battle_sprites.py):
-# frame 0 = cells[0:6], frame 1 = cells[6:12].  Single-frame sets repeat
-# frame 0.  The Makefile gfx rule emits the header in this same order, so
-# art set N lives at tile offset N*12 in battle_enemy_art.h.
+# Battle-sprite art sets.  Each set is (frame0_cells, frame1_cells, palette,
+# width, height): 2 frames of WxH sheet cells into assets/battle_sprites.png
+# (3 cols x 8 rows; see tools/compose_battle_sprites.py).  Single-frame sets
+# repeat frame 0.  The Makefile gfx rule emits the header in this same order,
+# so art set N lives at tile offset N*12 in battle_enemy_art.h.
 # BLANK is the all-white cell that pads 3x1 art (bat) to 3x2 slots.
 # Each set also names its CGB battle palette (ui_color_* indices in ui.h):
 # slime = poison emerald, bat = dim gray, boss = fire red.  DMG hardware
@@ -46,11 +46,11 @@ DEFAULT_OUT_DIR = str(REPO_ROOT / "src" / "game")
 BLANK = (0, 7)
 ART_SETS = {
     "slime": ([(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
-              [(0, 2), (1, 2), (2, 2), (0, 1), (1, 1), (2, 1)], 4),
+              [(0, 2), (1, 2), (2, 2), (0, 1), (1, 1), (2, 1)], 4, 3, 2),
     "bat": ([(0, 3), (1, 3), (2, 3), BLANK, BLANK, BLANK],
-            [(0, 4), (1, 4), (2, 4), BLANK, BLANK, BLANK], 7),
+            [(0, 4), (1, 4), (2, 4), BLANK, BLANK, BLANK], 7, 3, 2),
     "boss": ([(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)],
-             [(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)], 1),
+             [(0, 5), (1, 5), (2, 5), (0, 6), (1, 6), (2, 6)], 1, 3, 2),
 }
 ART_ORDER = ["slime", "bat", "boss"]
 ART_CELLS_PER_SET = 12
@@ -284,9 +284,13 @@ def build_enemy_types_output(enemy_types):
         try:
             art_index = ART_ORDER.index(art_id)
             art_palette = ART_SETS[art_id][2]
+            art_w = ART_SETS[art_id][3]
+            art_h = ART_SETS[art_id][4]
         except ValueError:
             art_index = 0xFF  # text fallback: no battle art
             art_palette = 0
+            art_w = 0
+            art_h = 0
         art_frames = sprite.get('frames', 0) if art_index != 0xFF else 0
         lines.append("static const EnemyTypeDef g_enemy_type_%s = {" % et['id'])
         lines.append('    %s,' % c_escape(et['id']))
@@ -300,7 +304,9 @@ def build_enemy_types_output(enemy_types):
         lines.append('    %s,' % et['reward_currency'])
         lines.append('    %d,' % art_index)
         lines.append('    %d,' % art_frames)
-        lines.append('    %d' % art_palette)
+        lines.append('    %d,' % art_palette)
+        lines.append('    %d,' % art_w)
+        lines.append('    %d' % art_h)
         lines.append("};")
         lines.append("")
 

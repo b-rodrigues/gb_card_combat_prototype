@@ -42,6 +42,12 @@ void game_battle_hud_load(uint8_t battle_type);
  * g_battle_screens into WRAM g_battle_hud.  Called via banked_call_run(). */
 void battle_hud_load_banked(void);
 
+/* Game-layer combat-art mapping (src/game/enemy_art_content.c, bank 4):
+ * BattleId -> enemy-type row id ("slime", "bat", ...), 0 when no row
+ * claims the battle.  Called directly by battle_art_load_banked (same
+ * bank, plain call) so the fixed bank pays nothing for the mapping. */
+const char *game_battle_enemy_type_id(uint8_t battle_id);
+
 /* Content registration helpers, implemented in the content modules. */
 void game_events_register(void);
 void game_dialogue_register(void);

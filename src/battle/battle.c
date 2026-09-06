@@ -19,6 +19,13 @@
 uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+/* Per-slot combat-art geometry + VRAM base (tile index), staged by the
+ * bank-4 art loader alongside the arrays above.  Slots that fall back to
+ * text (or exceed the VRAM art budget) keep art 0xFF with the standard
+ * 3x2 dims so the bank-3 stamper's blank path clears the usual zone. */
+uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
 
 /* Active battle screen layout (see battle_data.h): uninitialized WRAM
  * (bss); staged from the bank-4 BattleScreenDef by game_battle_hud_load()

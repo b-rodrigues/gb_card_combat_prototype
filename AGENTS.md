@@ -2267,6 +2267,9 @@ Rules:
   not inlined at the call site.
 * `%`/`/` in new fixed-bank code pulls in the SDCC div/mod library; use
   masks for power-of-two bounds.
+* 8-bit `*` anywhere (including banked bodies) pulls the SDCC mult
+  routines (`__mulsuchar` et al.) into fixed `_CODE` (~69 B); use shifts,
+  repeated addition, or a running counter for small tile-math instead.
 
 ## 52.19 SDCC miscompile instances are LAYOUT-SENSITIVE (Aug 2026)
 
