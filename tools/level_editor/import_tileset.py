@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Import a tileset from a source PNG sheet + CSV description file.
 
-Reads a 128x24 (16 cols x 3 rows) PNG of 8x8 tiles and a matching CSV
+Reads a PNG of 8x8 tiles (e.g., 128x24 = 16x3, or 96x16 = 12x2) and a matching CSV
 with one label per cell.  Produces:
   - individual tile PNGs in --output-dir
   - a tileset JSON at --output-json
@@ -15,6 +15,16 @@ Usage (inside nix develop for Pillow):
       --gb-tileset-kind WORLD_TILESET_FOREST \
       --output-dir tools/level_editor/public/tiles/forest \
       --output-json tools/level_editor/tilesets/forest.json
+
+For actors tileset (12x2 grid with transparency):
+    python3 tools/level_editor/import_tileset.py \
+      --sheet assets/actor-sprites.png \
+      --csv assets/actor-tileset-description.csv \
+      --tileset-id actors \
+      --label "Actors (Shared)" \
+      --gb-tileset-kind WORLD_TILESET_ACTORS \
+      --output-dir tools/level_editor/public/tiles/actors \
+      --output-json tools/level_editor/tilesets/actors.json
 """
 import argparse
 import csv
@@ -52,13 +62,15 @@ def infer_walkable(description):
 
 def infer_category(description):
     d = description.lower()
+    if "hero" in d:
+        return "hero"
     if "wall" in d:
         return "wall"
     if "tree" in d or "stump" in d or "rock" in d or "treetop" in d or "treetrunk" in d:
         return "nature"
-    if "enemy" in d or "kobold" in d or "bats" in d:
+    if "kobold" in d or "slime" in d or "bats" in d or "spider" in d or "boss" in d:
         return "enemy"
-    if "hero" in d or "merchant" in d:
+    if "guard" in d or "wizard" in d or "merchant" in d or "mayor" in d or "dog" in d:
         return "npc"
     if "fire" in d:
         return "object"
@@ -66,6 +78,14 @@ def infer_category(description):
         return "terrain"
     if "floor" in d:
         return "terrain"
+    if "enemy" in d:
+        return "enemy"
+    if "merchant" in d:
+        return "npc"
+    if "empty" in d:
+        return "object"
+    if "black" in d and "emptyness" in d:
+        return "object"
     return "terrain"
 
 
@@ -73,9 +93,52 @@ def ascii_char(walkable):
     return "." if walkable else "#"
 
 
+# Transparency key color for sprite/actor sheets: the artist paints the
+# background behind every actor with this exact yellow; those pixels become
+# see-through (Game Boy sprite shade 0).  Chroma-keyed by RGB, independent
+# of which palette index the color lands on.
+KEY_TRANSPARENT_RGB = (241, 235, 3)
+
+
+def crop_tile_with_transparency(source_img, left, upper, right, lower):
+    """Crop a tile from a palette image, chroma-keying the yellow
+    transparency color (KEY_TRANSPARENT_RGB) to alpha=0."""
+    # Crop in palette mode to preserve palette indices
+    tile_p = source_img.crop((left, upper, right, lower))
+    palette = source_img.palette.palette if source_img.mode == 'P' and source_img.palette else None
+
+    if palette is None:
+        # RGBA source: key the yellow RGB directly
+        rgba = tile_p.convert("RGBA")
+        px = rgba.load()
+        for yy in range(TILE_SIZE):
+            for xx in range(TILE_SIZE):
+                r, g, b, a = px[xx, yy]
+                if a > 0 and (r, g, b) == KEY_TRANSPARENT_RGB:
+                    px[xx, yy] = (0, 0, 0, 0)
+        return rgba
+
+    # Palette source: map each palette index through its RGB.
+    pixels = list(tile_p.getdata())
+    new_pixels = []
+    for idx in pixels:
+        i3 = idx * 3
+        if i3 + 2 < len(palette):
+            r, g, b = palette[i3], palette[i3 + 1], palette[i3 + 2]
+            if (r, g, b) == KEY_TRANSPARENT_RGB:
+                new_pixels.append((0, 0, 0, 0))
+            else:
+                new_pixels.append((r, g, b, 255))
+        else:
+            new_pixels.append((0, 0, 0, 255))
+    tile_rgba = Image.new("RGBA", (TILE_SIZE, TILE_SIZE))
+    tile_rgba.putdata(new_pixels)
+    return tile_rgba
+
+
 def main():
     parser = argparse.ArgumentParser(description="Import tileset from PNG + CSV")
-    parser.add_argument("--sheet", required=True, help="Source PNG (128x24)")
+    parser.add_argument("--sheet", required=True, help="Source PNG (e.g., 128x24 or 96x16)")
     parser.add_argument("--csv", required=True, help="Description CSV")
     parser.add_argument("--tileset-id", required=True, help="Tileset id (e.g. forest)")
     parser.add_argument("--label", required=True, help="Human label (e.g. Whispering Forest)")
@@ -84,11 +147,19 @@ def main():
     parser.add_argument("--output-json", required=True, help="Output tileset JSON path")
     args = parser.parse_args()
 
-    img = Image.open(args.sheet).convert("RGBA")
-    w, h = img.size
-    cols = w // TILE_SIZE
-    rows = h // TILE_SIZE
-    print(f"Sheet: {w}x{h} = {cols}x{rows} tiles")
+    sheet_path = args.sheet
+
+    # Open in palette mode to preserve palette indices for the yellow key
+    source_img = Image.open(sheet_path)
+    if source_img.mode != 'P':
+        source_img = source_img.convert("P")
+
+    # Open as RGBA for color analysis
+    img_rgba = Image.open(sheet_path).convert("RGBA")
+    w, h = source_img.size
+    cols = source_img.width // TILE_SIZE
+    rows = source_img.height // TILE_SIZE
+    print(f"Sheet: {source_img.width}x{source_img.height} = {cols}x{rows} tiles")
 
     with open(args.csv, newline="") as f:
         reader = csv.reader(io.StringIO(f.read()))
@@ -120,29 +191,42 @@ def main():
         else:
             tile_id = f"{args.tileset_id}_{slug}"
 
-        # Extract 8x8 tile from sheet
+        # Extract 8x8 tile from sheet with transparency
         left = c * TILE_SIZE
         upper = r * TILE_SIZE
-        tile_img = img.crop((left, upper, left + TILE_SIZE, upper + TILE_SIZE))
+        right = left + TILE_SIZE
+        lower = upper + TILE_SIZE
 
-        # Determine dominant color for the fallback swatch
-        pixels = list(tile_img.getdata())
-        opaque = [p for p in pixels if p[3] > 0]
-        if opaque:
-            r_avg = sum(p[0] for p in opaque) // len(opaque)
-            g_avg = sum(p[1] for p in opaque) // len(opaque)
-            b_avg = sum(p[2] for p in opaque) // len(opaque)
-            color = f"#{r_avg:02x}{g_avg:02x}{b_avg:02x}"
-        else:
+        # Crop tile with transparency (yellow chroma-key)
+        tile_rgba = crop_tile_with_transparency(source_img, left, upper, right, lower)
+
+        # Handle special "empty" description -> black_emptyness
+        if desc.lower().strip() == "empty":
+            tile_id = f"{args.tileset_id}_black_emptyness_{slug_seen[slug]}"
+            tile_rgba = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 255))
             color = "#000000"
+            walkable = False
+            category = "object"
+            slug = "black_emptyness"
+            gb_const = f"TILE_{args.tileset_id.upper()}_BLACK_EMPTYNESS"
+        else:
+            # Determine dominant color for the fallback swatch
+            pixels = list(tile_rgba.getdata())
+            opaque = [p for p in pixels if p[3] > 0]
+            if opaque:
+                r_avg = sum(p[0] for p in opaque) // len(opaque)
+                g_avg = sum(p[1] for p in opaque) // len(opaque)
+                b_avg = sum(p[2] for p in opaque) // len(opaque)
+                color = f"#{r_avg:02x}{g_avg:02x}{b_avg:02x}"
+            else:
+                color = "#000000"
+
+            walkable = infer_walkable(desc)
+            category = infer_category(desc)
+            gb_const = f"TILE_{args.tileset_id.upper()}_{slug.upper()}"
 
         png_name = f"{tile_id}.png"
-        tile_img.save(os.path.join(args.output_dir, png_name))
-
-        walkable = infer_walkable(desc)
-        category = infer_category(desc)
-
-        gb_const = f"TILE_{args.tileset_id.upper()}_{slug.upper()}"
+        tile_rgba.save(os.path.join(args.output_dir, png_name))
 
         tiles.append({
             "id": tile_id,

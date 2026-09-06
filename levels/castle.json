@@ -11,20 +11,84 @@
   "default_walkable": "castle.castle_plain_floor",
   "layers": {
     "terrain": [
-      { "x": 3, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_left_wall" },
-      { "x": 6, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_right_wall" },
-      { "x": 13, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_left_wall" },
-      { "x": 16, "y": 3, "width": 1, "height": 6, "tile": "castle.castle_right_wall" },
-      { "x": 4, "y": 3, "width": 2, "height": 1, "tile": "castle.castle_top_wall" },
-      { "x": 14, "y": 3, "width": 2, "height": 1, "tile": "castle.castle_top_wall" },
-      { "x": 4, "y": 8, "width": 2, "height": 1, "tile": "castle.castle_bottom_wall" },
-      { "x": 14, "y": 8, "width": 2, "height": 1, "tile": "castle.castle_bottom_wall" },
-      { "x": 9, "y": 6, "width": 1, "height": 1, "tile": "castle.castle_table" },
-      { "x": 9, "y": 9, "width": 1, "height": 1, "tile": "castle.castle_chest" }
+      {
+        "x": 3,
+        "y": 3,
+        "width": 1,
+        "height": 6,
+        "tile": "castle.castle_left_wall"
+      },
+      {
+        "x": 6,
+        "y": 3,
+        "width": 1,
+        "height": 6,
+        "tile": "castle.castle_right_wall"
+      },
+      {
+        "x": 13,
+        "y": 3,
+        "width": 1,
+        "height": 6,
+        "tile": "castle.castle_left_wall"
+      },
+      {
+        "x": 16,
+        "y": 3,
+        "width": 1,
+        "height": 6,
+        "tile": "castle.castle_right_wall"
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "width": 2,
+        "height": 1,
+        "tile": "castle.castle_top_wall"
+      },
+      {
+        "x": 14,
+        "y": 3,
+        "width": 2,
+        "height": 1,
+        "tile": "castle.castle_top_wall"
+      },
+      {
+        "x": 4,
+        "y": 8,
+        "width": 2,
+        "height": 1,
+        "tile": "castle.castle_bottom_wall"
+      },
+      {
+        "x": 14,
+        "y": 8,
+        "width": 2,
+        "height": 1,
+        "tile": "castle.castle_bottom_wall"
+      },
+      {
+        "x": 9,
+        "y": 6,
+        "width": 1,
+        "height": 1,
+        "tile": "castle.castle_table"
+      },
+      {
+        "x": 9,
+        "y": 9,
+        "width": 1,
+        "height": 1,
+        "tile": "castle.castle_chest"
+      }
     ]
   },
   "player": {
-    "spawn": { "x": 10, "y": 10, "facing": "UP" }
+    "spawn": {
+      "x": 10,
+      "y": 10,
+      "facing": "UP"
+    }
   },
   "exits": [
     {
@@ -41,15 +105,25 @@
     {
       "id": "castle_bat",
       "type": "enemy",
-      "overworld_sprite": "castle.castle_enemy_bat_frame_1",
-      "animation_frames": [ "castle.castle_enemy_bat_frame_1", "castle.castle_enemy_bat_frame_2" ],
-      "position": { "x": 12, "y": 7 },
+      "overworld_sprite": "actors.actors_bats_frame_1",
+      "animation_frames": [
+        "actors.actors_bats_frame_1",
+        "actors.actors_bats_frame_2"
+      ],
+      "position": {
+        "x": 12,
+        "y": 7
+      },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
         "display_name": "BAT",
         "actor_id": 5,
         "facing": "DOWN",
-        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
         "visual": "V",
         "hp": 8,
         "max_hp": 8,
@@ -62,20 +136,27 @@
     {
       "id": "slime_lord",
       "type": "enemy",
-      "overworld_sprite": "castle.castle_top_left_boss",
+      "overworld_sprite": "actors.actors_boss_top_left_corner",
       "animation_frames": [
-        "castle.castle_top_left_boss",
-        "castle.castle_top_right_boss",
-        "castle.castle_bottom_left_boss",
-        "castle.castle_bottom_right_boss"
+        "actors.actors_boss_top_left_corner",
+        "actors.actors_boss_top_right_corner",
+        "actors.actors_boss_bottom_left_corner",
+        "actors.actors_boss_bottom_right_corner"
       ],
-      "position": { "x": 10, "y": 5 },
+      "position": {
+        "x": 10,
+        "y": 5
+      },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME_LORD",
         "display_name": "LORD OF SLIMES",
         "actor_id": 6,
         "facing": "DOWN",
-        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
         "visual": "L",
         "hp": 50,
         "max_hp": 50,
@@ -91,9 +172,17 @@
   "regions": [
     {
       "id": "throne_room",
-      "bounds": { "x": 4, "y": 2, "width": 12, "height": 12 },
+      "bounds": {
+        "x": 4,
+        "y": 2,
+        "width": 12,
+        "height": 12
+      },
       "description": "The abandoned castle throne room where the Slime Lord awaits.",
-      "gameplay": { "purpose": "boss_arena", "difficulty": 3 }
+      "gameplay": {
+        "purpose": "boss_arena",
+        "difficulty": 3
+      }
     }
   ]
 }

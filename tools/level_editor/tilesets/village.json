@@ -94,16 +94,6 @@
       "category": "terrain"
     },
     {
-      "id": "village_plain_floor_2",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_09",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_2.png",
-      "category": "terrain"
-    },
-    {
       "id": "village_top_left_roof",
       "label": "top left roof",
       "gb_constant": "TILE_VILLAGE_10",
@@ -254,16 +244,6 @@
       "category": "terrain"
     },
     {
-      "id": "village_plain_floor_3",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_25",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_3.png",
-      "category": "terrain"
-    },
-    {
       "id": "village_bottom_left_roof",
       "label": "bottom left roof",
       "gb_constant": "TILE_VILLAGE_26",
@@ -321,16 +301,6 @@
       "color": "#ad9568",
       "ascii": "#",
       "image_url": "/tiles/village/village_bottom_right_roof_2.png",
-      "category": "terrain"
-    },
-    {
-      "id": "village_plain_floor_4",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_32",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_4.png",
       "category": "terrain"
     },
     {
@@ -452,36 +422,6 @@
       "ascii": "#",
       "image_url": "/tiles/village/village_right_house.png",
       "category": "terrain"
-    },
-    {
-      "id": "village_plain_floor_5",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_45",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_5.png",
-      "category": "terrain"
-    },
-    {
-      "id": "village_plain_floor_6",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_46",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_6.png",
-      "category": "terrain"
-    },
-    {
-      "id": "village_plain_floor_7",
-      "label": "plain floor",
-      "gb_constant": "TILE_VILLAGE_47",
-      "walkable": true,
-      "color": "#b6a27e",
-      "ascii": ".",
-      "image_url": "/tiles/village/village_plain_floor_7.png",
-      "category": "terrain"
     }
   ],
   "vram_block": {
@@ -546,7 +486,7 @@
         "x": 9,
         "y": 0,
         "index": 9,
-        "tile": "village_plain_floor_2"
+        "tile": "village_plain_floor_1"
       },
       {
         "x": 10,
@@ -642,7 +582,7 @@
         "x": 9,
         "y": 1,
         "index": 25,
-        "tile": "village_plain_floor_3"
+        "tile": "village_plain_floor_1"
       },
       {
         "x": 10,
@@ -684,7 +624,7 @@
         "x": 0,
         "y": 2,
         "index": 32,
-        "tile": "village_plain_floor_4"
+        "tile": "village_plain_floor_1"
       },
       {
         "x": 1,
@@ -763,19 +703,19 @@
         "x": 13,
         "y": 2,
         "index": 45,
-        "tile": "village_plain_floor_5"
+        "tile": "village_plain_floor_1"
       },
       {
         "x": 14,
         "y": 2,
         "index": 46,
-        "tile": "village_plain_floor_6"
+        "tile": "village_plain_floor_1"
       },
       {
         "x": 15,
         "y": 2,
         "index": 47,
-        "tile": "village_plain_floor_7"
+        "tile": "village_plain_floor_1"
       }
     ]
   }

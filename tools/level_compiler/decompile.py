@@ -82,12 +82,12 @@ SPRITE_FRAMES = {
     "castle": {
         "KOBOLD": ["castle.castle_enemy_kobold_frame_1",
                    "castle.castle_enemy_kobold_frame_2"],
-        "BAT": ["castle.castle_enemy_bat_frame_1",
-                "castle.castle_enemy_bat_frame_2"],
-        "BOSS": ["castle.castle_top_left_boss",
-                 "castle.castle_top_right_boss",
-                 "castle.castle_bottom_left_boss",
-                 "castle.castle_bottom_right_boss"],
+        "BAT": ["actors.actors_bats_frame_1",
+                "actors.actors_bats_frame_2"],
+        "BOSS": ["actors.actors_boss_top_left_corner",
+                 "actors.actors_boss_top_right_corner",
+                 "actors.actors_boss_bottom_left_corner",
+                 "actors.actors_boss_bottom_right_corner"],
     },
 }
 

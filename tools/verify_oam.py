@@ -215,12 +215,13 @@ def verify_exit_art(sess):
     """Tileset-specific exit art (manifest vram_block exit markings):
     gate cells render the tileset's exit tile, not the generic gate.
     town (forest) -> 128+8, south_field (desolate) -> 128+40,
-    castle -> 128+26.  RPG_TILE_BASE_* are all 128."""
+    castle (reworked 8x2 sheet) -> 128+7 (castle_stairs at index 7).
+    RPG_TILE_BASE_* are all 128."""
     print("== Exit art (per-tileset gate tiles) ==")
     cases = (("town_boot.json", (1, 7), 168),
              ("south_field_boot.json", (12, 0), 168),
              ("south_field_boot.json", (12, 11), 168),
-             ("castle_boot.json", (12, 11), 154))
+             ("castle_boot.json", (12, 11), 135))
     mirror = sess.get_symbol("g_tilemap_mirror")
     for name, (x, y), want in cases:
         sess.load_scenario(load_scenario(sess, name))

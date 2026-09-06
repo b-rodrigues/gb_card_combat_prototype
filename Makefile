@@ -84,6 +84,12 @@ GFX_OUT_DIR = $(SRC_DIR)/gfx
 
 gfx:
 	@mkdir -p $(GFX_OUT_DIR)
+	# Shared composed sheets (battle art, overworld enemies, hero): the
+	# gfx rules below read these; compose them deterministically from the
+	# curated public/tiles/ PNGs so a clean checkout always has them.
+	@python3 tools/compose_battle_sprites.py
+	@python3 tools/compose_enemy_sprites.py
+	@python3 tools/compose_hero_sprites.py
 	# ── Intrepid font ─────────────────────────────────────────────────────
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
@@ -109,15 +115,6 @@ gfx:
 		--palette auto --anchor-color "#7bb660" --tile-coords "14,0 15,0 14,1 15,1 15,1" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
 	# Sprite tiles from forest-tile.png
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_hero_sprite_tile \
-		--palette auto --tile-coords "1,2 2,2" \
-		-o $(GFX_OUT_DIR)/forest_hero_sprite_tile.h
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_kobold_sprite_tile \
-		--palette auto --tile-coords "3,2 4,2" \
-		-o $(GFX_OUT_DIR)/forest_kobold_sprite_tile.h
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_bat_sprite_tile \
-		--palette auto --tile-coords "9,2 10,2" \
-		-o $(GFX_OUT_DIR)/forest_bat_sprite_tile.h
 	@python3 tools/png2gb.py assets/forest-tile.png --name forest_chest_sprite_tile \
 		--palette auto --tile-coords "11,2" \
 		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
@@ -150,20 +147,10 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
 		--palette auto --tile-coords "1,2 2,2" \
 		-o $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
-		--palette auto --tile-coords "3,2 4,2" \
-		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name desolate_bat_sprite_tile \
-		--palette auto --tile-coords "9,2 10,2" \
-		-o $(GFX_OUT_DIR)/desolate_bat_sprite_tile.h
-	# ── Castle tileset (assets/castle-tile.png, 9 cols × 3 rows) ─────────
-	# Full 27-tile world sheet (g_tileset_castle)
+	# ── Castle tileset (assets/castle-tile.png) ─────────
+	# Full world sheet (g_tileset_castle).  Sized by the source PNG.
 	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
 		--palette auto --anchor-color "#d7d7d7" --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
-	# Sprite tiles from castle-tile.png
-	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
-		--palette auto --tile-coords "5,2 6,2" \
-		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
 	# ── Village tileset (assets/village-tile.png, 16 cols × 3 rows) ────────
 	# Full 48-tile world sheet (g_tileset_village).  Arranged in SheetIndex
 	# order (the tileset JSON's vram_block section numbering = scanning order).
@@ -247,6 +234,12 @@ extract-tiles:
 		--gb-tileset-kind WORLD_TILESET_VILLAGE \
 		--output-dir tools/level_editor/public/tiles/village \
 		--output-json tools/level_editor/tilesets/village.json
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/actor-sprites.png --csv assets/actor-tileset-description.csv \
+		--tileset-id actors --label "Actors (Shared)" \
+		--gb-tileset-kind WORLD_TILESET_ACTORS \
+		--output-dir tools/level_editor/public/tiles/actors \
+		--output-json tools/level_editor/tilesets/actors.json
 
 # NOTE: extract-tiles is intentionally NOT a dependency here.
 # The tileset JSON files (tools/level_editor/tilesets/*.json) are the sole

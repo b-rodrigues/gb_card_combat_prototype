@@ -1,6 +1,7 @@
 import castleJson from '../../tilesets/castle.json';
 import combatJson from '../../tilesets/combat.json';
 import enemiesJson from '../../tilesets/enemies.json';
+import actorsJson from '../../tilesets/actors.json';
 import forestJson from '../../tilesets/forest.json';
 import desolateLandscapeJson from '../../tilesets/desolate_landscape.json';
 import heroJson from '../../tilesets/hero.json';
@@ -51,6 +52,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
   castle: parseTilesetJson(castleJson),
   combat: parseTilesetJson(combatJson),
   enemies: parseTilesetJson(enemiesJson),
+  actors: parseTilesetJson(actorsJson),
   forest: parseTilesetJson(forestJson),
   desolate_landscape: parseTilesetJson(desolateLandscapeJson),
   hero: parseTilesetJson(heroJson),
@@ -61,6 +63,7 @@ export const BUILTIN_TILESETS: Record<string, TilesetDefinition> = {
 export const TILESET_CASTLE = BUILTIN_TILESETS.castle;
 export const TILESET_COMBAT = BUILTIN_TILESETS.combat;
 export const TILESET_ENEMIES = BUILTIN_TILESETS.enemies;
+export const TILESET_ACTORS = BUILTIN_TILESETS.actors;
 export const TILESET_HERO = BUILTIN_TILESETS.hero;
 export const TILESET_FOREST = BUILTIN_TILESETS.forest;
 export const TILESET_DESOLATE_LANDSCAPE = BUILTIN_TILESETS.desolate_landscape;
