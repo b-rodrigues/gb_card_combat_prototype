@@ -22,6 +22,7 @@ import os
 import json
 import argparse
 import glob
+import re
 from pathlib import Path
 
 # REPO_ROOT is the repository root. When run from repo root with
@@ -100,6 +101,76 @@ def set_frame_cells(entry, frame):
     for name in cells:
         out.append(BLANK_COORD if name is None else TILE_COORDS[name])
     return out
+
+
+# BattleScreenDef HUD tail, in struct order: (struct field, JSON key,
+# default).  This list is the SINGLE source of truth for both the C
+# emitter below and the check_battle_struct_order() guard: the emitter
+# walks it positionally, so the generated initializer cannot drift from
+# the struct without the guard failing first.  Note the remaps: the
+# hud_* struct fields read legacy JSON keys (deck_row, timer_row, ...).
+HUD_STRUCT_FIELDS = [
+    ('turn_banner_row', 'turn_banner_row', 0),
+    ('enemy_hp_row', 'enemy_hp_row', 1),
+    ('enemy_sprite_row', 'enemy_sprite_row', 2),
+    ('enemy_cursor_row', 'enemy_cursor_row', 4),
+    ('enemy_col_start', 'enemy_col_start', 0),
+    ('enemy_col_step', 'enemy_col_step', 7),
+    ('hero_label_row', 'hero_label_row', 6),
+    ('hero_label_col', 'hero_label_col', 1),
+    ('hero_hp_row', 'hero_hp_row', 6),
+    ('hero_hp_col', 'hero_hp_col', 13),
+    ('deck_row', 'deck_row', 7),
+    ('deck_col', 'deck_col', 1),
+    ('ap_row', 'ap_row', 7),
+    ('ap_col', 'ap_col', 13),
+    ('combo_row', 'combo_row', 9),
+    ('cards_row', 'cards_row', 10),
+    ('card_cursor_row', 'card_cursor_row', 14),
+    ('card_desc_row', 'card_desc_row', 15),
+    ('timer_row', 'timer_row', 16),
+    ('timer_col', 'timer_col', 0),
+    ('timer_width', 'timer_width', 20),
+    ('hud_enemy_row_start', 'enemy_row_start', 2),
+    ('hud_enemy_row_step', 'enemy_row_step', 1),
+    ('hud_deck_row', 'deck_row', 7),
+    ('hud_combo_row_start', 'combo_row_start', 13),
+    ('hud_combo_row_step', 'combo_row_step', 1),
+    ('hud_timer_row', 'timer_row', 15),
+    ('hud_caret_x', 'caret_x', 3),
+]
+
+
+def check_battle_struct_order():
+    """Fail loudly if BattleScreenDef's field order in battle_data.h no
+    longer matches HUD_STRUCT_FIELDS.  The emitter is positional, so a
+    struct reorder without a matching list update would silently
+    misassign every HUD row.  Runs on every invocation (emit, --check,
+    --validate, --gfx-coords)."""
+    header = REPO_ROOT / "src" / "battle" / "battle_data.h"
+    try:
+        text = header.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        print("WARNING: battle_data.h not found; skipping struct-order check")
+        return True
+    m = re.search(r"typedef struct BattleScreenDef \{(.*?)\} BattleScreenDef;", text, re.S)
+    if not m:
+        print("ERROR: BattleScreenDef not found in battle_data.h", file=sys.stderr)
+        return False
+    names = re.findall(r"(?:uint8_t|char|int|const char \*)\s*(\w+)", m.group(1))
+    try:
+        tail = names[names.index('enemy_positions'):]
+    except ValueError:
+        print("ERROR: enemy_positions not found in BattleScreenDef", file=sys.stderr)
+        return False
+    expected = (['enemy_positions', 'timer_overworld_ticks', 'timer_battle_ticks']
+                + [f[0] for f in HUD_STRUCT_FIELDS])
+    if tail != expected:
+        print("ERROR: BattleScreenDef field order drifted from HUD_STRUCT_FIELDS:", file=sys.stderr)
+        print("  header: %s" % tail, file=sys.stderr)
+        print("  expect: %s" % expected, file=sys.stderr)
+        return False
+    return True
 
 
 def validate_enemy_type(path: Path, art_ids) -> dict:
@@ -261,34 +332,13 @@ def build_battle_screens_output(battle_screens, enemy_types):
 
         lines.append("    %d," % timer.get('overworld_ticks', 43))
         lines.append("    %d," % timer.get('battle_ticks', 17))
-        lines.append("    %d," % hud.get('turn_banner_row', 0))
-        lines.append("    %d," % hud.get('enemy_hp_row', 1))
-        lines.append("    %d," % hud.get('enemy_sprite_row', 2))
-        lines.append("    %d," % hud.get('enemy_cursor_row', 4))
-        lines.append("    %d," % hud.get('enemy_col_start', 0))
-        lines.append("    %d," % hud.get('enemy_col_step', 7))
-        lines.append("    %d," % hud.get('hero_label_row', 6))
-        lines.append("    %d," % hud.get('hero_label_col', 1))
-        lines.append("    %d," % hud.get('hero_hp_row', 6))
-        lines.append("    %d," % hud.get('hero_hp_col', 13))
-        lines.append("    %d," % hud.get('deck_row', 7))
-        lines.append("    %d," % hud.get('deck_col', 1))
-        lines.append("    %d," % hud.get('ap_row', 7))
-        lines.append("    %d," % hud.get('ap_col', 13))
-        lines.append("    %d," % hud.get('combo_row', 9))
-        lines.append("    %d," % hud.get('cards_row', 10))
-        lines.append("    %d," % hud.get('card_cursor_row', 14))
-        lines.append("    %d," % hud.get('card_desc_row', 15))
-        lines.append("    %d," % hud.get('timer_row', 16))
-        lines.append("    %d," % hud.get('timer_col', 0))
-        lines.append("    %d," % hud.get('timer_width', 20))
-        lines.append("    %d," % hud.get('enemy_row_start', 2))
-        lines.append("    %d," % hud.get('enemy_row_step', 1))
-        lines.append("    %d," % hud.get('deck_row', 7))
-        lines.append("    %d," % hud.get('combo_row_start', 13))
-        lines.append("    %d," % hud.get('combo_row_step', 1))
-        lines.append("    %d," % hud.get('timer_row', 15))
-        lines.append("    %d" % hud.get('caret_x', 3))
+        # HUD tail: positional, in HUD_STRUCT_FIELDS order (guarded by
+        # check_battle_struct_order(); the last field omits the comma).
+        for pos, (field, key, default) in enumerate(HUD_STRUCT_FIELDS):
+            if pos < len(HUD_STRUCT_FIELDS) - 1:
+                lines.append("    %d," % hud.get(key, default))
+            else:
+                lines.append("    %d" % hud.get(key, default))
         lines.append("};")
         lines.append("")
 
@@ -392,6 +442,9 @@ def main(args=None):
 
     # Combat art sets back every enemy-type sprite.art reference.
     art_sets, art_order, art_offsets = load_combat_art()
+    # The emitter is positional: refuse to run on a drifted struct.
+    if not check_battle_struct_order():
+        return 1
     if args.gfx_coords:
         coords = []
         for sid in art_order:

@@ -64,72 +64,45 @@ typedef struct EnemyTypeDef {
 /* WRAM cache for the active battle screen's HUD layout.
  * Staged from the bank-4 BattleScreenDef by game_battle_hud_load()
  * at every battle entry; read by the bank-3 renderer.
- * All fields are uint8_t; layout mirrors BattleScreenDef from
- * enemy_positions onward (indices match the struct order). */
+ * All fields are uint8_t.  Field names AND order mirror BattleScreenDef
+ * from enemy_positions onward on purpose: the bank-4 loader copies
+ * field-by-field with identical names, so a reorder/insert on either
+ * side is a review-visible mismatch, not a silent shift.  Keep the two
+ * structs in sync (the file-scope asserts in battle_hud_load_banked.c
+ * and the battle_compile.py field-order check enforce this). */
 typedef struct BattleHudCache {
-    uint8_t pos[3][2];      // enemy positions (x,y)
-    uint8_t tick_o;         // timer_overworld_ticks
-    uint8_t tick_b;         // timer_battle_ticks
-    uint8_t rows[28];       // HUD rows/cols in BattleScreenDef order:
-    // 0: turn_banner_row
-    // 1: enemy_hp_row
-    // 2: enemy_sprite_row
-    // 3: enemy_cursor_row
-    // 4: enemy_col_start
-    // 5: enemy_col_step
-    // 6: hero_label_row
-    // 7: hero_label_col
-    // 8: hero_hp_row
-    // 9: hero_hp_col
-    // 10: deck_row
-    // 11: deck_col
-    // 12: ap_row
-    // 13: ap_col
-    // 14: combo_row
-    // 15: cards_row
-    // 16: card_cursor_row
-    // 17: card_desc_row
-    // 18: timer_row
-    // 19: timer_col
-    // 20: timer_width
-    // 21: hud_enemy_row_start
-    // 22: hud_enemy_row_step
-    // 23: hud_deck_row
-    // 24: hud_combo_row_start
-    // 25: hud_combo_row_step
-    // 26: hud_timer_row
-    // 27: hud_caret_x
+    uint8_t enemy_positions[3][2];
+    uint8_t timer_overworld_ticks;
+    uint8_t timer_battle_ticks;
+    uint8_t turn_banner_row;
+    uint8_t enemy_hp_row;
+    uint8_t enemy_sprite_row;
+    uint8_t enemy_cursor_row;
+    uint8_t enemy_col_start;
+    uint8_t enemy_col_step;
+    uint8_t hero_label_row;
+    uint8_t hero_label_col;
+    uint8_t hero_hp_row;
+    uint8_t hero_hp_col;
+    uint8_t deck_row;
+    uint8_t deck_col;
+    uint8_t ap_row;
+    uint8_t ap_col;
+    uint8_t combo_row;
+    uint8_t cards_row;
+    uint8_t card_cursor_row;
+    uint8_t card_desc_row;
+    uint8_t timer_row;
+    uint8_t timer_col;
+    uint8_t timer_width;
+    uint8_t hud_enemy_row_start;
+    uint8_t hud_enemy_row_step;
+    uint8_t hud_deck_row;
+    uint8_t hud_combo_row_start;
+    uint8_t hud_combo_row_step;
+    uint8_t hud_timer_row;
+    uint8_t hud_caret_x;
 } BattleHudCache;
-
-/* Indices for rows[] array -- matches BattleScreenDef order from turn_banner_row */
-#define HUD_BANNER_ROW        0
-#define HUD_ENEMY_HP          1
-#define HUD_ENEMY_SPRITE      2
-#define HUD_ENEMY_CURSOR      3
-#define HUD_ENEMY_COL_START   4
-#define HUD_ENEMY_COL_STEP    5
-#define HUD_HERO_LROW         6
-#define HUD_HERO_LCOL         7
-#define HUD_HERO_HROW         8
-#define HUD_HERO_HCOL         9
-#define HUD_DECK_ROW          10
-#define HUD_DECK_COL          11
-#define HUD_AP_ROW            12
-#define HUD_AP_COL            13
-#define HUD_COMBO_ROW         14
-#define HUD_CARDS_ROW         15
-#define HUD_CARD_CUR_ROW      16
-#define HUD_CARD_DSC_ROW      17
-#define HUD_TIMER_ROW         18
-#define HUD_TIMER_COL         19
-#define HUD_TIMER_W           20
-#define HUD_ENEMY_ROW_START   21
-#define HUD_ENEMY_ROW_STEP    22
-#define HUD_DECK_ROW2         23
-#define HUD_COMBO_ROW_START   24
-#define HUD_COMBO_ROW_STEP    25
-#define HUD_TIMER_ROW2        26
-#define HUD_CARET_X           27
 
 /* WRAM cache for the active battle screen's HUD layout.
  * Staged from the bank-4 BattleScreenDef by game_battle_hud_load()

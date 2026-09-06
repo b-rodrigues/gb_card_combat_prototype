@@ -274,7 +274,7 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
     uint8_t w, h, ftiles, t;
     volatile uint8_t *dst;
     /* Staged screen row (WRAM copy of the active BattleScreenDef). */
-    uint8_t art_row = g_battle_hud.rows[HUD_ENEMY_SPRITE];
+    uint8_t art_row = g_battle_hud.enemy_sprite_row;
 
     /* Staged per-slot geometry (WRAM, written by the bank-4 art loader);
      * clamped defensively so a corrupt cache can never run the loops
@@ -353,11 +353,11 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
                       (((battle->timer_ticks >> 4) & 1) == 0);
     /* Staged rows/cols (WRAM copy of the active BattleScreenDef). */
     uint8_t name_row = 2;
-    uint8_t hp_row = g_battle_hud.rows[HUD_ENEMY_HP];
-    uint8_t cur_row = g_battle_hud.rows[HUD_ENEMY_CURSOR];
+    uint8_t hp_row = g_battle_hud.enemy_hp_row;
+    uint8_t cur_row = g_battle_hud.enemy_cursor_row;
 
     for (k = 0; k < MAX_BATTLE_ENEMIES; k++) {
-        x = g_battle_hud.pos[k][0];
+        x = g_battle_hud.enemy_positions[k][0];
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
             if (blink_name && k == battle->attacking_enemy_idx) {
@@ -392,7 +392,7 @@ static void battle_draw_hero_row(const volatile Battle *battle)
 {
     volatile uint8_t *dst;
     /* Staged rows (WRAM copy of the active BattleScreenDef). */
-    uint8_t hero_row = g_battle_hud.rows[HUD_HERO_LROW];
+    uint8_t hero_row = g_battle_hud.hero_label_row;
 
     battle_draw_text_line(0, hero_row, "HERO        HP:", 15);
     battle_color_span(0, hero_row, 4, battle_status_color(&s_battle_status[0]));
@@ -431,7 +431,7 @@ static void battle_draw_deck_line(const volatile Battle *battle)
 {
     volatile uint8_t *dst;
     /* Staged row (WRAM copy of the active BattleScreenDef). */
-    uint8_t deck_row = g_battle_hud.rows[HUD_DECK_ROW];
+    uint8_t deck_row = g_battle_hud.deck_row;
 
     battle_draw_text_line(0, deck_row, " DECK:      AP:", 15);
     battle_draw_num2(7, deck_row,
@@ -525,7 +525,7 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
      * results announce via the banner instead of sticking around. */
     const char *name = battle_combo_pending_name(battle);
     /* Staged row (WRAM copy of the active BattleScreenDef). */
-    uint8_t combo_row = g_battle_hud.rows[HUD_COMBO_ROW];
+    uint8_t combo_row = g_battle_hud.combo_row;
 
     battle_draw_text_line(0, combo_row, "COMBO:", 6);
     if (name[0] != '\0') {
@@ -552,8 +552,8 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     uint8_t cur  = battle->cursor_pos;
     uint8_t sel[BATTLE_HAND_SIZE];
     /* Staged rows (WRAM copy of the active BattleScreenDef). */
-    uint8_t cards_row = g_battle_hud.rows[HUD_CARDS_ROW];
-    uint8_t mark_row  = g_battle_hud.rows[HUD_CARD_CUR_ROW];
+    uint8_t cards_row = g_battle_hud.cards_row;
+    uint8_t mark_row  = g_battle_hud.card_cursor_row;
 
     for (k = 0; k < BATTLE_HAND_SIZE; k++) {
         sel[k] = (k < cc) ? battle->selected_indices[k] : 0xFF;
@@ -655,9 +655,9 @@ void ui_update_battle_banked(void)
     const char *turn_banner = "";
     const char *desc_msg = "";
     /* Staged rows/width (WRAM copy of the active BattleScreenDef). */
-    uint8_t banner_row = g_battle_hud.rows[HUD_BANNER_ROW];
-    uint8_t timer_w    = g_battle_hud.rows[HUD_TIMER_W];
-    uint8_t desc_row   = g_battle_hud.rows[HUD_CARD_DSC_ROW];
+    uint8_t banner_row = g_battle_hud.turn_banner_row;
+    uint8_t timer_w    = g_battle_hud.timer_width;
+    uint8_t desc_row   = g_battle_hud.card_desc_row;
 
     if (!battle) return;
     d = battle->dirty ? battle->dirty : BATTLE_DIRTY_ALL;
