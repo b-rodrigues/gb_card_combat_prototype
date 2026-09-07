@@ -542,7 +542,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         });
 
         // Target arrow under enemy 1 (middle)
-        const arrowImg = tileImages.get('combat.arrow_up');
+        const arrowImg = tileImages.get('combat.combat_arrow_pointing_up');
         if (arrowImg) {
           ctx.drawImage(arrowImg, (enemyCols[1] + 1) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
         } else {
@@ -560,8 +560,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       // Row 6: Left "HERO" + Icon | Right "[♥] : 10/10"
       const heroSprite = tileImages.get('combat.hero');
-      const heartImg = tileImages.get('combat.heart_hp');
-      const batteryImg = tileImages.get('combat.battery_ap');
+      const heartImg = tileImages.get('combat.combat_hp_icon');
+      const batteryImg = tileImages.get('combat.combat_ap_icon');
       const deckImg = tileImages.get('combat.deck_cards');
 
       ctx.fillText('HERO', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
@@ -604,11 +604,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // 7. Rows 10–13: 5 Framed Multi-Tile Cards
       const cardCols = [1, 5, 8, 12, 16];
       const cardDefs = [
-        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_3', val: 3, riderKey: null },
-        { iconKey: 'combat.icon_bow', fallback: '🏹', valKey: 'combat.digit_2', val: 2, riderKey: 'combat.status_poison' },
-        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
-        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
-        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_4', val: 4, riderKey: 'combat.status_fire' },
+        { iconKey: 'combat.combat_sword_icon', fallback: '🗡️', valKey: 'combat.combat_three_icon', val: 3, riderKey: null },
+        { iconKey: 'combat.combat_bow_icon', fallback: '🏹', valKey: 'combat.combat_two_icon', val: 2, riderKey: 'combat.combat_poison_status' },
+        { iconKey: 'combat.combat_shield_icon', fallback: '🛡️', valKey: 'combat.combat_two_icon', val: 2, riderKey: null },
+        { iconKey: 'combat.combat_shield_icon', fallback: '🛡️', valKey: 'combat.combat_two_icon', val: 2, riderKey: null },
+        { iconKey: 'combat.combat_sword_icon', fallback: '🗡️', valKey: 'combat.combat_four_icon', val: 4, riderKey: 'combat.combat_fire_status' },
       ];
 
       cardCols.forEach((cx, idx) => {
@@ -665,7 +665,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       });
 
       // 8. Row 14: Card Cursor
-      const cardArrow = tileImages.get('combat.arrow_up');
+      const cardArrow = tileImages.get('combat.combat_arrow_pointing_up');
       if (cardArrow) {
         ctx.drawImage(cardArrow, (cardCols[0] + 0.9) * tileSize, cardCursorRow * tileSize, tileSize, tileSize);
       } else {

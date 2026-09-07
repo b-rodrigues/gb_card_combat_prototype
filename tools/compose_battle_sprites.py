@@ -1,13 +1,19 @@
 """Compose assets/battle_sprites.png (canonical battle-art source sheet).
 
-Reads the curated 32x32 editor PNGs (4x pixel art), downscales NEAREST to
-8x8, and lays out 3 cols x N rows of cells:
+Reads the CSV-slug editor PNGs (tools/level_editor/public/tiles/combat/,
+sliced fresh from assets/combat-tile.png via import_tileset.py --tileset-id
+combat), downscales NEAREST to 8x8, and lays out 3 cols x N rows of cells:
 
-  row 0: slime_top_*      row 5: boss_horns_*
-  row 1: slime_bottom_*   row 6: boss_head_*
-  row 2: slime_anim_*     row 7: boss_torso_*
-  row 3: bat_0_*          row 8: mimic_body
-  row 4: bat_1_*          row 9: blank
+  row 0: slime top_*       row 6: boss head_*
+  row 1: slime bottom_*    row 7: boss torso_*
+  row 2: slime anim_*      row 8: mimic top_*
+  row 3: bat top_*         row 9: mimic bottom_*
+  row 4: bat bottom_*      row 10: blank
+  row 5: boss horns_*
+
+The boss glow-eyes cells (combat_*_boss_2) are intentionally excluded:
+they use 5 colors, over the 4-color 2bpp tile budget (make gfx fails).
+They ship when the art is reduced to 4 colors.
 
 Deterministic: rerunning reproduces the sheet byte-identically.
 """
@@ -16,15 +22,16 @@ from PIL import Image
 
 PUB = 'tools/level_editor/public/tiles/combat'
 LAYOUT = [
-    ['slime_top_left', 'slime_top_mid', 'slime_top_right'],
-    ['slime_bottom_left', 'slime_bottom_mid', 'slime_bottom_right'],
-    ['slime_anim_left', 'slime_anim_mid', 'slime_anim_right'],
-    ['bat_0_left', 'bat_0_body', 'bat_0_right'],
-    ['bat_1_left', 'bat_1_body', 'bat_1_right'],
-    ['boss_horns_left', 'boss_horns_mid', 'boss_horns_right'],
-    ['boss_head_left', 'boss_head_mid', 'boss_head_right'],
-    ['boss_torso_left', 'boss_torso_mid', 'boss_torso_right'],
-    ['mimic_body', None, None],
+    ['combat_top_left_slime', 'combat_top_middle_slime', 'combat_top_right_slime'],
+    ['combat_bottom_left_slime', 'combat_bottom_middle_slime', 'combat_bottom_right_slime'],
+    ['combat_top_left_slime_2', 'combat_top_middle_slime_2', 'combat_top_right_slime_2'],
+    ['combat_top_left_bat', 'combat_top_middle_bat', 'combat_top_right_bat'],
+    ['combat_bottom_left_bat', 'combat_bottom_middle_bat', 'combat_bottom_right_bat'],
+    ['combat_top_left_boss', 'combat_top_middle_boss', 'combat_top_right_boss'],
+    ['combat_left_middle_boss', 'combat_middle_center_boss', 'combat_middle_right_boss'],
+    ['combat_bottom_left_boss', 'combat_bottom_middle_boss', 'combat_bottom_right_boss'],
+    ['combat_top_left_mimic', 'combat_top_middle_mimic', 'combat_top_right_mimic'],
+    ['combat_bottom_left_mimic', 'combat_bottom_middle_mimic', 'combat_bottom_right_mimic'],
     [None, None, None],
 ]
 
@@ -38,8 +45,8 @@ for _y, _row in enumerate(LAYOUT):
         if _name is not None:
             TILE_COORDS[_name] = (_x, _y)
 
-# The all-white cell (row 9) pads partial art (bat is 3x1 per frame).
-BLANK_COORD = (0, 9)
+# The all-white cell (row 10) pads partial art (bat is 3x1 per frame).
+BLANK_COORD = (0, 10)
 
 
 def main():

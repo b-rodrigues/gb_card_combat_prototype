@@ -7,8 +7,8 @@
   "height": 3,
   "palette": 1,
   "frame0": [
-    "boss_horns_left", "boss_horns_mid", "boss_horns_right",
-    "boss_head_left", "boss_head_mid", "boss_head_right",
-    "boss_torso_left", "boss_torso_mid", "boss_torso_right"
+    "combat_top_left_boss", "combat_top_middle_boss", "combat_top_right_boss",
+    "combat_left_middle_boss", "combat_middle_center_boss", "combat_middle_right_boss",
+    "combat_bottom_left_boss", "combat_bottom_middle_boss", "combat_bottom_right_boss"
   ]
 }

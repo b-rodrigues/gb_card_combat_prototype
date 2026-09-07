@@ -36,44 +36,48 @@ export interface EnemyTypeListItem {
 
 /** Tiles present in the composed battle sheet (assets/battle_sprites.png).
  *  MUST stay in sync with tools/compose_battle_sprites.py LAYOUT: only
- *  these names resolve to sheet cells for the ROM.  Extra PNGs in
+ *  these names resolve to sheet cells for the ROM.  Names are the CSV slugs
+ *  (import_tileset.py --tileset-id combat): sliced fresh from
+ *  assets/combat-tile.png, never hand-renamed.  Extra PNGs in
  *  public/tiles/combat/ need a LAYOUT entry + compose + make gfx first. */
 export const SHEET_TILE_NAMES: string[] = [
-  'slime_top_left', 'slime_top_mid', 'slime_top_right',
-  'slime_bottom_left', 'slime_bottom_mid', 'slime_bottom_right',
-  'slime_anim_left', 'slime_anim_mid', 'slime_anim_right',
-  'bat_0_left', 'bat_0_body', 'bat_0_right',
-  'bat_1_left', 'bat_1_body', 'bat_1_right',
-  'boss_horns_left', 'boss_horns_mid', 'boss_horns_right',
-  'boss_head_left', 'boss_head_mid', 'boss_head_right',
-  'boss_torso_left', 'boss_torso_mid', 'boss_torso_right',
-  'mimic_body',
+  'combat_top_left_slime', 'combat_top_middle_slime', 'combat_top_right_slime',
+  'combat_bottom_left_slime', 'combat_bottom_middle_slime', 'combat_bottom_right_slime',
+  'combat_top_left_slime_2', 'combat_top_middle_slime_2', 'combat_top_right_slime_2',
+  'combat_top_left_bat', 'combat_top_middle_bat', 'combat_top_right_bat',
+  'combat_bottom_left_bat', 'combat_bottom_middle_bat', 'combat_bottom_right_bat',
+  'combat_top_left_boss', 'combat_top_middle_boss', 'combat_top_right_boss',
+  'combat_left_middle_boss', 'combat_middle_center_boss', 'combat_middle_right_boss',
+  'combat_bottom_left_boss', 'combat_bottom_middle_boss', 'combat_bottom_right_boss',
+  'combat_top_left_mimic', 'combat_top_middle_mimic', 'combat_top_right_mimic',
+  'combat_bottom_left_mimic', 'combat_bottom_middle_mimic', 'combat_bottom_right_mimic',
 ];
 
-/** Every curated combat tile (tools/level_editor/public/tiles/combat/*.png)
+/** Every combat tile (tools/level_editor/public/tiles/combat/*.png)
  *  that the Combat Art Studio brush exposes.  A superset of
  *  SHEET_TILE_NAMES: tiles missing from the composed sheet (cards, icons,
- *  HUD, digits, statuses) are paintable but are flagged "not compiled to
- *  ROM" until a LAYOUT entry + compose + make gfx is added.  Kept in sync
- *  with the directory listing; the source tileset (assets/combat-tile.png,
- *  16x4 = 64 tiles) is described in assets/combat-tileset-description.csv. */
+ *  HUD, digits, statuses, kobold, spider, boss glow-eyes) are paintable but
+ *  are flagged "not compiled to ROM" until a LAYOUT entry + compose +
+ *  make gfx is added.  Names are CSV slugs, kept in sync with the directory
+ *  listing; the source tileset (assets/combat-tile.png, 16x5 = 80 tiles,
+ *  minus 11 blank cells) is described in
+ *  assets/combat-tileset-description.csv. */
 export const COMBAT_BRUSH_NAMES: string[] = [
   ...SHEET_TILE_NAMES,
-  'arrow_up', 'battery_ap', 'card_bottom_left', 'card_bottom_right',
-  'card_mid_center', 'card_mid_left', 'card_mid_right', 'card_slot_blank',
-  'card_top_left', 'card_top_mid', 'card_top_right', 'combat_blank',
-  'deck_cards', 'digit_1', 'digit_2', 'digit_3', 'digit_4',
-  'heart_hp', 'hero', 'icon_bow', 'icon_shield', 'icon_sword',
-  'status_fire', 'status_poison',
-  'tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_0_3', 'tile_0_4', 'tile_0_5',
-  'tile_0_6', 'tile_0_7', 'tile_0_8', 'tile_0_9', 'tile_0_10', 'tile_0_11',
-  'tile_0_12', 'tile_0_13', 'tile_0_14', 'tile_0_15',
-  'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_1_3', 'tile_1_4', 'tile_1_5',
-  'tile_1_6', 'tile_1_7', 'tile_1_8', 'tile_1_9', 'tile_1_10', 'tile_1_11',
-  'tile_1_12', 'tile_1_13', 'tile_1_14', 'tile_1_15',
-  'tile_2_0', 'tile_2_1', 'tile_2_2', 'tile_2_3', 'tile_2_4', 'tile_2_5',
-  'tile_2_6', 'tile_2_7', 'tile_2_8', 'tile_2_9', 'tile_2_10', 'tile_2_11',
-  'tile_2_12', 'tile_2_13', 'tile_2_14', 'tile_2_15',
+  'combat_sword_icon', 'combat_bow_icon', 'combat_shield_icon',
+  'combat_top_left_card_corner', 'combat_top_middle_card', 'combat_top_right_card_corner',
+  'combat_left_card_side', 'combat_right_card_side',
+  'combat_bottom_left_card_corner', 'combat_bottom_middle_card', 'combat_bottom_right_card_corner',
+  'combat_center_card',
+  'combat_one_icon', 'combat_two_icon', 'combat_three_icon', 'combat_four_icon',
+  'combat_poison_status', 'combat_fire_status', 'combat_ice_status',
+  'combat_arrow_pointing_up', 'combat_hp_icon', 'combat_ap_icon',
+  'combat_deck_icon', 'combat_hero_icon',
+  'combat_top_left_kobold', 'combat_top_middle_kobold', 'combat_top_right_kobold',
+  'combat_bottom_left_kobold', 'combat_bottom_middle_kobold', 'combat_bottom_right_kobold',
+  'combat_top_left_spider', 'combat_top_middle_spider', 'combat_top_right_spider',
+  'combat_bottom_left_spider', 'combat_bottom_middle_spider', 'combat_bottom_right_spider',
+  'combat_left_middle_boss_2', 'combat_middle_center_boss_2', 'combat_middle_right_boss_2',
 ];
 
 export const COMBAT_TILE_URL = (name: string) => `/tiles/combat/${name}.png`;

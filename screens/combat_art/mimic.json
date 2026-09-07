@@ -3,13 +3,11 @@
   "id": "mimic",
   "label": "Mimic",
   "order": 3,
-  "width": 1,
-  "height": 1,
+  "width": 3,
+  "height": 2,
   "palette": 2,
   "frame0": [
-    "mimic_body"
-  ],
-  "frame1": [
-    "mimic_body"
+    "combat_top_left_mimic", "combat_top_middle_mimic", "combat_top_right_mimic",
+    "combat_bottom_left_mimic", "combat_bottom_middle_mimic", "combat_bottom_right_mimic"
   ]
 }

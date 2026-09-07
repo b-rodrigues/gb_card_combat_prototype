@@ -7,11 +7,11 @@
   "height": 2,
   "palette": 7,
   "frame0": [
-    "bat_0_left", "bat_0_body", "bat_0_right",
+    "combat_top_left_bat", "combat_top_middle_bat", "combat_top_right_bat",
     null, null, null
   ],
   "frame1": [
-    "bat_1_left", "bat_1_body", "bat_1_right",
+    "combat_bottom_left_bat", "combat_bottom_middle_bat", "combat_bottom_right_bat",
     null, null, null
   ]
 }
