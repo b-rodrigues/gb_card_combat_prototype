@@ -1035,15 +1035,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 const gw = dims?.w || 1;
                 const gh = dims?.h || 1;
                 const per = gw * gh;
-                const frameIdx = (per > 1 ? 0 : animTick % Math.max(1, cells.length));
+                // Multi-tile sprites occupy gw x gh map tiles (like the
+                // ROM's w*h OAM grid); single-tile sprites animate frames.
+                const frames = Math.max(1, Math.floor(cells.length / Math.max(1, per)));
+                const frameIdx = frames > 1 ? animTick % frames : 0;
                 const base = frameIdx * per;
+                const cw = (gw > 1 || gh > 1) ? tileSize : objW / Math.max(1, gw);
+                const chh = (gw > 1 || gh > 1) ? tileSize : objH / Math.max(1, gh);
                 for (let gy = 0; gy < gh; gy++) {
                   for (let gx = 0; gx < gw; gx++) {
                     const cell = cells[base + gy * gw + gx];
                     const img = cell ? owImgs.get(cell) : undefined;
                     if (img && img.complete && img.naturalWidth > 0) {
-                      const cw = objW / gw;
-                      const chh = objH / gh;
                       ctx.imageSmoothingEnabled = false;
                       ctx.drawImage(img, px + gx * cw, py + gy * chh, cw, chh);
                     }

@@ -13,6 +13,8 @@ PUB = 'tools/level_editor/public/tiles/enemies'
 LAYOUT = [
     ['slime_f0', 'slime_f1', 'bat_f0', 'bat_f1'],
     ['boss_ow_tl', 'boss_ow_tr', 'boss_ow_bl', 'boss_ow_br'],
+    ['kobold_f0', 'kobold_f1', 'spider_f0', 'spider_f1'],
+    ['kobold_idle', None, None, None],
 ]
 
 # Tile-name -> sheet (x, y): the single source of truth for enemy

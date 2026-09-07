@@ -82,6 +82,56 @@
       "ascii": "B",
       "image_url": "/tiles/enemies/boss_ow_br.png",
       "category": "enemy"
+    },
+    {
+      "id": "kobold_f0",
+      "label": "Kobold frame 0",
+      "gb_constant": "TILE_ENEMIES_KOBOLD_F0",
+      "walkable": false,
+      "color": "#8a6d3b",
+      "ascii": "K",
+      "image_url": "/tiles/enemies/kobold_f0.png",
+      "category": "enemy"
+    },
+    {
+      "id": "kobold_f1",
+      "label": "Kobold frame 1",
+      "gb_constant": "TILE_ENEMIES_KOBOLD_F1",
+      "walkable": false,
+      "color": "#8a6d3b",
+      "ascii": "K",
+      "image_url": "/tiles/enemies/kobold_f1.png",
+      "category": "enemy"
+    },
+    {
+      "id": "kobold_idle",
+      "label": "Kobold idle",
+      "gb_constant": "TILE_ENEMIES_KOBOLD_IDLE",
+      "walkable": false,
+      "color": "#8a6d3b",
+      "ascii": "K",
+      "image_url": "/tiles/enemies/kobold_idle.png",
+      "category": "enemy"
+    },
+    {
+      "id": "spider_f0",
+      "label": "Spider frame 0",
+      "gb_constant": "TILE_ENEMIES_SPIDER_F0",
+      "walkable": false,
+      "color": "#555555",
+      "ascii": "S",
+      "image_url": "/tiles/enemies/spider_f0.png",
+      "category": "enemy"
+    },
+    {
+      "id": "spider_f1",
+      "label": "Spider frame 1",
+      "gb_constant": "TILE_ENEMIES_SPIDER_F1",
+      "walkable": false,
+      "color": "#555555",
+      "ascii": "S",
+      "image_url": "/tiles/enemies/spider_f1.png",
+      "category": "enemy"
     }
   ]
 }
