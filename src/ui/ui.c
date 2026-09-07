@@ -161,7 +161,8 @@ void ui_init(void)
      * icons) stream from Bank 3 (generated card_frame_tiles.h, make gfx)
      * through the banked loader -- the fixed bank stays lean (AGENTS.md
      * 52.18).  VRAM: frames 118-126, bar 117/127, HUD icons overwrite the
-     * atlas data at 113/114/116.  Runs with the LCD still off. */
+     * atlas data at 113/114/116 (sheet tiles 11-13; the trailing pad tile
+     * 14 is never loaded).  Runs with the LCD still off. */
     g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&ui_card_tiles_load_banked;
     banked_call_run();

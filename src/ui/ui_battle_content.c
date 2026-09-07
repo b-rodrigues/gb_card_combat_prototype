@@ -792,7 +792,11 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
  * mapping the battle art loader uses.  VRAM: frames 118-126, bar
  * filled 117 / empty 127, HUD icons overwrite the atlas data at
  * 113 (hp/heart), 114 (ap/bolt) and 116 (deck). */
-static const uint8_t s_card_tile_vram_ids[15] = {
+/* Sheet order (compose_card_frames.py): frames are tiles 0-8 (VRAM
+ * 118-126), filled is tile 9 (VRAM 117), empty is tile 10 (VRAM 127),
+ * HUD icons are tiles 11-13 (VRAM 113/114/116).  The trailing blank pad
+ * (sheet tile 14) is never loaded. */
+static const uint8_t s_card_tile_vram_ids[14] = {
     118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
     117, 127,                                     /* bar filled, empty */
     113, 114, 116,                                /* HUD: hp, ap, deck */
@@ -804,7 +808,7 @@ void ui_card_tiles_load_banked(void)
     volatile uint8_t *dst;
     const uint8_t *src;
 
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 14; i++) {
         dst = (volatile uint8_t *)(0x8000u + ((uint16_t)s_card_tile_vram_ids[i] << 4));
         src = card_frame_tiles + ((uint16_t)i << 4);
         for (j = 0; j < 16; j++) {

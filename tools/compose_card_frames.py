@@ -20,14 +20,15 @@ LAYOUT = [
     ['combat_top_left_card_corner', 'combat_top_middle_card', 'combat_top_right_card_corner'],
     ['combat_left_card_side', 'combat_center_card', 'combat_right_card_side'],
     ['combat_bottom_left_card_corner', 'combat_bottom_middle_card', 'combat_bottom_right_card_corner'],
-    # Turn-timer bar segments (HUD skin): filled / empty; the blank pad cell
-    # keeps the 3-column sheet layout.  VRAM: frames at UI_TILE_CARD_FRAME_BASE
-    # (118-126), filled at UI_TILE_TIMER_FILLED (117), empty at 127.
-    ['combat_timer_bar_filled', 'combat_timer_bar_empty', None],
-    # HUD icons from the combat tileset (combat-tileset-description.csv):
-    # hp / ap / deck.  ui_init overwrites the atlas heart/bolt/deck tile
-    # DATA at the same VRAM ids (113/114/116) -- no extra VRAM slots.
-    ['combat_hp_icon', 'combat_ap_icon', 'combat_deck_icon'],
+    # Turn-timer bar segments (HUD skin): filled / empty, then the HUD
+    # icons from the combat tileset (combat-tileset-description.csv):
+    # hp / ap / deck.  VRAM: frames at UI_TILE_CARD_FRAME_BASE (118-126),
+    # filled at UI_TILE_TIMER_FILLED (117), empty at 127, HUD icons
+    # overwrite the atlas data at 113/114/116.  The trailing blank pad
+    # keeps the 3-column sheet layout; the loader consumes tiles 0-13
+    # only (pad = sheet tile 14, never loaded).
+    ['combat_timer_bar_filled', 'combat_timer_bar_empty', 'combat_hp_icon'],
+    ['combat_ap_icon', 'combat_deck_icon', None],
 ]
 
 
