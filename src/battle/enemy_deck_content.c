@@ -40,6 +40,13 @@ static const Card s_kobold_deck[] = {
     { BATTLE_CARD_TYPE_SWORD, 3, 0xFF },
     { BATTLE_CARD_TYPE_HEAL,  2, 0xFF },
 };
+static const Card s_mimic_deck[] = {
+    { BATTLE_CARD_TYPE_SWORD, 3, 0xFF },
+    { BATTLE_CARD_TYPE_SWORD, 3, 0xFF },
+    { BATTLE_CARD_TYPE_SWORD, 4, 0xFF },
+    { BATTLE_CARD_TYPE_SWORD, 2, 0xFF },
+    { BATTLE_CARD_TYPE_HEAL,  3, 0xFF },
+};
 
 void enemy_deck_setup_banked(void)
 {
@@ -54,7 +61,9 @@ void enemy_deck_setup_banked(void)
     case 1:  src = s_slime_deck;      count = 4; break;
     case 2:  src = s_bat_deck;        count = 5; break;
     case 3:  src = s_slime_trio_deck; count = 5; break;
-    /* BATTLE_KOBOLD = 5 (BATTLE_MIMIC = 4 intentionally has no deck). */
+    /* BATTLE_MIMIC = 4, BATTLE_KOBOLD = 5 (numeric cases match the
+     * BattleId enum; see actor.h). */
+    case 4:  src = s_mimic_deck;      count = 5; break;
     case 5:  src = s_kobold_deck;     count = 4; break;
     }
 

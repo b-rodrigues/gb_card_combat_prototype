@@ -134,6 +134,33 @@
       }
     },
     {
+      "id": "castle_mimic",
+      "type": "enemy",
+      "position": {
+        "x": 12,
+        "y": 10
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_MIMIC",
+        "enemy_type": "mimic",
+        "display_name": "MIMIC",
+        "actor_id": 10,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "M",
+        "hp": 30,
+        "max_hp": 30,
+        "gold_reward": 0,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_MIMIC",
+        "ai": "AI_NONE"
+      }
+    },
+    {
       "id": "slime_lord",
       "type": "enemy",
       "overworld_sprite": "actors.actors_boss_top_left_corner",
