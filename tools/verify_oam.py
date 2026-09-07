@@ -180,26 +180,29 @@ def verify_hostile_sprites(sess):
     sess.step(2)
     # Actor slot 0 (SLIME) = OAM entry 1; slot 1 (BAT) = OAM entry 2.
     # Shared per-enemy sprites (ENEMY_OW_BASE 100): blob order is sorted
-    # enemy ids with overworld (bat, kobold, slime, slime_lord).
-    # bat frames 100|101, slime frames 104|105.
+    # enemy ids with overworld (bat, kobold, mimic, slime, slime_lord).
+    # bat frames 100|101, slime frames 105|106.
     slime = shadow_oam_slot_tile(sess, 1)
     bat = shadow_oam_slot_tile(sess, 2)
-    check("south_field slime renders as shared slime OAM tile (104|105)",
-          1, (104 <= slime <= 105))
+    check("south_field slime renders as shared slime OAM tile (105|106)",
+          1, (105 <= slime <= 106))
     check("south_field bat renders as shared bat OAM tile (100|101)",
           1, (100 <= bat <= 101))
 
-    print("== Boss sprite rendering (castle: bat + 2x2 boss OAM sprite) ==")
+    print("== Boss sprite rendering (castle: bat + mimic + 2x2 boss OAM sprite) ==")
     boss = load_scenario(sess, "boss_appears.json")
     sess.load_scenario(boss)
     sess.step(1)
     # Actor slot 0 (BAT) = OAM entry 1; slot 1 (MIMIC, 1x1) = entry 2;
     # slot 2 (SLIME_LORD/BOSS) = entries 3-6 (a 2x2 grid of four
-    # shared-enemy OAM tiles).  Boss blob base = 106.
+    # shared-enemy OAM tiles).  Mimic tile = 104.  Boss blob base = 107.
     castle_bat = shadow_oam_slot_tile(sess, 1)
+    castle_mimic = shadow_oam_slot_tile(sess, 2)
     check("castle bat renders as shared bat OAM tile (100|101)",
           1, (100 <= castle_bat <= 101))
-    # Boss 2x2 OAM grid at actor (10,5): tiles 106-109 (boss_ow_tl/tr/bl/br),
+    check("castle mimic renders as shared mimic OAM tile (104)",
+          104, castle_mimic)
+    # Boss 2x2 OAM grid at actor (10,5): tiles 107-110 (boss_ow_tl/tr/bl/br),
     # positions span a 2x2 area (row 0 at world y, row 1 at world y+1, cols
     # at world x and x+1).  The four OAM entries must be present and laid
     # out as a grid (same x for a column, y increasing by 8 down a row).
@@ -211,9 +214,9 @@ def verify_hostile_sprites(sess):
     t1 = shadow_oam_slot_tile(sess, 4)
     t2 = shadow_oam_slot_tile(sess, 5)
     t3 = shadow_oam_slot_tile(sess, 6)
-    check("boss renders as shared boss OAM tiles (106|107|108|109)",
-          1, (106 <= t0 <= 109 and 106 <= t1 <= 109 and
-              106 <= t2 <= 109 and 106 <= t3 <= 109))
+    check("boss renders as shared boss OAM tiles (107|108|109|110)",
+          1, (107 <= t0 <= 110 and 107 <= t1 <= 110 and
+              107 <= t2 <= 110 and 107 <= t3 <= 110))
     check("boss is a 2x2 OAM grid (top row y, bottom row y+8)",
           1, (boss0 == boss1 and boss2 == boss3 and
               boss2 == boss0 + 8 and boss0 > 0))

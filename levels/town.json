@@ -68,8 +68,8 @@
       "y": 7,
       "facing": "RIGHT",
       "animation_frames": [
-        "forest.forest_hero_frame_1_with_green_forest_background",
-        "forest.forest_hero_frame_2_with_green_forest_background"
+        "actors.actors_hero_frame_1",
+        "actors.actors_hero_frame_2"
       ]
     }
   },

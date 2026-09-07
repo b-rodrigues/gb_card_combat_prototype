@@ -631,8 +631,8 @@
       "y": 7,
       "facing": "LEFT",
       "animation_frames": [
-        "forest.forest_hero_frame_1_with_green_forest_background",
-        "forest.forest_hero_frame_2_with_green_forest_background"
+        "actors.actors_hero_frame_1",
+        "actors.actors_hero_frame_2"
       ]
     }
   },
@@ -669,10 +669,10 @@
     {
       "id": "field_slime",
       "type": "enemy",
-      "overworld_sprite": "forest.forest_enemy_kobold_frame_1",
+      "overworld_sprite": "actors.actors_slime_frame_1",
       "animation_frames": [
-        "forest.forest_enemy_kobold_frame_1",
-        "forest.forest_enemy_kobold_frame_2"
+        "actors.actors_slime_frame_1",
+        "actors.actors_slime_frame_2"
       ],
       "position": {
         "x": 14,

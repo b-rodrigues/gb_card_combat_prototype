@@ -339,6 +339,7 @@ def emit_palette(entries, tilesets, const_by_value):
             15: 6,  # Chest (gold)
         },
         "desolate_landscape": {
+            32: 7,  # Plain floor (slate rock / grey)
             37: 1,  # Campfire frame 1 (fire)
             38: 1,  # Campfire frame 2 (fire)
             43: 6,  # Treasure chest (gold)

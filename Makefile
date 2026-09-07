@@ -143,9 +143,9 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
 		--palette auto --anchor-color "#938da1" --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
-	# Sprite tiles from desolate_landscape.png
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
-		--palette auto --tile-coords "1,2 2,2" \
+	# Player sprite tiles from assets/hero_sprites.png (hero frames 1 & 2)
+	@python3 tools/png2gb.py assets/hero_sprites.png --name hero_desolate_sprite_tile \
+		--palette auto \
 		-o $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
 	# ── Castle tileset (assets/castle-tile.png) ─────────
 	# Full world sheet (g_tileset_castle).  Sized by the source PNG.

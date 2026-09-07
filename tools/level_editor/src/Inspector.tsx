@@ -1537,8 +1537,8 @@ export const Inspector: React.FC<InspectorProps> = ({
                     onUpdateSpawn({
                       ...level.spawn,
                       animation_frames: [
-                        'desolate_landscape.desolate_hero_01',
-                        'desolate_landscape.desolate_hero_02',
+                        'actors.actors_hero_frame_1',
+                        'actors.actors_hero_frame_2',
                       ],
                     });
                   }}

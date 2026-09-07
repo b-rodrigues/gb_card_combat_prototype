@@ -132,6 +132,16 @@
       "ascii": "S",
       "image_url": "/tiles/enemies/spider_f1.png",
       "category": "enemy"
+    },
+    {
+      "id": "mimic_f0",
+      "label": "Mimic frame 0",
+      "gb_constant": "TILE_ENEMIES_MIMIC_F0",
+      "walkable": false,
+      "color": "#826d37",
+      "ascii": "T",
+      "image_url": "/tiles/enemies/mimic_f0.png",
+      "category": "enemy"
     }
   ]
 }

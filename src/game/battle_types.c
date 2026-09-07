@@ -76,11 +76,11 @@ static const EnemyTypeDef g_enemy_type_mimic = {
     3,
     2,
     42,
-    255,
-    0,
-    0,
-    0,
-    0
+    104,
+    1,
+    1,
+    1,
+    2
 };
 
 static const EnemyTypeDef g_enemy_type_slime = {
@@ -99,7 +99,7 @@ static const EnemyTypeDef g_enemy_type_slime = {
     3,
     2,
     0,
-    104,
+    105,
     1,
     1,
     2,
@@ -122,7 +122,7 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     3,
     3,
     24,
-    106,
+    107,
     2,
     2,
     1,
@@ -162,4 +162,4 @@ const EnemyTypeDef* const g_enemy_types[6] = {
 };
 const uint8_t g_enemy_type_count = 6;
 
-const uint8_t g_enemy_ow_tile_count = 10;
+const uint8_t g_enemy_ow_tile_count = 11;

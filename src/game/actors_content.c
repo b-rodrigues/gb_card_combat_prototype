@@ -122,7 +122,7 @@ static const WorldActorDefinition g_castle_actors[] = {
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'T', "MIMIC", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_MIMIC, AI_NONE, 30, 30, 0, CURRENCY_ID_GOLD,
         0, 0,
-         SPRITE_KIND_ASCII, 0xFF, 1
+         SPRITE_KIND_ENEMY, 2, 1
     },
     {
         6, ENTITY_ID_SLIME_LORD, 10, 5, DIRECTION_DOWN,

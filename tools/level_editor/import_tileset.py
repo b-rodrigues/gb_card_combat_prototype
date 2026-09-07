@@ -68,11 +68,11 @@ def infer_category(description):
         return "wall"
     if "tree" in d or "stump" in d or "rock" in d or "treetop" in d or "treetrunk" in d:
         return "nature"
-    if "kobold" in d or "slime" in d or "bats" in d or "spider" in d or "boss" in d:
+    if "kobold" in d or "slime" in d or "bats" in d or "spider" in d or "boss" in d or "mimic" in d:
         return "enemy"
     if "guard" in d or "wizard" in d or "merchant" in d or "mayor" in d or "dog" in d:
         return "npc"
-    if "fire" in d:
+    if "fire" in d or "chest" in d:
         return "object"
     if "exit" in d:
         return "terrain"

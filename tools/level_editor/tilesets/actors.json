@@ -204,24 +204,24 @@
       "category": "enemy"
     },
     {
-      "id": "actors_black_emptyness_1",
-      "label": "empty",
-      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "id": "actors_boss_top_left_corner_2",
+      "label": "boss top left corner 2",
+      "gb_constant": "TILE_ACTORS_BOSS_TOP_LEFT_CORNER_2",
       "walkable": false,
-      "color": "#000000",
+      "color": "#16100d",
       "ascii": "#",
-      "image_url": "/tiles/actors/actors_black_emptyness_1.png",
-      "category": "object"
+      "image_url": "/tiles/actors/actors_boss_top_left_corner_2.png",
+      "category": "enemy"
     },
     {
-      "id": "actors_black_emptyness_2",
-      "label": "empty",
-      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "id": "actors_boss_top_right_corner_2",
+      "label": "boss top right corner 2",
+      "gb_constant": "TILE_ACTORS_BOSS_TOP_RIGHT_CORNER_2",
       "walkable": false,
-      "color": "#000000",
+      "color": "#30190f",
       "ascii": "#",
-      "image_url": "/tiles/actors/actors_black_emptyness_2.png",
-      "category": "object"
+      "image_url": "/tiles/actors/actors_boss_top_right_corner_2.png",
+      "category": "enemy"
     },
     {
       "id": "actors_boss_bottom_left_corner",
@@ -242,6 +242,126 @@
       "ascii": "#",
       "image_url": "/tiles/actors/actors_boss_bottom_right_corner.png",
       "category": "enemy"
+    },
+    {
+      "id": "actors_chest_open",
+      "label": "chest open",
+      "gb_constant": "TILE_ACTORS_CHEST_OPEN",
+      "walkable": false,
+      "color": "#766234",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_chest_open.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_chest_closed",
+      "label": "chest closed",
+      "gb_constant": "TILE_ACTORS_CHEST_CLOSED",
+      "walkable": false,
+      "color": "#7f6938",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_chest_closed.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_chest_mimic",
+      "label": "chest mimic",
+      "gb_constant": "TILE_ACTORS_CHEST_MIMIC",
+      "walkable": false,
+      "color": "#826d37",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_chest_mimic.png",
+      "category": "enemy"
+    },
+    {
+      "id": "actors_black_emptyness_1",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_1.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_black_emptyness_2",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_2.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_black_emptyness_3",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_3.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_black_emptyness_4",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_4.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_black_emptyness_5",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_5.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_boss_bottom_left_corner_2",
+      "label": "boss bottom left corner 2",
+      "gb_constant": "TILE_ACTORS_BOSS_BOTTOM_LEFT_CORNER_2",
+      "walkable": false,
+      "color": "#141414",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_boss_bottom_left_corner_2.png",
+      "category": "enemy"
+    },
+    {
+      "id": "actors_boss_bottom_right_corner_2",
+      "label": "boss bottom right corner 2",
+      "gb_constant": "TILE_ACTORS_BOSS_BOTTOM_RIGHT_CORNER_2",
+      "walkable": false,
+      "color": "#1d1a15",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_boss_bottom_right_corner_2.png",
+      "category": "enemy"
+    },
+    {
+      "id": "actors_black_emptyness_6",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_6.png",
+      "category": "object"
+    },
+    {
+      "id": "actors_black_emptyness_7",
+      "label": "empty",
+      "gb_constant": "TILE_ACTORS_BLACK_EMPTYNESS",
+      "walkable": false,
+      "color": "#000000",
+      "ascii": "#",
+      "image_url": "/tiles/actors/actors_black_emptyness_7.png",
+      "category": "object"
     }
   ]
 }

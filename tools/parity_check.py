@@ -200,7 +200,17 @@ def check_anim_frames(levels_by_id, tilesets):
 
         def collect(frames, where):
             for f in frames or []:
-                short = f.split(".")[-1]
+                if "." in f:
+                    ts_name, short = f.split(".", 1)
+                else:
+                    ts_name, short = tileset_id, f
+                if ts_name == "actors":
+                    actors_ts = tilesets.get("actors", {})
+                    actors_by_id = {t["id"]: t for t in actors_ts.get("tiles", [])}
+                    if short not in actors_by_id:
+                        fail("%s %s: actor frame '%s' not in manifest 'actors'"
+                             % (sid, where, f))
+                    continue
                 refs.append((short, where))
                 if short not in by_id:
                     fail("%s %s: animation frame '%s' not in manifest '%s'"

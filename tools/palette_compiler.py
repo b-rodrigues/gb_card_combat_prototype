@@ -329,6 +329,7 @@ def write_manifest(tileset_id: str, manifest: Dict[str, Any]) -> Path:
 # Per-tileset curated overrides (e.g. animated fire frames)
 TILE_PALETTE_OVERRIDES = {
     "desolate_landscape": {
+        32: 7,  # Plain floor (slate rock / grey)
         37: 1,  # Campfire frame 1 (fire)
         38: 1,  # Campfire frame 2 (fire)
     },
