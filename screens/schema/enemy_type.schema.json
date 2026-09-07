@@ -98,7 +98,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["AI_NONE", "AI_PATROL_CROSS", "AI_PATROL_CIRCLE"]
+        "enum": ["AI_NONE", "AI_PATROL_CROSS", "AI_PATROL_CIRCLE", "AI_CHASE"]
       },
       "description": "Valid AI types for this enemy type."
     },

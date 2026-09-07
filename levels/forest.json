@@ -113,6 +113,26 @@
       }
     },
     {
+      "id": "forest_kobold",
+      "type": "enemy",
+      "position": { "x": 4, "y": 10 },
+      "properties": {
+        "entity_id": "ENTITY_ID_KOBOLD",
+        "enemy_type": "kobold",
+        "display_name": "KOBOLD",
+        "actor_id": 9,
+        "facing": "DOWN",
+        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "visual": "K",
+        "hp": 12,
+        "max_hp": 12,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_KOBOLD",
+        "ai": "AI_CHASE"
+      }
+    },
+    {
       "id": "amulet_pickup",
       "type": "item",
       "overworld_sprite": "forest.forest_treasure_chest_forest",

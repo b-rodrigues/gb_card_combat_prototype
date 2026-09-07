@@ -179,12 +179,13 @@ def verify_hostile_sprites(sess):
     sess.load_scenario(south)
     sess.step(2)
     # Actor slot 0 (SLIME) = OAM entry 1; slot 1 (BAT) = OAM entry 2.
-    # Shared per-enemy sprites (ENEMY_OW_BASE 100): slime frames 102|103,
-    # bat frames 100|101 -- one transparent sprite per type, every world.
+    # Shared per-enemy sprites (ENEMY_OW_BASE 100): blob order is sorted
+    # enemy ids with overworld (bat, kobold, slime, slime_lord).
+    # bat frames 100|101, slime frames 104|105.
     slime = shadow_oam_slot_tile(sess, 1)
     bat = shadow_oam_slot_tile(sess, 2)
-    check("south_field slime renders as shared slime OAM tile (102|103)",
-          1, (102 <= slime <= 103))
+    check("south_field slime renders as shared slime OAM tile (104|105)",
+          1, (104 <= slime <= 105))
     check("south_field bat renders as shared bat OAM tile (100|101)",
           1, (100 <= bat <= 101))
 
@@ -193,11 +194,11 @@ def verify_hostile_sprites(sess):
     sess.load_scenario(boss)
     sess.step(1)
     # Actor slot 0 (BAT) = OAM entry 1; slot 1 (SLIME_LORD/BOSS) = entries 2-5
-    # (a 2x2 grid of four shared-enemy OAM tiles).
+    # (a 2x2 grid of four shared-enemy OAM tiles).  Boss blob base = 106.
     castle_bat = shadow_oam_slot_tile(sess, 1)
     check("castle bat renders as shared bat OAM tile (100|101)",
           1, (100 <= castle_bat <= 101))
-    # Boss 2x2 OAM grid at actor (10,5): tiles 104-107 (boss_ow_tl/tr/bl/br),
+    # Boss 2x2 OAM grid at actor (10,5): tiles 106-109 (boss_ow_tl/tr/bl/br),
     # positions span a 2x2 area (row 0 at world y, row 1 at world y+1, cols
     # at world x and x+1).  The four OAM entries must be present and laid
     # out as a grid (same x for a column, y increasing by 8 down a row).
@@ -209,9 +210,9 @@ def verify_hostile_sprites(sess):
     t1 = shadow_oam_slot_tile(sess, 3)
     t2 = shadow_oam_slot_tile(sess, 4)
     t3 = shadow_oam_slot_tile(sess, 5)
-    check("boss renders as shared boss OAM tiles (104|105|106|107)",
-          1, (104 <= t0 <= 107 and 104 <= t1 <= 107 and
-              104 <= t2 <= 107 and 104 <= t3 <= 107))
+    check("boss renders as shared boss OAM tiles (106|107|108|109)",
+          1, (106 <= t0 <= 109 and 106 <= t1 <= 109 and
+              106 <= t2 <= 109 and 106 <= t3 <= 109))
     check("boss is a 2x2 OAM grid (top row y, bottom row y+8)",
           1, (boss0 == boss1 and boss2 == boss3 and
               boss2 == boss0 + 8 and boss0 > 0))

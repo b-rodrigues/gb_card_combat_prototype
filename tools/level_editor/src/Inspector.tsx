@@ -2031,9 +2031,10 @@ export const Inspector: React.FC<InspectorProps> = ({
                           })
                         }
                       >
-                        <option value="AI_NONE">AI_NONE</option>
-                        <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
-                        <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
+<option value="AI_NONE">AI_NONE</option>
+                      <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
+                      <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
+                      <option value="AI_CHASE">AI_CHASE</option>
                       </select>
                     </div>
                     <div className="form-group">

@@ -37,6 +37,29 @@ static const EnemyTypeDef g_enemy_type_bat = {
     0
 };
 
+static const EnemyTypeDef g_enemy_type_kobold = {
+    "kobold",
+    "Kobold",
+    0,
+    "KOBOLD",
+    12,
+    12,
+    "BATTLE_KOBOLD",
+    8,
+    CURRENCY_ID_GOLD,
+    255,
+    0,
+    0,
+    0,
+    0,
+    0,
+    102,
+    1,
+    1,
+    2,
+    2
+};
+
 static const EnemyTypeDef g_enemy_type_mimic = {
     "mimic",
     "Mimic",
@@ -76,7 +99,7 @@ static const EnemyTypeDef g_enemy_type_slime = {
     3,
     2,
     0,
-    102,
+    104,
     1,
     1,
     2,
@@ -99,7 +122,7 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     3,
     3,
     24,
-    104,
+    106,
     2,
     2,
     1,
@@ -129,13 +152,14 @@ static const EnemyTypeDef g_enemy_type_spider = {
     0
 };
 
-const EnemyTypeDef* const g_enemy_types[5] = {
+const EnemyTypeDef* const g_enemy_types[6] = {
     &g_enemy_type_bat,
+    &g_enemy_type_kobold,
     &g_enemy_type_mimic,
     &g_enemy_type_slime,
     &g_enemy_type_slime_lord,
     &g_enemy_type_spider,
 };
-const uint8_t g_enemy_type_count = 5;
+const uint8_t g_enemy_type_count = 6;
 
-const uint8_t g_enemy_ow_tile_count = 8;
+const uint8_t g_enemy_ow_tile_count = 10;

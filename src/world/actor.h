@@ -35,14 +35,16 @@ typedef enum {
     BATTLE_SLIME = 1,
     BATTLE_BAT = 2,
     BATTLE_SLIME_TRIO = 3,
-    BATTLE_MIMIC = 4
+    BATTLE_MIMIC = 4,
+    BATTLE_KOBOLD = 5
 } BattleId;
 
 /* Overworld autonomous patrol/AI behavior type. */
 typedef enum {
     AI_NONE          = 0,
     AI_PATROL_CIRCLE = 1,   /* Clockwise 2x2 circle around spawn (Bats) */
-    AI_PATROL_CROSS  = 2    /* + cross pattern around spawn (Slimes) */
+    AI_PATROL_CROSS  = 2,   /* + cross pattern around spawn (Slimes) */
+    AI_CHASE         = 3    /* Step toward the player every AI tick (Kobolds) */
 } ActorAiType;
 
 /* Static, scene-owned actor configuration.  No mutable gameplay state.
