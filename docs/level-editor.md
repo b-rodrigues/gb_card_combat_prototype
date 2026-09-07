@@ -1030,11 +1030,11 @@ The web editor must never be a stale snapshot of the JSON:
   Full hud_layout-driven positioning beyond the art rows is still future
   work; see `docs/BATTLE_SCREENS_COMPILER_ISSUE.md`.
 - Enemy battle art: `screens/enemy_types/*.json` `sprite: { art, frames }`
-  selects a 3x2 art set from `assets/battle_sprites.png` (composed by
-  `tools/compose_battle_sprites.py` from the curated combat PNGs; cell
-  order pinned by `ART_SETS` in `battle_compile.py` and mirrored by the
+  selects a variable-size art set from `assets/battle_sprites.png` (composed
+  by `tools/compose_battle_sprites.py` from the curated combat PNGs; cell
+  order pinned by the per-set `width`/`height` and mirrored by the
   `make gfx` rule).  The bank-4 loader (`battle_art_load_banked`)
-  resolves art per battle, streams 12 tiles per enemy slot into BG tiles
+  resolves art per battle, streams w*h tiles per enemy slot into BG tiles
   at battle entry (LCD-off), and the bank-3 stamper draws them at the
   compiled hud_layout rows (HP row 1, art rows 3-4, caret row 5).
   Per-enemy art lives in WRAM globals, never in `Battle` (struct growth

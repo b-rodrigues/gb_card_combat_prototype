@@ -60,7 +60,9 @@ typedef struct EnemyTypeDef {
     uint8_t art_h;  // combat art height in tiles (2 for the built-in sets; up to 4)
     uint16_t art_offset;  // blob tile offset of this set's frame0 in battle_enemy_art.h
     uint8_t ow_tile;  // shared overworld OAM base tile (ENEMY_OW_BASE + blob offset), 0xFF = legacy SPRITE_KIND path
-    uint8_t ow_frames;  // overworld animation frames (1..2, 0 when ow_tile is 0xFF)
+    uint8_t ow_w;  // overworld sprite width in tiles (1 = single-tile sprite, 2 = 2x2 grid)
+    uint8_t ow_h;  // overworld sprite height in tiles (1 = single-tile sprite, 2 = 2x2 grid)
+    uint8_t ow_frames;  // overworld animation frames (cells / (ow_w*ow_h), 0 when ow_tile is 0xFF)
     uint8_t ow_palette;  // CGB OAM palette index
 } EnemyTypeDef;
 

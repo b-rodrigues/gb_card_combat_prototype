@@ -55,67 +55,14 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
   },
   {
     type: 'enemy',
-    label: 'Enemy / Monster',
-    defaultId: 'enemy_slime',
+    label: 'Enemy',
+    defaultId: 'enemy',
     color: '#e74c3c',
     icon: '👾',
     defaultProps: {
-      display_name: 'SLIME',
-      battle: 'BATTLE_SLIME',
-      ai: 'AI_PATROL_CROSS',
-      overworld_sprite: 'combat.slime_bottom_mid',
-      battle_sprite: 'combat.slime_bottom_mid',
-      battle_name: 'SLIME',
-      animation_frames: ['combat.slime_bottom_mid', 'combat.slime_anim_mid']
-    }
-  },
-  {
-    type: 'enemy',
-    label: 'Bat Enemy (Animated)',
-    defaultId: 'enemy_bat',
-    color: '#9b59b6',
-    icon: '🦇',
-    defaultProps: {
-      display_name: 'BAT',
-      battle: 'BATTLE_BAT',
-      ai: 'AI_PATROL_CIRCLE',
-      overworld_sprite: 'combat.bat_0_body',
-      battle_sprite: 'combat.bat_0_body',
-      battle_name: 'CAVE BAT',
-      animation_frames: ['combat.bat_0_body', 'combat.bat_1_body']
-    }
-  },
-  {
-    type: 'enemy',
-    label: 'Boss Enemy (9x9 Meta-Tile)',
-    defaultId: 'enemy_boss',
-    color: '#8e44ad',
-    icon: '👑',
-    defaultProps: {
-      display_name: 'LORD GIAUSAR',
-      battle: 'BATTLE_BOSS',
-      ai: 'AI_NONE',
-      is_boss: true,
-      sprite_width: 9,
-      sprite_height: 9,
-      overworld_sprite: 'combat.boss_head_mid',
-      battle_sprite: 'combat.boss_head_mid',
-      battle_name: 'LORD GIAUSAR'
-    }
-  },
-  {
-    type: 'enemy',
-    label: 'Mimic (Chest Trap)',
-    defaultId: 'enemy_mimic',
-    color: '#8e44ad',
-    icon: '🎭',
-    defaultProps: {
-      display_name: 'CHEST',
-      battle: 'BATTLE_MIMIC',
-      ai: 'AI_NONE',
-      overworld_sprite: 'forest.forest_treasure_chest_forest',
-      battle_sprite: 'forest.forest_treasure_chest_forest',
-      battle_name: 'MIMIC'
+      display_name: 'ENEMY',
+      battle: 'BATTLE_NONE',
+      ai: 'AI_PATROL_CROSS'
     }
   },
   {

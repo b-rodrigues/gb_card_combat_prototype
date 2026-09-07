@@ -3,7 +3,7 @@
   "id": "mimic",
   "label": "Mimic",
   "category": "elite",
-  "sprite": { "art": "chest", "frames": 1 },
+  "sprite": { "art": "mimic", "frames": 1 },
   "name": "MIMIC",
   "hp": 30,
   "max_hp": 30,

@@ -188,27 +188,40 @@ def verify_hostile_sprites(sess):
     check("south_field bat renders as shared bat OAM tile (100|101)",
           1, (100 <= bat <= 101))
 
-    print("== Boss sprite rendering (castle: bat + 2x2 boss block) ==")
+    print("== Boss sprite rendering (castle: bat + 2x2 boss OAM sprite) ==")
     boss = load_scenario(sess, "boss_appears.json")
     sess.load_scenario(boss)
     sess.step(1)
-    # Actor slot 0 (BAT) = OAM entry 1; slot 1 (SLIME_LORD/BOSS) = entry 2.
+    # Actor slot 0 (BAT) = OAM entry 1; slot 1 (SLIME_LORD/BOSS) = entries 2-5
+    # (a 2x2 grid of four shared-enemy OAM tiles).
     castle_bat = shadow_oam_slot_tile(sess, 1)
-    # The boss is hidden from OAM (y=0); read the entry's y byte.  The tile
-    # byte may hold a stale value from a prior actor in this slot, so assert
-    # the semantic "not drawn as a sprite" via y==0 (hidden), not tile==0.
-    boss_y = sess._memread(0xC000 + 4 * 2)  # entry 2 y byte
     check("castle bat renders as shared bat OAM tile (100|101)",
           1, (100 <= castle_bat <= 101))
-    check("boss is not hidden from OAM (y==0)",
-          0, boss_y)
-    # Boss 2x2 background block at (10,5): castle tile indices 7,8,16,17
-    # -> RPG_TILE_BASE_WORLD (128) + 7/8/16/17 = 135/136/144/145 in mirror.
+    # Boss 2x2 OAM grid at actor (10,5): tiles 104-107 (boss_ow_tl/tr/bl/br),
+    # positions span a 2x2 area (row 0 at world y, row 1 at world y+1, cols
+    # at world x and x+1).  The four OAM entries must be present and laid
+    # out as a grid (same x for a column, y increasing by 8 down a row).
+    boss0 = sess._memread(0xC000 + 4 * 2)  # entry 2 y byte (top-left)
+    boss1 = sess._memread(0xC000 + 4 * 3)  # entry 3 y byte (top-right)
+    boss2 = sess._memread(0xC000 + 4 * 4)  # entry 4 y byte (bot-left)
+    boss3 = sess._memread(0xC000 + 4 * 5)  # entry 5 y byte (bot-right)
+    t0 = shadow_oam_slot_tile(sess, 2)
+    t1 = shadow_oam_slot_tile(sess, 3)
+    t2 = shadow_oam_slot_tile(sess, 4)
+    t3 = shadow_oam_slot_tile(sess, 5)
+    check("boss renders as shared boss OAM tiles (104|105|106|107)",
+          1, (104 <= t0 <= 107 and 104 <= t1 <= 107 and
+              104 <= t2 <= 107 and 104 <= t3 <= 107))
+    check("boss is a 2x2 OAM grid (top row y, bottom row y+8)",
+          1, (boss0 == boss1 and boss2 == boss3 and
+              boss2 == boss0 + 8 and boss0 > 0))
+    # The boss must no longer draw the legacy 2x2 background block at
+    # (10,5): the ground underneath stays the castle floor, not the
+    # background boss corners (RPG_TILE_BASE_WORLD + 7/8/16/17).
     mirror = sess.get_symbol("g_tilemap_mirror")
-    check("boss top-left  background tile in mirror", 135, mirror_at(sess, mirror, 10, 5))
-    check("boss top-right background tile in mirror", 136, mirror_at(sess, mirror, 11, 5))
-    check("boss bot-left  background tile in mirror", 144, mirror_at(sess, mirror, 10, 6))
-    check("boss bot-right background tile in mirror", 145, mirror_at(sess, mirror, 11, 6))
+    corner = mirror_at(sess, mirror, 10, 5)
+    check("boss background block removed (floor under boss)",
+          0, (135 == corner or 136 == corner or 144 == corner or 145 == corner))
 
 
 def verify_exit_art(sess):

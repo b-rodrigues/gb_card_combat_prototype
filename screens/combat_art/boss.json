@@ -4,10 +4,11 @@
   "label": "Boss",
   "order": 2,
   "width": 3,
-  "height": 2,
+  "height": 3,
   "palette": 1,
   "frame0": [
     "boss_horns_left", "boss_horns_mid", "boss_horns_right",
-    "boss_head_left", "boss_head_mid", "boss_head_right"
+    "boss_head_left", "boss_head_mid", "boss_head_right",
+    "boss_torso_left", "boss_torso_mid", "boss_torso_right"
   ]
 }

@@ -249,12 +249,13 @@ void ui_sprite_hide(void)
 }
 
 /* Hide the player and actor sprites in real OAM right now, before the new
- * screen's full redraw runs.  Covers the hostile slots plus the static
- * sprite slots behind them (see OAM_SLOT_STATIC0 in ui_world_sprite_banked). */
+ * screen's full redraw runs.  Covers the hostile OAM region (slots grow
+ * by w*h per actor for multi-tile enemy sprites) plus the static slots
+ * behind them (see the running-cursor layout in ui_world_sprite_banked). */
 void ui_sprite_begin_transition(void)
 {
     uint8_t i;
-    for (i = 0; i <= MAX_WORLD_ACTORS + MAX_STATIC_ACTORS; i++) {
+    for (i = 0; i < OAM_MAX_ACTOR_ENTRIES; i++) {
         shadow_OAM[i].y = 0;
     }
     refresh_OAM();

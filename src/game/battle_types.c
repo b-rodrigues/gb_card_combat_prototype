@@ -31,6 +31,8 @@ static const EnemyTypeDef g_enemy_type_bat = {
     2,
     12,
     100,
+    1,
+    1,
     2,
     0
 };
@@ -45,13 +47,15 @@ static const EnemyTypeDef g_enemy_type_mimic = {
     "BATTLE_MIMIC",
     0,
     CURRENCY_ID_GOLD,
+    3,
+    1,
+    2,
+    1,
+    1,
+    42,
     255,
     0,
     0,
-    0,
-    0,
-    0,
-    255,
     0,
     0
 };
@@ -73,6 +77,8 @@ static const EnemyTypeDef g_enemy_type_slime = {
     2,
     0,
     102,
+    1,
+    1,
     2,
     2
 };
@@ -91,11 +97,13 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     1,
     1,
     3,
-    2,
+    3,
     24,
-    255,
-    0,
-    0
+    104,
+    2,
+    2,
+    1,
+    1
 };
 
 static const EnemyTypeDef g_enemy_type_wolf = {
@@ -116,6 +124,8 @@ static const EnemyTypeDef g_enemy_type_wolf = {
     0,
     255,
     0,
+    0,
+    0,
     0
 };
 
@@ -128,4 +138,4 @@ const EnemyTypeDef* const g_enemy_types[5] = {
 };
 const uint8_t g_enemy_type_count = 5;
 
-const uint8_t g_enemy_ow_tile_count = 6;
+const uint8_t g_enemy_ow_tile_count = 8;

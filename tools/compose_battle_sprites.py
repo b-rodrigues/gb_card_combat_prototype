@@ -1,12 +1,13 @@
-"""Compose assets/battle_sprites.png (canonical 3x2 battle-art source sheet).
+"""Compose assets/battle_sprites.png (canonical battle-art source sheet).
 
 Reads the curated 32x32 editor PNGs (4x pixel art), downscales NEAREST to
-8x8, and lays out 3 cols x 8 rows of cells:
+8x8, and lays out 3 cols x N rows of cells:
 
-  row 0: slime_top_*      row 4: bat_1_*
-  row 1: slime_bottom_*   row 5: boss_horns_*
-  row 2: slime_anim_*     row 6: boss_head_*
-  row 3: bat_0_*          row 7: blank
+  row 0: slime_top_*      row 5: boss_horns_*
+  row 1: slime_bottom_*   row 6: boss_head_*
+  row 2: slime_anim_*     row 7: boss_torso_*
+  row 3: bat_0_*          row 8: mimic_body
+  row 4: bat_1_*          row 9: blank
 
 Deterministic: rerunning reproduces the sheet byte-identically.
 """
@@ -22,6 +23,7 @@ LAYOUT = [
     ['bat_1_left', 'bat_1_body', 'bat_1_right'],
     ['boss_horns_left', 'boss_horns_mid', 'boss_horns_right'],
     ['boss_head_left', 'boss_head_mid', 'boss_head_right'],
+    ['boss_torso_left', 'boss_torso_mid', 'boss_torso_right'],
     ['mimic_body', None, None],
     [None, None, None],
 ]
@@ -36,12 +38,13 @@ for _y, _row in enumerate(LAYOUT):
         if _name is not None:
             TILE_COORDS[_name] = (_x, _y)
 
-# The all-white cell (row 7) pads partial art (bat is 3x1 per frame).
-BLANK_COORD = (0, 7)
+# The all-white cell (row 9) pads partial art (bat is 3x1 per frame).
+BLANK_COORD = (0, 9)
 
 
 def main():
-    sheet = Image.new('RGB', (24, 64), (255, 255, 255))
+    rows = len(LAYOUT)
+    sheet = Image.new('RGB', (24, rows * 8), (255, 255, 255))
     for y, row in enumerate(LAYOUT):
         for x, name in enumerate(row):
             if name is None:

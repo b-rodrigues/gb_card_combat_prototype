@@ -154,6 +154,7 @@
             "description": "Engine-mapped actor fields. entity_id/display_name/battle/ai/dialogue/shop/save/quest_var/quest_val are the original slots; actor_id/facing/flags/visual/hp/max_hp/gold_reward/reward_currency are full-fidelity slots so JSON roundtrips the C rows (see tools/level_compiler/decompile.py). overworld_sprite/animation_frames select the SPRITE_KIND_* render.",
             "properties": {
               "entity_id": { "type": "string" },
+              "enemy_type": { "type": "string", "description": "Explicit enemy-type id (screens/enemy_types/<id>.json) for type=enemy placements. Wins over the ENTITY_ID_X naming convention when resolving shared overworld art." },
               "display_name": { "type": "string" },
               "battle": { "type": "string" },
               "ai": { "type": "string" },

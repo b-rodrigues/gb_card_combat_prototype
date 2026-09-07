@@ -44,6 +44,11 @@ extern uint8_t g_is_cgb;
 #define ENEMY_OW_BASE            100u
 #define ENEMY_OW_LIMIT           128u
 
+/* Max shadow-OAM entries the actor pipeline can touch: player (entry 0),
+ * hostile actors up to MAX_WORLD_ACTORS each a w*h sprite (max 2x2 = 4),
+ * then static actors.  Used by the transition-hide sweep. */
+#define OAM_MAX_ACTOR_ENTRIES     (1u + (MAX_WORLD_ACTORS * 4u) + MAX_STATIC_ACTORS)
+
 /* Bank-4 no-arg body behind ui_draw_actors_sprites(): writes each active
  * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)
  * and the castle boss 2x2 background block.  Lives in bank 4 to keep the

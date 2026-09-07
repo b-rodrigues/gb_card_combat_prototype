@@ -14,6 +14,8 @@ import { BUILTIN_TILESETS } from './model/Tileset';
  *  their type row by the ENTITY_ID_X naming convention. */
 
 interface OwDraft {
+  width: number;
+  height: number;
   cells: string[];
   palette: number;
 }
@@ -47,7 +49,12 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
     fetchEnemyType(activeId).then((data) => {
       setFull(data);
       const o = data.overworld || null;
-      setOw(o ? { cells: (o.cells || []).slice(0, 2), palette: o.palette || 0 } : null);
+      setOw(o ? {
+        width: o.width || 1,
+        height: o.height || 1,
+        cells: (o.cells || []).slice(),
+        palette: o.palette || 0,
+      } : null);
       setDirty(false);
       setStatus('');
     }).catch((e) => setStatus(`load failed: ${e.message}`));
@@ -61,7 +68,7 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
     try {
       const data = JSON.parse(JSON.stringify(full));
       if (ow && ow.cells.length > 0) {
-        data.overworld = { cells: ow.cells.slice(0, 2), palette: ow.palette };
+        data.overworld = { width: ow.width, height: ow.height, cells: ow.cells.slice(), palette: ow.palette };
       } else {
         delete data.overworld;
       }
@@ -95,17 +102,42 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
     setOw((prev) => {
       const cells = ((prev && prev.cells) || []).slice();
       cells[idx] = id;
-      return { cells, palette: (prev && prev.palette) || 0 };
+      return { ...(prev || { width: 1, height: 1, palette: 0 }), cells };
     });
     setDirty(true);
   };
 
+  /* Change sprite grid dimensions.  Cells are a flat frame-major list of
+   * width*height*frames tiles; resizing keeps existing cells and pads new
+   * cells with the first overworld tile (or blanks when shrinking). */
+  const setDims = (w: number, h: number) => {
+    w = Math.max(1, Math.min(2, w));
+    h = Math.max(1, Math.min(2, h));
+    setOw((prev) => {
+      const p = prev || { width: 1, height: 1, cells: [] as string[], palette: 0 };
+      const ow = p.width * p.height;
+      const nw = w * h;
+      const out: string[] = [];
+      for (let i = 0; i < nw; i++) {
+        out.push(i < p.cells.length ? p.cells[i] : (owTiles[0] && owTiles[0].id) || '');
+      }
+      return { width: w, height: h, cells: out, palette: p.palette };
+    });
+    setDirty(true);
+  };
+
+  /* Number of animation frames = cells.length / (w*h).  Frames are
+   * stacked: each frame is its own w*h block. */
+  const frameCount = ow ? Math.max(1, Math.ceil((ow.cells.length || 0) / (ow.width * ow.height))) : 1;
   const setFrames = (n: number) => {
     n = Math.max(1, Math.min(2, n));
     setOw((prev) => {
-      const cells = ((prev && prev.cells) || []).slice(0, n);
-      while (cells.length < n) cells.push((prev && prev.cells[0]) || (owTiles[0] && owTiles[0].id) || '');
-      return { cells, palette: (prev && prev.palette) || 0 };
+      const p = prev || { width: 1, height: 1, cells: [] as string[], palette: 0 };
+      const per = p.width * p.height;
+      const target = per * n;
+      const cells = (p.cells || []).slice(0, target);
+      while (cells.length < target) cells.push((cells[0]) || (owTiles[0] && owTiles[0].id) || '');
+      return { width: p.width, height: p.height, cells, palette: p.palette };
     });
     setDirty(true);
   };
@@ -147,21 +179,45 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
             <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>
               One transparent-background sprite shared by every world. Applies everywhere a {active.id} is placed.
             </div>
-            {(ow ? ow.cells : []).map((cell, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <img src={tileUrl(cell)} alt={cell} width={32} height={32} style={{ imageRendering: 'pixelated', background: '#888' }} />
-                <label>Frame {i}:{' '}
-                  <select value={cell} onChange={(e) => setCell(i, e.target.value)}>
-                    {owTiles.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                  </select>
-                </label>
+            {(ow ? ow.cells : []).length > 0 && ow && (
+              <div style={{ marginBottom: 6 }}>
+                {Array.from({ length: frameCount }).map((_, f) => (
+                  <div key={f} style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Frame {f + 1} (grid {ow.width}×{ow.height}):</div>
+                    <div style={{ display: 'inline-grid', gridTemplateColumns: `repeat(${ow.width}, auto)`, gap: 2 }}>
+                      {Array.from({ length: ow.width * ow.height }).map((_, i) => {
+                        const idx = f * ow.width * ow.height + i;
+                        const cell = ow.cells[idx];
+                        return (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: '1px solid #bbb', padding: 2, background: '#fff' }}>
+                            <img src={tileUrl(cell)} alt={cell} width={32} height={32} style={{ imageRendering: 'pixelated', background: '#888' }} />
+                            <select value={cell} onChange={(e) => setCell(idx, e.target.value)} style={{ fontSize: 10, width: 90 }}>
+                              {owTiles.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-            <div style={{ marginTop: 6, fontSize: 13 }}>
-              Frames: <button onClick={() => setFrames(((ow && ow.cells.length) || 1) - 1)}>-</button>{' '}
-              {(ow && ow.cells.length) || 0}{' '}
-              <button onClick={() => setFrames(((ow && ow.cells.length) || 0) + 1)}>+</button>{' '}
-              (max 2)
+            )}
+            <div style={{ marginTop: 6, fontSize: 13, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <span>
+                Grid: W <button onClick={() => setDims(((ow && ow.width) || 1) - 1, (ow && ow.height) || 1)}>-</button>{' '}
+                {(ow && ow.width) || 1}{' '}
+                <button onClick={() => setDims(((ow && ow.width) || 1) + 1, (ow && ow.height) || 1)}>+</button>{' '}
+                H <button onClick={() => setDims((ow && ow.width) || 1, ((ow && ow.height) || 1) - 1)}>-</button>{' '}
+                {(ow && ow.height) || 1}{' '}
+                <button onClick={() => setDims((ow && ow.width) || 1, ((ow && ow.height) || 1) + 1)}>+</button>{' '}
+                (1-2)
+              </span>
+              <span>
+                Frames: <button onClick={() => setFrames(frameCount - 1)}>-</button>{' '}
+                {frameCount}{' '}
+                <button onClick={() => setFrames(frameCount + 1)}>+</button>{' '}
+                (max 2)
+              </span>
             </div>
             <div style={{ marginTop: 6, fontSize: 13 }}>
               <label>Palette:{' '}
@@ -169,13 +225,13 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
                   value={(ow && ow.palette) || 0}
                   onChange={(e) => {
                     const palette = Math.max(0, Math.min(7, parseInt(e.target.value) || 0));
-                    setOw((prev) => ({ cells: ((prev && prev.cells) || []).slice(), palette }));
+                    setOw((prev) => ({ ...(prev || { width: 1, height: 1, cells: [] as string[] }), palette }));
                     setDirty(true);
                   }} />
               </label>
             </div>
             {!ow && (
-              <button style={{ marginTop: 8 }} onClick={() => { setOw({ cells: [owTiles[0] ? owTiles[0].id : ''], palette: 0 }); setDirty(true); }}>
+              <button style={{ marginTop: 8 }} onClick={() => { setOw({ width: 1, height: 1, cells: [owTiles[0] ? owTiles[0].id : ''], palette: 0 }); setDirty(true); }}>
                 Add shared sprite
               </button>
             )}

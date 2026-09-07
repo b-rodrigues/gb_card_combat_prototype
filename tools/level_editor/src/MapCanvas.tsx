@@ -105,6 +105,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   /* Shared overworld enemy sprites (UPPER name -> cells): type-owned art
    * wins over per-instance sprite names, mirroring the ROM. */
   const [enemyOwByName, setEnemyOwByName] = useState<Map<string, string[]>>(new Map());
+  const [enemyOwDims, setEnemyOwDims] = useState<Map<string, { w: number; h: number }>>(new Map());
   const [owImgs, setOwImgs] = useState<Map<string, HTMLImageElement>>(new Map());
   useEffect(() => {
     fetchCombatArtList().then(async (items) => {
@@ -120,6 +121,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     fetchEnemyTypeList().then(async (types) => {
       const e = new Map<string, string>();
       const o = new Map<string, string[]>();
+      const owDims = new Map<string, { w: number; h: number }>();
       const needed = new Set<string>();
       for (const t of types) {
         if (t.art) {
@@ -132,12 +134,15 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           if (cells.length > 0) {
             o.set(t.id.toUpperCase(), cells);
             o.set(t.label.toUpperCase(), cells);
+            owDims.set(t.id.toUpperCase(), { w: full.overworld.width || 1, h: full.overworld.height || 1 });
+            owDims.set(t.label.toUpperCase(), { w: full.overworld.width || 1, h: full.overworld.height || 1 });
             cells.forEach((c: string) => needed.add(c));
           }
         } catch { /* keep others */ }
       }
       setEnemyArtByName(e);
       setEnemyOwByName(o);
+      setEnemyOwDims(owDims);
       const imgs = new Map<string, HTMLImageElement>();
       let done = 0;
       const names = [...needed];
@@ -1023,14 +1028,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
               const explicit = props.enemy_type ? String(props.enemy_type).toUpperCase() : '';
               const ent = String(props.entity_id || '');
               const conv = ent.startsWith('ENTITY_ID_') ? ent.slice('ENTITY_ID_'.length).toUpperCase() : '';
-              const cells = (explicit && enemyOwByName.get(explicit)) || (conv && enemyOwByName.get(conv)) || null;
+              const key = (explicit && enemyOwByName.get(explicit)) ? explicit : (conv && enemyOwByName.get(conv)) ? conv : '';
+              const cells = key ? enemyOwByName.get(key) : null;
+              const dims = key ? enemyOwDims.get(key) : undefined;
               if (cells && cells.length > 0) {
-                const cell = cells[animTick % cells.length];
-                const img = owImgs.get(cell);
-                if (img && img.complete && img.naturalWidth > 0) {
-                  ctx.drawImage(img, px + 4, py + 4, objW - 8, objH - 8);
-                  owDrawn = true;
+                const gw = dims?.w || 1;
+                const gh = dims?.h || 1;
+                const per = gw * gh;
+                const frameIdx = (per > 1 ? 0 : animTick % Math.max(1, cells.length));
+                const base = frameIdx * per;
+                for (let gy = 0; gy < gh; gy++) {
+                  for (let gx = 0; gx < gw; gx++) {
+                    const cell = cells[base + gy * gw + gx];
+                    const img = cell ? owImgs.get(cell) : undefined;
+                    if (img && img.complete && img.naturalWidth > 0) {
+                      const cw = objW / gw;
+                      const chh = objH / gh;
+                      ctx.imageSmoothingEnabled = false;
+                      ctx.drawImage(img, px + gx * cw, py + gy * chh, cw, chh);
+                    }
+                  }
                 }
+                owDrawn = true;
               }
             }
             let spriteId: string | null = null;

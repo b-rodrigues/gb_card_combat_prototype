@@ -231,9 +231,11 @@ export const Inspector: React.FC<InspectorProps> = ({
   // Enemy types with shared overworld art (id -> id): placements of these
   // types ignore per-instance sprite names (type-owned art wins in ROM).
   const [owEnemyIds, setOwEnemyIds] = useState<Set<string>>(new Set());
+  const [enemyTypeList, setEnemyTypeList] = useState<Array<{ id: string; label: string }>>([]);
   useEffect(() => {
     fetchEnemyTypeList().then((items) => {
       setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
+      setEnemyTypeList(items.map((e) => ({ id: e.id, label: e.label || e.id })));
     }).catch(() => undefined);
   }, []);
   const selectedEnemyType = (() => {
@@ -2017,22 +2019,49 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </div>
 
                 {selectedObject.type === 'enemy' && (
-                  <div className="form-group">
-                    <label>AI Pattern</label>
-                    <select
-                      value={selectedObject.properties?.ai || 'AI_PATROL_CROSS'}
-                      onChange={(e) =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          properties: { ...selectedObject.properties, ai: e.target.value },
-                        })
-                      }
-                    >
-                      <option value="AI_NONE">AI_NONE</option>
-                      <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
-                      <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
-                    </select>
-                  </div>
+                  <>
+                    <div className="form-group">
+                      <label>AI Pattern</label>
+                      <select
+                        value={selectedObject.properties?.ai || 'AI_PATROL_CROSS'}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            properties: { ...selectedObject.properties, ai: e.target.value },
+                          })
+                        }
+                      >
+                        <option value="AI_NONE">AI_NONE</option>
+                        <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
+                        <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Enemy Type</label>
+                      <select
+                        value={selectedEnemyType || ''}
+                        onChange={(e) => {
+                          const typeId = e.target.value;
+                          const props = { ...(selectedObject.properties || {}) };
+                          if (!typeId) {
+                            delete props.enemy_type;
+                          } else {
+                            props.enemy_type = typeId;
+                            if (!props.entity_id) props.entity_id = `ENTITY_ID_${typeId.toUpperCase()}`;
+                          }
+                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                        }}
+                      >
+                        <option value="">-- choose enemy type --</option>
+                        {enemyTypeList.map((t) => (
+                          <option key={t.id} value={t.id}>{t.label} ({t.id})</option>
+                        ))}
+                      </select>
+                      <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
+                        Sprite/art is configured in the Enemies view (art-only) — this dropdown picks which enemy type the placement is.
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 {selectedObject.type === 'npc' && (
@@ -2051,7 +2080,9 @@ export const Inspector: React.FC<InspectorProps> = ({
                   </div>
                 )}
 
-                {/* Sprite/Tile Configuration */}
+                {/* Sprite/Tile Configuration (hidden for enemies: art is
+                    configured in the dedicated Enemies view) */}
+                {selectedObject.type !== 'enemy' && (
                 <div className="inspector-section">
                   <h5>🎨 Sprite/Tile Configuration</h5>
                   {selectedEnemyType && (
@@ -2505,6 +2536,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                     />
                   </div>
                 </div>
+                )}
 
                 {selectedObject.type === 'npc' && (
                   <div className="form-group">

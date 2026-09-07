@@ -42,6 +42,46 @@
       "ascii": "V",
       "image_url": "/tiles/enemies/bat_f1.png",
       "category": "enemy"
+    },
+    {
+      "id": "boss_ow_tl",
+      "label": "Boss overworld top-left",
+      "gb_constant": "TILE_ENEMIES_BOSS_OW_TL",
+      "walkable": false,
+      "color": "#8e44ad",
+      "ascii": "B",
+      "image_url": "/tiles/enemies/boss_ow_tl.png",
+      "category": "enemy"
+    },
+    {
+      "id": "boss_ow_tr",
+      "label": "Boss overworld top-right",
+      "gb_constant": "TILE_ENEMIES_BOSS_OW_TR",
+      "walkable": false,
+      "color": "#8e44ad",
+      "ascii": "B",
+      "image_url": "/tiles/enemies/boss_ow_tr.png",
+      "category": "enemy"
+    },
+    {
+      "id": "boss_ow_bl",
+      "label": "Boss overworld bottom-left",
+      "gb_constant": "TILE_ENEMIES_BOSS_OW_BL",
+      "walkable": false,
+      "color": "#8e44ad",
+      "ascii": "B",
+      "image_url": "/tiles/enemies/boss_ow_bl.png",
+      "category": "enemy"
+    },
+    {
+      "id": "boss_ow_br",
+      "label": "Boss overworld bottom-right",
+      "gb_constant": "TILE_ENEMIES_BOSS_OW_BR",
+      "walkable": false,
+      "color": "#8e44ad",
+      "ascii": "B",
+      "image_url": "/tiles/enemies/boss_ow_br.png",
+      "category": "enemy"
     }
   ]
 }

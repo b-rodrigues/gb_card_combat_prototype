@@ -368,7 +368,10 @@ def build_battle_screens_output(battle_screens, enemy_types):
 def ow_blob_layout(enemy_types, hero_json=None):
     """Shared overworld blob layout: returns (offsets, cells) where offsets
     maps id -> blob tile offset and cells is the ordered tile-name
-    list (hero first, then sorted enemy-id order, append-only stability).  
+    list (hero first, then sorted enemy-id order, append-only stability).
+    Overworld sprites may be multi-tile grids (width*height cells per frame,
+    frame-major): each type contributes width*height*frames cells, and the
+    per-type base is the cumulative tile offset.
     Returns (None, None) on budget overflow (error already printed)."""
     # Hero always comes first
     offsets = {}
@@ -379,8 +382,10 @@ def ow_blob_layout(enemy_types, hero_json=None):
         hero_ow = hero_json.get('overworld') or None
         if hero_ow is not None:
             names = hero_ow.get('cells', [])
-            if not (1 <= len(names) <= 2):
-                print("WARNING: hero: overworld.cells has %d entries, need 1-2" % len(names))
+            w = hero_ow.get('width', 1) or 1
+            h = hero_ow.get('height', 1) or 1
+            if len(names) % (w * h) != 0:
+                print("WARNING: hero: overworld.cells has %d entries, not a multiple of width*height=%d" % (len(names), w * h))
             for name in names:
                 if name not in HERO_TILE_COORDS:
                     print("WARNING: hero: unknown overworld tile '%s'" % name)
@@ -398,8 +403,10 @@ def ow_blob_layout(enemy_types, hero_json=None):
         if ow is None:
             continue
         names = ow.get('cells', [])
-        if not (1 <= len(names) <= 2):
-            print("WARNING: %s: overworld.cells has %d entries, need 1-2" % (et_id, len(names)))
+        w = ow.get('width', 1) or 1
+        h = ow.get('height', 1) or 1
+        if len(names) % (w * h) != 0:
+            print("WARNING: %s: overworld.cells has %d entries, not a multiple of width*height=%d" % (et_id, len(names), w * h))
         for name in names:
             if name not in ENEMY_TILE_COORDS:
                 print("WARNING: %s: unknown overworld tile '%s'" % (et_id, name))
@@ -463,10 +470,15 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
         ow = (enemy_types[et_id].get('overworld') or None)
         if ow is not None and et_id in ow_offsets:
             ow_tile = ENEMY_OW_BASE + ow_offsets[et_id]
-            ow_frames = len(ow.get('cells', []))
+            ow_w = ow.get('width', 1) or 1
+            ow_h = ow.get('height', 1) or 1
+            cells = ow.get('cells', [])
+            ow_frames = (len(cells) // (ow_w * ow_h)) if (ow_w * ow_h) else 0
             ow_palette = ow.get('palette', 0)
         else:
             ow_tile = 0xFF
+            ow_w = 0
+            ow_h = 0
             ow_frames = 0
             ow_palette = 0
         et = enemy_types[et_id]
@@ -503,6 +515,8 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
         lines.append('    %d,' % art_h)
         lines.append('    %d,' % art_offset)
         lines.append('    %d,' % ow_tile)
+        lines.append('    %d,' % ow_w)
+        lines.append('    %d,' % ow_h)
         lines.append('    %d,' % ow_frames)
         lines.append('    %d' % ow_palette)
         lines.append("};")
@@ -516,15 +530,12 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
     lines.append("const uint8_t g_enemy_type_count = %d;" % len(et_ids))
     lines.append("")
     # Shared overworld blob size (tiles) for the ui_init OAM stream.
-    # Includes hero tiles + enemy tiles
-    _ow_hero = 0
-    if hero_json is not None:
-        hero_ow = hero_json.get('overworld') or None
-        if hero_ow is not None:
-            _ow_hero = len(hero_ow.get('cells', []))
+    # Enemies only: the hero overworld sprite is loaded separately via
+    # HERO_DESOLATE_SPRITE_TILE_ID and never from this blob, so the blob
+    # and g_enemy_ow_tile_count must not include hero cells (they would
+    # shift every enemy ow_tile offset in battle_types.c by 2).
     _ow_enemy = len(_ow_cells) if _ow_cells is not None else 0
-    _ow_total = _ow_enemy + _ow_hero
-    lines.append("const uint8_t g_enemy_ow_tile_count = %d;" % _ow_total)
+    lines.append("const uint8_t g_enemy_ow_tile_count = %d;" % _ow_enemy)
     lines.append("")
 
     return "\n".join(lines)
@@ -646,19 +657,21 @@ def main(args=None):
         return 0
 
     if args.ow_coords:
+        # Enemies only: the hero overworld sprite is loaded separately via
+        # HERO_DESOLATE_SPRITE_TILE_ID (not from this blob), so prepending
+        # hero cells here would shift every enemy OAM offset by the hero's
+        # tile count and break the ow_tile values in battle_types.c (which
+        # are computed hero-excluded by ow_blob_layout).  The blob order
+        # must match battle_types.c exactly: sorted enemy-id order.
         _offsets, names = ow_blob_layout(enemy_types, hero_json)
         if names is None:
             return 1
-        # Hero tiles use HERO_TILE_COORDS, enemy tiles use ENEMY_TILE_COORDS
         coords = []
         hero_cells = []
         if hero_json is not None:
             hero_ow = hero_json.get('overworld') or None
             if hero_ow is not None:
                 hero_cells = hero_json['overworld'].get('cells', [])
-                for n in hero_cells:
-                    coords.append("%d,%d" % HERO_TILE_COORDS[n])
-        # Filter out hero cells from names list
         for n in names:
             if n not in hero_cells:
                 coords.append("%d,%d" % ENEMY_TILE_COORDS[n])

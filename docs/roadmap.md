@@ -1317,23 +1317,21 @@ Missing:
   harness, `make test`, `make verify-oam`, `make memmap` OK.
 * **enemy overworld sprites — DONE (shared, type-owned):** the Enemies
   view (level dropdown) defines one transparent-background overworld
-  sprite per enemy type (`screens/enemy_types` `overworld.cells/palette`),
-  applied everywhere the type is placed.  Pixels live in the shared
-  `assets/enemy_sprites.png` (composed from `public/tiles/enemies/`,
-  byte-identical to the old per-world cells); the gfx rule + compiler
-  `--ow-coords` build the OAM blob (base 100, 28-tile budget) and per-type
-  base/frames/palette in `battle_types.c`.  Spawn resolves the type by the
-  `ENTITY_ID_X` convention (explicit `enemy_type` wins) into a new actor
-  `ow_type` field; the OAM writer reads the bank-4 row directly
-  (`SPRITE_KIND_ENEMY`), falling back to ASCII.  Per-instance
-  `overworld_sprite` names are ignored for typed enemies (Inspector says
-  so).  Drive-by: the old overworld-bat copy read bank 3 for a bank-4
-  symbol (garbage bat OAM) — fixed to bank 4; dead kobold/bat fixed-bank
-  loads reclaimed (fixed budget back to 32041, headroom 24 B).  Validated:
-  OAM tiles proven exact on both ROMs (slime 97→103, bat 89→101,
-  positions + palettes unchanged), 181/181 harness, `make test`,
-  `make verify-oam` (expectations migrated to shared tiles), `make
-  memmap`, `screens-check` + `levels-check` OK.
+  sprite per enemy type (`screens/enemy_types`
+  `overworld.cells/palette`, with optional `width`/`height` for multi-tile
+  grids like the 2x2 boss), applied everywhere the type is placed.
+  Pixels live in the shared `assets/enemy_sprites.png` (composed from
+  `public/tiles/enemies/`); the gfx rule + compiler `--ow-coords` build the
+  OAM blob (base 100, 28-tile budget, enemies-only: the hero uses its own
+  `HERO_DESOLATE` sprite) and per-type base/frames/w/h/palette in
+  `battle_types.c`.  Spawn resolves the type by the `ENTITY_ID_X`
+  convention (explicit `enemy_type` wins) into a new actor `ow_type`
+  field; the OAM writer reads the bank-4 row directly (`SPRITE_KIND_ENEMY`),
+  writing a w*h grid of OAM entries for multi-tile sprites and falling back
+  to ASCII.  Per-instance `overworld_sprite` names are ignored for typed
+  enemies (Inspector says so).  Validated: 181/181 harness, `make test`,
+  `make verify-oam` (boss asserted as a 2x2 OAM grid), `make memmap`,
+  `screens-check` + `levels-check` OK.
 
 ### 9.1 Deck management UI — DONE
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CombatArtSet, CombatArtListItem, EnemyTypeListItem,
-  SHEET_TILE_NAMES, COMBAT_TILE_URL, MAX_ART_W, MAX_ART_H, frameCells,
+  SHEET_TILE_NAMES, COMBAT_BRUSH_NAMES, COMBAT_TILE_URL, MAX_ART_W, MAX_ART_H, frameCells,
   fetchCombatArtList, fetchCombatArtSet, saveCombatArtSet,
   fetchEnemyTypeList, fetchEnemyType, saveEnemyType,
 } from './io/combatArt';
@@ -54,10 +54,10 @@ export const CombatArtStudio: React.FC<{ onClose: () => void }> = ({ onClose }) 
     fetchEnemyTypeList().then(setEnemies).catch(() => undefined);
     const map = new Map<string, HTMLImageElement>();
     let done = 0;
-    SHEET_TILE_NAMES.forEach((name) => {
+    COMBAT_BRUSH_NAMES.forEach((name) => {
       const img = new Image();
       img.src = COMBAT_TILE_URL(name);
-      const fin = () => { done++; map.set(name, img); if (done === SHEET_TILE_NAMES.length) setImages(new Map(map)); };
+      const fin = () => { done++; map.set(name, img); if (done === COMBAT_BRUSH_NAMES.length) setImages(new Map(map)); };
       img.onload = fin;
       img.onerror = fin;
     });
@@ -155,8 +155,10 @@ export const CombatArtStudio: React.FC<{ onClose: () => void }> = ({ onClose }) 
     if (set) {
       if (set.frame0.length !== set.width * set.height) out.push('frame0 length != W*H');
       if (set.frame1 && set.frame1.length !== set.width * set.height) out.push('frame1 length != W*H');
-      const unknown = cells.filter((c) => c !== null && !SHEET_TILE_NAMES.includes(c as string));
+      const unknown = cells.filter((c) => c !== null && !COMBAT_BRUSH_NAMES.includes(c as string));
       if (unknown.length > 0) out.push(`unknown tiles: ${[...new Set(unknown)].join(', ')}`);
+      const noSheet = cells.filter((c) => c !== null && !SHEET_TILE_NAMES.includes(c as string));
+      if (noSheet.length > 0) out.push(`not compiled to ROM (add LAYOUT entry + compose + make gfx): ${[...new Set(noSheet)].join(', ')}`);
     }
     return out;
   }, [set, cells]);
@@ -248,8 +250,9 @@ export const CombatArtStudio: React.FC<{ onClose: () => void }> = ({ onClose }) 
                       title="blank"
                       style={{ width: 26, height: 26, background: '#fff', border: brush === null ? '2px solid #c00' : '1px solid #999', boxSizing: 'border-box' }}
                     />
-                    {SHEET_TILE_NAMES.map((name) => (
-                      <div key={name} onClick={() => setBrush(name)} title={name}
+                    {COMBAT_BRUSH_NAMES.map((name) => (
+                      <div key={name} onClick={() => setBrush(name)}
+                        title={SHEET_TILE_NAMES.includes(name) ? name : `${name} (not in ROM sheet)`}
                         style={{ width: 26, height: 26, background: '#fff', border: brush === name ? '2px solid #c00' : '1px solid #999', boxSizing: 'border-box' }}>
                         {images.get(name) && (
                           <img src={COMBAT_TILE_URL(name)} alt={name} width={22} height={22} style={{ imageRendering: 'pixelated', display: 'block' }} draggable={false} />
@@ -257,7 +260,7 @@ export const CombatArtStudio: React.FC<{ onClose: () => void }> = ({ onClose }) 
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 12, color: '#555' }}>Only sheet tiles compile to the ROM. New PNGs need a LAYOUT entry + compose + make gfx first.</div>
+                  <div style={{ fontSize: 12, color: '#555' }}>Every curated combat tile is brushable. Tiles not in the composed sheet (title "… (not in ROM sheet)") compile only after a LAYOUT entry + compose + make gfx.</div>
                   <div style={{ marginTop: 8 }}>
                     <label>Label: <input value={set.label} onChange={(e) => mutate((s) => { s.label = e.target.value; return s; })} /></label>
                   </div>

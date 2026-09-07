@@ -46,6 +46,34 @@ export const SHEET_TILE_NAMES: string[] = [
   'bat_1_left', 'bat_1_body', 'bat_1_right',
   'boss_horns_left', 'boss_horns_mid', 'boss_horns_right',
   'boss_head_left', 'boss_head_mid', 'boss_head_right',
+  'boss_torso_left', 'boss_torso_mid', 'boss_torso_right',
+  'mimic_body',
+];
+
+/** Every curated combat tile (tools/level_editor/public/tiles/combat/*.png)
+ *  that the Combat Art Studio brush exposes.  A superset of
+ *  SHEET_TILE_NAMES: tiles missing from the composed sheet (cards, icons,
+ *  HUD, digits, statuses) are paintable but are flagged "not compiled to
+ *  ROM" until a LAYOUT entry + compose + make gfx is added.  Kept in sync
+ *  with the directory listing; the source tileset (assets/combat-tile.png,
+ *  16x4 = 64 tiles) is described in assets/combat-tileset-description.csv. */
+export const COMBAT_BRUSH_NAMES: string[] = [
+  ...SHEET_TILE_NAMES,
+  'arrow_up', 'battery_ap', 'card_bottom_left', 'card_bottom_right',
+  'card_mid_center', 'card_mid_left', 'card_mid_right', 'card_slot_blank',
+  'card_top_left', 'card_top_mid', 'card_top_right', 'combat_blank',
+  'deck_cards', 'digit_1', 'digit_2', 'digit_3', 'digit_4',
+  'heart_hp', 'hero', 'icon_bow', 'icon_shield', 'icon_sword',
+  'status_fire', 'status_poison',
+  'tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_0_3', 'tile_0_4', 'tile_0_5',
+  'tile_0_6', 'tile_0_7', 'tile_0_8', 'tile_0_9', 'tile_0_10', 'tile_0_11',
+  'tile_0_12', 'tile_0_13', 'tile_0_14', 'tile_0_15',
+  'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_1_3', 'tile_1_4', 'tile_1_5',
+  'tile_1_6', 'tile_1_7', 'tile_1_8', 'tile_1_9', 'tile_1_10', 'tile_1_11',
+  'tile_1_12', 'tile_1_13', 'tile_1_14', 'tile_1_15',
+  'tile_2_0', 'tile_2_1', 'tile_2_2', 'tile_2_3', 'tile_2_4', 'tile_2_5',
+  'tile_2_6', 'tile_2_7', 'tile_2_8', 'tile_2_9', 'tile_2_10', 'tile_2_11',
+  'tile_2_12', 'tile_2_13', 'tile_2_14', 'tile_2_15',
 ];
 
 export const COMBAT_TILE_URL = (name: string) => `/tiles/combat/${name}.png`;
