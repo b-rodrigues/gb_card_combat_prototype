@@ -8,6 +8,7 @@
 #include "rpg/loot.h"
 #include "rpg/status.h"
 #include "rpg/loot.h"
+#include "rng.h"
 #include "game/game_ids.h"
 #include "content.h"
 #include "battle_data.h"
