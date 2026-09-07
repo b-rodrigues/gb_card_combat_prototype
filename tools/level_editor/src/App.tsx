@@ -27,9 +27,6 @@ import townData from '../../../levels/town.json';
 import mountainPassData from '../../../levels/mountain_pass.json';
 import castleData from '../../../levels/castle.json';
 import titleData from '../../../screens/title.json';
-import battleDefaultData from '../../../screens/battle/default.json';
-import battleBossData from '../../../screens/battle/boss.json';
-import battleLegacyData from '../../../screens/battle.json';
 
 interface ExistingLevelItem {
   id: string;
@@ -46,9 +43,6 @@ const EXISTING_LEVELS: ExistingLevelItem[] = [
   { id: 'mountain_pass', name: mountainPassData.name || 'Mountain Pass', data: mountainPassData, category: 'levels' },
   { id: 'castle', name: castleData.name || 'Castle', data: castleData, category: 'levels' },
   { id: 'title', name: 'Title Screen', data: titleData, category: 'screens' },
-  { id: 'battle_default', name: 'Battle (Standard / Mockup)', data: battleDefaultData, category: 'screens' },
-  { id: 'battle_boss', name: 'Battle (Boss, 1 centered enemy)', data: battleBossData, category: 'screens' },
-  { id: 'battle', name: 'Battle Screen (Legacy)', data: battleLegacyData, category: 'screens' },
 ];
 
 export const App: React.FC = () => {

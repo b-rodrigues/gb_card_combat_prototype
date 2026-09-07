@@ -62,11 +62,13 @@ function levelEditorApiPlugin(): Plugin {
       server.middlewares.use((req, res, next) => {
         const repoRoot = path.resolve(__dirname, '../..');
 
-        // Editor-facing ids for the screen mockups (App.tsx imports these
-        // JSONs; the save/load maps below must stay in sync with that list).
+        // Editor-facing ids for the screen mockups (the save/load maps
+        // below must stay in sync with App.tsx).  Battle screens are NOT
+        // listed here as editable "screens" — the Battle view
+        // (BattleManager) owns screens/battle/*.json and routes its saves
+        // through these ids (keep battle_default/battle_boss entries).
         const SCREEN_ID_TO_PATH: Record<string, string> = {
           'title': 'screens/title.json',
-          'battle': 'screens/battle.json',
           'battle_default': 'screens/battle/default.json',
           'battle_boss': 'screens/battle/boss.json',
         };
