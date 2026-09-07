@@ -160,6 +160,15 @@ gfx:
 	@python3 tools/png2gb.py assets/village-tile.png --name rpg_village_world_tiles \
 		--palette auto --anchor-color "#b6a27e" \
 		--raw -o $(GFX_OUT_DIR)/rpg_village_world_tiles.inc
+	# NPC map art (compose from the curated actors tileset; see
+	# tools/compose_npc_tiles.py).  The village sheet's NPC cells are blank
+	# since the art moved to the shared actors tileset; tiles_content.c
+	# overlays these into the village VRAM block after the sheet copy.
+	@python3 tools/compose_npc_tiles.py
+	@python3 tools/png2gb.py assets/npc_tiles.png --name rpg_actor_npc_tiles \
+t@python3 tools/palette_compiler.py --tilesets village 2>&1 | grep -v -i warning
+		--palette auto --anchor-color "#f1eb03" --raw \
+		-o $(GFX_OUT_DIR)/rpg_actor_npc_tiles.inc
 
 
 
