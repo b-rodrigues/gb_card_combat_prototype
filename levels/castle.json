@@ -140,7 +140,11 @@
     {
       "id": "castle_mimic",
       "type": "enemy",
-      "overworld_sprite": "actors.actors_chest_mimic",
+      "overworld_sprite": "actors.actors_chest_closed",
+      "animation_frames": [
+        "actors.actors_chest_closed",
+        "actors.actors_chest_mimic"
+      ],
       "position": {
         "x": 12,
         "y": 10

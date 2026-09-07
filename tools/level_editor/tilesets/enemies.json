@@ -142,6 +142,16 @@
       "ascii": "T",
       "image_url": "/tiles/enemies/mimic_f0.png",
       "category": "enemy"
+    },
+    {
+      "id": "mimic_f1",
+      "label": "Mimic frame 1",
+      "gb_constant": "TILE_ENEMIES_MIMIC_F1",
+      "walkable": false,
+      "color": "#826d37",
+      "ascii": "T",
+      "image_url": "/tiles/enemies/mimic_f1.png",
+      "category": "enemy"
     }
   ]
 }

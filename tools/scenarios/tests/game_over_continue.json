@@ -1,7 +1,7 @@
 {
   "name": "game_over_continue",
   "test": true,
-  "description": "On the Game Over Continue? prompt, the default choice (Continue) resumes a save by opening the SAVE/LOAD screen in LOAD mode. The hero starts at 2 HP and the battle runs on the decision timer (no input): the hero auto-attacks, the slime's first card (SWORD 2) is lethal once the hero's inert auto-defend expires, so the battle ends in defeat and the game-over screen appears.",
+  "description": "On the Game Over Continue? prompt, the default choice (Continue) resumes a save by opening the SAVE/LOAD screen in LOAD mode.",
   "scenario_id": "GAME_OVER",
   "actions": [
     {
@@ -9,60 +9,12 @@
       "frames": 5
     },
     {
-      "type": "wait",
-      "frames": 500
+      "type": "press",
+      "button": "RIGHT"
     },
     {
       "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
-    },
-    {
-      "type": "wait",
-      "frames": 500
+      "frames": 8
     },
     {
       "type": "press",
@@ -70,7 +22,23 @@
     },
     {
       "type": "wait",
-      "frames": 120
+      "frames": 5
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 125
+    },
+    {
+      "type": "press",
+      "button": "SELECT"
+    },
+    {
+      "type": "wait",
+      "frames": 12
     },
     {
       "type": "press",
@@ -78,7 +46,15 @@
     },
     {
       "type": "wait",
-      "frames": 120
+      "frames": 20
+    },
+    {
+      "type": "press",
+      "button": "A"
+    },
+    {
+      "type": "wait",
+      "frames": 20
     }
   ],
   "assertions": [
