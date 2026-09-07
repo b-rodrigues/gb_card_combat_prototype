@@ -45,8 +45,9 @@ export const CARD_COLOR_HEX: Record<string, string> = {
   dim: '#9a9a9a',
 };
 
-/** Preview tile PNGs (public/tiles/combat).  Ring/dagger/amulet and the
- *  HUD atlas icons (heart/bolt/coin/deck) are atlas tiles not sliced to
+/** Preview tile PNGs (public/tiles/combat).  The HUD hp/ap/deck icons map
+ *  to the combat-tileset icons (the same tiles the ROM loads at VRAM
+ *  113/114/116).  Ring/dagger/amulet/coin remain atlas tiles not sliced to
  *  public/tiles, so they preview as text chips. */
 export const CARD_ICON_URL: Record<string, string | null> = {
   sword: '/tiles/combat/combat_sword_icon.png',
@@ -55,13 +56,13 @@ export const CARD_ICON_URL: Record<string, string | null> = {
   fire: '/tiles/combat/combat_fire_status.png',
   ice: '/tiles/combat/combat_ice_status.png',
   poison: '/tiles/combat/combat_poison_status.png',
+  heart: '/tiles/combat/combat_hp_icon.png',
+  bolt: '/tiles/combat/combat_ap_icon.png',
+  deck: '/tiles/combat/combat_deck_icon.png',
   dagger: null,
   ring: null,
   amulet: null,
-  heart: null,
-  bolt: null,
   coin: null,
-  deck: null,
   bar_filled: null,
   bar_empty: null,
 };

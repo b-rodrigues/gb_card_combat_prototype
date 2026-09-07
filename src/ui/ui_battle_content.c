@@ -371,6 +371,17 @@ extern uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
 
+/* Art centered on the 6-column name slot: the name text draws at x..x+5,
+ * so the W-wide art shifts right by (6 - w) / 2 (shift, no divmod --
+ * AGENTS.md 52.18).  Used by the stamper AND the target caret so both
+ * center on the name. */
+static uint8_t battle_enemy_art_x(uint8_t x, uint8_t slot)
+{
+    uint8_t w = (slot < MAX_BATTLE_ENEMIES) ? g_battle_enemy_art_w[slot] : 3;
+    if (w == 0 || w > 6) w = 3;
+    return (uint8_t)(x + ((6 - w) >> 1));
+}
+
 static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
                                   const volatile Battle *battle, uint8_t blank)
 {
@@ -389,6 +400,9 @@ static void battle_draw_enemy_art(uint8_t x, uint8_t slot,
     h = (slot < MAX_BATTLE_ENEMIES) ? g_battle_enemy_art_h[slot] : 2;
     if (w == 0 || w > 6) w = 3;
     if (h == 0 || h > 4) h = 2;
+    /* Center the art footprint on the name slot (blank path clears the
+     * same centered footprint it stamps). */
+    x = battle_enemy_art_x(x, slot);
 
     if (!blank && slot < MAX_BATTLE_ENEMIES &&
         g_battle_enemy_art[slot] != 0xFF) {
@@ -482,10 +496,12 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             battle_put_char((uint8_t)(x + 5), hp_row, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                /* Caret spans exactly the art width (3 cols): on the boss
-                 * screen a 3x3 art fills rows 3-5 with the caret on row 6,
-                 * so a 6-wide caret would run into the hero HP block. */
-                battle_draw_text_line(x, cur_row, "  ^", 3);
+                /* Caret spans exactly the art width (3 cols), centered on
+                 * the art like the art is centered on the name: on the
+                 * boss screen a 3x3 art fills rows 3-5 with the caret on
+                 * row 6, so a 6-wide caret would run into the hero HP
+                 * block. */
+                battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, "  ^", 3);
                 continue;
             }
         } else {
@@ -493,7 +509,7 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             battle_draw_text_line(x, name_row, NULL, 6);
             battle_draw_enemy_art(x, k, battle, 1);
         }
-        battle_draw_text_line(x, cur_row, NULL, 3);
+        battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, NULL, 3);
     }
 }
 
@@ -765,6 +781,37 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 }
 
 /* ── Banked entry point ────────────────────────────────────────────────── */
+
+/* Battle UI tile loader (bank-3 body behind the fixed-bank
+ * ui_card_tiles_load() wrapper, dispatched once from ui_init with the LCD
+ * off): streams the card frame tiles, the turn-timer bar segments and the
+ * HUD hp/ap/deck icons from THIS bank's generated card_frame_tiles.h into
+ * VRAM block 1.  Reads its own bank-local data directly (no banked_copy,
+ * which would restore the home bank mid-body -- banked.h ABI) and writes
+ * VRAM at the unsigned tile addresses (0x8000 + id*16), the same physical
+ * mapping the battle art loader uses.  VRAM: frames 118-126, bar
+ * filled 117 / empty 127, HUD icons overwrite the atlas data at
+ * 113 (hp/heart), 114 (ap/bolt) and 116 (deck). */
+static const uint8_t s_card_tile_vram_ids[15] = {
+    118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
+    117, 127,                                     /* bar filled, empty */
+    113, 114, 116,                                /* HUD: hp, ap, deck */
+};
+
+void ui_card_tiles_load_banked(void)
+{
+    uint8_t i, j;
+    volatile uint8_t *dst;
+    const uint8_t *src;
+
+    for (i = 0; i < 15; i++) {
+        dst = (volatile uint8_t *)(0x8000u + ((uint16_t)s_card_tile_vram_ids[i] << 4));
+        src = card_frame_tiles + ((uint16_t)i << 4);
+        for (j = 0; j < 16; j++) {
+            dst[j] = src[j];
+        }
+    }
+}
 
 /* Turn-timer bar (bank-3 body behind the fixed-bank ui_draw_battle_timer
  * wrapper): one segment tile per column -- filled while the timer has

@@ -1,7 +1,7 @@
 {
   "name": "battle_slime_sprite",
   "test": true,
-  "description": "Slime trio battle renders 3x2 enemy art tiles (slime art set from screens/enemy_types.json) under each HP line",
+  "description": "Slime trio battle renders 3x2 enemy art tiles (slime art set from screens/enemy_types.json) under each HP line, centered on the 6-column name slot (art at slot_x+1)",
   "scenario_id": "BATTLE_BOOT",
   "actions": [],
   "assertions": [
@@ -26,31 +26,31 @@
     {
       "type": "tilemap_cell",
       "row": 3,
-      "col": 0,
+      "col": 1,
       "expected": 128
     },
     {
       "type": "tilemap_cell",
       "row": 3,
-      "col": 1,
+      "col": 2,
       "expected": 129
     },
     {
       "type": "tilemap_cell",
       "row": 4,
-      "col": 0,
+      "col": 1,
       "expected": 131
     },
     {
       "type": "tilemap_cell",
       "row": 3,
-      "col": 7,
+      "col": 8,
       "expected": 140
     },
     {
       "type": "tilemap_cell",
       "row": 3,
-      "col": 14,
+      "col": 15,
       "expected": 152
     },
     {

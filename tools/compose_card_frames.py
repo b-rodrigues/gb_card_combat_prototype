@@ -24,6 +24,10 @@ LAYOUT = [
     # keeps the 3-column sheet layout.  VRAM: frames at UI_TILE_CARD_FRAME_BASE
     # (118-126), filled at UI_TILE_TIMER_FILLED (117), empty at 127.
     ['combat_timer_bar_filled', 'combat_timer_bar_empty', None],
+    # HUD icons from the combat tileset (combat-tileset-description.csv):
+    # hp / ap / deck.  ui_init overwrites the atlas heart/bolt/deck tile
+    # DATA at the same VRAM ids (113/114/116) -- no extra VRAM slots.
+    ['combat_hp_icon', 'combat_ap_icon', 'combat_deck_icon'],
 ]
 
 

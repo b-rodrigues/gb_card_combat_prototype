@@ -8,6 +8,10 @@ import {
   HUD_ICON_NAMES, BAR_TILE_NAMES,
   fetchBattleHud, saveBattleHud, fetchBattleScreen, saveBattleScreen,
 } from './io/battleHud';
+import {
+  EnemyTypeListItem, CombatArtSet,
+  fetchEnemyTypeList, fetchCombatArtSet, COMBAT_TILE_URL,
+} from './io/combatArt';
 
 /** Battle view: configures the entire battle-time view from the editor.
  *
@@ -126,7 +130,16 @@ const CELL = 11;
 const GRID_W = 20;
 const GRID_H = 18;
 
-const BattlePreview: React.FC<{ skin: CardSkin; hud: BattleHud; screen: BattleScreen }> = ({ skin, hud, screen }) => {
+/* The 6-column name slot the ROM centers enemy art on
+ * (battle_enemy_art_x in ui_battle_content.c: art_x = x + (6-w)/2). */
+const ENEMY_NAME_SLOT_W = 6;
+
+const BattlePreview: React.FC<{
+  skin: CardSkin;
+  hud: BattleHud;
+  screen: BattleScreen;
+  artSet: CombatArtSet | null;
+}> = ({ skin, hud, screen, artSet }) => {
   const L = screen.hud_layout;
   /* grid holds per-cell render nodes: string (char) or JSX (icons/tiles) */
   const grid: Array<Array<React.ReactNode>> = Array.from({ length: GRID_H },
@@ -146,8 +159,25 @@ const BattlePreview: React.FC<{ skin: CardSkin; hud: BattleHud; screen: BattleSc
     const p = screen.enemy_positions[e] || { x: 0, y: 0 };
     put(p.x, 2, 'SLIME');
     put(p.x, L.enemy_hp_row, '10/10');
-    putNode(p.x, L.enemy_sprite_row,
-      <div style={{ width: 3 * CELL - 2, height: 2 * CELL - 2, background: '#67c23a', border: '1px solid #3f7d22', borderRadius: 3 }} />);
+    /* Real combat art (frame0), centered on the name slot exactly like
+     * the ROM stamper; falls back to a placeholder blob for text-fallback
+     * types (art 0xFF). */
+    if (artSet && artSet.frame0 && artSet.frame0.length > 0) {
+      const ax = p.x + Math.floor((ENEMY_NAME_SLOT_W - artSet.width) / 2);
+      for (let r = 0; r < artSet.height; r++) {
+        for (let c = 0; c < artSet.width; c++) {
+          const cell = artSet.frame0[r * artSet.width + c];
+          if (cell) {
+            putNode(ax + c, L.enemy_sprite_row + r,
+              <img src={COMBAT_TILE_URL(cell)} alt="" width={CELL} height={CELL}
+                style={{ imageRendering: 'pixelated', width: CELL - 1, height: CELL - 1, marginTop: 1, marginLeft: 1 }} />);
+          }
+        }
+      }
+    } else {
+      putNode(p.x, L.enemy_sprite_row,
+        <div style={{ width: 3 * CELL - 2, height: 2 * CELL - 2, background: '#67c23a', border: '1px solid #3f7d22', borderRadius: 3 }} />);
+    }
     if (e === 1) put(p.x, L.enemy_cursor_row, '  ^');
   }
   put(L.hero_label_col, L.hero_label_row, 'HERO');
@@ -218,16 +248,41 @@ export const BattleManager: React.FC = () => {
   const [screen, setScreen] = useState<BattleScreen | null>(null);
   const [dirty, setDirty] = useState({ hud: false, layout: false, cards: false });
   const [status, setStatus] = useState('');
+  const [enemyTypes, setEnemyTypes] = useState<EnemyTypeListItem[]>([]);
+  const [artSets, setArtSets] = useState<Record<string, CombatArtSet>>({});
 
   useEffect(() => {
     fetchCardSkin().then((s) => setSkin(s)).catch((e) => setStatus(`cards load failed: ${e.message}`));
     fetchBattleHud().then((h) => setHud(h)).catch((e) => setStatus(`hud load failed: ${e.message}`));
     fetchBattleScreen('default').then((s) => setScreen(s)).catch((e) => setStatus(`layout load failed: ${e.message}`));
+    fetchEnemyTypeList().then(setEnemyTypes).catch(() => undefined);
   }, []);
 
   useEffect(() => {
     fetchBattleScreen(screenId).then((s) => setScreen(s)).catch((e) => setStatus(`layout load failed: ${e.message}`));
   }, [screenId]);
+
+  /* Preview enemy: same category rule as the ROM's screen filter — prefer
+   * the first sorted type of the highest-priority allowed category, so
+   * 'default' previews the slime trio and 'boss' previews the 3x3 lord. */
+  const previewType = (() => {
+    const sorted = [...enemyTypes].sort((a, b) => a.id.localeCompare(b.id));
+    const allowed = screen?.allowed_categories || [];
+    for (const cat of ['boss', 'elite', 'minion']) {
+      if (!allowed.includes(cat)) continue;
+      const hit = sorted.find((t) => t.category === cat);
+      if (hit) return hit;
+    }
+    return sorted[0] || null;
+  })();
+
+  useEffect(() => {
+    const art = previewType?.art;
+    if (!art || artSets[art]) return;
+    fetchCombatArtSet(art)
+      .then((s) => setArtSets((prev) => ({ ...prev, [art]: s })))
+      .catch(() => undefined);
+  }, [previewType, artSets]);
 
   const mutateSkin = (fn: (s: CardSkin) => void) => {
     setSkin((prev) => {
@@ -394,7 +449,8 @@ export const BattleManager: React.FC = () => {
           Replicates the ROM battle renderer from the edited HUD skin, layout
           and card skin. Ring/dagger/amulet icons preview as text chips.
         </div>
-        <BattlePreview skin={skin} hud={hud} screen={screen} />
+        <BattlePreview skin={skin} hud={hud} screen={screen}
+          artSet={previewType?.art ? (artSets[previewType.art] || null) : null} />
       </div>
     </div>
   );

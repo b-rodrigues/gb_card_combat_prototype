@@ -2163,7 +2163,14 @@ by `battle_start(..., solo)`).  The HUD skin (`screens/battle_hud.json`
 deck icon tiles + palettes and the turn-timer bar (segment tiles
 VRAM 117/127, color, row, width; drawn by the bank-3
 `ui_draw_battle_timer_banked` behind the fixed-bank wrapper -- the
-fixed `_HOME` bank is hard against 0x8000, AGENTS.md 52.18).  Hero/deck
+fixed `_HOME` bank is hard against 0x8000, AGENTS.md 52.18).  The
+hp/ap/deck icon tile DATA comes from the combat tileset
+(`combat_hp_icon`/`combat_ap_icon`/`combat_deck_icon` via the card-frames
+sheet, loaded by the bank-3 `ui_card_tiles_load_banked` at boot),
+overwriting the atlas data at VRAM 113/114/116 (ids unchanged;
+UI_TILE_DECK is shared with the quick-screen deck tab).  Enemy art is
+CENTERED on the 6-column name slot: `battle_enemy_art_x()` offsets the
+stamp (and the 3-col caret) by (6-w)/2.  Hero/deck
 row positions are layout-driven: label at (hero_label_row,
 hero_label_col), HP block at hero_hp_col (icon 2 cols left of "HP:"),
 DECK at deck_col (icon 1 left), AP at ap_col (icon 2 left).  VRAM BG
