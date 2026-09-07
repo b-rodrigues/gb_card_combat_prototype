@@ -105,10 +105,10 @@ export async function fetchBattleScreen(id: string): Promise<BattleScreen> {
 }
 
 export async function saveBattleScreen(id: string, data: BattleScreen): Promise<void> {
-  const res = await fetch('/api/save-level', {
+  const res = await fetch('/api/save-battle-screen', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: `battle_${id}`, category: 'screens', data }),
+    body: JSON.stringify({ id, data }),
   });
   if (!res.ok) throw new Error(`save battle-screen ${id} returned ${res.status}`);
   const body = await res.json();

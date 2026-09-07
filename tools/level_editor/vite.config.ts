@@ -65,12 +65,10 @@ function levelEditorApiPlugin(): Plugin {
         // Editor-facing ids for the screen mockups (the save/load maps
         // below must stay in sync with App.tsx).  Battle screens are NOT
         // listed here as editable "screens" — the Battle view
-        // (BattleManager) owns screens/battle/*.json and routes its saves
-        // through these ids (keep battle_default/battle_boss entries).
+        // (BattleManager) owns screens/battle/*.json and saves through
+        // the dedicated /api/save-battle-screen endpoint.
         const SCREEN_ID_TO_PATH: Record<string, string> = {
           'title': 'screens/title.json',
-          'battle_default': 'screens/battle/default.json',
-          'battle_boss': 'screens/battle/boss.json',
         };
         const isSafeId = (id: unknown) =>
           typeof id === 'string' && /^[A-Za-z0-9_]+$/.test(id);
@@ -355,6 +353,25 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        if (req.method === 'POST' && req.url === '/api/save-battle-screen') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, data } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+              const targetPath = path.join(repoRoot, 'screens', 'battle', `${id}.json`);
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 1) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         if (req.method === 'POST' && req.url === '/api/save-level') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
@@ -362,17 +379,18 @@ function levelEditorApiPlugin(): Plugin {
             try {
               const { id, category, data } = JSON.parse(body);
               if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
-              let targetPath = path.join(repoRoot, 'levels', `${id}.json`);
               if (category === 'screens') {
+                // Screens route through SCREEN_ID_TO_PATH only ('title');
+                // battle screens save via /api/save-battle-screen.
                 const rel = SCREEN_ID_TO_PATH[id];
-                if (rel) {
-                  targetPath = path.join(repoRoot, rel);
-                } else if (data.hud_layout || data.enemies || data.enemy_positions) {
-                  targetPath = path.join(repoRoot, 'screens', 'battle', `${id}.json`);
-                } else {
-                  targetPath = path.join(repoRoot, 'screens', 'title', `${id}.json`);
-                }
+                if (!rel) throw new Error(`unknown screen '${id}'`);
+                const targetPath = path.join(repoRoot, rel);
+                fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, path: targetPath }));
+                return;
               }
+              const targetPath = path.join(repoRoot, 'levels', `${id}.json`);
               fs.mkdirSync(path.dirname(targetPath), { recursive: true });
               fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
               res.writeHead(200, { 'Content-Type': 'application/json' });
