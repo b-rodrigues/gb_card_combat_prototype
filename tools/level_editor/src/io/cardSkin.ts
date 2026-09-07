@@ -21,11 +21,16 @@ export interface CardSkin {
   elements: Record<'fire' | 'ice' | 'poison', CardTypeSkin>;
 }
 
-/** Fixed VRAM icon catalog (ui.h UI_TILE_CARD_* 104-112, loaded by
- *  ui_init): the names battle_compile.py ICON_TILES resolves. */
+/** Fixed VRAM icon catalog — names are the slugified combat-tileset
+ *  description entries (assets/combat-tileset-description.csv -> the
+ *  public/tiles/combat slugs); dagger/ring/amulet have no CSV entry
+ *  (atlas-only icons) and keep plain names.  Values resolve through
+ *  battle_compile.py ICON_TILES to the fixed VRAM tiles ui_init loads
+ *  (ui.h UI_TILE_CARD_* 104-112).  The atlas-only coin is not offered. */
 export const CARD_ICON_NAMES: string[] = [
-  'sword', 'shield', 'bow', 'dagger', 'ring', 'amulet',
-  'fire', 'ice', 'poison',
+  'combat_sword_icon', 'combat_shield_icon', 'combat_bow_icon',
+  'dagger', 'ring', 'amulet',
+  'combat_fire_status', 'combat_ice_status', 'combat_poison_status',
 ];
 
 /** CGB BG palette names (UI_COLOR_* 0-7). */
@@ -45,26 +50,22 @@ export const CARD_COLOR_HEX: Record<string, string> = {
   dim: '#9a9a9a',
 };
 
-/** Preview tile PNGs (public/tiles/combat).  The HUD hp/ap/deck icons map
- *  to the combat-tileset icons (the same tiles the ROM loads at VRAM
- *  113/114/116).  Ring/dagger/amulet/coin remain atlas tiles not sliced to
- *  public/tiles, so they preview as text chips. */
+/** Preview tile PNGs (public/tiles/combat), keyed by the slugified icon
+ *  names.  Ring/dagger/amulet are atlas-only (no CSV slug), so they
+ *  preview as text chips. */
 export const CARD_ICON_URL: Record<string, string | null> = {
-  sword: '/tiles/combat/combat_sword_icon.png',
-  shield: '/tiles/combat/combat_shield_icon.png',
-  bow: '/tiles/combat/combat_bow_icon.png',
-  fire: '/tiles/combat/combat_fire_status.png',
-  ice: '/tiles/combat/combat_ice_status.png',
-  poison: '/tiles/combat/combat_poison_status.png',
-  heart: '/tiles/combat/combat_hp_icon.png',
-  bolt: '/tiles/combat/combat_ap_icon.png',
-  deck: '/tiles/combat/combat_deck_icon.png',
+  combat_sword_icon: '/tiles/combat/combat_sword_icon.png',
+  combat_shield_icon: '/tiles/combat/combat_shield_icon.png',
+  combat_bow_icon: '/tiles/combat/combat_bow_icon.png',
+  combat_fire_status: '/tiles/combat/combat_fire_status.png',
+  combat_ice_status: '/tiles/combat/combat_ice_status.png',
+  combat_poison_status: '/tiles/combat/combat_poison_status.png',
+  combat_hp_icon: '/tiles/combat/combat_hp_icon.png',
+  combat_ap_icon: '/tiles/combat/combat_ap_icon.png',
+  combat_deck_icon: '/tiles/combat/combat_deck_icon.png',
   dagger: null,
   ring: null,
   amulet: null,
-  coin: null,
-  bar_filled: null,
-  bar_empty: null,
 };
 
 /** Card frame tiles (assets/card_frames.png, tools/compose_card_frames.py

@@ -65,12 +65,15 @@ export interface BattleScreen {
  *  solo-flagged minibosses). */
 export const BATTLE_SCREEN_IDS = ['default', 'boss'] as const;
 
-/** HUD icon choices (battle_hud.schema.json iconSkin enum): the fixed VRAM
- *  icon tiles ui_init loads (heart/bolt/coin/deck 113-116 + card icons). */
+/** HUD icon choices (battle_hud.schema.json iconSkin enum).  Names are the
+ *  slugified combat-tileset description entries (assets/
+ *  combat-tileset-description.csv); dagger/ring/amulet are atlas-only and
+ *  keep plain names.  The atlas-only coin is not offered (no combat tile). */
 export const HUD_ICON_NAMES: string[] = [
-  'heart', 'bolt', 'coin', 'deck',
-  'sword', 'shield', 'bow', 'dagger', 'ring', 'amulet',
-  'fire', 'ice', 'poison',
+  'combat_hp_icon', 'combat_ap_icon', 'combat_deck_icon',
+  'combat_sword_icon', 'combat_shield_icon', 'combat_bow_icon',
+  'dagger', 'ring', 'amulet',
+  'combat_fire_status', 'combat_ice_status', 'combat_poison_status',
 ];
 
 /** Timer-bar segment tile choices (any compiled HUD/card icon tile plus

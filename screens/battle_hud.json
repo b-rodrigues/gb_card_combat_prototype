@@ -2,8 +2,8 @@
  "$schema": "./schema/battle_hud.schema.json",
  "id": "battle_hud",
  "label": "Battle HUD Skin",
- "hp": { "icon": "heart", "color": "fire" },
- "ap": { "icon": "bolt", "color": "gold" },
- "deck": { "icon": "deck", "color": "iron" },
+ "hp": { "icon": "combat_hp_icon", "color": "fire" },
+ "ap": { "icon": "combat_ap_icon", "color": "gold" },
+ "deck": { "icon": "combat_deck_icon", "color": "iron" },
  "bar": { "filled": "bar_filled", "empty": "bar_empty", "color": "wood", "row": 17, "width": 20 }
 }

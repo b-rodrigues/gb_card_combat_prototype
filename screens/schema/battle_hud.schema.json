@@ -19,8 +19,7 @@
     },
     "hp": { "$ref": "#/definitions/iconSkin", "description": "Hero HP icon (drawn at the hero row, before 'HP:')." },
     "ap": { "$ref": "#/definitions/iconSkin", "description": "AP (energy) icon (deck row, before 'AP:')." },
-    "deck": { "$ref": "#/definitions/iconSkin", "description": "Deck icon (deck row, col 0, before 'DECK:')." },
-    "bar": {
+    "deck": { "$ref": "#/definitions/iconSkin", "description": "Deck icon (deck row, col 0, before 'DECK:')." },    "bar": {
       "type": "object",
       "additionalProperties": false,
       "required": ["filled", "empty", "color", "row", "width"],
@@ -28,12 +27,12 @@
       "properties": {
         "filled": {
           "type": "string",
-          "enum": ["bar_filled", "sword", "shield", "bow", "dagger", "ring", "amulet", "fire", "ice", "poison", "heart", "bolt", "coin", "deck", "bar_empty"],
+          "enum": ["bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "bar_empty"],
           "description": "Tile for an unexpired segment (default bar_filled, VRAM 117)."
         },
         "empty": {
           "type": "string",
-          "enum": ["bar_filled", "sword", "shield", "bow", "dagger", "ring", "amulet", "fire", "ice", "poison", "heart", "bolt", "coin", "deck", "bar_empty"],
+          "enum": ["bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "bar_empty"],
           "description": "Tile for an expired segment (default bar_empty, VRAM 127)."
         },
         "color": {
@@ -64,8 +63,8 @@
       "properties": {
         "icon": {
           "type": "string",
-          "enum": ["heart", "bolt", "coin", "deck", "sword", "shield", "bow", "dagger", "ring", "amulet", "fire", "ice", "poison"],
-          "description": "Which VRAM icon tile represents this HUD element."
+          "enum": ["combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status"],
+          "description": "Which VRAM icon tile represents this HUD element. Names are the slugified combat-tileset description entries (assets/combat-tileset-description.csv); dagger/ring/amulet have no CSV entry (atlas-only) and keep plain names."
         },
         "color": {
           "type": "string",

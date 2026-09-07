@@ -68,8 +68,8 @@
       "properties": {
         "icon": {
           "type": "string",
-          "enum": ["sword", "shield", "bow", "dagger", "ring", "amulet", "fire", "ice", "poison"],
-          "description": "Which VRAM icon tile represents this type/element in the battle hand."
+          "enum": ["combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status"],
+          "description": "Which VRAM icon tile represents this type/element. Names are the slugified combat-tileset description entries (assets/combat-tileset-description.csv); dagger/ring/amulet have no CSV entry (atlas-only) and keep plain names."
         },
         "color": {
           "type": "string",

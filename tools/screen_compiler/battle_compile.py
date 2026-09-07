@@ -549,10 +549,19 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
 # is staged into the WRAM mirror g_card_skin_wram by
 # battle_hud_load_banked() at battle entry.
 ICON_TILES = {
-    'sword': 104, 'shield': 105, 'bow': 106, 'dagger': 107,
-    'ring': 108, 'amulet': 109,
-    'fire': 110, 'ice': 111, 'poison': 112,
-    'heart': 113, 'bolt': 114, 'coin': 115, 'deck': 116,
+    # Icon names are the slugified combat-tileset description entries
+    # (assets/combat-tileset-description.csv -> public/tiles/combat slugs).
+    # dagger/ring/amulet have no CSV entry (atlas-only icons) and keep
+    # plain names; bar_filled/bar_empty are compose_card_frames.py slugs.
+    # NOTE: VRAM tile DATA for sword/shield/bow + elements still comes
+    # from the asset atlas (only the HUD hp/ap/deck icons load from the
+    # combat tileset).
+    'combat_sword_icon': 104, 'combat_shield_icon': 105,
+    'combat_bow_icon': 106, 'dagger': 107, 'ring': 108, 'amulet': 109,
+    'combat_fire_status': 110, 'combat_ice_status': 111,
+    'combat_poison_status': 112,
+    'combat_hp_icon': 113, 'combat_ap_icon': 114,
+    'combat_deck_icon': 116,
     'bar_filled': 117, 'bar_empty': 127,
 }
 SKIN_COLORS = {'none': 0, 'fire': 1, 'iron': 2, 'field': 3, 'poison': 4,
@@ -566,23 +575,23 @@ SKIN_ELEM_KEYS = [None, 'poison', 'fire', 'ice']
 DEFAULT_SKIN = {
     'box': {'w': 3, 'h': 4},
     'types': {
-        'sword':  {'icon': 'sword',  'color': 'iron'},
-        'shield': {'icon': 'shield', 'color': 'wood'},
-        'bow':    {'icon': 'bow',    'color': 'gold'},
-        'heal':   {'icon': 'ring',   'color': 'wood'},
-        'dagger': {'icon': 'dagger', 'color': 'poison'},
+        'sword':  {'icon': 'combat_sword_icon',  'color': 'iron'},
+        'shield': {'icon': 'combat_shield_icon', 'color': 'wood'},
+        'bow':    {'icon': 'combat_bow_icon',    'color': 'gold'},
+        'heal':   {'icon': 'ring',               'color': 'wood'},
+        'dagger': {'icon': 'dagger',             'color': 'poison'},
     },
     'elements': {
-        'fire':   {'icon': 'fire',   'color': 'fire'},
-        'ice':    {'icon': 'ice',    'color': 'iron'},
-        'poison': {'icon': 'poison', 'color': 'poison'},
+        'fire':   {'icon': 'combat_fire_status',   'color': 'fire'},
+        'ice':    {'icon': 'combat_ice_status',    'color': 'iron'},
+        'poison': {'icon': 'combat_poison_status', 'color': 'poison'},
     },
 }
 
 DEFAULT_HUD = {
-    'hp':   {'icon': 'heart', 'color': 'fire'},
-    'ap':   {'icon': 'bolt',  'color': 'gold'},
-    'deck': {'icon': 'deck',  'color': 'iron'},
+    'hp':   {'icon': 'combat_hp_icon',   'color': 'fire'},
+    'ap':   {'icon': 'combat_ap_icon',   'color': 'gold'},
+    'deck': {'icon': 'combat_deck_icon', 'color': 'iron'},
     'bar':  {'filled': 'bar_filled', 'empty': 'bar_empty', 'color': 'wood',
              'row': 17, 'width': 20},
 }
