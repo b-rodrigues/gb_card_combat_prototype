@@ -106,14 +106,14 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     1
 };
 
-static const EnemyTypeDef g_enemy_type_wolf = {
-    "wolf",
-    "Wolf",
+static const EnemyTypeDef g_enemy_type_spider = {
+    "spider",
+    "Spider",
     1,
-    "WOLF",
+    "SPIDER",
     16,
     16,
-    "BATTLE_WOLF",
+    "BATTLE_SPIDER",
     15,
     CURRENCY_ID_GOLD,
     255,
@@ -134,7 +134,7 @@ const EnemyTypeDef* const g_enemy_types[5] = {
     &g_enemy_type_mimic,
     &g_enemy_type_slime,
     &g_enemy_type_slime_lord,
-    &g_enemy_type_wolf,
+    &g_enemy_type_spider,
 };
 const uint8_t g_enemy_type_count = 5;
 

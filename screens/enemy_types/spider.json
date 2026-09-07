@@ -1,13 +1,13 @@
 {
   "$schema": "../schema/enemy_type.schema.json",
-  "id": "wolf",
-  "label": "Wolf",
+  "id": "spider",
+  "label": "Spider",
   "category": "elite",
   "sprite": null,
-  "name": "WOLF",
+  "name": "SPIDER",
   "hp": 16,
   "max_hp": 16,
-  "battle_id": "BATTLE_WOLF",
+  "battle_id": "BATTLE_SPIDER",
   "ai_types": ["AI_PATROL_CROSS", "AI_PATROL_CIRCLE"],
   "gold_reward": 15,
   "reward_currency": "CURRENCY_ID_GOLD"
