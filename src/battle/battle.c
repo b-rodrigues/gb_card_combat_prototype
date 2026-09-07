@@ -33,6 +33,20 @@ uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
  * at every battle entry, read by the bank-3 renderer. */
 BattleHudCache g_battle_hud;
 
+/* Battle hand-card skin (see battle_data.h): uninitialized WRAM (bss);
+ * staged from the bank-4 generated const by battle_hud_load_banked() at
+ * every battle entry, read by the bank-3 renderer. */
+CardSkinDef g_card_skin_wram;
+
+/* Battle HUD skin (see battle_data.h): uninitialized WRAM (bss); same
+ * staging contract as the card skin; read by the fixed-bank timer draw
+ * (ui.c) and the bank-3 renderer. */
+HudSkinDef g_hud_skin_wram;
+
+/* Solo-encounter flag (see battle.h): staged by battle_start, read by
+ * battle_hud_load_banked to pick the single-enemy boss screen. */
+uint8_t g_battle_solo;
+
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
  * deck from the player's owned cards.  When NULL, fall back to the
@@ -70,7 +84,7 @@ static const int g_deck_min_matches_hand_size[
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds, uint8_t battle_id)
+                  const DeckState *ds, uint8_t battle_id, uint8_t solo)
 {
     uint8_t *p = (uint8_t *)b;
     uint16_t n = sizeof(Battle);
@@ -121,7 +135,9 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
 
     /* Stage the active screen's layout (rows/cols/positions) into WRAM
      * for the bank-3 renderer.  Game layer picks the screen by battle
-     * type (boss vs standard); engine never names screens itself. */
+     * type + solo flag (boss/miniboss vs standard); engine never names
+     * screens itself. */
+    g_battle_solo = solo;
     g_bk_byte_a = b->enemy_battle_id;
     g_bk_call_bank = 4;
     g_bk_call_target = (uint16_t)&battle_hud_load_banked;

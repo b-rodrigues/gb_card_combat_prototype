@@ -37,18 +37,36 @@
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 13,
       "contains": "SW3 SW3"
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 13,
       "contains": "SH2 SH2"
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 13,
       "contains": "SW4"
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 11,
+      "col": 16,
+      "expected": 118
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 12,
+      "col": 17,
+      "expected": 104
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 10,
+      "col": 18,
+      "expected": 110
     }
   ],
   "name": "fallback_deck_starter"

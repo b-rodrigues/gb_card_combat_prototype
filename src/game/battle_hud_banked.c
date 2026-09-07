@@ -37,7 +37,37 @@ void battle_hud_load_banked(void)
     uint8_t i, k;
     uint8_t match;
 
-    want = (battle_type == BATTLE_NONE) ? "boss" : "default";
+    want = (battle_type == BATTLE_NONE || g_battle_solo) ? "boss" : "default";
+
+    /* Stage the card skin (generated const, same bank 4) into its WRAM
+     * mirror for the bank-3 renderer.  Field-by-field: no struct
+     * assignment across banks (banked.h ABI contract).  Runs before the
+     * screen resolution: the skin is battle-invariant and must stage even
+     * when no screen def matches. */
+    g_card_skin_wram.box_w = g_card_skin.box_w;
+    g_card_skin_wram.box_h = g_card_skin.box_h;
+    for (k = 0; k < 5; k++) {
+        g_card_skin_wram.weapon_tile[k] = g_card_skin.weapon_tile[k];
+        g_card_skin_wram.weapon_color[k] = g_card_skin.weapon_color[k];
+    }
+    for (k = 0; k < 4; k++) {
+        g_card_skin_wram.elem_tile[k] = g_card_skin.elem_tile[k];
+        g_card_skin_wram.elem_color[k] = g_card_skin.elem_color[k];
+    }
+
+    /* Stage the HUD skin (same contract). */
+    g_hud_skin_wram.hp_icon_tile = g_hud_skin.hp_icon_tile;
+    g_hud_skin_wram.hp_icon_color = g_hud_skin.hp_icon_color;
+    g_hud_skin_wram.ap_icon_tile = g_hud_skin.ap_icon_tile;
+    g_hud_skin_wram.ap_icon_color = g_hud_skin.ap_icon_color;
+    g_hud_skin_wram.deck_icon_tile = g_hud_skin.deck_icon_tile;
+    g_hud_skin_wram.deck_icon_color = g_hud_skin.deck_icon_color;
+    g_hud_skin_wram.bar_filled_tile = g_hud_skin.bar_filled_tile;
+    g_hud_skin_wram.bar_empty_tile = g_hud_skin.bar_empty_tile;
+    g_hud_skin_wram.bar_color = g_hud_skin.bar_color;
+    g_hud_skin_wram.bar_row = g_hud_skin.bar_row;
+    g_hud_skin_wram.bar_width = g_hud_skin.bar_width;
+
     def = 0;
     dflt = 0;
     for (i = 0; i < g_battle_screen_count; i++) {

@@ -2140,12 +2140,34 @@ cleared a `_HOME` overflow that presented as a harness-wide guest spin
 The battle screen uses the fixed background rows: `0` centered banner,
 `2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DECK:` +
 draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
-hero row on BATTLE_DIRTY_HERO), `13` `COMBO:` + hand type
-(`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
-cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`
-card description (`card_get_description`), `17` timer bar (window row,
-`0x9A20`).  Rows `8-12` stay blank as whitespace between the hero block
-and the bottom card stack.
+hero row on BATTLE_DIRTY_HERO), `8` transient gameplay messages
+(`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `9` `COMBO:`
++ hand type (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c),
+`10` floating element-status icons (one per ridden card, above its
+top-right corner), `11-14` boxed hand cards (`cards_row`=14 is the BOTTOM
+row; each card is a 3-wide x `box_h`-tall frame from the compiled
+`card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on
+the first interior row, power digit on the last; the semantic screen
+buffer keeps the type code + digit on row 13 for assertions), `15`
+markers (`1-5` selection-order digits, `^` cursor), `16` card
+description (`card_get_description`), `17` timer bar (window row,
+`0x9A20`).  Card visuals are data-driven: `screens/cards_skin.json` via
+`battle_compile.py` emits `g_card_skin` (bank 4), staged into the
+`g_card_skin_wram` mirror by `battle_hud_load_banked()`.  There are
+exactly TWO battle screens (`screens/battle/`): `default` (3 enemies)
+and `boss` (1 enemy centered at x=8, art up to 3x3 on rows 3-5, caret
+narrowed to 3 cols on row 6) -- selected by `battle_hud_load_banked()`
+from `BATTLE_NONE` OR the `g_battle_solo` flag (solo minibosses, staged
+by `battle_start(..., solo)`).  The HUD skin (`screens/battle_hud.json`
+-> `g_hud_skin` -> `g_hud_skin_wram` mirror) owns the hero-HP / AP /
+deck icon tiles + palettes and the turn-timer bar (segment tiles
+VRAM 117/127, color, row, width; drawn by the bank-3
+`ui_draw_battle_timer_banked` behind the fixed-bank wrapper -- the
+fixed `_HOME` bank is hard against 0x8000, AGENTS.md 52.18).  Hero/deck
+row positions are layout-driven: label at (hero_label_row,
+hero_label_col), HP block at hero_hp_col (icon 2 cols left of "HP:"),
+DECK at deck_col (icon 1 left), AP at ap_col (icon 2 left).  VRAM BG
+tiles 117-127 are FULLY allocated (bar segments + card frames).
 
 ## 52.12 Scenario state ordering
 

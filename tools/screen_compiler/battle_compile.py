@@ -140,7 +140,7 @@ HUD_STRUCT_FIELDS = [
     ('cards_row', 'cards_row', 10),
     ('card_cursor_row', 'card_cursor_row', 14),
     ('card_desc_row', 'card_desc_row', 15),
-    ('timer_row', 'timer_row', 16),
+    ('timer_row', 'timer_row', 17),
     ('timer_col', 'timer_col', 0),
     ('timer_width', 'timer_width', 20),
     ('hud_enemy_row_start', 'enemy_row_start', 2),
@@ -148,7 +148,7 @@ HUD_STRUCT_FIELDS = [
     ('hud_deck_row', 'deck_row', 7),
     ('hud_combo_row_start', 'combo_row_start', 13),
     ('hud_combo_row_step', 'combo_row_step', 1),
-    ('hud_timer_row', 'timer_row', 15),
+    ('hud_timer_row', 'timer_row', 17),
     ('hud_caret_x', 'caret_x', 3),
 ]
 
@@ -541,6 +541,216 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
     return "\n".join(lines)
 
 
+# Battle hand-card skin (screens/cards_skin.json): per BattleCardType
+# weapon icon tile + CGB palette, per element status icon tile + palette,
+# and the card box geometry.  Icon names resolve to the fixed VRAM icon
+# tiles ui_init loads (ui.h UI_TILE_CARD_*: 104-112); colors to UI_COLOR_*
+# palette indices.  The generated const g_card_skin (bank 4, card_skin.c)
+# is staged into the WRAM mirror g_card_skin_wram by
+# battle_hud_load_banked() at battle entry.
+ICON_TILES = {
+    'sword': 104, 'shield': 105, 'bow': 106, 'dagger': 107,
+    'ring': 108, 'amulet': 109,
+    'fire': 110, 'ice': 111, 'poison': 112,
+    'heart': 113, 'bolt': 114, 'coin': 115, 'deck': 116,
+    'bar_filled': 117, 'bar_empty': 127,
+}
+SKIN_COLORS = {'none': 0, 'fire': 1, 'iron': 2, 'field': 3, 'poison': 4,
+               'wood': 5, 'gold': 6, 'dim': 7}
+# BattleCardType order (src/battle/card.h): SWORD SHIELD BOW HEAL DAGGER.
+SKIN_TYPE_KEYS = ['sword', 'shield', 'bow', 'heal', 'dagger']
+# StatusId order (src/rpg/status.h): NONE POISON BURN FREEZE; none has no
+# JSON entry (the icon cell stays blank).
+SKIN_ELEM_KEYS = [None, 'poison', 'fire', 'ice']
+
+DEFAULT_SKIN = {
+    'box': {'w': 3, 'h': 4},
+    'types': {
+        'sword':  {'icon': 'sword',  'color': 'iron'},
+        'shield': {'icon': 'shield', 'color': 'wood'},
+        'bow':    {'icon': 'bow',    'color': 'gold'},
+        'heal':   {'icon': 'ring',   'color': 'wood'},
+        'dagger': {'icon': 'dagger', 'color': 'poison'},
+    },
+    'elements': {
+        'fire':   {'icon': 'fire',   'color': 'fire'},
+        'ice':    {'icon': 'ice',    'color': 'iron'},
+        'poison': {'icon': 'poison', 'color': 'poison'},
+    },
+}
+
+DEFAULT_HUD = {
+    'hp':   {'icon': 'heart', 'color': 'fire'},
+    'ap':   {'icon': 'bolt',  'color': 'gold'},
+    'deck': {'icon': 'deck',  'color': 'iron'},
+    'bar':  {'filled': 'bar_filled', 'empty': 'bar_empty', 'color': 'wood',
+             'row': 17, 'width': 20},
+}
+
+
+def load_card_skin():
+    """Load + validate screens/cards_skin.json.  Falls back to the
+    hardcoded defaults (the pre-skin renderer mapping) when the file is
+    missing; invalid icon/color names fail the compile.  Returns the
+    resolved skin dict."""
+    path = REPO_ROOT / "screens" / "cards_skin.json"
+    if not path.exists():
+        return DEFAULT_SKIN
+    with open(path) as f:
+        skin = json.load(f)
+    box = skin.get('box') or {}
+    w, h = box.get('w', 3), box.get('h', 4)
+    if w != 3:
+        sys.stderr.write("ERROR: cards_skin.box.w %d must be 3 (hand stride is 4)\n" % w)
+        return None
+    if not (3 <= h <= 5):
+        sys.stderr.write("ERROR: cards_skin.box.h %d must be 3-5\n" % h)
+        return None
+    types = skin.get('types') or {}
+    for key in SKIN_TYPE_KEYS:
+        entry = types.get(key)
+        if not entry:
+            sys.stderr.write("ERROR: cards_skin.types missing '%s'\n" % key)
+            return None
+        if entry.get('icon') not in ICON_TILES:
+            sys.stderr.write("ERROR: cards_skin.types.%s icon '%s' not in %s\n"
+                             % (key, entry.get('icon'), sorted(ICON_TILES)))
+            return None
+        if entry.get('color') not in SKIN_COLORS:
+            sys.stderr.write("ERROR: cards_skin.types.%s color '%s' not in %s\n"
+                             % (key, entry.get('color'), sorted(SKIN_COLORS)))
+            return None
+    elements = skin.get('elements') or {}
+    for key in SKIN_ELEM_KEYS:
+        if key is None:
+            continue
+        entry = elements.get(key)
+        if not entry:
+            sys.stderr.write("ERROR: cards_skin.elements missing '%s'\n" % key)
+            return None
+        if entry.get('icon') not in ICON_TILES:
+            sys.stderr.write("ERROR: cards_skin.elements.%s icon '%s' not in %s\n"
+                             % (key, entry.get('icon'), sorted(ICON_TILES)))
+            return None
+        if entry.get('color') not in SKIN_COLORS:
+            sys.stderr.write("ERROR: cards_skin.elements.%s color '%s' not in %s\n"
+                             % (key, entry.get('color'), sorted(SKIN_COLORS)))
+            return None
+    return skin
+
+
+def build_card_skin_output(skin):
+    """Generate src/game/card_skin.c: the const CardSkinDef g_card_skin
+    (bank 4) staged into WRAM by battle_hud_load_banked().  Emitted as
+    numeric VRAM tiles / UI_COLOR_* palettes with per-row comments."""
+    if skin is None:
+        return None
+    lines = []
+    lines.append("/**")
+    lines.append(" * Generated by tools/screen_compiler/battle_compile.py --all.")
+    lines.append(" * Do not edit directly -- edit screens/cards_skin.json and re-run.")
+    lines.append(" */")
+    lines.append("")
+    lines.append("#pragma bank 4")
+    lines.append("")
+    lines.append("#include <stdint.h>")
+    lines.append('#include "battle_data.h"')
+    lines.append("")
+    lines.append("const CardSkinDef g_card_skin = {")
+    lines.append("    %d, %d," % (skin['box']['w'], skin['box']['h']))
+    lines.append("    /* weapon_tile: %s */" % " ".join(SKIN_TYPE_KEYS))
+    lines.append("    { %s }," % ", ".join(str(ICON_TILES[skin['types'][k]['icon']]) for k in SKIN_TYPE_KEYS))
+    lines.append("    /* weapon_color: %s */" % " ".join(SKIN_TYPE_KEYS))
+    lines.append("    { %s }," % ", ".join(str(SKIN_COLORS[skin['types'][k]['color']]) for k in SKIN_TYPE_KEYS))
+    lines.append("    /* elem_tile: none poison fire ice (none = blank font tile;")
+    lines.append("     * JSON 'fire' = STATUS_BURN, 'ice' = STATUS_FREEZE) */")
+    lines.append("    { 0, %s }," % ", ".join(str(ICON_TILES[skin['elements'][k]['icon']]) for k in SKIN_ELEM_KEYS if k))
+    lines.append("    /* elem_color: none %s */" % " ".join(
+        k for k in SKIN_ELEM_KEYS if k))
+    lines.append("    { 0, %s }" % ", ".join(str(SKIN_COLORS[skin['elements'][k]['color']]) for k in SKIN_ELEM_KEYS if k))
+    lines.append("};")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def load_battle_hud():
+    """Load + validate screens/battle_hud.json (the battle HUD skin:
+    hero-HP / AP / deck icons + colors and the turn-timer bar geometry).
+    Falls back to the hardcoded defaults (the pre-skin renderer values)
+    when the file is missing; unknown icon/color names fail the run."""
+    path = REPO_ROOT / "screens" / "battle_hud.json"
+    if not path.exists():
+        return DEFAULT_HUD
+    with open(path) as f:
+        hud = json.load(f)
+    for key in ('hp', 'ap', 'deck'):
+        entry = hud.get(key)
+        if not entry:
+            sys.stderr.write("ERROR: battle_hud.%s missing\n" % key)
+            return None
+        if entry.get('icon') not in ICON_TILES:
+            sys.stderr.write("ERROR: battle_hud.%s icon '%s' not in %s\n"
+                             % (key, entry.get('icon'), sorted(ICON_TILES)))
+            return None
+        if entry.get('color') not in SKIN_COLORS:
+            sys.stderr.write("ERROR: battle_hud.%s color '%s' not in %s\n"
+                             % (key, entry.get('color'), sorted(SKIN_COLORS)))
+            return None
+    bar = hud.get('bar')
+    if not bar:
+        sys.stderr.write("ERROR: battle_hud.bar missing\n")
+        return None
+    for key in ('filled', 'empty'):
+        if bar.get(key) not in ICON_TILES:
+            sys.stderr.write("ERROR: battle_hud.bar.%s tile '%s' not in %s\n"
+                             % (key, bar.get(key), sorted(ICON_TILES)))
+            return None
+    if bar.get('color') not in SKIN_COLORS:
+        sys.stderr.write("ERROR: battle_hud.bar.color '%s' not in %s\n"
+                         % (bar.get('color'), sorted(SKIN_COLORS)))
+        return None
+    row, width = bar.get('row', 17), bar.get('width', 20)
+    if not (0 <= row <= 17):
+        sys.stderr.write("ERROR: battle_hud.bar.row %s out of 0-17\n" % row)
+        return None
+    if not (1 <= width <= 20):
+        sys.stderr.write("ERROR: battle_hud.bar.width %s out of 1-20\n" % width)
+        return None
+    return hud
+
+
+def build_battle_hud_output(hud):
+    """Generate src/game/hud_skin.c: the const HudSkinDef g_hud_skin
+    (bank 4), staged into WRAM by battle_hud_load_banked()."""
+    if hud is None:
+        return None
+    lines = []
+    lines.append("/**")
+    lines.append(" * Generated by tools/screen_compiler/battle_compile.py --all.")
+    lines.append(" * Do not edit directly -- edit screens/battle_hud.json and re-run.")
+    lines.append(" */")
+    lines.append("")
+    lines.append("#pragma bank 4")
+    lines.append("")
+    lines.append("#include <stdint.h>")
+    lines.append('#include "battle_data.h"')
+    lines.append("")
+    lines.append("const HudSkinDef g_hud_skin = {")
+    lines.append("    %d, %d, /* hp icon + color */"
+                 % (ICON_TILES[hud['hp']['icon']], SKIN_COLORS[hud['hp']['color']]))
+    lines.append("    %d, %d, /* ap icon + color */"
+                 % (ICON_TILES[hud['ap']['icon']], SKIN_COLORS[hud['ap']['color']]))
+    lines.append("    %d, %d, /* deck icon + color */"
+                 % (ICON_TILES[hud['deck']['icon']], SKIN_COLORS[hud['deck']['color']]))
+    lines.append("    %d, %d, /* bar segment tiles: filled, empty */"
+                 % (ICON_TILES[hud['bar']['filled']], ICON_TILES[hud['bar']['empty']]))
+    lines.append("    %d, %d, %d /* bar color, row, width */"
+                 % (SKIN_COLORS[hud['bar']['color']], hud['bar']['row'], hud['bar']['width']))
+    lines.append("};")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def load_game_card_ids():
     """Game CARD_* id macros from src/game/game_ids.h (the engine id range
     plus per-game content ids).  Used to validate screens/hero.json
@@ -632,6 +842,15 @@ def main(args=None):
     art_sets, art_order, art_offsets = load_combat_art()
     # The emitter is positional: refuse to run on a drifted struct.
     if not check_battle_struct_order():
+        return 1
+
+    # Battle hand-card skin (always; battle-invariant).  Resolved+validated
+    # even for --gfx-coords/--ow-coords: keep the gate uniform.
+    skin = load_card_skin()
+    if skin is None:
+        return 1
+    hud = load_battle_hud()
+    if hud is None:
         return 1
 
     # Load hero.json for OW blob
@@ -756,6 +975,12 @@ def main(args=None):
     if enemy_types_output is None:
         return 1
     hero_output = build_hero_output(hero_json)
+    card_skin_output = build_card_skin_output(skin)
+    if card_skin_output is None:
+        return 1
+    hud_skin_output = build_battle_hud_output(hud)
+    if hud_skin_output is None:
+        return 1
 
     # Write battle_screens.c
     battle_screens_path = output_dir / "battle_screens.c"
@@ -763,11 +988,17 @@ def main(args=None):
     battle_types_path = output_dir / "battle_types.c"
     # Write hero_content.c (data-driven starter deck)
     hero_content_path = output_dir / "hero_content.c"
+    # Write card_skin.c (battle hand-card skin)
+    card_skin_path = output_dir / "card_skin.c"
+    # Write hud_skin.c (battle HUD skin)
+    hud_skin_path = output_dir / "hud_skin.c"
 
     if args.check:
         for path, fresh in ((battle_screens_path, battle_screens_output),
                             (battle_types_path, enemy_types_output),
-                            (hero_content_path, hero_output)):
+                            (hero_content_path, hero_output),
+                            (card_skin_path, card_skin_output),
+                            (hud_skin_path, hud_skin_output)):
             try:
                 committed = path.read_text(encoding="utf-8")
             except FileNotFoundError:
@@ -775,8 +1006,9 @@ def main(args=None):
             if committed is None or committed != fresh:
                 print("DRIFT: fresh compile differs from %s" % path, file=sys.stderr)
                 return 1
-        print("battle compile --check OK: %s, %s and %s match fresh output"
-              % (battle_screens_path, battle_types_path, hero_content_path))
+        print("battle compile --check OK: %s, %s, %s, %s and %s match fresh output"
+              % (battle_screens_path, battle_types_path, hero_content_path,
+                 card_skin_path, hud_skin_path))
         return 0
 
     with open(battle_screens_path, "w") as f:
@@ -790,6 +1022,14 @@ def main(args=None):
     with open(hero_content_path, "w") as f:
         f.write(hero_output)
     print("Wrote %s" % hero_content_path)
+
+    with open(card_skin_path, "w") as f:
+        f.write(card_skin_output)
+    print("Wrote %s" % card_skin_path)
+
+    with open(hud_skin_path, "w") as f:
+        f.write(hud_skin_output)
+    print("Wrote %s" % hud_skin_path)
 
     return 0
 

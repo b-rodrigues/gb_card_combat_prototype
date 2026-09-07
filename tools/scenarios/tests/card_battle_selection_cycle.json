@@ -68,13 +68,67 @@
       "expected": "BATTLE"
     },
     {
+      "type": "tilemap_cell",
+      "row": 11,
+      "col": 0,
+      "expected": 118
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 14,
+      "col": 0,
+      "expected": 124
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 12,
+      "col": 5,
+      "expected": 105
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 10,
+      "col": 14,
+      "expected": 0
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 17,
+      "col": 0,
+      "expected": 117
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 17,
+      "col": 19,
+      "expected": 117
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 6,
+      "col": 11,
+      "expected": 113
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 7,
+      "col": 0,
+      "expected": 116
+    },
+    {
+      "type": "tilemap_cell",
+      "row": 7,
+      "col": 11,
+      "expected": 114
+    },
+    {
       "type": "screen_row",
-      "row": 13,
+      "row": 9,
       "contains": "COMBO:"
     },
     {
       "type": "screen_row",
-      "row": 14,
+      "row": 13,
       "contains": "SW3 SH2 BO4 SW4 HE7"
     },
     {

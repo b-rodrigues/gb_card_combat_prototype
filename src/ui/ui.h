@@ -27,6 +27,26 @@ extern uint8_t g_is_cgb;
 #define UI_TILE_BOLT             114u
 #define UI_TILE_COIN             115u
 #define UI_TILE_DECK             116u
+/* Turn-timer bar segment tiles (HUD skin; generated card_frame_tiles.h
+ * sheet row 3, loaded explicitly at these ids by ui_init).  Together with
+ * the card frames these fully allocate the 117-127 BG window between the
+ * icon block (104-116) and the world / battle-art blocks (128+). */
+#define UI_TILE_TIMER_FILLED     117u
+#define UI_TILE_TIMER_EMPTY      127u
+/* Battle hand-card frame tiles (VRAM Block 1, 0x8800): 9 tiles in frame
+ * order TL TM TR / L C R / BL BM BR (generated card_frame_tiles.h from
+ * assets/card_frames.png).  Sits between the icon block (104-116) and the
+ * world / battle-art blocks (128+). */
+#define UI_TILE_CARD_FRAME_BASE  118u
+#define UI_TILE_CARD_FRAME_TL    118u
+#define UI_TILE_CARD_FRAME_TM    119u
+#define UI_TILE_CARD_FRAME_TR    120u
+#define UI_TILE_CARD_FRAME_L     121u
+#define UI_TILE_CARD_FRAME_C     122u
+#define UI_TILE_CARD_FRAME_R     123u
+#define UI_TILE_CARD_FRAME_BL    124u
+#define UI_TILE_CARD_FRAME_BM    125u
+#define UI_TILE_CARD_FRAME_BR    126u
 
 /* Overworld actor OAM sprite tile bases (VRAM Block 0, 0x8000).  Collision
  * rules: must not overlap the font-duplicate block 0..95 used for ASCII
@@ -165,6 +185,7 @@ void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
 void ui_update_battle_banked(void);
 void ui_draw_battle_timer(const Battle *battle);
+void ui_draw_battle_timer_banked(void);
 uint8_t ui_calc_timer_bar(uint16_t t);
 
 void ui_draw_font_test(void);

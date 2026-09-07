@@ -114,6 +114,48 @@ typedef struct BattleHudCache {
  * at every battle entry; read by the bank-3 renderer. */
 extern BattleHudCache g_battle_hud;
 
+/* Battle hand-card skin (screens/cards_skin.json via battle_compile.py):
+ * per battle-card-type weapon icon tile + CGB palette, per element-status
+ * icon tile + palette, and the card box geometry.  The generated const
+ * lives in bank 4 (battle_types.c); battle_hud_load_banked() stages it
+ * into this WRAM mirror at battle entry, and the bank-3 renderer reads
+ * only the mirror (banked code must not call across banks). */
+typedef struct CardSkinDef {
+    uint8_t box_w;             /* card box width in tiles (3; hand stride is 4) */
+    uint8_t box_h;             /* card box height in tiles (4: top..bottom rows) */
+    uint8_t weapon_tile[5];    /* BATTLE_CARD_TYPE 0..4 -> VRAM weapon icon tile */
+    uint8_t weapon_color[5];   /* per-type box/icon CGB palette (UI_COLOR_*) */
+    uint8_t elem_tile[4];      /* status 0=NONE(blank) 1=POISON 2=BURN 3=FREEZE -> icon tile */
+    uint8_t elem_color[4];     /* status icon CGB palette */
+} CardSkinDef;
+
+extern const CardSkinDef g_card_skin;   /* generated (bank 4) */
+extern CardSkinDef g_card_skin_wram;    /* staged mirror (WRAM) */
+
+/* Battle HUD skin (screens/battle_hud.json via battle_compile.py):
+ * hero-HP / AP / deck icon tiles + CGB palettes, and the turn-timer bar
+ * geometry (segment tiles, color, row, width).  Same staging contract as
+ * the card skin: generated const in bank 4 (hud_skin.c), mirrored into
+ * WRAM by battle_hud_load_banked() at battle entry; the fixed-bank timer
+ * draw and the bank-3 renderer read only the mirror. */
+typedef struct HudSkinDef {
+    uint8_t hp_icon_tile;      /* heart icon (VRAM tile) */
+    uint8_t hp_icon_color;     /* UI_COLOR_* */
+    uint8_t ap_icon_tile;      /* lightning-bolt icon */
+    uint8_t ap_icon_color;
+    uint8_t deck_icon_tile;    /* deck-stack icon */
+    uint8_t deck_icon_color;
+    uint8_t bar_filled_tile;   /* segment tile when the timer has time left */
+    uint8_t bar_empty_tile;    /* segment tile when drained */
+    uint8_t bar_color;         /* palette for the filled span */
+    uint8_t bar_row;           /* tilemap row 0..17 */
+    uint8_t bar_width;         /* segments, 1..20 */
+} HudSkinDef;
+
+extern const HudSkinDef g_hud_skin;     /* generated (bank 4) */
+extern HudSkinDef g_hud_skin_wram;      /* staged mirror (WRAM) */
+
+
 /* Generated data declarations (bank 4) */
 extern const BattleScreenDef* const g_battle_screens[];
 extern const uint8_t g_battle_screen_count;

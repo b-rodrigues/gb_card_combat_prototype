@@ -50,6 +50,11 @@
       "contains": "MIMIC"
     },
     {
+      "type": "screen_row",
+      "row": 2,
+      "contains": "        MIMIC"
+    },
+    {
       "type": "screen_row_not_contains",
       "row": 2,
       "contains": "MIMIC  MIMIC"

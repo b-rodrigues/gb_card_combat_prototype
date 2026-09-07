@@ -1,0 +1,116 @@
+/** Battle HUD skin + battle-screen layout disk I/O via the vite dev API.
+ *  Mirrors io/cardSkin.ts: all functions throw on transport failure. */
+import type { CardTypeSkin } from './cardSkin';
+
+/** The battle HUD skin (screens/battle_hud.json). */
+export interface BattleHud {
+  $schema?: string;
+  id: string;
+  label: string;
+  hp: CardTypeSkin;
+  ap: CardTypeSkin;
+  deck: CardTypeSkin;
+  bar: {
+    filled: string;
+    empty: string;
+    color: string;
+    row: number;
+    width: number;
+  };
+}
+
+/** hud_layout keys of screens/battle/<id>.json (BattleScreenDef tail).
+ *  Order mirrors battle_compile.py HUD_STRUCT_FIELDS. */
+export interface HudLayout {
+  turn_banner_row: number;
+  enemy_hp_row: number;
+  enemy_sprite_row: number;
+  enemy_cursor_row: number;
+  enemy_col_start: number;
+  enemy_col_step: number;
+  hero_label_row: number;
+  hero_label_col: number;
+  hero_hp_row: number;
+  hero_hp_col: number;
+  deck_row: number;
+  deck_col: number;
+  ap_row: number;
+  ap_col: number;
+  combo_row: number;
+  cards_row: number;
+  card_cursor_row: number;
+  card_desc_row: number;
+  timer_row: number;
+  timer_col: number;
+  timer_width: number;
+  enemy_row_start: number;
+  enemy_row_step: number;
+  combo_row_start: number;
+  combo_row_step: number;
+  caret_x: number;
+}
+
+export interface BattleScreen {
+  id: string;
+  label: string;
+  max_enemies: number;
+  allowed_categories: string[];
+  enemy_positions: Array<{ x: number; y: number }>;
+  timer_config: { overworld_ticks: number; battle_ticks: number };
+  hud_layout: HudLayout;
+}
+
+/** Exactly two battle screens: default (3-enemy standard) and boss
+ *  (single centered enemy, art up to 3x3 — used for bosses and
+ *  solo-flagged minibosses). */
+export const BATTLE_SCREEN_IDS = ['default', 'boss'] as const;
+
+/** HUD icon choices (battle_hud.schema.json iconSkin enum): the fixed VRAM
+ *  icon tiles ui_init loads (heart/bolt/coin/deck 113-116 + card icons). */
+export const HUD_ICON_NAMES: string[] = [
+  'heart', 'bolt', 'coin', 'deck',
+  'sword', 'shield', 'bow', 'dagger', 'ring', 'amulet',
+  'fire', 'ice', 'poison',
+];
+
+/** Timer-bar segment tile choices (any compiled HUD/card icon tile plus
+ *  the two dedicated bar segments, VRAM 117/127). */
+export const BAR_TILE_NAMES: string[] = ['bar_filled', 'bar_empty', ...HUD_ICON_NAMES];
+
+export async function fetchBattleHud(): Promise<BattleHud> {
+  const res = await fetch('/api/battle-hud');
+  if (!res.ok) throw new Error(`battle-hud returned ${res.status}`);
+  const body = await res.json();
+  if (!body.success) throw new Error(body.error || 'battle-hud failed');
+  return body.data as BattleHud;
+}
+
+export async function saveBattleHud(hud: BattleHud): Promise<void> {
+  const res = await fetch('/api/save-battle-hud', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: hud }),
+  });
+  if (!res.ok) throw new Error(`save battle-hud returned ${res.status}`);
+  const body = await res.json();
+  if (!body.success) throw new Error(body.error || 'save battle-hud failed');
+}
+
+export async function fetchBattleScreen(id: string): Promise<BattleScreen> {
+  const res = await fetch(`/api/battle-screen?id=${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`battle-screen ${id} returned ${res.status}`);
+  const body = await res.json();
+  if (!body.success) throw new Error(body.error || `battle-screen ${id} failed`);
+  return body.data as BattleScreen;
+}
+
+export async function saveBattleScreen(id: string, data: BattleScreen): Promise<void> {
+  const res = await fetch('/api/save-level', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: `battle_${id}`, category: 'screens', data }),
+  });
+  if (!res.ok) throw new Error(`save battle-screen ${id} returned ${res.status}`);
+  const body = await res.json();
+  if (!body.success) throw new Error(body.error || `save battle-screen ${id} failed`);
+}

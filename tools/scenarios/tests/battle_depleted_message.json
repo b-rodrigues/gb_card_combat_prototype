@@ -18,6 +18,6 @@
   ],
   "assertions": [
     {"type": "screen", "expected": "BATTLE"},
-    {"type": "screen_row", "row": 12, "contains": "OUT OF USES!"}
+    {"type": "screen_row", "row": 8, "contains": "OUT OF USES!"}
   ]
 }

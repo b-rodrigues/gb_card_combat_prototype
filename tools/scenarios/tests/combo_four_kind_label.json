@@ -30,7 +30,7 @@
   ],
   "assertions": [
     { "type": "screen", "expected": "BATTLE" },
-    { "type": "screen_row", "row": 13, "contains": "FOUR KIND" },
+    { "type": "screen_row", "row": 9, "contains": "FOUR KIND" },
     { "type": "event_not_occurred", "event": "DAMAGE_DEALT" }
   ]
 }

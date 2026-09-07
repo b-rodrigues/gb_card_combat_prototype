@@ -16,14 +16,16 @@ void start_battle_from_world(Game *g)
     act = &g->world.actors[idx];
 
     /* Hero HP is authoritative in the party state; the world entity is the
-     * runtime engine copy. */
+     * runtime engine copy.  Bosses (no enemy deck) and solo-flagged
+     * minibosses stand alone on the single-enemy centered boss screen. */
     battle_start(&g->battle,
                  act->display_name ? act->display_name : "ENEMY",
                  g->state.party.members[0].hp,
                  g->state.party.members[0].max_hp,
                  act->hp, act->max_hp,
                  &g->state.cards.deck,
-                 act->battle_type);
+                 act->battle_type,
+                 (uint8_t)((act->battle_type == BATTLE_NONE) || act->solo));
 
     /* Every hostile encounter engages as a trio: the struck actor plus
      * two clones of its stats -- EXCEPT actors with no enemy deck

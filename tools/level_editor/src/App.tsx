@@ -16,6 +16,7 @@ import { TilesetReviewer } from './TilesetReviewer';
 import { CombatArtStudio } from './CombatArtStudio';
 import { EnemyManager } from './EnemyManager';
 import { HeroManager } from './HeroManager';
+import { BattleManager } from './BattleManager';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -28,8 +29,6 @@ import castleData from '../../../levels/castle.json';
 import titleData from '../../../screens/title.json';
 import battleDefaultData from '../../../screens/battle/default.json';
 import battleBossData from '../../../screens/battle/boss.json';
-import battleAmbushData from '../../../screens/battle/ambush.json';
-import battleDuoData from '../../../screens/battle/duo.json';
 import battleLegacyData from '../../../screens/battle.json';
 
 interface ExistingLevelItem {
@@ -48,9 +47,7 @@ const EXISTING_LEVELS: ExistingLevelItem[] = [
   { id: 'castle', name: castleData.name || 'Castle', data: castleData, category: 'levels' },
   { id: 'title', name: 'Title Screen', data: titleData, category: 'screens' },
   { id: 'battle_default', name: 'Battle (Standard / Mockup)', data: battleDefaultData, category: 'screens' },
-  { id: 'battle_boss', name: 'Battle (Boss)', data: battleBossData, category: 'screens' },
-  { id: 'battle_ambush', name: 'Battle (Ambush)', data: battleAmbushData, category: 'screens' },
-  { id: 'battle_duo', name: 'Battle (Duo)', data: battleDuoData, category: 'screens' },
+  { id: 'battle_boss', name: 'Battle (Boss, 1 centered enemy)', data: battleBossData, category: 'screens' },
   { id: 'battle', name: 'Battle Screen (Legacy)', data: battleLegacyData, category: 'screens' },
 ];
 
@@ -94,6 +91,9 @@ export const App: React.FC = () => {
   // area to the EnemyManager; the level underneath is left untouched.
   const [enemyView, setEnemyView] = useState<string | null>(null);
   const [heroView, setHeroView] = useState<boolean>(false);
+  // Battle view (screens/battle_hud.json + battle/<id>.json layout +
+  // cards_skin.json) — the whole battle-time view, editable from here.
+  const [cardView, setCardView] = useState<boolean>(false);
   const [enemyItems, setEnemyItems] = useState<Array<{ id: string; name: string }>>([]);
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
@@ -312,6 +312,14 @@ export const App: React.FC = () => {
     if (selectedId === 'hero') {
       setHeroView(true);
       setEnemyView(null);
+      setCardView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'cards') {
+      setCardView(true);
+      setEnemyView(null);
+      setHeroView(false);
       setSelectedEntityIndex(null);
       return;
     }
@@ -322,6 +330,7 @@ export const App: React.FC = () => {
     }
     setEnemyView(null);
     setHeroView(false);
+    setCardView(false);
 
     const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
@@ -711,7 +720,7 @@ export const App: React.FC = () => {
           <select
             id="level-select-dropdown"
             className="level-select"
-            value={enemyView ? `enemy:${enemyView}` : currentLevelId}
+            value={heroView ? 'hero' : cardView ? 'cards' : enemyView ? `enemy:${enemyView}` : currentLevelId}
             onChange={(e) => handleSelectLevel(e.target.value)}
           >
             <optgroup label="Overworld Levels">
@@ -738,6 +747,11 @@ export const App: React.FC = () => {
             <optgroup label="Hero">
               <option key="hero" value="hero">
                 Hero (art + stats + starter deck)
+              </option>
+            </optgroup>
+            <optgroup label="Battle">
+              <option key="cards" value="cards">
+                Battle (HUD + layout + cards)
               </option>
             </optgroup>
             {!levelItems.some((l) => l.id === currentLevelId) && (
@@ -844,6 +858,8 @@ export const App: React.FC = () => {
               initialId={enemyView}
               onOpenComposer={() => setShowCombatArt(true)}
             />
+          ) : cardView ? (
+            <BattleManager key="cards" />
           ) : (
           <>
           {/* Left Sidebar */}

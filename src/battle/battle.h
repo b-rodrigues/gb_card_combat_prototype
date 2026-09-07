@@ -116,8 +116,15 @@ void battle_art_load_banked(void);
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds, uint8_t battle_id);
+                  const DeckState *ds, uint8_t battle_id, uint8_t solo);
 void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp);
+
+/* Solo-encounter flag for the active battle (WRAM, staged by battle_start):
+ * bosses (BATTLE_NONE) and solo-flagged minibosses stand alone and render
+ * on the single-enemy centered battle screen ("boss"); everything else
+ * uses the standard 3-slot screen ("default").  Read directly by
+ * battle_hud_load_banked() in the same bank-4 dispatch. */
+extern uint8_t g_battle_solo;
 void battle_cursor_move(Battle *b, int8_t dir);
 void battle_target_move(Battle *b, int8_t dir);
 void battle_target_auto_advance(Battle *b);

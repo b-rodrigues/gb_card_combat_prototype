@@ -30,7 +30,7 @@
   ],
   "assertions": [
     { "type": "screen", "expected": "BATTLE" },
-    { "type": "screen_row", "row": 13, "contains": "TWO PAIR" },
+    { "type": "screen_row", "row": 9, "contains": "TWO PAIR" },
     { "type": "event_not_occurred", "event": "DAMAGE_DEALT" }
   ]
 }

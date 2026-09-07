@@ -69,8 +69,6 @@ function levelEditorApiPlugin(): Plugin {
           'battle': 'screens/battle.json',
           'battle_default': 'screens/battle/default.json',
           'battle_boss': 'screens/battle/boss.json',
-          'battle_ambush': 'screens/battle/ambush.json',
-          'battle_duo': 'screens/battle/duo.json',
         };
         const isSafeId = (id: unknown) =>
           typeof id === 'string' && /^[A-Za-z0-9_]+$/.test(id);
@@ -222,6 +220,80 @@ function levelEditorApiPlugin(): Plugin {
         // Hero definition (screens/hero.json): single read + save for the
         // hero manager (art, stats, starter deck).  The client sends and
         // receives the hero object directly (not wrapped).
+        if (req.method === 'GET' && req.url === '/api/card-skin') {
+          try {
+            sendJson({ success: true, data: readJsonFile(path.join('screens', 'cards_skin.json')) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-card-skin') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { data } = JSON.parse(body);
+              const targetPath = path.join(repoRoot, 'screens', 'cards_skin.json');
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 1) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Battle HUD skin (screens/battle_hud.json): singleton read + save
+        // for the battle manager's HUD tab.
+        if (req.method === 'GET' && req.url === '/api/battle-hud') {
+          try {
+            sendJson({ success: true, data: readJsonFile(path.join('screens', 'battle_hud.json')) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-battle-hud') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { data } = JSON.parse(body);
+              const targetPath = path.join(repoRoot, 'screens', 'battle_hud.json');
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 1) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Battle screen layout (screens/battle/<id>.json): single read for
+        // the battle manager's Layout tab.  Saving reuses /api/save-level
+        // with category 'screens' (SCREEN_ID_TO_PATH routes battle_* ids).
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/battle-screen')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            sendJson({ success: true, id, data: readJsonFile(path.join('screens', 'battle', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
         if (req.method === 'GET' && req.url === '/api/hero') {
           try {
             sendJson(readJsonFile(path.join('screens', 'hero.json')));

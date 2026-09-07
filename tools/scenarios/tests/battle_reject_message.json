@@ -1,7 +1,7 @@
 {
   "name": "battle_reject_message",
   "test": true,
-  "description": "Selecting a card that costs more than the remaining energy pool is rejected with a transient 'NO ENERGY!' flash on the battle HUD (row 12). Cost-9 cards make even the first selection a rejection.",
+  "description": "Selecting a card that costs more than the remaining energy pool is rejected with a transient 'NO ENERGY!' flash on the battle HUD (row 8). Cost-9 cards make even the first selection a rejection.",
   "scenario_id": "BATTLE_BOOT",
   "initial_state": {
     "scene": "FIELD",
@@ -20,6 +20,6 @@
   ],
   "assertions": [
     {"type": "screen", "expected": "BATTLE"},
-    {"type": "screen_row", "row": 12, "contains": "NO ENERGY!"}
+    {"type": "screen_row", "row": 8, "contains": "NO ENERGY!"}
   ]
 }

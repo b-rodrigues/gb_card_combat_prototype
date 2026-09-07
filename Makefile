@@ -90,6 +90,7 @@ gfx:
 	@python3 tools/compose_battle_sprites.py
 	@python3 tools/compose_enemy_sprites.py
 	@python3 tools/compose_hero_sprites.py
+	@python3 tools/compose_card_frames.py
 	# ── Intrepid font ─────────────────────────────────────────────────────
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
@@ -165,6 +166,11 @@ gfx:
 	# since the art moved to the shared actors tileset; tiles_content.c
 	# overlays these into the village VRAM block after the sheet copy.
 	@python3 tools/compose_npc_tiles.py
+	# ── Battle hand-card frame (assets/card_frames.png, 3 cols × 3 rows) ──
+	# 9 border/background tiles for the boxed battle-hand cards (TL TM TR /
+	# L C R / BL BM BR); loaded to VRAM at UI_TILE_CARD_FRAME_BASE (118).
+	@python3 tools/png2gb.py assets/card_frames.png --name card_frame_tiles \
+		--palette auto -o $(GFX_OUT_DIR)/card_frame_tiles.h
 	@python3 tools/png2gb.py assets/npc_tiles.png --name rpg_actor_npc_tiles \
 		--palette auto --anchor-color "#f1eb03" --raw \
 		-o $(GFX_OUT_DIR)/rpg_actor_npc_tiles.inc
@@ -207,7 +213,7 @@ src/game/scenes_content.c: $(wildcard levels/*.json)
 screens:
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
 	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
-	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types}.c"
+	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types,card_skin}.c"
 
 screens-check:
 	@python3 tools/screen_compiler/title_compile.py --check
@@ -216,7 +222,7 @@ screens-check:
 src/game/title_data.c: screens/title.json
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
 
-src/game/battle_screens.c src/game/battle_types.c: $(wildcard screens/battle/*.json) $(wildcard screens/enemy_types/*.json)
+src/game/battle_screens.c src/game/battle_types.c src/game/card_skin.c: $(wildcard screens/battle/*.json) $(wildcard screens/enemy_types/*.json) screens/cards_skin.json
 	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
 
 # Extract tile images from source PNGs for the web editor (import_tileset.py)
