@@ -350,6 +350,7 @@ typedef struct {
     uint8_t move_target_y;
     uint8_t move_progress;       /* 0..7 sub-tile pixels */
     uint8_t battle_type;         /* BattleId */
+    uint8_t solo;                /* copied from the definition: engage alone */
 } WorldActorRuntime;
 
 typedef struct {

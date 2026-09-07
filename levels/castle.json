@@ -151,13 +151,14 @@
           "BLOCKING",
           "INTERACTABLE"
         ],
-        "visual": "M",
+        "visual": "T",
         "hp": 30,
         "max_hp": 30,
         "gold_reward": 0,
         "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_MIMIC",
-        "ai": "AI_NONE"
+        "ai": "AI_NONE",
+        "solo": true
       }
     },
     {
@@ -191,6 +192,7 @@
         "reward_currency": "CURRENCY_ID_GOLD",
         "battle": "BATTLE_NONE",
         "ai": "AI_NONE",
+        "solo": true,
         "quest_var": "VARIABLE_ID_QUEST_MONSTER_HUNT",
         "quest_val": 2
       }

@@ -73,6 +73,9 @@ typedef struct {
     ActorSpriteKind sprite_kind; /* how the overworld renders this actor */
     uint8_t ow_type;             /* enemy-type OAM index for SPRITE_KIND_ENEMY
                                     (into g_enemy_types; 0xFF = ASCII fallback) */
+    uint8_t solo;                /* nonzero: this hostile engages alone (no
+                                    trio clones), even with an enemy deck.
+                                    Appended last: keep initializers in sync. */
 } WorldActorDefinition;
 
 /* A per-map block of actor definitions.  The engine owns no scene content:

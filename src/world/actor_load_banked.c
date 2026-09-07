@@ -5,6 +5,11 @@
 #include "rpg/state.h"
 #include "banked.h"
 
+/* Fixed-WRAM per-slot display-name staging (defined in actor.c, always
+ * mapped).  actor_spawn copies the bank-2 def literal here; fixed-bank
+ * encounter code then dereferences it with any ROM bank mapped. */
+extern char s_actor_names[MAX_WORLD_ACTORS][8];
+
 /* ── Scene actor loader, bank-2 body ────────────────────────────────
  * Dispatched by actor_load_scene() (src/world/actor.c) through the WRAM
  * trampoline.  The registered definition tables live in THIS bank, so
@@ -23,10 +28,10 @@ extern uint8_t g_static_actor_count;
 
 static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
 {
-    /* NOTE: display_name is deliberately NOT set here -- the wrapper
-     * derives it from `visual` AFTER the trampoline returns, because
-     * these literals must live in the fixed bank (overworld_screen
-     * dereferences the pointer while bank 1 is mapped). */
+    /* NOTE: display_name bytes are staged into fixed WRAM (s_actor_names)
+     * here, where bank 2 (the def literals) is mapped.  Fixed-bank code
+     * dereferences the staged pointer with any bank mapped -- hence no
+     * fixed-bank name table (fixed _HOME budget, AGENTS.md 55.5). */
     r->actor_id = def->actor_id;
     r->id = def->id;
     r->active = 1;
@@ -38,10 +43,8 @@ static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
     r->flags = ACTOR_STATE_NONE;
     r->gold_reward = def->gold_reward;
     r->reward_currency = def->reward_currency;
-    /* display_name deliberately left unset: the wrapper derives it from
-     * `visual` after the trampoline returns, because these literals must
-     * live in the fixed bank (overworld_screen dereferences the pointer
-     * while bank 1 is mapped). */
+    /* display_name bytes are staged by the caller into s_actor_names
+     * (fixed WRAM); the pointer is assigned there. */
     r->visual = def->visual;
     r->sprite_kind = def->sprite_kind;
     r->ow_type = def->ow_type;
@@ -55,6 +58,7 @@ static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
     r->move_target_y = def->y;
     r->move_progress = 0;
     r->battle_type = (uint8_t)def->battle_id;
+    r->solo = def->solo;
 }
 
 void actor_load_scene_banked(void)
@@ -108,7 +112,19 @@ void actor_load_scene_banked(void)
 
             if (def->flags & ACTOR_FLAG_HOSTILE) {
                 if (slot < MAX_WORLD_ACTORS) {
+                    uint8_t j;
+                    char *dst = s_actor_names[slot];
+                    const char *src = def->display_name ?
+                        def->display_name : "Enemy";
                     actor_spawn(&world->actors[slot], def);
+                    /* Stage the def name literal (bank 2 mapped here) into
+                     * fixed WRAM, capped like Combatant.name (7+NUL, same
+                     * idiom as battle_start in battle.c). */
+                    for (j = 0; j < 7 && src[j]; j++) {
+                        dst[j] = src[j];
+                    }
+                    dst[j] = 0;
+                    world->actors[slot].display_name = dst;
                     slot++;
                 }
             } else if (g_static_actor_count < 6) {

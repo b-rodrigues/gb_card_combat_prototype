@@ -27,10 +27,11 @@ void start_battle_from_world(Game *g)
 
     /* Every hostile encounter engages as a trio: the struck actor plus
      * two clones of its stats -- EXCEPT actors with no enemy deck
-     * (BATTLE_NONE): the Lord of Slimes stands alone as a proper final
-     * boss.  Enemy decks wrap their draw index, so per-type decks serve
-     * trios unchanged. */
-    if (act->battle_type != BATTLE_NONE) {
+     * (BATTLE_NONE) and actors flagged solo (e.g. the Lord of Slimes as
+     * a proper final boss, the castle mimic as an optional boss): those
+     * stand alone.  Enemy decks wrap their draw index, so per-type decks
+     * serve trios unchanged. */
+    if (act->battle_type != BATTLE_NONE && !act->solo) {
         battle_add_enemy(&g->battle,
                          act->display_name ? act->display_name : "ENEMY",
                          act->hp, act->max_hp);

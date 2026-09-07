@@ -18,6 +18,12 @@ static uint8_t g_actor_bank = 2;
 WorldActorDefinition g_static_actors[MAX_STATIC_ACTORS];
 uint8_t g_static_actor_count = 0;
 
+/* Per-slot display-name staging (fixed WRAM, always mapped).  The banked
+ * loader copies each hostile's def literal here at spawn; encounter code
+ * dereferences it with any ROM bank mapped.  Data-driven: every hostile
+ * shows its level-JSON display_name in battle (no fixed-bank table). */
+char s_actor_names[MAX_WORLD_ACTORS][8];
+
 void actor_register_tables(const WorldActorTable *tables, uint8_t count, uint8_t bank)
 {
     g_actor_registry = tables;
@@ -74,35 +80,16 @@ ActorEngageResult actor_engage(const WorldActorDefinition *actor, DialogueState 
     return ENGAGE_NONE;
 }
 
-static const char *actor_name_for_visual(uint8_t visual)
-{
-    if (visual == 'V') return "BAT";
-    if (visual == 'L') return "LORD OF SLIMES";
-    if (visual == 'W') return "WIZARD";
-    return "SLIME";
-}
-
 void actor_load_scene(World *world, MapId map_id, const GameState *state)
 {
-    uint8_t i;
-
     /* Body runs banked (src/world/actor_load_banked.c): the registered
      * tables live in the same ROM bank, so the body reads them directly
-     * with no staging copies (AGENTS.md 52.11.1). */
+     * with no staging copies (AGENTS.md 52.11.1).  Hostile display names
+     * are staged into s_actor_names there (fixed WRAM). */
     g_bk_call_bank = 2;
     g_bk_call_target = (uint16_t)&actor_load_scene_banked;
     g_bk_ptr_a = (void *)world;
     g_bk_ptr_b = (void *)state;
     g_bk_byte_a = (uint8_t)map_id;
     banked_call_run();
-
-    /* display_name literals must live in the fixed bank: derive them
-     * here, after the trampoline returns (the body leaves the field
-     * untouched rather than pointing it into bank 2). */
-    for (i = 0; i < MAX_WORLD_ACTORS; i++) {
-        if (world->actors[i].active) {
-            world->actors[i].display_name =
-                actor_name_for_visual(world->actors[i].visual);
-        }
-    }
 }

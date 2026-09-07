@@ -2062,6 +2062,21 @@ export const Inspector: React.FC<InspectorProps> = ({
                         Sprite/art is configured in the Enemies view (art-only) — this dropdown picks which enemy type the placement is.
                       </div>
                     </div>
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!!selectedObject.properties?.solo}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, solo: e.target.checked },
+                            })
+                          }
+                        />{' '}
+                        Solo (engage alone, no trio clones)
+                      </label>
+                    </div>
                   </>
                 )}
 

@@ -590,12 +590,13 @@ def emit_actor_row(obj, enemy_ids):
     else:
         ow = "0xFF"
     aid = props.get("actor_id", 0)
+    solo = 1 if props.get("solo", False) else 0
     line1 = f"        {aid}, {ent}, {x}, {y}, {facing},"
     line2 = f"        {flag_expr},"
     line3 = (f"        {visual}, {name}, {inter}, {shop}, {dlg}, {battle}, {ai}, "
              f"{hp}, {max_hp}, {gold}, {cur},")
     line4 = f"        {svar}, {sval},"
-    line5 = f"         {spk}, {ow}"
+    line5 = f"         {spk}, {ow}, {solo}"
     return "    {\n" + "\n".join([line1, line2, line3, line4, line5]) + "\n    },"
 
 

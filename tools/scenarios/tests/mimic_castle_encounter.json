@@ -43,6 +43,16 @@
     {
       "type": "battle_enemy_hp",
       "expected": 30
+    },
+    {
+      "type": "screen_row",
+      "row": 2,
+      "contains": "MIMIC"
+    },
+    {
+      "type": "screen_row_not_contains",
+      "row": 2,
+      "contains": "MIMIC  MIMIC"
     }
   ],
   "initial_state": {
