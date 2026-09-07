@@ -219,6 +219,38 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Hero definition (screens/hero.json): single read + save for the
+        // hero manager (art, stats, starter deck).  The client sends and
+        // receives the hero object directly (not wrapped).
+        if (req.method === 'GET' && req.url === '/api/hero') {
+          try {
+            sendJson(readJsonFile(path.join('screens', 'hero.json')));
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-hero') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { data } = JSON.parse(body);
+              if (!data || typeof data !== 'object') throw new Error('missing hero data');
+              const targetPath = path.join(repoRoot, 'screens', 'hero.json');
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         if (req.method === 'GET' && req.url === '/api/tilesets') {
           try {
             const dir = path.join(repoRoot, 'tools', 'level_editor', 'tilesets');

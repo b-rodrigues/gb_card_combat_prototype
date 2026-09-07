@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "screens/schema/hero.schema.json",
   "title": "Hero Definition",
-  "description": "Single source of truth for the hero: name, stats, starter deck, and overworld sprite. The compiler emits src/game/hero_def.h from this file.",
+  "description": "Single source of truth for the hero: name, stats, starter deck, and overworld sprite. The compiler emits src/game/hero_content.c (bank-2 starter-deck table) from this file.",
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "name", "start_hp", "start_gold", "starter_deck", "overworld"],
@@ -37,7 +37,7 @@
         "type": "string",
         "pattern": "^CARD_[A-Z_]+$"
       },
-      "description": "Ordered starter deck (exact draw-pile order). Each entry must be a valid CARD_* constant. Max 20 cards."
+      "description": "Ordered starter deck (exact draw-pile order). Each entry must be a valid CARD_* constant from game_ids.h (quest-only SPECIAL cards are rejected at compile time). Max 20 cards. Compiled into g_hero_starter_deck by battle_compile.py; both game_new_game and the battle fallback read it."
     },
     "overworld": {
       "type": "object",

@@ -62,28 +62,27 @@ void game_new_game(GameState *state)
     state->variables.values[VARIABLE_ID_CHAPTER - 1] = 1;
     state->currency.amount[CURRENCY_ID_GOLD - 1] = HERO_START_GOLD;
 
-    /* Starter deck (docs/deck-management.md §1): 12 cards — 4x SW3, 3x SH2,
-     * 3x SW4 (Fire Sword), 2x DA1.  The original five are decked first so the
-     * opening battle hand (SW SW SH SH SW) is unchanged; the extras only
-     * deepen the draw pile.
-     * Granted as real owned state via the silent mutators so battles draw
-     * from the player's actual deck from turn one. */
-    deck_collection_add(&state->cards, CARD_IRON_SWORD, 4);
-    deck_collection_add(&state->cards, CARD_WOODEN_SHIELD, 3);
-    deck_collection_add(&state->cards, CARD_FIRE_SWORD, 3);
-    deck_collection_add(&state->cards, CARD_POISON_DAGGER, 2);
-    deck_add_card(&state->cards, CARD_IRON_SWORD);
-    deck_add_card(&state->cards, CARD_IRON_SWORD);
-    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_SWORD);
-    deck_add_card(&state->cards, CARD_IRON_SWORD);
-    deck_add_card(&state->cards, CARD_WOODEN_SHIELD);
-    deck_add_card(&state->cards, CARD_FIRE_SWORD);
-    deck_add_card(&state->cards, CARD_FIRE_SWORD);
-    deck_add_card(&state->cards, CARD_POISON_DAGGER);
-    deck_add_card(&state->cards, CARD_POISON_DAGGER);
-    deck_add_card(&state->cards, CARD_IRON_SWORD);
+    /* Starter deck (docs/deck-management.md §1), granted from the generated
+     * hero table (screens/hero.json via battle_compile.py) so the editor
+     * owns the contents: each entry is granted once to the collection and
+     * once to the draw pile, preserving exact draw order.  The bank-2
+     * table is staged one byte at a time (no large stack or WRAM scratch
+     * needed); deck_add_card/deck_collection_add enforce max_copies. */
+    {
+        uint8_t n = 0;
+        uint8_t i;
+        CardId id = CARD_NONE;
+        banked_copy(2, &n, &g_hero_starter_deck_count, 1);
+        if (n > MAX_DECK_CARDS) n = MAX_DECK_CARDS;
+        for (i = 0; i < n; i++) {
+            banked_copy(2, &id, &g_hero_starter_deck_ids[i], 1);
+            deck_collection_add(&state->cards, id, 1);
+        }
+        for (i = 0; i < n; i++) {
+            banked_copy(2, &id, &g_hero_starter_deck_ids[i], 1);
+            deck_add_card(&state->cards, id);
+        }
+    }
 }
 
 /* Thin fixed-bank wrapper: stages the battle type and dispatches to the

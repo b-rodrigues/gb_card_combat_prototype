@@ -128,7 +128,7 @@ export const HeroManager: React.FC<{ onOpenComposer: () => void }> = ({ onOpenCo
               onChange={(e) => { setHero((prev) => ({ ...prev!, start_gold: Math.max(0, Math.min(65535, parseInt(e.target.value) || 0)) })); setDirty(true); }} /></label>
           </div>
 
-          <h3 style={{ margin: '12px 0 4px' }}>Starter Deck (ordered draw-pile order)</h3>
+          <h3 style={{ margin: '12px 0 4px' }}>Starter Deck ({(hero?.starter_deck || []).length}/20 cards, ordered draw-pile order)</h3>
           <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>
             Max 20 cards. Edit the JSON array directly in the textarea below.
           </div>

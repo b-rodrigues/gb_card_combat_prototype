@@ -35,7 +35,7 @@ BattleHudCache g_battle_hud;
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
  * deck from the player's owned cards.  When NULL, fall back to the
- * hardcoded starter deck (all unlimited uses).
+ * data-driven starter deck (screens/hero.json via hero_content.c).
  *
  * The bridge body lives in ROM bank 2 (src/battle/battle_init_content.c)
  * so it can read the registered card catalog directly without consuming
