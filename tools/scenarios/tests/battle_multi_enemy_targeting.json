@@ -41,7 +41,7 @@
     },
     {
       "type": "screen_row",
-      "row": 1,
+      "row": 2,
       "contains": "16/16  16/16  16/16"
     },
     {
@@ -51,12 +51,12 @@
     },
     {
       "type": "screen_row",
-      "row": 6,
+      "row": 7,
       "contains": "HERO        HP:10/10"
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 10,
       "contains": "COMBO:"
     }
   ],

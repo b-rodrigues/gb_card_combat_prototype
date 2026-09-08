@@ -704,7 +704,25 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
     const char *name = battle_combo_pending_name(battle);
     /* Staged row (WRAM copy of the active BattleScreenDef). */
     uint8_t combo_row = g_battle_hud.combo_row;
+    uint8_t r;
 
+    /* Blank the whole row first -- UNCONDITIONAL direct writes (the
+     * battle_draw_text_line skip-guard would skip cells whose semantic
+     * buffer already holds spaces, letting stale overworld/wipe tiles
+     * survive in VRAM and the mirror; same reason the old band clear
+     * above the hand was unconditional).  The combo preview shares row
+     * 10 with the hand zone now; the full-width clear also covers the
+     * col-6 gap the old two-segment draw left behind. */
+    VBK_REG = 0;
+    for (r = 0; r < 20; r++) {
+        battle_vram_sync_write(
+            (volatile uint8_t *)(0x9800 + ((uint16_t)combo_row << 5) + r),
+            ui_font_tile_base);
+#ifdef DEBUG_BUILD
+        g_tilemap_mirror[(uint16_t)combo_row * 32 + r] = ui_font_tile_base;
+#endif
+    }
+    battle_color_span(0, combo_row, 20, UI_COLOR_NONE);
     battle_draw_text_line(0, combo_row, "COMBO:", 6);
     if (name[0] != '\0') {
         battle_draw_text_line(7, combo_row, " ", 1);
@@ -739,19 +757,8 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     if (bh < 3 || bh > 5) bh = 4;
     top = (uint8_t)(cards_row - (bh - 1));
 
-    /* Blank the band above the hand (the former floating status-icon
-     * cells): stale transition-wipe dither tiles must not survive there
-     * now that the per-card icon stamp is gone. */
-    VBK_REG = 0;
-    for (r = 0; r < 20; r++) {
-        battle_vram_sync_write(
-            (volatile uint8_t *)(0x9800 + ((uint16_t)(top - 1) << 5) + r),
-            ui_font_tile_base);
-#ifdef DEBUG_BUILD
-        g_tilemap_mirror[(uint16_t)(top - 1) * 32 + r] = ui_font_tile_base;
-#endif
-    }
-    battle_color_span(0, (uint8_t)(top - 1), 20, UI_COLOR_NONE);
+    /* Row (top - 1) is the COMBO line now: no band clear here -- the
+     * combo draw owns that row (full-width clear on DIRTY_COMBO). */
 
     for (k = 0; k < BATTLE_HAND_SIZE; k++) {
         sel[k] = (k < cc) ? battle->selected_indices[k] : 0xFF;
@@ -1104,9 +1111,10 @@ void ui_update_battle_banked(void)
                                   (uint8_t)(20 - x));
             battle_color_span(x, 12, len, ncolor);
         } else {
-            /* Transient gameplay messages live on row 8 (the whitespace
-             * band above the hand): rows 11-14 are the card boxes now. */
-            battle_draw_text_line(0, 8,
+            /* Transient gameplay messages live on row 9 (below the
+             * DECK/AP line, above the COMBO row): rows 11-14 are the
+             * card boxes now. */
+            battle_draw_text_line(0, 9,
                 (battle->msg_id == 1) ? "NO ENERGY!" :
                 (battle->msg_id == 2) ? "OUT OF USES!" :
                 (battle->msg_id == 3) ? "ONE RING!" : NULL, 12);

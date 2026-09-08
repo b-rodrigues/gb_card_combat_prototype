@@ -105,25 +105,25 @@
     },
     {
       "type": "tilemap_cell",
-      "row": 6,
+      "row": 7,
       "col": 11,
       "expected": 113
     },
     {
       "type": "tilemap_cell",
-      "row": 7,
+      "row": 8,
       "col": 0,
       "expected": 116
     },
     {
       "type": "tilemap_cell",
-      "row": 7,
+      "row": 8,
       "col": 11,
       "expected": 114
     },
     {
       "type": "screen_row",
-      "row": 9,
+      "row": 10,
       "contains": "COMBO:"
     },
     {

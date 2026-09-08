@@ -2152,19 +2152,15 @@ phase; result/other phases keep the fixed literals VICTORY!/DEFEATED!/
 FLED!/BLOCKED ATTACK!/RESHUFFLE!; fallbacks PLAYER TURN/PLAYER ATTACK!/
 ENEMY ATTACK!/DEFENSE TURN keep every phase readable if a name slot is
 invalid; composed in the bank-3 file-static `s_banner_text[24]`, names
-cap at 11 chars so all banners fit 20 cols), `2` BLANK (the former
-enemy-name row: identity moved to the row-0 banner; no status tint, no
-blink blanking), `3-4` enemies (HP/caret), `6` hero, `7` deck counter (`DECK:` +
+cap at 11 chars so all banners fit 20 cols), `2` enemy HP (the former
+name row; HP moved here when the name row was removed), `3-4` enemies
+(art/caret), `7` hero, `8` deck counter (`DECK:` +
 draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
-hero row on BATTLE_DIRTY_HERO), `8` transient gameplay messages
-(`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `9` `COMBO:`
-+ hand type (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c),
-`10` blank band above the hand (the floating element-status icons were
-removed: riders are shown by the card's tint instead -- the box tint is
-element-driven (heal = field green, fire rider = fire reddish, ice rider
-= iron blueish, poison rider = poison mauve; riderless cards keep their
-material color; poison grey-out still renders dim; the poison palette
-ramp is mauve in every palette set), `11-14`
+hero row on BATTLE_DIRTY_HERO) + AP, `9` transient gameplay messages
+(`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `10` `COMBO:`
++ hand type (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c;
+drawn with a full 20-col row clear -- the combo draw owns the row the
+old blank band above the hand occupied), `11-14`
 boxed hand cards (`cards_row`=14 is the BOTTOM
 row; each card is a 3-wide x `box_h`-tall frame from the compiled
 `card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on

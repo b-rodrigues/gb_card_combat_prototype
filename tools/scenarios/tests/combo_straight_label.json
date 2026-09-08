@@ -34,7 +34,7 @@
   ],
   "assertions": [
     { "type": "screen", "expected": "BATTLE" },
-    { "type": "screen_row", "row": 9, "contains": "STRAIGHT" },
+    { "type": "screen_row", "row": 10, "contains": "STRAIGHT" },
     { "type": "screen_row_not_contains", "row": 9, "contains": "FLUSH" },
     { "type": "event_not_occurred", "event": "DAMAGE_DEALT" }
   ]
