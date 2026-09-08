@@ -3,7 +3,7 @@ import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level'
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
-import { fetchEnemyTypeList } from './io/combatArt';
+import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 
 
 interface InspectorProps {
@@ -1402,11 +1402,52 @@ export const Inspector: React.FC<InspectorProps> = ({
                           const props = { ...(selectedObject.properties || {}) };
                           if (!typeId) {
                             delete props.enemy_type;
-                          } else {
-                            props.enemy_type = typeId;
-                            if (!props.entity_id) props.entity_id = `ENTITY_ID_${typeId.toUpperCase()}`;
+                            onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                            return;
                           }
-                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                          props.enemy_type = typeId;
+                          if (!props.entity_id) props.entity_id = `ENTITY_ID_${typeId.toUpperCase()}`;
+                          // Full-actor prefill from the type JSON (always
+                          // overwrite): display name, battle routing,
+                          // stats, AI, gold, flags -- the complete row
+                          // compile.py needs for a hostile actor.  Every
+                          // field stays editable afterward.
+                          const nextObj: LevelObject = { ...selectedObject, properties: props };
+                          props.facing = props.facing || 'DOWN';
+                          if (!props.flags) props.flags = ['HOSTILE', 'BLOCKING', 'INTERACTABLE'];
+                          props.visual = (props.visual as string) ||
+                            ((typeId[0] || 'E').toUpperCase());
+                          // Auto-assign the next free actor_id within the
+                          // level (cross-scene uniqueness is compile-checked).
+                          if (!props.actor_id) {
+                            const used = new Set<number>(
+                              level.objects
+                                .map((o) => (o.properties || {}).actor_id as number)
+                                .filter((n) => typeof n === 'number' && n > 0));
+                            let next = 1;
+                            while (used.has(next)) next++;
+                            props.actor_id = next;
+                          }
+                          onUpdateObject(selectedEntityIndex, nextObj);
+                          const objIndex = selectedEntityIndex;
+                          // Stats/battle come from the type JSON (async;
+                          // capture the index so a click-away in the
+                          // fetch window cannot update the wrong object).
+                          fetchEnemyType(typeId).then((t) => {
+                            const cur = { ...props };
+                            cur.display_name = t.name || typeId.toUpperCase();
+                            cur.battle = t.battle_id || cur.battle;
+                            cur.hp = t.hp ?? 1;
+                            cur.max_hp = t.max_hp ?? t.hp ?? 1;
+                            cur.gold_reward = t.gold_reward ?? 0;
+                            if (t.reward_currency) cur.reward_currency = t.reward_currency;
+                            if (Array.isArray(t.ai_types) && t.ai_types.length > 0) {
+                              cur.ai = t.ai_types[0];
+                            }
+                            if (t.label) cur.visual = (t.label[0] || 'E').toUpperCase();
+                            const latest = { ...nextObj, properties: cur };
+                            onUpdateObject(objIndex, latest);
+                          }).catch(() => undefined);
                         }}
                       >
                         <option value="">-- choose enemy type --</option>

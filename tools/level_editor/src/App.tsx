@@ -614,7 +614,9 @@ export const App: React.FC = () => {
     // Objects
     let objectsOk = true;
     const seenIds = new Set<string>();
+    const seenActorIds = new Map<number, string>();
     level.objects.forEach((obj, i) => {
+      const oid = obj.id || `#${i + 1}`;
       if (!obj.id) {
         errors.push(`Object #${i + 1} has empty ID`);
         objectsOk = false;
@@ -623,6 +625,74 @@ export const App: React.FC = () => {
         objectsOk = false;
       } else {
         seenIds.add(obj.id);
+      }
+
+      // Property parity with tools/level_compiler/validate.py (the
+      // toolchain runs the same rules inside make's levels target, so
+      // the browser check must not say green for something Compile ROM
+      // rejects).
+      const props = (obj.properties || {}) as Record<string, unknown>;
+      const otype = obj.type;
+      if (!props.entity_id) {
+        warnings.push(
+          `Object '${oid}' has no entity_id: kept verbatim, ignored by compile`);
+        (['actor_id', 'hp', 'max_hp', 'battle', 'ai'] as const).forEach((key) => {
+          if (key in props) {
+            errors.push(`Object '${oid}' has no entity_id but carries actor slot '${key}'`);
+            objectsOk = false;
+          }
+        });
+      } else {
+        const aid = typeof props.actor_id === 'number' && Number.isInteger(props.actor_id)
+          ? props.actor_id
+          : 0;
+        if (aid < 0 || aid > 65535) {
+          errors.push(`Object '${oid}' has invalid actor_id '${props.actor_id}' (0..65535)`);
+          objectsOk = false;
+        } else if (aid > 0) {
+          // 0 = unset (toolchain default); only real ids must be unique
+          // within the level (cross-scene uniqueness is compile-checked).
+          const owner = seenActorIds.get(aid);
+          if (owner) {
+            errors.push(`Duplicate actor_id ${aid} on '${owner}' and '${oid}'`);
+            objectsOk = false;
+          } else {
+            seenActorIds.set(aid, oid);
+          }
+        }
+        const facing = (props.facing as string) || 'DOWN';
+        if (!['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(facing)) {
+          errors.push(`Object '${oid}' has invalid facing '${facing}'`);
+          objectsOk = false;
+        }
+        ((props.flags as string[]) || []).forEach((flag) => {
+          if (!['HOSTILE', 'BLOCKING', 'INTERACTABLE'].includes(flag)) {
+            errors.push(`Object '${oid}' has unknown flag '${flag}'`);
+            objectsOk = false;
+          }
+        });
+        const visual = props.visual as string | undefined;
+        if (visual !== undefined && (typeof visual !== 'string' || visual.length !== 1)) {
+          errors.push(`Object '${oid}' visual must be a single character`);
+          objectsOk = false;
+        }
+        if (otype === 'enemy') {
+          (['hp', 'max_hp', 'ai', 'battle'] as const).forEach((key) => {
+            if (!(key in props)) {
+              errors.push(`Enemy object '${oid}' is missing properties.${key}`);
+              objectsOk = false;
+            }
+          });
+        }
+        (['hp', 'max_hp', 'gold_reward'] as const).forEach((key) => {
+          if (key in props) {
+            const v = props[key] as number;
+            if (!Number.isInteger(v) || v < 0) {
+              errors.push(`Object '${oid}' has invalid ${key} '${v}'`);
+              objectsOk = false;
+            }
+          }
+        });
       }
     });
     if (objectsOk) passed.push('Objects valid');
@@ -966,9 +1036,11 @@ export const App: React.FC = () => {
             </div>
             <div className="modal-body">
               <div style={{ marginBottom: '12px', fontSize: '13px', opacity: 0.85 }}>
-                Browser checks are a subset of the toolchain validator — the full
-                check (<code>validate.py</code>, per-tile rules, cross-file actor-id
-                uniqueness) runs server-side at Compile ROM time.
+                Browser checks mirror the toolchain's object rules (enemy
+                hp/max_hp/battle/ai, actor-id range and within-level
+                uniqueness).  The toolchain still runs the full
+                <code>validate.py</code> (per-tile rules, cross-file
+                actor-id uniqueness) server-side at Compile ROM time.
               </div>
               <div className="validation-list">
                 {validationResult.passed.map((p, i) => (
