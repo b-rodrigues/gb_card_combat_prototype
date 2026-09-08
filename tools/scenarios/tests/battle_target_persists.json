@@ -60,12 +60,12 @@
     {
       "type": "screen_row",
       "row": 0,
-      "contains": "PLAYER TURN"
+      "contains": "TARGET SLIME"
     },
     {
-      "type": "screen_row",
+      "type": "screen_row_not_contains",
       "row": 2,
-      "contains": "SLIME  SLIME  SLIME"
+      "contains": "SLIME"
     },
     {
       "type": "screen_row",

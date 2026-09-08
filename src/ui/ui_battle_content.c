@@ -496,8 +496,9 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
     const Combatant *e;
     bool blink_name = (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) &&
                       (((battle->timer_ticks >> 4) & 1) == 0);
-    /* Staged rows/cols (WRAM copy of the active BattleScreenDef). */
-    uint8_t name_row = 2;
+    /* Staged rows/cols (WRAM copy of the active BattleScreenDef).  Row 2
+     * (the former enemy-name row) is blank: enemy identity moved to the
+     * dynamic row-0 banner ("TARGET <name>" / "ATTACK <name>" / ...). */
     uint8_t hp_row = g_battle_hud.enemy_hp_row;
     uint8_t cur_row = g_battle_hud.enemy_cursor_row;
 
@@ -505,14 +506,6 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
         x = g_battle_hud.enemy_positions[k][0];
         if (k < battle->enemy_count && battle->enemies[k].hp != 0) {
             e = &battle->enemies[k];
-            if (blink_name && k == battle->attacking_enemy_idx) {
-                battle_draw_text_line(x, 2, NULL, 6);
-                battle_color_span(x, 2, 6, UI_COLOR_NONE);
-            } else {
-                battle_draw_text_line(x, 2, e->name[0] ? e->name : "ENEMY", 6);
-                battle_color_span(x, 2, 6,
-                                  battle_status_color(&s_battle_status[k + 1]));
-            }
             battle_draw_enemy_art(x, k, battle,
                                   (uint8_t)(blink_name && k == battle->attacking_enemy_idx));
             battle_draw_num2(x, hp_row, e->hp);
@@ -534,7 +527,6 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             }
         } else {
             battle_draw_text_line(x, hp_row, NULL, 6);
-            battle_draw_text_line(x, name_row, NULL, 6);
             battle_draw_enemy_art(x, k, battle, 1);
         }
         battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, NULL, 3);
@@ -944,6 +936,88 @@ static void loot_build_full_name(const CardDefinition *card)
     *d = '\0';
 }
 
+/* Banner composer (row 0): dynamic enemy-identity messages.  The name
+ * is limited to 11 chars ("L.of Slimes"), so every composed banner fits
+ * the 20-column width the banner drawer enforces.  s_banner_text is a
+ * file-static buffer: no large stack locals under the harness (§52.14). */
+static char s_banner_text[24];
+
+static const char *battle_banner_text(const volatile Battle *battle)
+{
+    const char *name = "";
+    uint8_t j;
+
+    if (battle->result == BATTLE_RESULT_VICTORY) return "VICTORY!";
+    if (battle->result == BATTLE_RESULT_DEFEAT) return "DEFEATED!";
+    if (battle->result == BATTLE_RESULT_FLED) return "FLED!";
+
+    if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
+        /* Live target: follows UP/DOWN cycling (BATTLE_DIRTY_BANNER set
+         * by the banked nav body on every target move). */
+        if (battle->target_idx < battle->enemy_count &&
+            battle->enemies[battle->target_idx].name[0]) {
+            name = battle->enemies[battle->target_idx].name;
+            s_banner_text[0] = 'T'; s_banner_text[1] = 'A';
+            s_banner_text[2] = 'R'; s_banner_text[3] = 'G';
+            s_banner_text[4] = 'E'; s_banner_text[5] = 'T';
+            s_banner_text[6] = ' ';
+            for (j = 7; *name && j < 23; j++) s_banner_text[j] = *name++;
+            s_banner_text[j] = '\0';
+            return s_banner_text;
+        }
+        return "PLAYER TURN";
+    }
+    if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
+        /* Victim snapshot (battle_execute_combo): resolution may kill
+         * the target and auto-advance target_idx before this draws. */
+        if (g_battle_anim_target_name[0]) {
+            s_banner_text[0] = 'A'; s_banner_text[1] = 'T';
+            s_banner_text[2] = 'T'; s_banner_text[3] = 'A';
+            s_banner_text[4] = 'C'; s_banner_text[5] = 'K';
+            s_banner_text[6] = ' ';
+            for (j = 7; g_battle_anim_target_name[j - 7] && j < 23; j++) {
+                s_banner_text[j] = g_battle_anim_target_name[j - 7];
+            }
+            s_banner_text[j] = '\0';
+            return s_banner_text;
+        }
+        return "PLAYER ATTACK!";
+    }
+    if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
+        if (battle->attacking_enemy_idx < battle->enemy_count &&
+            battle->enemies[battle->attacking_enemy_idx].name[0]) {
+            name = battle->enemies[battle->attacking_enemy_idx].name;
+            for (j = 0; *name && j < 19; j++) s_banner_text[j] = *name++;
+            s_banner_text[j++] = ' ';
+            s_banner_text[j++] = 'A'; s_banner_text[j++] = 'T';
+            s_banner_text[j++] = 'T'; s_banner_text[j++] = 'A';
+            s_banner_text[j++] = 'C'; s_banner_text[j++] = 'K';
+            s_banner_text[j++] = 'S'; s_banner_text[j++] = '!';
+            s_banner_text[j] = '\0';
+            return s_banner_text;
+        }
+        return "ENEMY ATTACK!";
+    }
+    if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+        if (battle->attacking_enemy_idx < battle->enemy_count &&
+            battle->enemies[battle->attacking_enemy_idx].name[0]) {
+            name = battle->enemies[battle->attacking_enemy_idx].name;
+            for (j = 0; *name && j < 18; j++) s_banner_text[j] = *name++;
+            s_banner_text[j++] = ':'; s_banner_text[j++] = ' ';
+            s_banner_text[j++] = 'D'; s_banner_text[j++] = 'E';
+            s_banner_text[j++] = 'F'; s_banner_text[j++] = 'E';
+            s_banner_text[j++] = 'N'; s_banner_text[j++] = 'D';
+            s_banner_text[j++] = '!';
+            s_banner_text[j] = '\0';
+            return s_banner_text;
+        }
+        return "DEFENSE TURN";
+    }
+    if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) return "BLOCKED ATTACK!";
+    if (battle->phase == BATTLE_PHASE_SHUFFLE) return "RESHUFFLE!";
+    return "";
+}
+
 void ui_update_battle_banked(void)
 {
     const volatile Battle *battle = (const Battle *)g_bk_ptr_a;
@@ -959,31 +1033,10 @@ void ui_update_battle_banked(void)
     d = battle->dirty ? battle->dirty : BATTLE_DIRTY_ALL;
 
     if (d & (BATTLE_DIRTY_BANNER | BATTLE_DIRTY_DESC)) {
-        if (battle->result == BATTLE_RESULT_VICTORY) {
-            turn_banner = "VICTORY!";
-        } else if (battle->result == BATTLE_RESULT_DEFEAT) {
-            turn_banner = "DEFEATED!";
-        } else if (battle->result == BATTLE_RESULT_FLED) {
-            turn_banner = "FLED!";
-        } else {
-            if (battle->phase == BATTLE_PHASE_PLAYER_SELECT) {
-                turn_banner = "PLAYER TURN";
-                desc_msg = battle_card_get_description(battle->hand[battle->cursor_pos].type);
-            } else if (battle->phase == BATTLE_PHASE_PLAYER_ANIM) {
-                turn_banner =
-                    (battle->last_combo.tier == HAND_STRAIGHT ||
-                     battle->last_combo.tier == HAND_STRAIGHT_FLUSH)
-                        ? "STRAIGHT COMBO!" : "PLAYER ATTACK!";
-            } else if (battle->phase == BATTLE_PHASE_ENEMY_TELEGRAPH) {
-                turn_banner = "ENEMY ATTACK!";
-            } else if (battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
-                turn_banner = "DEFENSE TURN";
-                desc_msg = battle_card_get_description(battle->hand[battle->cursor_pos].type);
-            } else if (battle->phase == BATTLE_PHASE_DEFENSE_RESOLVE) {
-                turn_banner = "BLOCKED ATTACK!";
-            } else if (battle->phase == BATTLE_PHASE_SHUFFLE) {
-                turn_banner = "RESHUFFLE!";
-            }
+        turn_banner = battle_banner_text(battle);
+        if (battle->phase == BATTLE_PHASE_PLAYER_SELECT ||
+            battle->phase == BATTLE_PHASE_PLAYER_DEFEND) {
+            desc_msg = battle_card_get_description(battle->hand[battle->cursor_pos].type);
         }
     }
 

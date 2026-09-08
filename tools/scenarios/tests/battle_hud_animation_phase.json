@@ -37,7 +37,7 @@
     {
       "type": "screen_row",
       "row": 0,
-      "contains": "PLAYER ATTACK!"
+      "contains": "ATTACK SLIME"
     },
     {
       "type": "screen_row_not_contains",

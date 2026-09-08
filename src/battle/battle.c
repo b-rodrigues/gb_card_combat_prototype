@@ -81,6 +81,14 @@ static const int g_deck_min_matches_hand_size[
     (DECK_MIN_CARDS == BATTLE_HAND_SIZE) ? 1 : 0
 ];
 
+/* Victim name snapshot for the ANIM banner ("ATTACK <name>"): resolution
+ * may kill the target and auto-advance target_idx before the banner
+ * draws, so the name is captured here at execute time.  Empty when the
+ * ANIM phase runs without an attack (freeze skip, empty combo) -- the
+ * banner then falls back to "PLAYER ATTACK!".  WRAM (fixed bank stays
+ * lean); read by the bank-3 renderer. */
+char g_battle_anim_target_name[12];
+
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
@@ -92,11 +100,12 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     if (!b) return;
 
     while (n--) *p++ = 0;
+    g_battle_anim_target_name[0] = '\0';
     { const char *s = "Hero"; uint8_t j; for (j = 0; j < 7 && s[j]; j++) b->player.name[j] = s[j]; b->player.name[j] = '\0'; }
     b->player.hp = player_hp;
     b->player.max_hp = player_max_hp;
 
-    { const char *s = enemy_name ? enemy_name : "Enemy"; uint8_t j; for (j = 0; j < 7 && s[j]; j++) b->enemies[0].name[j] = s[j]; b->enemies[0].name[j] = '\0'; }
+    { const char *s = enemy_name ? enemy_name : "Enemy"; uint8_t j; for (j = 0; j < 11 && s[j]; j++) b->enemies[0].name[j] = s[j]; b->enemies[0].name[j] = '\0'; }
     b->enemies[0].hp = enemy_hp;
     b->enemies[0].max_hp = enemy_max_hp;
     b->enemy_count = 1;
@@ -151,7 +160,7 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
     uint8_t idx;
     if (!b || b->enemy_count >= MAX_BATTLE_ENEMIES) return;
     idx = b->enemy_count++;
-    { const char *nm = name ? name : "Enemy"; uint8_t j; for (j = 0; j < 7 && nm[j]; j++) b->enemies[idx].name[j] = nm[j]; b->enemies[idx].name[j] = '\0'; }
+    { const char *nm = name ? name : "Enemy"; uint8_t j; for (j = 0; j < 11 && nm[j]; j++) b->enemies[idx].name[j] = nm[j]; b->enemies[idx].name[j] = '\0'; }
     b->enemies[idx].hp = hp;
     b->enemies[idx].max_hp = max_hp;
     b->dirty = BATTLE_DIRTY_ALL;
@@ -393,6 +402,7 @@ static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
 void battle_execute_combo(Battle *b)
 {
     EffectResult res;
+    uint8_t j;
     if (!b || b->battle_over) return;
 
     /* STATUS_FREEZE on the player (docs/combo-system.md §12): the whole
@@ -410,6 +420,7 @@ void battle_execute_combo(Battle *b)
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
         b->delay_timer = 30;
         b->dirty = BATTLE_DIRTY_ALL;
+        g_battle_anim_target_name[0] = '\0';
         return;
     }
 
@@ -428,11 +439,23 @@ void battle_execute_combo(Battle *b)
                     b->phase = BATTLE_PHASE_PLAYER_ANIM;
                     b->delay_timer = 30;
                     b->dirty = BATTLE_DIRTY_ALL;
+                    g_battle_anim_target_name[0] = '\0';
                     return;
                 }
             }
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
+        }
+        /* Snapshot the victim for the ANIM banner: resolution may kill
+         * it and auto-advance target_idx before the banner draws. */
+        if (b->target_idx < b->enemy_count) {
+            for (j = 0; j < 11 && b->enemies[b->target_idx].name[j]; j++) {
+                g_battle_anim_target_name[j] =
+                    b->enemies[b->target_idx].name[j];
+            }
+            g_battle_anim_target_name[j] = '\0';
+        } else {
+            g_battle_anim_target_name[0] = '\0';
         }
         battle_play_hand(b, true, &res);
         /* Rings heal their power as the combo resolves, whatever the

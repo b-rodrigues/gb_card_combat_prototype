@@ -146,14 +146,14 @@
       "event": "ENTITY_DEFEATED"
     },
     {
-      "type": "screen_row",
-      "row": 2,
-      "contains": "SLIME  SLIME"
-    },
-    {
       "type": "screen_row_not_contains",
       "row": 2,
-      "contains": "SLIME  SLIME  SLIME"
+      "contains": "SLIME"
+    },
+    {
+      "type": "screen_row",
+      "row": 0,
+      "contains": "TARGET SLIME"
     },
     {
       "type": "screen_row",

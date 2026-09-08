@@ -154,10 +154,9 @@ const BattlePreview: React.FC<{
     if (y >= 0 && y < GRID_H && x >= 0 && x < GRID_W) grid[y][x] = node;
   };
 
-  put(5, L.turn_banner_row, 'PLAYER TURN');
+  put(4, L.turn_banner_row, 'TARGET SLIME');
   for (let e = 0; e < screen.max_enemies; e++) {
     const p = screen.enemy_positions[e] || { x: 0, y: 0 };
-    put(p.x, 2, 'SLIME');
     put(p.x, L.enemy_hp_row, '10/10');
     /* Real combat art (frame0), centered on the name slot exactly like
      * the ROM stamper; falls back to a placeholder blob for text-fallback

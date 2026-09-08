@@ -2141,8 +2141,20 @@ cleared a `_HOME` overflow that presented as a harness-wide guest spin
 
 ### 52.11.2 Battle HUD layout (rows)
 
-The battle screen uses the fixed background rows: `0` centered banner,
-`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DECK:` +
+The battle screen uses the fixed background rows: `0` centered banner
+(DYNAMIC enemy-identity messages: `TARGET <name>` on the select phase --
+follows UP/DOWN cycling via BATTLE_DIRTY_BANNER from the banked nav body,
+`ATTACK <name>` on the ANIM phase from the victim snapshot
+`g_battle_anim_target_name` (battle.c) because resolution may kill the
+target and auto-advance target_idx before the banner draws,
+`<name> ATTACKS!` on the telegraph, `<name>: DEFEND!` on the defend
+phase; result/other phases keep the fixed literals VICTORY!/DEFEATED!/
+FLED!/BLOCKED ATTACK!/RESHUFFLE!; fallbacks PLAYER TURN/PLAYER ATTACK!/
+ENEMY ATTACK!/DEFENSE TURN keep every phase readable if a name slot is
+invalid; composed in the bank-3 file-static `s_banner_text[24]`, names
+cap at 11 chars so all banners fit 20 cols), `2` BLANK (the former
+enemy-name row: identity moved to the row-0 banner; no status tint, no
+blink blanking), `3-4` enemies (HP/caret), `6` hero, `7` deck counter (`DECK:` +
 draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
 hero row on BATTLE_DIRTY_HERO), `8` transient gameplay messages
 (`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `9` `COMBO:`

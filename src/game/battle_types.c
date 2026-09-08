@@ -110,7 +110,7 @@ static const EnemyTypeDef g_enemy_type_slime_lord = {
     "slime_lord",
     "Lord of Slimes",
     2,
-    "LORD OF SLIMES",
+    "L.of Slimes",
     50,
     50,
     "BATTLE_SLIME_LORD",

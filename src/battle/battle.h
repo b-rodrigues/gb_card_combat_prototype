@@ -105,6 +105,11 @@ extern uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
 
+/* ANIM-phase victim snapshot (battle.c): the enemy name "ATTACK <name>"
+ * shows while the attack resolves.  Empty string = no attack this ANIM
+ * (freeze/empty-combo skip) -> banner falls back to "PLAYER ATTACK!". */
+extern char g_battle_anim_target_name[12];
+
 /* Banked battle-art loader (src/battle/battle_art_banked.c, ROM bank 4):
  * g_bk_ptr_a = Battle*.  Resolves the battle's enemy-type row through
  * the game layer, loads each slot's WxH art tiles into VRAM from
