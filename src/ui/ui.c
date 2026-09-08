@@ -158,12 +158,15 @@ void ui_init(void)
     }
 
     /* Battle UI tiles (card frames, timer-bar segments, HUD hp/ap/deck
-     * icons, select arrow) stream from Bank 3 (generated
-     * card_frame_tiles.h, make gfx) through the banked loader -- the
-     * fixed bank stays lean (AGENTS.md 52.18).  VRAM (signed BG block,
-     * 0x9000-based: AGENTS.md 52.22): frames 118-126, bar 117/127, HUD
-     * icons overwrite the atlas data at 113/114/116 (sheet tiles 11-13),
-     * select arrow at 96 (sheet tile 14).  Runs with the LCD still off. */
+     * icons, select arrow, status tiles, weapon icons) stream from Bank 3
+     * (generated card_frame_tiles.h, make gfx) through the banked loader
+     * -- the fixed bank stays lean (AGENTS.md 52.18).  VRAM (signed BG
+     * block, 0x9000-based: AGENTS.md 52.22): frames 118-126, bar 117/127,
+     * HUD icons overwrite the atlas data at 113/114/116 (sheet tiles
+     * 11-13), select arrow at 96 (sheet tile 14), status at 110/111/112
+     * (sheet tiles 15-17), weapons overwrite the atlas data at 104-108
+     * (sheet tiles 18-22), spare blank at 97 (sheet tile 23).  Runs with
+     * the LCD still off. */
     g_bk_call_bank = 3;
     g_bk_call_target = (uint16_t)&ui_card_tiles_load_banked;
     banked_call_run();

@@ -704,6 +704,26 @@
       "category": "enemy"
     },
     {
+      "id": "combat_dagger_icon",
+      "label": "dagger icon",
+      "gb_constant": "TILE_COMBAT_DAGGER_ICON",
+      "walkable": false,
+      "color": "#c9a87a",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_dagger_icon.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_ring_icon",
+      "label": "ring icon",
+      "gb_constant": "TILE_COMBAT_RING_ICON",
+      "walkable": false,
+      "color": "#b5986b",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_ring_icon.png",
+      "category": "terrain"
+    },
+    {
       "id": "combat_black_emptyness_2",
       "label": "empty",
       "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",

@@ -1,15 +1,15 @@
 """Compose assets/card_frames.png (battle hand-card frame sheet).
 
 Reads the CSV-slug editor PNGs (tools/level_editor/public/tiles/combat/)
-and lays out 3 cols x 3 rows of 8x8 cells in VRAM-load order:
+and lays out 3 cols x 8 rows of 8x8 cells in VRAM-load order:
 
   row 0: card top border   (top_left_corner, top_middle, top_right_corner)
   row 1: card middle band  (left_side, center, right_side)
   row 2: card bottom border (bottom_left_corner, bottom_middle, bottom_right_corner)
 
 png2gb converts the sheet to src/gfx/card_frame_tiles.h; the ROM loads all
-18 tiles (9 frame tiles at UI_TILE_CARD_FRAME_BASE 118, bar segments,
-HUD icons, select arrow, status icons -- VRAM block 1, battle enemy art
+24 tiles (9 frame tiles at UI_TILE_CARD_FRAME_BASE 118, bar segments,
+HUD icons, select arrow, status icons, weapon icons -- VRAM block 1, battle enemy art
 starts at 128) and the bank-3 renderer stamps 3x4 card boxes from them.
 
 Deterministic: rerunning reproduces the sheet byte-identically.
@@ -33,6 +33,11 @@ LAYOUT = [
     ['combat_timer_bar_filled', 'combat_timer_bar_empty', 'combat_hp_icon'],
     ['combat_ap_icon', 'combat_deck_icon', 'combat_arrow_pointing_up'],
     ['combat_fire_status', 'combat_ice_status', 'combat_poison_status'],
+    # Card weapon icons (skin weapon_tile VRAM ids 104-108): sword,
+    # shield, bow, dagger, ring.  The 6th cell stays blank (None); the
+    # loader maps it to the unused VRAM 97 scratch tile.
+    ['combat_sword_icon', 'combat_shield_icon', 'combat_bow_icon'],
+    ['combat_dagger_icon', 'combat_ring_icon', None],
 ]
 
 

@@ -551,11 +551,12 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
 ICON_TILES = {
     # Icon names are the slugified combat-tileset description entries
     # (assets/combat-tileset-description.csv -> public/tiles/combat slugs).
-    # dagger/ring/amulet have no CSV entry (atlas-only icons) and keep
-    # plain names; bar_filled/bar_empty are compose_card_frames.py slugs.
-    # NOTE: VRAM tile DATA for sword/shield/bow + elements still comes
-    # from the asset atlas (only the HUD hp/ap/deck icons load from the
-    # combat tileset).
+    # amulet has no CSV entry (atlas-only icon) and keeps its plain name;
+    # bar_filled/bar_empty are compose_card_frames.py slugs.
+    # NOTE: VRAM tile DATA for the weapon icons (sword/shield/bow/dagger/
+    # ring) and the element status tiles comes from the combat tileset via
+    # the card-frames sheet (the banked loader overwrites the atlas data
+    # the atlas loop loads at 104-108 and 110/111/112).
     'combat_sword_icon': 104, 'combat_shield_icon': 105,
     'combat_bow_icon': 106, 'dagger': 107, 'ring': 108, 'amulet': 109,
     'combat_fire_status': 110, 'combat_ice_status': 111,

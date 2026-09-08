@@ -171,7 +171,7 @@ gfx:
 	# since the art moved to the shared actors tileset; tiles_content.c
 	# overlays these into the village VRAM block after the sheet copy.
 	@python3 tools/compose_npc_tiles.py
-	# ── Battle hand-card frame (assets/card_frames.png, 3 cols × 3 rows) ──
+	# ── Battle hand-card frame (assets/card_frames.png, 3 cols × 8 rows) ──
 	# 9 border/background tiles for the boxed battle-hand cards (TL TM TR /
 	# L C R / BL BM BR); loaded to VRAM at UI_TILE_CARD_FRAME_BASE (118).
 	@python3 tools/png2gb.py assets/card_frames.png --name card_frame_tiles \

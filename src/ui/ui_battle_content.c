@@ -833,12 +833,14 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
  * HUD icons are tiles 11-13 (VRAM 113/114/116), the select arrow is
  * tile 14 (VRAM 96), status tiles are 15-17 (VRAM 110/111/112 --
  * overwrite the atlas Flame Spire / Snowflake Star / Toxic Vial). */
-static const uint8_t s_card_tile_vram_ids[18] = {
+static const uint8_t s_card_tile_vram_ids[24] = {
     118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
     117, 127,                                     /* bar filled, empty */
     113, 114, 116,                                /* HUD: hp, ap, deck */
     96,                                           /* select arrow */
     110, 111, 112,                                /* status: fire, ice, poison */
+    104, 105, 106, 107, 108,                      /* weapons: sword, shield, bow, dagger, ring */
+    97,                                           /* spare blank (unused scratch) */
 };
 
 void ui_card_tiles_load_banked(void)
@@ -847,11 +849,11 @@ void ui_card_tiles_load_banked(void)
     volatile uint8_t *dst;
     const uint8_t *src;
 
-    for (i = 0; i < 18; i++) {
+    for (i = 0; i < 24; i++) {
         /* Signed BG tile addressing (LCDC.4 = 0, set in ui_init and never
          * restored): BG tile ids < 128 are fetched by the PPU from
          * 0x9000 + id*16, NOT from the sprite-addressable 0x8000 block.
-         * All 18 ids are <= 127, so the physical address is 0x9000-based.
+         * All 24 ids are <= 127, so the physical address is 0x9000-based.
          * Raw writes to 0x8000 + id*16 land in VRAM the BG never reads
          * (mGBA watchpoint regression: AGENTS.md 52.22).  Ids >= 128
          * (world/enemy art) map to 0x8800 + (id-128)*16, which their own
