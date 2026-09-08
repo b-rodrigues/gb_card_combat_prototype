@@ -552,19 +552,21 @@ def build_enemy_types_output(enemy_types, art_sets, art_order, art_offsets, hero
 ICON_TILES = {
     # Icon names are the slugified combat-tileset description entries
     # (assets/combat-tileset-description.csv -> public/tiles/combat slugs).
-    # amulet has no CSV entry (atlas-only icon) and keeps its plain name;
-    # bar_filled/bar_empty are compose_card_frames.py slugs.
+    # Every slug here must exist as tools/level_editor/public/tiles/combat/
+    # <slug>.png (checked on every invocation) EXCEPT 'amulet', which is an
+    # atlas-only icon with no combat-tileset entry.
     # NOTE: VRAM tile DATA for the weapon icons (sword/shield/bow/dagger/
     # ring) and the element status tiles comes from the combat tileset via
     # the card-frames sheet (the banked loader overwrites the atlas data
     # the atlas loop loads at 104-108 and 110/111/112).
     'combat_sword_icon': 104, 'combat_shield_icon': 105,
-    'combat_bow_icon': 106, 'dagger': 107, 'ring': 108, 'amulet': 109,
+    'combat_bow_icon': 106, 'combat_dagger_icon': 107,
+    'combat_ring_icon': 108, 'amulet': 109,
     'combat_fire_status': 110, 'combat_ice_status': 111,
     'combat_poison_status': 112,
     'combat_hp_icon': 113, 'combat_ap_icon': 114,
     'combat_deck_icon': 116,
-    'bar_filled': 117, 'bar_empty': 127,
+    'combat_timer_bar_filled': 117, 'combat_timer_bar_empty': 127,
 }
 SKIN_COLORS = {'none': 0, 'fire': 1, 'iron': 2, 'field': 3, 'poison': 4,
                'wood': 5, 'gold': 6, 'dim': 7}
@@ -580,8 +582,8 @@ DEFAULT_SKIN = {
         'sword':  {'icon': 'combat_sword_icon',  'color': 'iron'},
         'shield': {'icon': 'combat_shield_icon', 'color': 'wood'},
         'bow':    {'icon': 'combat_bow_icon',    'color': 'gold'},
-        'heal':   {'icon': 'ring',               'color': 'wood'},
-        'dagger': {'icon': 'dagger',             'color': 'poison'},
+        'heal':   {'icon': 'combat_ring_icon',   'color': 'field'},
+        'dagger': {'icon': 'combat_dagger_icon', 'color': 'poison'},
     },
     'elements': {
         'fire':   {'icon': 'combat_fire_status',   'color': 'fire'},
@@ -594,9 +596,36 @@ DEFAULT_HUD = {
     'hp':   {'icon': 'combat_hp_icon',   'color': 'fire'},
     'ap':   {'icon': 'combat_ap_icon',   'color': 'gold'},
     'deck': {'icon': 'combat_deck_icon', 'color': 'iron'},
-    'bar':  {'filled': 'bar_filled', 'empty': 'bar_empty', 'color': 'wood',
+    'bar':  {'filled': 'combat_timer_bar_filled',
+             'empty': 'combat_timer_bar_empty', 'color': 'wood',
              'row': 17, 'width': 20},
 }
+
+
+# Icon slugs with no tools/level_editor/public/tiles/combat PNG: the
+# atlas-only amulet (no combat-tileset CSV entry).  Everything else in
+# ICON_TILES must have a tileset-extracted PNG or the editor previews and
+# the ROM data have drifted apart.
+ICON_PNG_EXCEPTIONS = {'amulet'}
+
+TILES_PNG_DIR = "tools/level_editor/public/tiles/combat"
+
+
+def check_icon_pngs():
+    """Parity guard: every non-atlas ICON_TILES slug must exist as an
+    extracted tile PNG the editor previews.  Runs on every invocation
+    (emit, --check, --validate) so the icon catalog cannot drift from the
+    tileset the editor dropdowns preview."""
+    for name in ICON_TILES:
+        if name in ICON_PNG_EXCEPTIONS:
+            continue
+        png = REPO_ROOT / TILES_PNG_DIR / (name + ".png")
+        if not png.exists():
+            sys.stderr.write("ERROR: ICON_TILES '%s' has no %s -- the editor "
+                             "dropdown cannot preview it and the tileset has "
+                             "drifted\n" % (name, png))
+            return False
+    return True
 
 
 def load_card_skin():
@@ -853,6 +882,9 @@ def main(args=None):
     art_sets, art_order, art_offsets = load_combat_art()
     # The emitter is positional: refuse to run on a drifted struct.
     if not check_battle_struct_order():
+        return 1
+    # Icon catalog <-> extracted tile PNGs parity (see check_icon_pngs).
+    if not check_icon_pngs():
         return 1
 
     # Battle hand-card skin (always; battle-invariant).  Resolved+validated

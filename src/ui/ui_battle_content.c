@@ -243,15 +243,17 @@ static uint8_t battle_card_weapon_tint(uint8_t type, uint8_t is_heal)
 }
 
 /* Box tint for a hand card (skin-driven).  The tint is element-driven:
- * heal cards green (field palette), fire rider reddish, ice rider
- * blueish, poison rider mauve; cards without a rider keep their
- * per-type material color.  Poison grey-out (status.h): greyed player
- * cards render dim. */
+ * heal cards use the skin's heal palette (field green), fire rider
+ * reddish, ice rider blueish, poison rider mauve; cards without a rider
+ * keep their per-type material color.  Poison grey-out (status.h):
+ * greyed player cards render dim. */
 static uint8_t battle_card_box_color(uint8_t type, uint8_t status_id,
                                      uint8_t is_heal)
 {
     uint8_t st = status_id;
-    if (type == BATTLE_CARD_TYPE_HEAL || is_heal) return UI_COLOR_FIELD;
+    if (type == BATTLE_CARD_TYPE_HEAL || is_heal) {
+        return g_card_skin_wram.weapon_color[BATTLE_CARD_TYPE_HEAL];
+    }
     if (st > 3) st = 0;
     if (st != 0) return g_card_skin_wram.elem_color[st];
     return battle_card_weapon_tint(type, is_heal);

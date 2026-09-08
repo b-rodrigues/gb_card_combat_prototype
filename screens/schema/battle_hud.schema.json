@@ -27,12 +27,12 @@
       "properties": {
         "filled": {
           "type": "string",
-          "enum": ["bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "bar_empty"],
+          "enum": ["combat_timer_bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "combat_dagger_icon", "combat_ring_icon", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "combat_timer_bar_empty"],
           "description": "Tile for an unexpired segment (default bar_filled, VRAM 117)."
         },
         "empty": {
           "type": "string",
-          "enum": ["bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "bar_empty"],
+          "enum": ["combat_timer_bar_filled", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "combat_dagger_icon", "combat_ring_icon", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status", "combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "combat_timer_bar_empty"],
           "description": "Tile for an expired segment (default bar_empty, VRAM 127)."
         },
         "color": {
@@ -63,7 +63,7 @@
       "properties": {
         "icon": {
           "type": "string",
-          "enum": ["combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "dagger", "ring", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status"],
+          "enum": ["combat_hp_icon", "combat_ap_icon", "combat_deck_icon", "combat_sword_icon", "combat_shield_icon", "combat_bow_icon", "combat_dagger_icon", "combat_ring_icon", "amulet", "combat_fire_status", "combat_ice_status", "combat_poison_status"],
           "description": "Which VRAM icon tile represents this HUD element. Names are the slugified combat-tileset description entries (assets/combat-tileset-description.csv); dagger/ring/amulet have no CSV entry (atlas-only) and keep plain names."
         },
         "color": {

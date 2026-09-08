@@ -23,13 +23,14 @@ export interface CardSkin {
 
 /** Fixed VRAM icon catalog — names are the slugified combat-tileset
  *  description entries (assets/combat-tileset-description.csv -> the
- *  public/tiles/combat slugs); dagger/ring/amulet have no CSV entry
- *  (atlas-only icons) and keep plain names.  Values resolve through
- *  battle_compile.py ICON_TILES to the fixed VRAM tiles ui_init loads
- *  (ui.h UI_TILE_CARD_* 104-112).  The atlas-only coin is not offered. */
+ *  public/tiles/combat slugs); battle_compile.py ICON_TILES enforces the
+ *  same set (and checks each slug has an extracted PNG).  Values resolve
+ *  to the fixed VRAM tiles ui_init loads (ui.h UI_TILE_CARD_* 104-112).
+ *  'amulet' is the one atlas-only icon (no combat tileset entry) and
+ *  previews as a text chip. */
 export const CARD_ICON_NAMES: string[] = [
   'combat_sword_icon', 'combat_shield_icon', 'combat_bow_icon',
-  'dagger', 'ring', 'amulet',
+  'combat_dagger_icon', 'combat_ring_icon', 'amulet',
   'combat_fire_status', 'combat_ice_status', 'combat_poison_status',
 ];
 
@@ -51,20 +52,20 @@ export const CARD_COLOR_HEX: Record<string, string> = {
 };
 
 /** Preview tile PNGs (public/tiles/combat), keyed by the slugified icon
- *  names.  Ring/dagger/amulet are atlas-only (no CSV slug), so they
- *  preview as text chips. */
+ *  names.  'amulet' is atlas-only (no combat slug), so it previews as a
+ *  text chip; every other slug has a real tile image. */
 export const CARD_ICON_URL: Record<string, string | null> = {
   combat_sword_icon: '/tiles/combat/combat_sword_icon.png',
   combat_shield_icon: '/tiles/combat/combat_shield_icon.png',
   combat_bow_icon: '/tiles/combat/combat_bow_icon.png',
+  combat_dagger_icon: '/tiles/combat/combat_dagger_icon.png',
+  combat_ring_icon: '/tiles/combat/combat_ring_icon.png',
   combat_fire_status: '/tiles/combat/combat_fire_status.png',
   combat_ice_status: '/tiles/combat/combat_ice_status.png',
   combat_poison_status: '/tiles/combat/combat_poison_status.png',
   combat_hp_icon: '/tiles/combat/combat_hp_icon.png',
   combat_ap_icon: '/tiles/combat/combat_ap_icon.png',
   combat_deck_icon: '/tiles/combat/combat_deck_icon.png',
-  dagger: null,
-  ring: null,
   amulet: null,
 };
 

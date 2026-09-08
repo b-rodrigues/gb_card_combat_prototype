@@ -3,6 +3,8 @@ import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { BUILTIN_TILESETS, TileDefinition, TilesetDefinition } from './model/Tileset';
 import { SHEET_TILE_NAMES, COMBAT_TILE_URL, fetchCombatArtList, fetchCombatArtSet, fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
+import { CardSkin, CARD_COLOR_HEX, fetchCardSkin } from './io/cardSkin';
+import { BattleHud, fetchBattleHud } from './io/battleHud';
 import { ToolType } from './Toolbar';
 import { EditLayer } from './LayerPanel';
 
@@ -202,6 +204,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       return new Map(imgMap);
     });
   }, [tilesetIdsKey]);
+
+  // Live battle-card + HUD skins (screens/cards_skin.json and
+  // screens/battle_hud.json via the dev API).  The battle-screen
+  // preview renders hand cards and HUD icons from these -- the same
+  // data battle_compile.py emits into the ROM -- instead of hardcoding
+  // icon keys (which drifted: fire/ice riders that the ROM no longer
+  // draws, a phantom deck_cards tile).
+  const [cardSkin, setCardSkin] = useState<CardSkin | null>(null);
+  const [hudSkin, setHudSkin] = useState<BattleHud | null>(null);
+  useEffect(() => {
+    fetchCardSkin().then(setCardSkin).catch(() => undefined);
+    fetchBattleHud().then(setHudSkin).catch(() => undefined);
+  }, []);
 
   // Convert mouse pixel coordinates to tile coordinates
   const getTileCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
@@ -482,10 +497,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.fillStyle = '#593c28';
 
       // Row 6: Left "HERO" + Icon | Right "[♥] : 10/10"
+      // HUD icon tiles come from the live battle_hud.json skin (the
+      // same names battle_compile.py resolves into g_hud_skin), not
+      // hardcoded keys.
       const heroSprite = tileImages.get('combat.hero');
-      const heartImg = tileImages.get('combat.combat_hp_icon');
-      const batteryImg = tileImages.get('combat.combat_ap_icon');
-      const deckImg = tileImages.get('combat.deck_cards');
+      const heartImg = tileImages.get('combat.' + (hudSkin?.hp.icon || 'combat_hp_icon'));
+      const batteryImg = tileImages.get('combat.' + (hudSkin?.ap.icon || 'combat_ap_icon'));
+      const deckImg = tileImages.get('combat.' + (hudSkin?.deck.icon || 'combat_deck_icon'));
 
       ctx.fillText('HERO', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
       if (heroSprite) {
@@ -524,18 +542,47 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // 6. Row 9: Combo Header "COMBO"
       ctx.fillText('COMBO', 1 * tileSize, (comboRow + 0.5) * tileSize);
 
-      // 7. Rows 10–13: 5 Framed Multi-Tile Cards
-      const cardCols = [1, 5, 8, 12, 16];
-      const cardDefs = [
-        { iconKey: 'combat.combat_sword_icon', fallback: '🗡️', valKey: 'combat.combat_three_icon', val: 3, riderKey: null },
-        { iconKey: 'combat.combat_bow_icon', fallback: '🏹', valKey: 'combat.combat_two_icon', val: 2, riderKey: 'combat.combat_poison_status' },
-        { iconKey: 'combat.combat_shield_icon', fallback: '🛡️', valKey: 'combat.combat_two_icon', val: 2, riderKey: null },
-        { iconKey: 'combat.combat_shield_icon', fallback: '🛡️', valKey: 'combat.combat_two_icon', val: 2, riderKey: null },
-        { iconKey: 'combat.combat_sword_icon', fallback: '🗡️', valKey: 'combat.combat_four_icon', val: 4, riderKey: 'combat.combat_fire_status' },
+      // 7. Rows 10–13: 5 Framed Hand Cards -- rendered from the LIVE skin
+      // (screens/cards_skin.json), the same data battle_compile.py emits
+      // into the ROM.  Weapon icon per card type; box tint = type color,
+      // element color when the demo card carries a status (the ROM shows
+      // element status purely as the box tint -- battle_card_box_color();
+      // the old floating fire/ice rider icons were removed).
+      const skinFallback: CardSkin = {
+        id: 'card_skin', label: '', box: { w: 3, h: 4 },
+        types: {
+          sword: { icon: 'combat_sword_icon', color: 'iron' },
+          shield: { icon: 'combat_shield_icon', color: 'wood' },
+          bow: { icon: 'combat_bow_icon', color: 'gold' },
+          heal: { icon: 'combat_ring_icon', color: 'field' },
+          dagger: { icon: 'combat_dagger_icon', color: 'poison' },
+        },
+        elements: {
+          fire: { icon: 'combat_fire_status', color: 'fire' },
+          ice: { icon: 'combat_ice_status', color: 'iron' },
+          poison: { icon: 'combat_poison_status', color: 'poison' },
+        },
+      };
+      const skin = cardSkin || skinFallback;
+      const demoHand: Array<{ type: keyof CardSkin['types']; value: number; elem: keyof CardSkin['elements'] | null }> = [
+        { type: 'sword', value: 3, elem: null },
+        { type: 'bow', value: 2, elem: 'poison' },
+        { type: 'shield', value: 2, elem: null },
+        { type: 'heal', value: 2, elem: null },
+        { type: 'dagger', value: 4, elem: null },
       ];
+      const typeFallbacks: Record<string, string> = {
+        sword: '🗡️', shield: '🛡️', bow: '🏹', heal: '💚', dagger: '🔪',
+      };
+      // Hand stride is 4 in the ROM (box 3 wide + 1 gap).
+      const cardCols = [1, 5, 9, 13, 17];
 
       cardCols.forEach((cx, idx) => {
-        const cDef = cardDefs[idx];
+        const card = demoHand[idx];
+        const typeSkin = skin.types[card.type];
+        const tintHex = CARD_COLOR_HEX[
+          (card.elem ? skin.elements[card.elem].color : typeSkin.color)
+        ] || '#deb580';
         const cardX = cx * tileSize;
         /* cards_row is the BOTTOM row in the ROM (box spans
          * cards_row-3..cards_row); draw upward from it. */
@@ -551,42 +598,35 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.fillStyle = '#deb580';
         ctx.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4);
 
+        // Box tint: element status overrides the type's material color,
+        // exactly like battle_card_box_color() in the ROM.
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = tintHex;
+        ctx.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4);
+        ctx.globalAlpha = 1.0;
+
         // Inset border line
         ctx.strokeStyle = '#cd9e64';
         ctx.lineWidth = 1;
         ctx.strokeRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8);
 
-        // Element rider in top right corner (fire/poison status)
-        if (cDef.riderKey) {
-          const riderImg = tileImages.get(cDef.riderKey);
-          if (riderImg) {
-            ctx.drawImage(riderImg, cardX + cardW - tileSize * 0.9, cardY + 3, tileSize * 0.8, tileSize * 0.8);
-          } else {
-            ctx.font = `${Math.max(8, Math.floor(tileSize * 0.55))}px sans-serif`;
-            ctx.textAlign = 'right';
-            ctx.fillText(cDef.riderKey.includes('fire') ? '🔥' : '🟣', cardX + cardW - 5, cardY + tileSize * 0.7);
-          }
-        }
-
-        // Weapon icon in center
-        const weaponImg = tileImages.get(cDef.iconKey);
+        // Weapon icon in center (skin-driven combat tileset tile)
+        const weaponImg = tileImages.get('combat.' + typeSkin.icon);
         if (weaponImg) {
           ctx.drawImage(weaponImg, cardX + (cardW - tileSize * 1.2) / 2, cardY + tileSize * 0.5, tileSize * 1.2, tileSize * 1.2);
         } else {
+          ctx.fillStyle = '#593c28';
           ctx.font = `${Math.max(12, Math.floor(tileSize * 0.85))}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText(cDef.fallback, cardX + cardW / 2, cardY + cardH * 0.42);
+          ctx.fillText(typeFallbacks[card.type] || '❔', cardX + cardW / 2, cardY + cardH * 0.42);
         }
 
-        // Card number value underneath weapon
-        const digitImg = tileImages.get(cDef.valKey);
-        if (digitImg) {
-          ctx.drawImage(digitImg, cardX + (cardW - tileSize * 0.9) / 2, cardY + cardH - tileSize * 1.1, tileSize * 0.9, tileSize * 0.9);
-        } else {
-          ctx.fillStyle = '#593c28';
-          ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
-          ctx.fillText(String(cDef.val), cardX + cardW / 2, cardY + cardH * 0.78);
-        }
+        // Power digit underneath (the ROM renders it as a font glyph --
+        // the semantic buffer asserts '0'+value on that row).
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(String(card.value), cardX + cardW / 2, cardY + cardH * 0.78);
       });
 
       // 8. Row 14: Card Cursor
@@ -1051,6 +1091,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     animTick,
     clonePattern,
     isCapturingClone,
+    cardSkin,
+    hudSkin,
   ]);
 
   useEffect(() => {

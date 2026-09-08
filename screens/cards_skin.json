@@ -7,8 +7,8 @@
   "sword":  { "icon": "combat_sword_icon",  "color": "iron"   },
   "shield": { "icon": "combat_shield_icon", "color": "wood"   },
   "bow":    { "icon": "combat_bow_icon",    "color": "gold"   },
-  "heal":   { "icon": "ring",               "color": "wood"   },
-  "dagger": { "icon": "dagger",             "color": "poison" }
+  "heal":   { "icon": "combat_ring_icon",     "color": "field"  },
+  "dagger": { "icon": "combat_dagger_icon",   "color": "poison" }
  },
  "elements": {
   "fire":   { "icon": "combat_fire_status",   "color": "fire"   },

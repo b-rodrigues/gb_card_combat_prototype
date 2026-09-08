@@ -87,11 +87,14 @@ const NumField: React.FC<{ label: string; value: number; min: number; max: numbe
 const PreviewCard: React.FC<{ skin: CardSkin; card: typeof PREVIEW_HAND[0]; scale: number }> = ({ skin, card, scale }) => {
   const h = Math.max(3, Math.min(5, skin.box.h || 4));
   const typeSkin = skin.types[card.type];
-  const elemSkin = card.elem ? skin.elements[card.elem] : null;
+  // The ROM shows element status purely as the card's box tint
+  // (battle_card_box_color: element color overrides the type's
+  // material color) -- no floating rider icon.
+  const tint = card.elem ? skin.elements[card.elem].color : typeSkin.color;
   const frame = (idx: number) => (
     <div style={{ position: 'relative', width: scale, height: scale }}>
       <img src={CARD_FRAME_URLS[idx]} alt="" width={scale} height={scale} style={{ imageRendering: 'pixelated', display: 'block' }} />
-      <div style={{ position: 'absolute', inset: 0, ...tintStyle(typeSkin.color) }} />
+      <div style={{ position: 'absolute', inset: 0, ...tintStyle(tint) }} />
     </div>
   );
   const rows: React.ReactNode[] = [];
@@ -114,11 +117,6 @@ const PreviewCard: React.FC<{ skin: CardSkin; card: typeof PREVIEW_HAND[0]; scal
   rows.push(<div key="b" style={{ display: 'flex' }}>{frame(6)}{frame(7)}{frame(8)}</div>);
   return (
     <div style={{ position: 'relative', width: scale * 3 }}>
-      {elemSkin && (
-        <div style={{ position: 'absolute', top: -scale, left: scale * 2, width: scale, height: scale, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {iconChip(elemSkin.icon, scale - 4)}
-        </div>
-      )}
       {rows}
     </div>
   );
@@ -428,7 +426,12 @@ export const BattleManager: React.FC = () => {
               <SkinRow key={k} label={TYPE_LABELS[k]} value={skin.types[k]} icons={CARD_ICON_NAMES}
                 onChange={(v) => mutateSkin((s) => { s.types[k] = v; })} />
             ))}
-            <h4 style={{ margin: '8px 0 4px' }}>Element riders (status icon + color)</h4>
+            <h4 style={{ margin: '8px 0 4px' }}>Element status (tint color + reveal icon)</h4>
+            <div style={{ fontSize: 12, color: '#555', margin: '0 0 6px' }}>
+              A card carrying a status is TINTED with the element color (no
+              floating rider icon).  The icon tile appears only in the
+              loot-reveal icon pair.
+            </div>
             {ELEM_KEYS.map((k) => (
               <SkinRow key={k} label={ELEM_LABELS[k]} value={skin.elements[k]} icons={CARD_ICON_NAMES}
                 onChange={(v) => mutateSkin((s) => { s.elements[k] = v; })} />

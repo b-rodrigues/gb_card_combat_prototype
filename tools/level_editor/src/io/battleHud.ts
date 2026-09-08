@@ -67,18 +67,22 @@ export const BATTLE_SCREEN_IDS = ['default', 'boss'] as const;
 
 /** HUD icon choices (battle_hud.schema.json iconSkin enum).  Names are the
  *  slugified combat-tileset description entries (assets/
- *  combat-tileset-description.csv); dagger/ring/amulet are atlas-only and
- *  keep plain names.  The atlas-only coin is not offered (no combat tile). */
+ *  combat-tileset-description.csv) — the same set battle_compile.py
+ *  ICON_TILES compiles and checks against extracted PNGs.  'amulet' is
+ *  atlas-only and keeps its plain name; the atlas-only coin is not
+ *  offered (no combat tile). */
 export const HUD_ICON_NAMES: string[] = [
   'combat_hp_icon', 'combat_ap_icon', 'combat_deck_icon',
   'combat_sword_icon', 'combat_shield_icon', 'combat_bow_icon',
-  'dagger', 'ring', 'amulet',
+  'combat_dagger_icon', 'combat_ring_icon', 'amulet',
   'combat_fire_status', 'combat_ice_status', 'combat_poison_status',
 ];
 
 /** Timer-bar segment tile choices (any compiled HUD/card icon tile plus
  *  the two dedicated bar segments, VRAM 117/127). */
-export const BAR_TILE_NAMES: string[] = ['bar_filled', 'bar_empty', ...HUD_ICON_NAMES];
+export const BAR_TILE_NAMES: string[] = [
+  'combat_timer_bar_filled', 'combat_timer_bar_empty', ...HUD_ICON_NAMES,
+];
 
 export async function fetchBattleHud(): Promise<BattleHud> {
   const res = await fetch('/api/battle-hud');

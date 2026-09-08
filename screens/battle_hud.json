@@ -5,5 +5,5 @@
  "hp": { "icon": "combat_hp_icon", "color": "fire" },
  "ap": { "icon": "combat_ap_icon", "color": "gold" },
  "deck": { "icon": "combat_deck_icon", "color": "iron" },
- "bar": { "filled": "bar_filled", "empty": "bar_empty", "color": "wood", "row": 17, "width": 20 }
+ "bar": { "filled": "combat_timer_bar_filled", "empty": "combat_timer_bar_empty", "color": "wood", "row": 17, "width": 20 }
 }
