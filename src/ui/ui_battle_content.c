@@ -208,9 +208,6 @@ static const char *battle_card_type_code(uint8_t type)
     return (type < 5) ? (codes + (type * 3)) : (codes + 15);
 }
 
-/* Icon tiles for a card's element rider + weapon glyph.  Driven by the
- * staged card skin (WRAM mirror; screens/cards_skin.json via
- * battle_compile.py): weapon icon per BattleCardType, element icon per
 /* Weapon icon tile for a hand card (skin-driven per-type mapping).
  * Element riders no longer draw a floating status icon, so the hand
  * renderer needs only the weapon tile. */
@@ -292,7 +289,7 @@ static void battle_clear_card_box(uint8_t x, uint8_t y)
 }
 
 static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
-                                uint8_t status_id, uint8_t is_heal)
+                                uint8_t is_heal)
 {
     uint8_t tile_wpn;
     const char *code;
@@ -784,7 +781,7 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             }
         }
         uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
-        battle_draw_card_at(col, cards_row, ctype, cvalue, cstat, is_heal);
+        battle_draw_card_at(col, cards_row, ctype, cvalue, is_heal);
         /* Tint the whole card by element (heal green, fire reddish, ice
          * blueish, poison mauve); material color for riderless cards.
          * Poison grey-out (status.h): greyed player cards render dim. */

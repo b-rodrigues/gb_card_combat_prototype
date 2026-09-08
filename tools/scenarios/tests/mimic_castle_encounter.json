@@ -45,6 +45,10 @@
       "expected": 30
     },
     {
+      "type": "music_track",
+      "expected": "MIMIC"
+    },
+    {
       "type": "screen_row",
       "row": 2,
       "contains": "MIMIC"

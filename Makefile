@@ -33,7 +33,7 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
@@ -48,9 +48,14 @@ MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/musi
 
 HUGEDRIVER_OBJ = $(BUILD_DIR)/lib/hUGEDriver.o
 HUGEDRIVER_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver.o
+# Second hUGE driver copy in bank 7 (renamed exports, see rules below) so
+# the mimic song can live outside the full bank 6.  The driver reads song
+# bytes through the mapped ROM window, so driver + song must share a bank.
+HUGEDRIVER_B7_OBJ = $(BUILD_DIR)/lib/hUGEDriver_b7.o
+HUGEDRIVER_B7_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver_b7.o
 
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ)
-OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ) $(HUGEDRIVER_B7_OBJ)
+OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG) $(HUGEDRIVER_B7_OBJ_DEBUG)
 
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
@@ -397,12 +402,18 @@ $(GENERATED_MUSIC_DIR)/village.c: assets/music/Village.uge tools/compile_music.p
 $(GENERATED_MUSIC_DIR)/castle.c: assets/music/castle.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_castle "$@"
 
+# Mimic battle theme.  Bank 6 (driver + six songs) is full, so the song
+# lives in bank 7 alongside a second driver copy (see hUGEDriver_b7
+# rules).  huge_music.c switches to the song's bank around hUGE calls.
+$(GENERATED_MUSIC_DIR)/mimic.c: assets/music/Mimic.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 7 song_mimic "$@"
+
 # WAV previews for the level editor's BGM toggle (Inspector Map Info).
 # Rendered from the generated song C by tools/render_music_preview.py
 # (driver-faithful approximation, not the ROM mix). Explicit target so
 # song builds stay fast; re-run after changing any assets/music/*.uge.
 MUSIC_PREVIEW_DIR = tools/level_editor/public/audio
-MUSIC_PREVIEW_WAVS = $(MUSIC_PREVIEW_DIR)/battle.wav $(MUSIC_PREVIEW_DIR)/desolate_landscape.wav $(MUSIC_PREVIEW_DIR)/forest.wav $(MUSIC_PREVIEW_DIR)/boss_fight.wav $(MUSIC_PREVIEW_DIR)/village.wav $(MUSIC_PREVIEW_DIR)/castle.wav
+MUSIC_PREVIEW_WAVS = $(MUSIC_PREVIEW_DIR)/battle.wav $(MUSIC_PREVIEW_DIR)/desolate_landscape.wav $(MUSIC_PREVIEW_DIR)/forest.wav $(MUSIC_PREVIEW_DIR)/boss_fight.wav $(MUSIC_PREVIEW_DIR)/village.wav $(MUSIC_PREVIEW_DIR)/castle.wav $(MUSIC_PREVIEW_DIR)/mimic.wav
 
 music-preview: music $(MUSIC_PREVIEW_WAVS)
 	@echo "Music previews up to date in $(MUSIC_PREVIEW_DIR)"
@@ -448,6 +459,47 @@ $(HUGEDRIVER_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $
 	@mkdir -p $(dir $@)
 	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/debug/lib/hUGEDriver.obj $<
 	$(RGB2SDAS) -b 6 -o $@ $(BUILD_DIR)/debug/lib/hUGEDriver.obj
+
+# Second hUGE driver copy in bank 7 (renamed exports so the two copies
+# coexist; internal driver references are section-relative and resolve
+# within bank 7).  Paired with the mimic song data in bank 7.
+$(HUGEDRIVER_B7_OBJ): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/lib/hUGEDriver_b7.obj $<
+	$(RGB2SDAS) -b 7 \
+		-r hUGE_init=hUGE_init_b7 \
+		-r _hUGE_init=_hUGE_init_b7 \
+		-r hUGE_dosound=hUGE_dosound_b7 \
+		-r _hUGE_dosound=_hUGE_dosound_b7 \
+		-r hUGE_mute_channel=hUGE_mute_channel_b7 \
+		-r _hUGE_mute_channel=_hUGE_mute_channel_b7 \
+		-r hUGE_set_position=hUGE_set_position_b7 \
+		-r _hUGE_set_position=_hUGE_set_position_b7 \
+		-r hUGE_current_wave=hUGE_current_wave_b7 \
+		-r _hUGE_current_wave=_hUGE_current_wave_b7 \
+		-r hUGE_mute_mask=hUGE_mute_mask_b7 \
+		-r _hUGE_mute_mask=_hUGE_mute_mask_b7 \
+		-r hUGE_NO_WAVE=hUGE_NO_WAVE_B7 \
+		-o $@ $(BUILD_DIR)/lib/hUGEDriver_b7.obj
+
+$(HUGEDRIVER_B7_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/debug/lib/hUGEDriver_b7.obj $<
+	$(RGB2SDAS) -b 7 \
+		-r hUGE_init=hUGE_init_b7 \
+		-r _hUGE_init=_hUGE_init_b7 \
+		-r hUGE_dosound=hUGE_dosound_b7 \
+		-r _hUGE_dosound=_hUGE_dosound_b7 \
+		-r hUGE_mute_channel=hUGE_mute_channel_b7 \
+		-r _hUGE_mute_channel=_hUGE_mute_channel_b7 \
+		-r hUGE_set_position=hUGE_set_position_b7 \
+		-r _hUGE_set_position=_hUGE_set_position_b7 \
+		-r hUGE_current_wave=hUGE_current_wave_b7 \
+		-r _hUGE_current_wave=_hUGE_current_wave_b7 \
+		-r hUGE_mute_mask=hUGE_mute_mask_b7 \
+		-r _hUGE_mute_mask=_hUGE_mute_mask_b7 \
+		-r hUGE_NO_WAVE=hUGE_NO_WAVE_B7 \
+		-o $@ $(BUILD_DIR)/debug/lib/hUGEDriver_b7.obj
 
 $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)

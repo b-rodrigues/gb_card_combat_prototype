@@ -43,8 +43,11 @@ void start_battle_from_world(Game *g)
     }
 
     /* Boss actors carry no enemy deck (BATTLE_NONE) and stand alone;
-     * give them the dedicated boss theme, everyone else the battle theme. */
-    if (act->battle_type == BATTLE_NONE) {
+     * give them the dedicated boss theme.  Mimics get their own theme
+     * (bank-7 tracker song); everyone else the battle theme. */
+    if (act->battle_type == BATTLE_MIMIC) {
+        audio_play_music(MUSIC_MIMIC);
+    } else if (act->battle_type == BATTLE_NONE) {
         audio_play_music(MUSIC_BOSS);
     } else {
         audio_play_music(MUSIC_BATTLE);

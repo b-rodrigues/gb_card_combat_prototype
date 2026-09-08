@@ -13,6 +13,7 @@ typedef enum {
     MUSIC_TOWN,      /* town / hub theme (loops) */
     MUSIC_DUNGEON,   /* castle / dungeon theme (loops) */
     MUSIC_BOSS,      /* final-boss theme (loops) */
+    MUSIC_MIMIC,     /* mimic battle theme (loops, bank 7: bank 6 is full) */
     MUSIC_DESOLATE,  /* desolate landscape theme (loops) */
     MUSIC_FOREST     /* forest / plain theme (Forest.uge, loops) */
 } MusicTrack;

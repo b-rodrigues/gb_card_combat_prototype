@@ -173,6 +173,8 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_forest);
     } else if (track == MUSIC_BOSS) {
         huge_music_play(&song_boss_fight);
+    } else if (track == MUSIC_MIMIC) {
+        huge_music_play_banked(&song_mimic, HUGE_MUSIC_BANK_B7);
     } else if (track == MUSIC_TOWN) {
         huge_music_play(&song_village);
     } else if (track == MUSIC_DUNGEON) {
@@ -195,13 +197,13 @@ MusicTrack audio_get_current_track(void)
  * VICTORY (one_shot) falls silent after its last note. */
 static const uint8_t *const s_track_notes[MUSIC_FOREST + 1] = {
     0, lacrimosa_notes, 0, victory_notes,
-    title_notes, 0, 0, 0, 0, 0
+    title_notes, 0, 0, 0, 0, 0, 0
 };
 static const uint8_t s_track_len[MUSIC_FOREST + 1] = {
-    0, 32, 0, VICTORY_NOTE_COUNT, 16, 0, 0, 0, 0, 0
+    0, 32, 0, VICTORY_NOTE_COUNT, 16, 0, 0, 0, 0, 0, 0
 };
 static const uint8_t s_track_ticks[MUSIC_FOREST + 1] = {
-    0, 43, 0, VICTORY_TICKS_PER_NOTE, 60, 0, 0, 0, 0, 0
+    0, 43, 0, VICTORY_TICKS_PER_NOTE, 60, 0, 0, 0, 0, 0, 0
 };
 
 void audio_update(void)
