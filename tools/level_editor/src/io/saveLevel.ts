@@ -23,7 +23,7 @@ export async function saveLevelToServer(level: EditorLevel): Promise<{ success: 
   }
 }
 
-export async function compileRom(): Promise<{ success: boolean; log?: string; romPath?: string; error?: string }> {
+export async function compileRom(): Promise<{ success: boolean; log?: string; romPath?: string[]; error?: string }> {
   try {
     const res = await fetch('/api/compile-rom', { method: 'POST' });
     const data = await res.json();

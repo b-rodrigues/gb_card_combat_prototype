@@ -472,7 +472,13 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
-          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
+          // Both ROMs in ONE make instance with parallel jobs: the shared
+          // prerequisites (generated C, crt0.o, gb_lite/sm83_lite) are
+          // built exactly once even with -j, the object sets are disjoint
+          // (build/*.o vs build/debug/*.o), and the two link steps write
+          // disjoint outputs.  Two SEPARATE make processes would race on
+          // the shared lite libs -- never split this into parallel execs.
+          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message);
               if (stderr) console.error('Compile stderr:\n' + stderr);
@@ -482,7 +488,7 @@ function levelEditorApiPlugin(): Plugin {
               res.end(JSON.stringify({ success: false, error: combinedError || err.message, log: stdout, attempts: attempts || [] }));
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, log: stdout, romPath: 'build/rpg_card_proto_debug.gb' }));
+              res.end(JSON.stringify({ success: true, log: stdout, romPath: ['build/rpg_card_proto_debug.gb', 'build/rpg_card_proto.gb'] }));
             }
           }) as any);
           return;

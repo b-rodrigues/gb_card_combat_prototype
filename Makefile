@@ -501,7 +501,11 @@ $(HUGEDRIVER_B7_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py 
 		-r hUGE_NO_WAVE=hUGE_NO_WAVE_B7 \
 		-o $@ $(BUILD_DIR)/debug/lib/hUGEDriver_b7.obj
 
-$(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
+# Grouped targets (&:): the lite libs come from ONE make_lite_libs.py run.
+# A plain multi-target rule runs its recipe once PER TARGET, which under
+# `make debug release -j` (the editor's Compile ROM button) races the two
+# runs on the script's temp file.  &: runs the recipe exactly once.
+$(GB_LITE) $(SM83_LITE) &: $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)
 
 # The VBlank ISR is copied to WRAM 0xC900 by crt0.s.  sdldgb auto-places

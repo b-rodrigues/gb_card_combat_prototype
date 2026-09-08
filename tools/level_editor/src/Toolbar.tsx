@@ -82,7 +82,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           style={{ background: '#d35400', color: '#fff', fontWeight: 'bold' }}
           onClick={onCompileRom}
           disabled={isCompiling}
-          title="Save Level & Build Game Boy ROM (make debug)"
+          title="Save Level & Build Game Boy ROMs (make debug + release, parallel)"
         >
           {isCompiling ? '⏳ Compiling...' : '🔨 Compile ROM'}
         </button>

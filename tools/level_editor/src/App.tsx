@@ -192,17 +192,17 @@ export const App: React.FC = () => {
 
   const handleCompileRom = async () => {
     setIsCompiling(true);
-    setNotification({ message: 'Saving level & compiling Game Boy ROM (make debug)...', type: 'info' });
+    setNotification({ message: 'Saving level & compiling Game Boy ROMs (make debug + release, parallel)...', type: 'info' });
     const saved = await saveLevelToServer(level);
     if (!saved.success) {
       setIsCompiling(false);
-      setNotification({ message: `Save failed, ROM not compiled: ${saved.error}`, type: 'error' });
+      setNotification({ message: `Save failed, ROMs not compiled: ${saved.error}`, type: 'error' });
       return;
     }
     const res = await compileRom();
     setIsCompiling(false);
     if (res.success) {
-      setNotification({ message: 'ROM Built Successfully! (build/rpg_card_proto_debug.gb)', type: 'success' });
+      setNotification({ message: 'ROMs Built Successfully! (debug + release)', type: 'success' });
     } else {
       setNotification({ message: `ROM Compilation Failed: ${res.error}`, type: 'error' });
       alert(`Compilation failed:\n\n${res.error}\n\n${res.log || ''}`);
