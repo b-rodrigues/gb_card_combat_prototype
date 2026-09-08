@@ -514,14 +514,14 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             battle_put_char((uint8_t)(x + 5), hp_row, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                /* Arrow spans exactly the art width (3 cols), centered on
-                 * the art like the art is centered on the name: on the
-                 * boss screen a 3x3 art fills rows 3-5 with the caret on
-                 * row 6, so a 6-wide caret would run into the hero HP
-                 * block.  VRAM gets the select-arrow tile; the semantic
-                 * buffer keeps '^' for harness text assertions. */
+                /* Arrow centered on the art's MIDDLE column (art is 3
+                 * wide at art_x..art_x+2): on the boss screen a 3x3 art
+                 * fills rows 3-5 with the caret on row 6, so a 6-wide
+                 * caret would run into the hero HP block.  VRAM gets the
+                 * select-arrow tile; the semantic buffer keeps '^' for
+                 * harness text assertions. */
                 battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, "   ", 3);
-                battle_put_tile((uint8_t)(battle_enemy_art_x(x, k) + 2), cur_row,
+                battle_put_tile((uint8_t)(battle_enemy_art_x(x, k) + 1), cur_row,
                                 '^', UI_TILE_SELECT_ARROW);
                 continue;
             }

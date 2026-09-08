@@ -2168,7 +2168,10 @@ the first interior row, power digit on the last; the semantic screen
 buffer keeps the type code + digit on row 13 for assertions), `15`
 markers (`1-5` selection-order digits; the cursor and the enemy-target
 caret render the up-arrow select icon tile `UI_TILE_SELECT_ARROW` 96
-(combat tileset "arrow pointing up", card_frames sheet tile 14) while
+(combat tileset "arrow pointing up", card_frames sheet tile 14) -- the
+enemy caret on the art's MIDDLE column (art_x+1; art is 3 wide, so the
+arrow sits centered under the enemy, matching the editor preview)
+while
 the semantic buffer keeps `^` for text assertions), `16` card
 description (`card_get_description`), `17` timer bar (window row,
 `0x9A20`).  Card visuals are data-driven: `screens/cards_skin.json` via
