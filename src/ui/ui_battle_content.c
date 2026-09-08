@@ -805,23 +805,25 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 /* Battle UI tile loader (bank-3 body behind the fixed-bank
  * ui_card_tiles_load() wrapper, dispatched once from ui_init with the LCD
  * off): streams the card frame tiles, the turn-timer bar segments, the
- * HUD hp/ap/deck icons and the select arrow from THIS bank's generated
- * card_frame_tiles.h into VRAM block 1.  Reads its own bank-local data
+ * HUD hp/ap/deck icons, the select arrow and the fire/ice/poison status
+ * tiles from THIS bank's generated card_frame_tiles.h into VRAM block 1.  Reads its own bank-local data
  * directly (no banked_copy, which would restore the home bank mid-body --
  * banked.h ABI) and writes VRAM at the SIGNED BG tile addresses
  * (0x9000 + id*16 -- LCDC.4 = 0, see the loop comment below and
  * AGENTS.md 52.22).  VRAM: frames 118-126, bar filled 117 / empty 127,
  * HUD icons overwrite the atlas data at 113 (hp/heart), 114 (ap/bolt)
- * and 116 (deck), select arrow at 96. */
+ * and 116 (deck), select arrow at 96, status tiles at 110/111/112. */
 /* Sheet order (compose_card_frames.py): frames are tiles 0-8 (VRAM
  * 118-126), filled is tile 9 (VRAM 117), empty is tile 10 (VRAM 127),
  * HUD icons are tiles 11-13 (VRAM 113/114/116), the select arrow is
- * tile 14 (VRAM 96). */
-static const uint8_t s_card_tile_vram_ids[15] = {
+ * tile 14 (VRAM 96), status tiles are 15-17 (VRAM 110/111/112 --
+ * overwrite the atlas Flame Spire / Snowflake Star / Toxic Vial). */
+static const uint8_t s_card_tile_vram_ids[18] = {
     118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
     117, 127,                                     /* bar filled, empty */
     113, 114, 116,                                /* HUD: hp, ap, deck */
     96,                                           /* select arrow */
+    110, 111, 112,                                /* status: fire, ice, poison */
 };
 
 void ui_card_tiles_load_banked(void)
@@ -830,11 +832,11 @@ void ui_card_tiles_load_banked(void)
     volatile uint8_t *dst;
     const uint8_t *src;
 
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 18; i++) {
         /* Signed BG tile addressing (LCDC.4 = 0, set in ui_init and never
          * restored): BG tile ids < 128 are fetched by the PPU from
          * 0x9000 + id*16, NOT from the sprite-addressable 0x8000 block.
-         * All 15 ids are <= 127, so the physical address is 0x9000-based.
+         * All 18 ids are <= 127, so the physical address is 0x9000-based.
          * Raw writes to 0x8000 + id*16 land in VRAM the BG never reads
          * (mGBA watchpoint regression: AGENTS.md 52.22).  Ids >= 128
          * (world/enemy art) map to 0x8800 + (id-128)*16, which their own

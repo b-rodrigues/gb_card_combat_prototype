@@ -966,6 +966,14 @@ void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t s
     ui_draw_text_line_ring(1, 15, "", 18, scroll_x, scroll_y);
     ui_draw_text_line_ring(1, 16, " [A] CONTINUE", 18, scroll_x, scroll_y);
     ui_draw_text_line_ring(0, 17, "+------------------+", 20, scroll_x, scroll_y);
+
+    /* Box background = palette 0 (the current palette set's background
+     * tone -- pure white in the field/forest set) with black font ink:
+     * without this the box cells inherit the world-tile palettes stamped
+     * beneath them (green grass box on the field, tan in town). */
+    for (y = 12; y <= 17; y++) {
+        ui_color_span(0, y, 20, UI_COLOR_NONE);
+    }
 }
 
 

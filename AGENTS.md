@@ -2144,7 +2144,10 @@ hero row on BATTLE_DIRTY_HERO), `8` transient gameplay messages
 (`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `9` `COMBO:`
 + hand type (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c),
 `10` floating element-status icons (one per ridden card, above its
-top-right corner), `11-14` boxed hand cards (`cards_row`=14 is the BOTTOM
+top-right corner; tiles 110/111/112 hold the CSV fire/ice/poison status
+art -- the card_frames loader overwrites the atlas Flame Spire /
+Snowflake Star / Toxic Vial the atlas loop first places there), `11-14`
+boxed hand cards (`cards_row`=14 is the BOTTOM
 row; each card is a 3-wide x `box_h`-tall frame from the compiled
 `card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on
 the first interior row, power digit on the last; the semantic screen
@@ -2171,7 +2174,13 @@ hp/ap/deck icon tile DATA comes from the combat tileset
 (`combat_hp_icon`/`combat_ap_icon`/`combat_deck_icon` via the card-frames
 sheet, loaded by the bank-3 `ui_card_tiles_load_banked` at boot),
 overwriting the atlas data at VRAM 113/114/116 (ids unchanged;
-UI_TILE_DECK is shared with the quick-screen deck tab).  Enemy art is
+UI_TILE_DECK 116 keeps the combat deck art on the battle HUD deck
+counter; the QUEST tab markers are font glyphs
+'!' active / '*' complete, never a tile -- the 8x8 deck art read
+poorly there).  Dialogue boxes stamp palette 0 over their whole
+footprint (`ui_draw_dialogue`) so the box shows the palette set's
+background tone (white in the field) with black font ink instead of
+inheriting world-tile palettes.  Enemy art is
 CENTERED on the 6-column name slot: `battle_enemy_art_x()` offsets the
 stamp (and the 3-col caret) by (6-w)/2.  Hero/deck
 row positions are layout-driven: label at (hero_label_row,

@@ -453,11 +453,14 @@ static void ic_draw_quest(Game *g)
         if (LCDC_REG & 0x80) {
             while (STAT_REG & 0x02);
         }
+        /* Quest marker as a font glyph ('!' active, '*' complete): the
+         * former deck-icon tile read poorly at 8x8 (AGENTS.md 52.22
+         * loader now overwrites tile 116 with the combat deck art). */
         if (ic_quest_status(&g->state, s_ic_q) == QUEST_STATUS_COMPLETE) {
-            *s_ic_dst = UI_TILE_CARD_ELEM_FIRE;
+            *s_ic_dst = (uint8_t)(ui_font_tile_base + (uint8_t)('*' - ' '));
             IC_COLOR_SPAN(1, s_ic_y, 1, UI_COLOR_GOLD);
         } else {
-            *s_ic_dst = UI_TILE_DECK;
+            *s_ic_dst = (uint8_t)(ui_font_tile_base + (uint8_t)('!' - ' '));
             IC_COLOR_SPAN(1, s_ic_y, 1, UI_COLOR_WOOD);
         }
 
