@@ -7,7 +7,7 @@ developer or LLM can review the current look without booting the ROM
 (AGENTS.md §56).  Screenshots are for VISUAL review only; semantic state and
 telemetry remain authoritative (AGENTS.md §7/§40).
 
-Four sessions, each starting from a fresh boot (fresh persistent state):
+Five sessions, each starting from a fresh boot (fresh persistent state):
 
   Walk A (town):
     00-boot-field        overworld at spawn with the HUD
@@ -30,6 +30,9 @@ Four sessions, each starting from a fresh boot (fresh persistent state):
 
   Walk C (forest):
     14-forest-arrived    FOREST gate arrival
+
+  Walk E (mimic):
+    23-mimic-battle      castle mimic encounter (solo boss screen)
 
   Walk D (tutorial):
     15-title-menu        title menu with the TUTORIAL entry (index 3)
@@ -581,6 +584,101 @@ def main():
         pb.tick()
 
     shoot(pb, "14-forest-arrived")
+    pb.stop()
+
+    # ─────────────────────────────────────────────────────────────
+    # Walk E: castle mimic battle (palette/wiring regression pin)
+    # ─────────────────────────────────────────────────────────────
+    # FIELD spawn (17,7) -> south down col 17 to row 16 (clear of the
+    # slime patrol box x13-16 around (14,8); collisions need the same
+    # cell, so the adjacent column is safe) -> west to col 12 -> south
+    # into the south gate (12,17) -> SOUTH_FIELD (12,1) -> straight
+    # down col 12 (slime x7-9, bat x13-14, campfire far) into the south
+    # exit (12,11) -> MOUNTAIN_PASS (12,10) -> straight up col 12
+    # (slime x13-15) into the north exit (12,0) -> CASTLE (10,10) ->
+    # east along row 10 into the mimic at (12,10).  The castle bat
+    # circles rows 6-7 and the Slime Lord stands at (10,5): row 10 is
+    # clear.  Goal is the encounter itself (DECK:), like Walk B.
+    pb = PyBoy(ROM, window="null")
+    for _ in range(180):
+        pb.tick()
+    if not advance_to_overworld(pb):
+        check("Walk E: boot reached overworld", False, "stuck on title/intro")
+    pos_addr = find_player(pb)
+
+    def pos5():
+        return (pb.memory[pos_addr],
+                pb.memory[pos_addr + 1])
+
+    def press5(btn, settle=12):
+        pb.button_press(btn)
+        for _ in range(4):
+            pb.tick()
+        pb.button_release(btn)
+        for _ in range(settle):
+            pb.tick()
+
+    def wiped(frames=90):
+        """True once the tilemap goes blank (alnum-free: the wipe reads
+        back '?' rows; the HUD always carries alnum on a live screen)."""
+        for _ in range(frames):
+            pb.tick()
+            if all(not any(c.isalnum() for c in r) for r in bg_text(pb)):
+                return True
+        return False
+
+    def cross_exit(btn, expect, tries=4):
+        """Step onto an exit tile and ride out the transition wipe.
+        Entering an exit always transitions, but a dropped PyBoy press
+        leaves us unmoved -- only the wipe tells them apart, so a
+        wipe-free arrival at `expect` is retried, never trusted."""
+        for _ in range(tries):
+            press5(btn, settle=12)
+            if wiped(frames=90):
+                for _ in range(60):
+                    pb.tick()
+                if pos5() == expect:
+                    return True
+        return pos5() == expect
+
+    def walk5(btn, is_goal, budget=2000):
+        for _ in range(budget):
+            if is_goal():
+                return True
+            x0, y0 = pos5()
+            pb.button_press(btn)
+            for _ in range(4):
+                pb.tick()
+            pb.button_release(btn)
+            for _ in range(24):
+                pb.tick()
+                if pos5() != (x0, y0):
+                    break
+        return is_goal()
+
+    print(f"mimic walk: boot at {pos5()}")
+    ok = walk5("down", lambda: pos5() == (17, 16))
+    ok = walk5("left", lambda: pos5()[0] == 12) and ok
+    ok = cross_exit("down", (12, 1)) and ok
+    check("walk: reached south_field", ok)
+    # (12,10) is ambiguous (south_field cell AND mountain_pass spawn):
+    # walk to row 10, then force the (12,11) exit through the wipe.
+    ok = walk5("down", lambda: pos5()[1] == 10) and ok
+    ok = cross_exit("down", (12, 10)) and ok
+    check("walk: reached mountain_pass", ok)
+    ok = walk5("up", lambda: pos5()[1] == 1) and ok
+    ok = cross_exit("up", (10, 10)) and ok
+    check("walk: reached castle", ok)
+    engaged = walk5("right", lambda: any("DECK:" in r for r in bg_text(pb)))
+    check("walk: engaged the mimic", engaged)
+    if not engaged:
+        print("warning: walk did not reach the mimic; sampling anyway")
+    for _ in range(40):
+        pb.tick()
+    # Solo boss screen: single MIMIC centered (no trio clones).  The
+    # marker is the enemy name row; the frame pins the wood-palette
+    # art (brown chest, cream background blending into the backdrop).
+    shoot(pb, "23-mimic-battle", need="MIMIC")
     pb.stop()
 
     # ── Walk D: title menu + tutorial slides ─────────────────────────

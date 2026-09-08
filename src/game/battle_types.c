@@ -72,7 +72,7 @@ static const EnemyTypeDef g_enemy_type_mimic = {
     CURRENCY_ID_GOLD,
     3,
     1,
-    2,
+    5,
     3,
     2,
     42,

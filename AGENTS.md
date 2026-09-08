@@ -2830,14 +2830,17 @@ the commit/PR without booting anything.
 * Frames are saved with PyBoy's `screen.image` (headless framebuffer render);
   each save prints the first non-blank `bg_text` row so a mislabeled frame
   is obvious in the build log without decoding PNGs.
-* Four fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
+* Five fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
   quick screen), Walk B (slime battle on the Field), Walk C (Forest gate),
-  and Walk D (title-menu + tutorial slides), so persistent state never bleeds
+  Walk D (title-menu + tutorial slides), and Walk E (castle mimic battle:
+  FIELD → south → SOUTH_FIELD → south → MOUNTAIN_PASS → north → CASTLE,
+  east along row 10 into the mimic; all corridor columns avoid patrol
+  boxes), so persistent state never bleeds
   between milestones.  Walk D stops at the boot title screen (START → menu,
   DOWN to the TUTORIAL entry, A, then RIGHT through the seven slides); it never
   enters the game.
 * Determinism is verified: the walk's position/caret/text checks make the
-  23 frames byte-identical across repeated runs.
+  24 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2858,6 +2861,7 @@ the commit/PR without booting anything.
 12-wizard-save       save menu at the wizard
 13-wizard-saved      after saving to Slot 1
 14-forest-arrived    FOREST gate arrival after Walk B
+23-mimic-battle      castle mimic encounter (solo boss screen, Walk E)
 15-title-menu        title menu with the TUTORIAL entry (index 3)
 16-tutorial-slide0   TUTORIAL BASICS
 17-tutorial-slide1   CARD TYPES
