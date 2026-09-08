@@ -326,6 +326,27 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
                 errors.append(f"Object '{oid}' has invalid {key} '{props[key]}'")
                 objects_ok = False
 
+    # Engine actor-slot caps: actor_load_banked() spawns hostile rows into
+    # World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
+    # g_static_actors (cap 6).  Rows beyond the cap are SILENTLY DROPPED
+    # at runtime -- catch the overflow at validation time instead.
+    hostile_rows = [o.get("id") for o in objects
+                    if (o.get("properties") or {}).get("entity_id")
+                    and "HOSTILE" in ((o.get("properties") or {}).get("flags") or [])]
+    static_rows = [o.get("id") for o in objects
+                   if (o.get("properties") or {}).get("entity_id")
+                   and "HOSTILE" not in ((o.get("properties") or {}).get("flags") or [])]
+    if len(hostile_rows) > 4:
+        errors.append(
+            f"Level has {len(hostile_rows)} hostile actors but the engine spawns at most "
+            f"MAX_WORLD_ACTORS=4; extra would be silently dropped: {hostile_rows[4:]}")
+        objects_ok = False
+    if len(static_rows) > 6:
+        errors.append(
+            f"Level has {len(static_rows)} friendly actors but the engine loads at most 6 "
+            f"static rows; extra would be silently dropped: {static_rows[6:]}")
+        objects_ok = False
+
     if objects_ok:
         passed.append("Objects valid")
 

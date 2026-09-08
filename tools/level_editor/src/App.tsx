@@ -717,6 +717,33 @@ export const App: React.FC = () => {
     });
     if (objectsOk) passed.push('Objects valid');
 
+    // Engine actor-slot caps (mirrors tools/level_compiler/validate.py):
+    // actor_load_banked() spawns hostile rows into
+    // World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
+    // g_static_actors (cap 6); rows beyond the cap are silently dropped
+    // at runtime.
+    const hostileRows = level.objects
+      .filter((o) => (o.properties || {}).entity_id &&
+        (((o.properties || {}).flags as string[]) || []).includes('HOSTILE'))
+      .map((o) => o.id);
+    const staticRows = level.objects
+      .filter((o) => (o.properties || {}).entity_id &&
+        !(((o.properties || {}).flags as string[]) || []).includes('HOSTILE'))
+      .map((o) => o.id);
+    if (hostileRows.length > 4) {
+      errors.push(
+        `Level has ${hostileRows.length} hostile actors but the engine spawns at most ` +
+        `MAX_WORLD_ACTORS=4; extra would be silently dropped: ${JSON.stringify(hostileRows.slice(4))}`);
+      objectsOk = false;
+    }
+    if (staticRows.length > 6) {
+      errors.push(
+        `Level has ${staticRows.length} friendly actors but the engine loads at most 6 ` +
+        `static rows; extra would be silently dropped: ${JSON.stringify(staticRows.slice(6))}`);
+      objectsOk = false;
+    }
+    if (!objectsOk) passed.pop();
+
     return { passed, errors, warnings, isValid: errors.length === 0 };
   };
 

@@ -306,6 +306,21 @@ $(BUILD_DIR)/world/world.o $(BUILD_DIR)/world/patrol_banked.o $(BUILD_DIR)/debug
 $(BUILD_DIR)/ui/ui.o $(BUILD_DIR)/debug/ui/ui.o: $(GENERATED_TILE_GLYPH)
 $(BUILD_DIR)/game/tiles_content.o $(BUILD_DIR)/debug/game/tiles_content.o: $(GENERATED_TILE_PALETTE)
 
+# Header-dependency safety net (AGENTS.md 52.2): the compile rules track
+# only .c -> .o mtimes, so an object compiled against an older struct
+# layout links SILENTLY against rebuilt neighbors -- field offsets shift,
+# gameplay reads garbage (wrong HP/positions/hangs), and the symptom looks
+# like a mysterious regression instead of a build bug.  Over-rebuild every
+# object when ANY project header or gfx asset changes; the parallel build
+# makes the full pass cheap (~10s).
+PROJECT_HEADERS = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h) \
+	$(wildcard $(GFX_OUT_DIR)/*.h $(GFX_OUT_DIR)/*.inc)
+# NOTE: generated/tiles/tile_{walk,glyph,palette}.h are deliberately NOT
+# here -- their rule depends on the phony `manifest`, so they remake (new
+# mtime) on every make run and would force a full rebuild every time.
+# Their consumers are wired explicitly above.
+$(OBJS) $(OBJS_DEBUG): $(PROJECT_HEADERS)
+
 # Toolchain self-check: every required native binary must not only resolve
 # but EXECUTE (a broken file shadowing the real one fails at exec time with
 # a cryptic OSError deep inside a build rule). Order-only prerequisite of

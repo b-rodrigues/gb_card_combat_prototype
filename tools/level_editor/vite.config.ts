@@ -502,13 +502,19 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'POST' && req.url === '/api/compile-rom') {
+          // CLEAN build: the ROM objects have no fine-grained header
+          // dependency graph (Makefile tracks .c -> .o only), so an
+          // incremental link after pulling commits can pair stale objects
+          // with a drifted struct layout and produce a subtly broken ROM
+          // (AGENTS.md 52.2).  `make clean` plus the header safety-net
+          // makes every Compile-ROM click a known-good full build.
           // Both ROMs in ONE make instance with parallel jobs: the shared
           // prerequisites (generated C, crt0.o, gb_lite/sm83_lite) are
           // built exactly once even with -j, the object sets are disjoint
           // (build/*.o vs build/debug/*.o), and the two link steps write
           // disjoint outputs.  Two SEPARATE make processes would race on
           // the shared lite libs -- never split this into parallel execs.
-          runInToolchain('python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
+          runInToolchain('make clean && python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message);
               if (stderr) console.error('Compile stderr:\n' + stderr);
