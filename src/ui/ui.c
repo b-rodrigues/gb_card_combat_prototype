@@ -439,37 +439,6 @@ void ui_draw_dialogue_line(uint8_t x, uint8_t y, const char *text,
     if (y >= 18 || x >= 20) return;
     if ((uint8_t)(x + max_chars) > 20) max_chars = (uint8_t)(20 - x);
 
-    if (y == 13 && text && text[0] != '\0') {
-        uint8_t icon = 0;
-        uint8_t pal = UI_COLOR_NONE;
-        if (text[0] == 'G' && text[1] == 'U') { /* GUARD */
-            icon = UI_TILE_CARD_SHIELD;
-            pal = UI_COLOR_IRON;
-        } else if (text[0] == 'M' && text[1] == 'A') { /* MAYOR */
-            icon = UI_TILE_CARD_RING;
-            pal = UI_COLOR_GOLD;
-        } else if (text[0] == 'S' && text[1] == 'H') { /* SHOP */
-            icon = UI_TILE_COIN;
-            pal = UI_COLOR_GOLD;
-        } else if (text[0] == 'W' && text[1] == 'I') { /* WIZARD */
-            icon = UI_TILE_CARD_ELEM_FIRE;
-            pal = UI_COLOR_FIRE;
-        }
-        if (icon) {
-            volatile uint8_t *v = &((volatile uint8_t *)0x9800)[((y + oy) & 31) * 32 + ((x + ox) & 31)];
-            VBK_REG = 0;
-            ui_vram_sync_write(v, icon);
-            g_ui_screen_buf[y][x] = ' ';
-            if (g_is_cgb) {
-                VBK_REG = 1;
-                ui_vram_sync_write(v, pal);
-                VBK_REG = 0;
-            }
-            x++;
-            if (max_chars > 0) max_chars--;
-        }
-    }
-
     VBK_REG = 0;
     ended = (text == NULL);
     for (i = 0; i < max_chars; i++) {
