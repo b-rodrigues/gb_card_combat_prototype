@@ -116,17 +116,6 @@ export interface EditorLevel {
     timer_col?: number;
     timer_width?: number;
   };
-  bossMetaTile?: {
-    enabled?: boolean;
-    width?: number;
-    height?: number;
-    x?: number;
-    y?: number;
-    name?: string;
-    hp?: number;
-    max_hp?: number;
-    tiles?: string[][];
-  };
   titleLayout?: {
     title?: string;
     logo?: { x: number; y: number; lines: string[] };
@@ -345,11 +334,9 @@ export function battleScreenToEditor(data: any): EditorLevel {
       timer_col: data.hud_layout?.timer_col ?? 0,
       timer_width: data.hud_layout?.timer_width ?? 20,
     },
-    bossMetaTile: data.boss_meta_tile ? JSON.parse(JSON.stringify(data.boss_meta_tile)) : undefined,
     originalScreenData: data
   };
 }
-
 export function createEmptyEditorLevel(id: string = 'new_scene', tilesetId: string = 'forest', width: number = 20, height: number = 18): EditorLevel {
   const grid: string[][] = [];
   const tileset = getTileset(tilesetId);
@@ -496,9 +483,6 @@ export function editorToLevelData(lvl: EditorLevel): any {
           ...(screenData.hud_layout || {}),
           ...lvl.battleHudLayout,
         };
-      }
-      if (lvl.bossMetaTile) {
-        screenData.boss_meta_tile = lvl.bossMetaTile;
       }
       const enemyObjs = (lvl.objects || []).filter((o) => o.type === 'enemy');
       if (enemyObjs.length > 0 && Array.isArray(screenData.enemy_positions)) {

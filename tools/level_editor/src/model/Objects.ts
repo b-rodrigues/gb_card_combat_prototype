@@ -23,10 +23,8 @@ export interface LevelObject {
   animation_speed?: number;   // Animation ticks per frame (default 16 or 250ms)
   battle_sprite?: string;     // tileset.tile_name for battle rendering
   battle_name?: string;       // name shown in battle UI (overrides display_name)
-  sprite_width?: number;      // Width in tiles (e.g. 9 for a 9x9 boss meta-tile)
-  sprite_height?: number;     // Height in tiles (e.g. 9 for a 9x9 boss meta-tile)
-  is_boss?: boolean;          // Flag indicating this is a boss
-  meta_tiles?: string[][];    // 2D grid of tile identifiers (e.g. 9x9 tiles)
+  sprite_width?: number;      // Width in tiles (multi-tile preview objects, 1-4)
+  sprite_height?: number;     // Height in tiles (multi-tile preview objects, 1-4)
 }
 
 export interface ObjectTemplate {

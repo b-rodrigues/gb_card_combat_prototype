@@ -338,30 +338,32 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     }
 
     // ── BATTLE SCREEN AUTHENTIC RENDERER ──
-    // Geometry mirrors the ROM's hardcoded battle layout
-    // (src/ui/ui_battle_content.c: banner 0, HP 1, names 2, art 3-4,
-    // cursor 5, hero 6, deck/AP 7, combo 13, cards 14, markers 15,
-    // desc 16, timer 16; enemy columns at k*7).  The battle JSON
-    // hud_layout is compiled but not read by the ROM (reserved), so the
-    // preview intentionally ignores it.
+    // Geometry is DATA-DRIVEN from the screen's hud_layout -- the same
+    // rows the ROM reads (AGENTS.md 52.11.2: banner 0, HP 2, art 3-4,
+    // caret 5/6, hero 7, deck/AP 8, msgs 9, combo 10, cards 11-14,
+    // markers 15, desc 16, timer 17).  Enemy columns come from the
+    // screen's enemy objects (boss screens: one centered enemy; the
+    // legacy 9x9 boss meta-tile preview is gone -- bosses render their
+    // combat-art set or the shared placeholder, exactly like the ROM).
     if (level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle'))) {
-      const bannerRow = 0;
-      const enemyHpRow = 1;
-      const enemySpriteRow = 3;
-      const enemyCursorRow = 5;
-      const heroLabelRow = 6;
-      const heroLabelCol = 1;
-      const heroHpRow = 6;
-      const heroHpCol = 13;
-      const deckRow = 7;
-      const deckCol = 1;
-      const apRow = 7;
-      const apCol = 13;
-      const comboRow = 13;
-      const cardsRow = 14;
-      const cardCursorRow = 15;
-      const cardDescRow = 16;
-      const timerRow = 16;
+      const L = level.battleHudLayout;
+      const bannerRow = L?.turn_banner_row ?? 0;
+      const enemyHpRow = L?.enemy_hp_row ?? 2;
+      const enemySpriteRow = L?.enemy_sprite_row ?? 3;
+      const enemyCursorRow = L?.enemy_cursor_row ?? 5;
+      const heroLabelRow = L?.hero_label_row ?? 7;
+      const heroLabelCol = L?.hero_label_col ?? 0;
+      const heroHpRow = L?.hero_hp_row ?? 7;
+      const heroHpCol = L?.hero_hp_col ?? 13;
+      const deckRow = L?.deck_row ?? 8;
+      const deckCol = L?.deck_col ?? 1;
+      const apRow = L?.ap_row ?? 8;
+      const apCol = L?.ap_col ?? 13;
+      const comboRow = L?.combo_row ?? 10;
+      const cardsRow = L?.cards_row ?? 14;
+      const cardCursorRow = L?.card_cursor_row ?? 15;
+      const cardDescRow = L?.card_desc_row ?? 16;
+      const timerRow = L?.timer_row ?? 17;
 
       // 1. Crisp white background
       ctx.fillStyle = '#ffffff';
@@ -387,102 +389,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.font = `bold ${fontScale}px monospace`;
       ctx.fillStyle = '#593c28';
 
-      // 3. Row 0: Top Banner "PLAYER TURN"
+      // 3. Row 0: Dynamic target banner (ROM: "TARGET <name>" on select)
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(
-        'PLAYER TURN',
+        'TARGET SLIME',
         canvasWidth / 2,
         bannerRow * tileSize + tileSize * 0.5
       );
 
-      // 4. Enemy Roster OR 9x9 Boss Meta-Tile
-      const isBossBattle = !!(
-        level.bossMetaTile?.enabled ||
-        level.id === 'boss' ||
-        level.id.includes('boss') ||
-        level.originalScreenData?.allowed_categories?.includes('boss')
-      );
-
-      if (isBossBattle) {
-        const boss = level.bossMetaTile || {};
-        const bw = (boss.width || 9) * tileSize;
-        const bh = (boss.height || 9) * tileSize;
-        const bx = (boss.x ?? 5) * tileSize;
-        const by = (boss.y ?? 1) * tileSize;
-        const wobble = animTick % 2 === 0 ? 1 : 0;
-
-        // Boss Header (HP & Name)
-        ctx.fillStyle = '#8e44ad';
-        ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.7))}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          `👑 ${boss.name || 'LORD GIAUSAR'} [HP: ${boss.hp || 100}/${boss.max_hp || 100}]`,
-          canvasWidth / 2,
-          Math.max(12, by - tileSize * 0.2 + wobble)
-        );
-
-        // Ominous Boss Aura / Shadow
-        ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
-        ctx.fillRect(bx - 4, by - 2 + wobble, bw + 8, bh + 4);
-
-        // 9x9 Boss Meta-Tile Grid Base
-        ctx.fillStyle = '#1e1b4b';
-        ctx.fillRect(bx, by + wobble, bw, bh);
-
-        // Render each tile in the 9x9 meta-tile matrix
-        const tiles = boss.tiles;
-        const tileDim = tileSize;
-        for (let r = 0; r < (boss.height || 9); r++) {
-          for (let c = 0; c < (boss.width || 9); c++) {
-            const cellX = bx + c * tileDim;
-            const cellY = by + r * tileDim + wobble;
-
-            let cellTileKey: string | null = null;
-            if (tiles && tiles[r] && tiles[r][c]) {
-              cellTileKey = tiles[r][c];
-            }
-
-            if (cellTileKey) {
-              const spriteId = cellTileKey;
-              const img = tileImages.get(spriteId);
-              if (img && img.complete && img.naturalWidth > 0) {
-                ctx.drawImage(img, cellX, cellY, tileDim, tileDim);
-              } else {
-                ctx.fillStyle = (r + c) % 2 === 0 ? '#450a0a' : '#7f1d1d';
-                ctx.fillRect(cellX, cellY, tileDim, tileDim);
-                ctx.font = `bold ${Math.max(7, Math.floor(tileDim * 0.45))}px monospace`;
-                ctx.fillStyle = '#fca5a5';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(cellTileKey.slice(0, 2), cellX + tileDim / 2, cellY + tileDim / 2);
-              }
-            } else {
-              ctx.fillStyle = (r + c) % 2 === 0 ? '#312e81' : '#1e1b4b';
-              ctx.fillRect(cellX, cellY, tileDim, tileDim);
-            }
-
-            // Inner subtle cell border
-            ctx.strokeStyle = 'rgba(239, 68, 68, 0.2)';
-            ctx.lineWidth = 0.5;
-            ctx.strokeRect(cellX, cellY, tileDim, tileDim);
-          }
-        }
-
-        // Meta-tile outer frame
-        ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(bx, by + wobble, bw, bh);
-
-        // Target arrow under boss
-        ctx.fillStyle = '#dc2626';
-        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⬆', canvasWidth / 2, by + bh + tileSize * 0.45);
-      } else {
-        // ROM columns are k*7 (ui_battle_content.c battle_draw_enemy_columns).
-        const enemyCols = [0, 7, 14];
+      // 4. Enemy roster at the screen's configured positions (boss
+      // screens: single centered enemy).
+      {
+        const enemyObjs = (level.objects || []).filter((o) => o.type === 'enemy');
+        const enemyCols = enemyObjs.length > 0
+          ? enemyObjs.map((o) => o.position.x)
+          : [0, 7, 14];
         const enemyHps = ['10/10', '10/10', '02/10'];
 
         enemyCols.forEach((colX, idx) => {
@@ -541,15 +463,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           }
         });
 
-        // Target arrow under enemy 1 (middle)
+        // Target arrow under enemy 0 (the default target), centered on
+        // the art's middle column (art_x = pos+1, caret = art_x+1).
         const arrowImg = tileImages.get('combat.combat_arrow_pointing_up');
         if (arrowImg) {
-          ctx.drawImage(arrowImg, (enemyCols[1] + 1) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
+          ctx.drawImage(arrowImg, (enemyCols[0] + 2) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
         } else {
           ctx.fillStyle = '#593c28';
           ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+          ctx.fillText('⬆', (enemyCols[0] + 2.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
         }
       }
 
@@ -614,7 +537,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       cardCols.forEach((cx, idx) => {
         const cDef = cardDefs[idx];
         const cardX = cx * tileSize;
-        const cardY = cardsRow * tileSize;
+        /* cards_row is the BOTTOM row in the ROM (box spans
+         * cards_row-3..cards_row); draw upward from it. */
+        const cardY = (cardsRow - 3) * tileSize;
         const cardW = 2.8 * tileSize;
         const cardH = 3.8 * tileSize;
 
@@ -681,12 +606,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.textAlign = 'left';
       ctx.fillText('Sword: physical', 1 * tileSize, (cardDescRow + 0.5) * tileSize);
 
-      // 10. Rows 16–17: Turn Timer Bar
+      // 10. Timer Bar (single row, at the layout's timer_row)
       const timerWidthCols = 20;
       const barX = 0 * tileSize;
       const barY = timerRow * tileSize;
       const barW = timerWidthCols * tileSize;
-      const barH = 1.9 * tileSize;
+      const barH = tileSize;
 
       ctx.fillStyle = '#d59f63';
       ctx.fillRect(barX, barY, barW, barH);
@@ -939,47 +864,26 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       });
     }
 
-    // 7. Render Objects / NPCs / Enemies (supporting 9x9 Boss Meta-Tiles)
+    // 7. Render Objects / NPCs / Enemies
     if (showObjects && level.objects) {
       level.objects.forEach((obj, idx) => {
         const isSelected = activeLayer === 'objects' && selectedEntityIndex === idx;
         const px = obj.position.x * tileSize;
         const py = obj.position.y * tileSize;
-        const wTiles = obj.sprite_width || (obj.is_boss ? 9 : 1);
-        const hTiles = obj.sprite_height || (obj.is_boss ? 9 : 1);
+        const wTiles = obj.sprite_width || 1;
+        const hTiles = obj.sprite_height || 1;
         const objW = wTiles * tileSize;
         const objH = hTiles * tileSize;
 
         const tmpl = OBJECT_TEMPLATES.find((t) => t.type === obj.type);
-        const color = obj.is_boss ? '#8e44ad' : tmpl ? tmpl.color : '#9b59b6';
+        const color = tmpl ? tmpl.color : '#9b59b6';
 
-        if (wTiles > 1 || hTiles > 1 || obj.is_boss) {
-          // ── RENDER 9x9 / LARGE BOSS META-TILE ──
+        if (wTiles > 1 || hTiles > 1) {
+          // ── Multi-tile object preview (sprite_width/height, 1-4) ──
           ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
           ctx.fillRect(px, py, objW, objH);
 
-          if (obj.meta_tiles && obj.meta_tiles.length > 0) {
-            for (let r = 0; r < Math.min(hTiles, obj.meta_tiles.length); r++) {
-              for (let c = 0; c < Math.min(wTiles, (obj.meta_tiles[r] || []).length); c++) {
-                const cellTileKey = obj.meta_tiles[r][c];
-                const cellX = px + c * tileSize;
-                const cellY = py + r * tileSize;
-                if (cellTileKey) {
-                  const spriteId = cellTileKey;
-                  const img = tileImages.get(spriteId);
-                  if (img && img.complete && img.naturalWidth > 0) {
-                    ctx.drawImage(img, cellX, cellY, tileSize, tileSize);
-                  } else {
-                    ctx.fillStyle = (r + c) % 2 === 0 ? '#4a1d96' : '#6b21a8';
-                    ctx.fillRect(cellX, cellY, tileSize, tileSize);
-                  }
-                }
-                ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(cellX, cellY, tileSize, tileSize);
-              }
-            }
-          } else {
+          {
             let spriteId: string | null = null;
             if (obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
@@ -1169,10 +1073,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
     // Select / Move Mode
     if (activeTool === 'select' || activeLayer === 'objects' || activeLayer === 'exits') {
-      // Check if clicked an object (supporting 9x9 and multi-tile boss bounds)
+      // Check if clicked an object (multi-tile bounds for 1-4 sized objects)
       const objIndex = level.objects.findIndex((o) => {
-        const ow = o.sprite_width || (o.is_boss ? 9 : 1);
-        const oh = o.sprite_height || (o.is_boss ? 9 : 1);
+        const ow = o.sprite_width || 1;
+        const oh = o.sprite_height || 1;
         return (
           coords.x >= o.position.x &&
           coords.x < o.position.x + ow &&
