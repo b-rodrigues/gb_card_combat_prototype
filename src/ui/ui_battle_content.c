@@ -132,15 +132,16 @@ static void battle_draw_num2(uint8_t x, uint8_t y, uint8_t val)
     battle_put_char((uint8_t)(x + 1), y, (char)('0' + val));
 }
 
-/* Material and effect color for a battle card:
- * Wood (Shield/Ring) = Brown, Iron (Sword) = Steel Blue, Mythril (Bow) = Gold,
- * Fire = Red-Orange, Poison = Emerald Green. */
+/* Material and effect color for a battle card (loot-reveal overlay):
+ * Wood (Shield) = Brown, Iron (Sword) = Steel Blue, Mythril (Bow) = Gold,
+ * Heal = Field Green, Fire = Red-Orange, Poison = Mauve. */
 static uint8_t battle_card_color(uint8_t type, uint8_t status_id, uint8_t is_heal)
 {
     if (status_id == STATUS_BURN) return UI_COLOR_FIRE;
     if (status_id == STATUS_POISON) return UI_COLOR_POISON;
     if (status_id == STATUS_FREEZE) return UI_COLOR_ICE;
-    if (type == BATTLE_CARD_TYPE_SHIELD || is_heal) return UI_COLOR_WOOD;
+    if (type == BATTLE_CARD_TYPE_SHIELD) return UI_COLOR_WOOD;
+    if (type == BATTLE_CARD_TYPE_HEAL || is_heal) return UI_COLOR_FIELD;
     if (type == BATTLE_CARD_TYPE_SWORD) return UI_COLOR_IRON;
     if (type == BATTLE_CARD_TYPE_BOW) return UI_COLOR_GOLD;
     if (type == BATTLE_CARD_TYPE_DAGGER) return UI_COLOR_POISON;
@@ -210,6 +211,18 @@ static const char *battle_card_type_code(uint8_t type)
 /* Icon tiles for a card's element rider + weapon glyph.  Driven by the
  * staged card skin (WRAM mirror; screens/cards_skin.json via
  * battle_compile.py): weapon icon per BattleCardType, element icon per
+/* Weapon icon tile for a hand card (skin-driven per-type mapping).
+ * Element riders no longer draw a floating status icon, so the hand
+ * renderer needs only the weapon tile. */
+static uint8_t battle_card_weapon_tile(uint8_t type, uint8_t is_heal)
+{
+    uint8_t t = type;
+    if (t > 4) t = 0;
+    if (is_heal) t = BATTLE_CARD_TYPE_HEAL;
+    return g_card_skin_wram.weapon_tile[t];
+}
+
+/* Loot-reveal icon pair: elem status tile + weapon tile.
  * StatusId (blank font tile when the card carries no on-hit rider).
  * is_heal (ring joker / heal effect) forces the HEAL type's weapon icon.
  * tile_elem is 0 (blank font tile) when the card carries no rider. */
@@ -217,24 +230,34 @@ static void battle_card_icon_tiles(uint8_t status_id, uint8_t type,
                                    uint8_t is_heal, uint8_t *tile_elem,
                                    uint8_t *tile_wpn)
 {
-    uint8_t t = type;
-    if (t > 4) t = 0;
-    if (is_heal) t = BATTLE_CARD_TYPE_HEAL;
-    if (status_id > 3) status_id = 0;
-    *tile_elem = g_card_skin_wram.elem_tile[status_id];
-    *tile_wpn = g_card_skin_wram.weapon_tile[t];
+    *tile_elem = g_card_skin_wram.elem_tile[
+        (status_id > 3) ? 0 : status_id];
+    *tile_wpn = battle_card_weapon_tile(type, is_heal);
 }
 
-/* Box/material color for a hand card (skin-driven per-type palette).
- * The element rider recolors only the floating status icon cell (elem
- * palette), keeping the type identity readable; the loot-reveal overlay
- * keeps the status-dominant battle_card_color semantics. */
-static uint8_t battle_card_box_color(uint8_t type, uint8_t is_heal)
+/* Material color for a card without an element rider (per-type mapping
+ * from the skin; daggers default to the poison mauve). */
+static uint8_t battle_card_weapon_tint(uint8_t type, uint8_t is_heal)
 {
     uint8_t t = type;
     if (t > 4) t = 0;
     if (is_heal) t = BATTLE_CARD_TYPE_HEAL;
     return g_card_skin_wram.weapon_color[t];
+}
+
+/* Box tint for a hand card (skin-driven).  The tint is element-driven:
+ * heal cards green (field palette), fire rider reddish, ice rider
+ * blueish, poison rider mauve; cards without a rider keep their
+ * per-type material color.  Poison grey-out (status.h): greyed player
+ * cards render dim. */
+static uint8_t battle_card_box_color(uint8_t type, uint8_t status_id,
+                                     uint8_t is_heal)
+{
+    uint8_t st = status_id;
+    if (type == BATTLE_CARD_TYPE_HEAL || is_heal) return UI_COLOR_FIELD;
+    if (st > 3) st = 0;
+    if (st != 0) return g_card_skin_wram.elem_color[st];
+    return battle_card_weapon_tint(type, is_heal);
 }
 
 /* Unconditionally blank one card slot's box footprint (3 x box_h rows)
@@ -246,14 +269,13 @@ static uint8_t battle_card_box_color(uint8_t type, uint8_t is_heal)
 static void battle_clear_card_box(uint8_t x, uint8_t y)
 {
     uint8_t bh = g_card_skin_wram.box_h;
-    uint8_t top, r, cx, srow;
+    uint8_t top, r, cx;
     uint8_t space = ui_font_tile_base;
     volatile uint8_t *dst;
     char *buf;
 
     if (bh < 3 || bh > 5) bh = 4;
     top = (uint8_t)(y - (bh - 1));
-    srow = (uint8_t)(top - 1);
 
     VBK_REG = 0;
     for (r = 0; r < bh; r++) {
@@ -267,22 +289,18 @@ static void battle_clear_card_box(uint8_t x, uint8_t y)
         }
         battle_color_span(x, (uint8_t)(top + r), 3, UI_COLOR_NONE);
     }
-    /* Floating status-icon cell above the top-right corner. */
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)srow << 5) + x + 2);
-    battle_vram_sync_write(dst, space);
-    battle_color_span((uint8_t)(x + 2), srow, 1, UI_COLOR_NONE);
 }
 
 static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
                                 uint8_t status_id, uint8_t is_heal)
 {
-    uint8_t tile_elem, tile_wpn;
+    uint8_t tile_wpn;
     const char *code;
     volatile uint8_t *dst;
     /* Staged skin snapshot (WRAM mirror; read each field once, §52.19
      * hygiene: no cached &struct.field across the VRAM loops). */
     uint8_t bh = g_card_skin_wram.box_h;
-    uint8_t top, r, srow;
+    uint8_t top, r;
     uint8_t frame = UI_TILE_CARD_FRAME_BASE;
     uint8_t digit_tile;
     char *buf;
@@ -296,11 +314,10 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     code = battle_card_type_code(type);
 
-    battle_card_icon_tiles(status_id, type, is_heal, &tile_elem, &tile_wpn);
+    tile_wpn = battle_card_weapon_tile(type, is_heal);
     digit_tile = (uint8_t)('0' - ' ' + value);
 
     top = (uint8_t)(y - (bh - 1));
-    srow = (uint8_t)(top - 1);
 
     VBK_REG = 0;
     for (r = 0; r < bh; r++) {
@@ -352,13 +369,8 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 #endif
         }
     }
-    /* Element rider floats above the top-right corner (blank font tile
-     * when the card carries no status). */
-    dst = (volatile uint8_t *)(0x9800 + ((uint16_t)srow << 5) + x + 2);
-    battle_vram_sync_write(dst, tile_elem);
-#ifdef DEBUG_BUILD
-    g_tilemap_mirror[srow * 32 + x + 2] = tile_elem;
-#endif
+    /* Element riders are shown by the card's tint (battle_card_box_color),
+     * not a floating icon. */
 
     /* Semantic screen buffer keeps the type code + power digit on the
      * digit row (harness/LLM assertions read text, not art tiles). */
@@ -733,11 +745,24 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
     uint8_t mark_row  = g_battle_hud.card_cursor_row;
     /* Staged card-skin geometry (WRAM mirror). */
     uint8_t bh = g_card_skin_wram.box_h;
-    uint8_t top, srow, r;
+    uint8_t top, r;
 
     if (bh < 3 || bh > 5) bh = 4;
     top = (uint8_t)(cards_row - (bh - 1));
-    srow = (uint8_t)(top - 1);
+
+    /* Blank the band above the hand (the former floating status-icon
+     * cells): stale transition-wipe dither tiles must not survive there
+     * now that the per-card icon stamp is gone. */
+    VBK_REG = 0;
+    for (r = 0; r < 20; r++) {
+        battle_vram_sync_write(
+            (volatile uint8_t *)(0x9800 + ((uint16_t)(top - 1) << 5) + r),
+            ui_font_tile_base);
+#ifdef DEBUG_BUILD
+        g_tilemap_mirror[(uint16_t)(top - 1) * 32 + r] = ui_font_tile_base;
+#endif
+    }
+    battle_color_span(0, (uint8_t)(top - 1), 20, UI_COLOR_NONE);
 
     for (k = 0; k < BATTLE_HAND_SIZE; k++) {
         sel[k] = (k < cc) ? battle->selected_indices[k] : 0xFF;
@@ -760,22 +785,15 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
         }
         uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
         battle_draw_card_at(col, cards_row, ctype, cvalue, cstat, is_heal);
-        /* Color the box + icon + power digit by the card's material; the
-         * element rider colors the floating status icon cell.  Poison
-         * grey-out (status.h): greyed player cards render dim. */
-        ccolor = battle_card_box_color(ctype, is_heal);
+        /* Tint the whole card by element (heal green, fire reddish, ice
+         * blueish, poison mauve); material color for riderless cards.
+         * Poison grey-out (status.h): greyed player cards render dim. */
+        ccolor = battle_card_box_color(ctype, cstat, is_heal);
         if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
             ccolor = UI_COLOR_DIM;
         }
         for (r = 0; r < bh; r++) {
             battle_color_span(col, (uint8_t)(top + r), 3, ccolor);
-        }
-        if (cstat != 0 && cstat <= 3) {
-            uint8_t scol = (ccolor == UI_COLOR_DIM)
-                         ? UI_COLOR_DIM : g_card_skin_wram.elem_color[cstat];
-            battle_color_span((uint8_t)(col + 2), srow, 1, scol);
-        } else {
-            battle_color_span((uint8_t)(col + 2), srow, 1, UI_COLOR_NONE);
         }
         if (i == cur) {
             battle_put_tile((uint8_t)(col + 1), mark_row, '^',

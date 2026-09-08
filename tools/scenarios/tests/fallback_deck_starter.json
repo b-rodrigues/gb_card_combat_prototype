@@ -66,7 +66,7 @@
       "type": "tilemap_cell",
       "row": 10,
       "col": 18,
-      "expected": 110
+      "expected": 0
     }
   ],
   "name": "fallback_deck_starter"
