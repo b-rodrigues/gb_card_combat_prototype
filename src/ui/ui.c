@@ -952,6 +952,11 @@ void ui_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
 void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t scroll_y)
 {
     uint8_t y;
+    static const uint16_t s_paper[4] = {
+        RGB8(255, 255, 255), RGB8(200, 200, 200),
+        RGB8(85, 85, 85), RGB8(0, 0, 0)
+    };
+    uint8_t i;
     if (!dialogue || !dialogue->active) return;
     if (dialogue->current_line >= dialogue->line_count) return;
 
@@ -967,12 +972,23 @@ void ui_draw_dialogue(const DialogueState *dialogue, uint8_t scroll_x, uint8_t s
     ui_draw_text_line_ring(1, 16, " [A] CONTINUE", 18, scroll_x, scroll_y);
     ui_draw_text_line_ring(0, 17, "+------------------+", 20, scroll_x, scroll_y);
 
-    /* Box background = palette 0 (the current palette set's background
-     * tone -- pure white in the field/forest set) with black font ink:
-     * without this the box cells inherit the world-tile palettes stamped
-     * beneath them (green grass box on the field, tan in town). */
+    /* Box background = the paper palette (CRAM slot 4, re-programmed here
+     * to a pure white/black document ramp): pure white box, pure black
+     * font ink in every tileset.  Palette 0 cannot be used -- it anchors
+     * the world tiles' background tone (tan in the village, slate in the
+     * desolate lands).  Slot 4 is free in every world tileset and the
+     * quick screen (its only other consumer) cannot be open during a
+     * dialogue; every screen transition re-programs CRAM, restoring the
+     * set's own slot-4 ramp. */
+    if (g_is_cgb) {
+        BCPS_REG = (uint8_t)(0x80u | (UI_COLOR_PAPER << 3));
+        for (i = 0; i < 4; i++) {
+            BCPD_REG = (uint8_t)s_paper[i];
+            BCPD_REG = (uint8_t)(s_paper[i] >> 8);
+        }
+    }
     for (y = 12; y <= 17; y++) {
-        ui_color_span(0, y, 20, UI_COLOR_NONE);
+        ui_color_span(0, y, 20, UI_COLOR_PAPER);
     }
 }
 

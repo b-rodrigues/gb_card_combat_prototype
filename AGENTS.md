@@ -2177,10 +2177,14 @@ overwriting the atlas data at VRAM 113/114/116 (ids unchanged;
 UI_TILE_DECK 116 keeps the combat deck art on the battle HUD deck
 counter; the QUEST tab markers are font glyphs
 '!' active / '*' complete, never a tile -- the 8x8 deck art read
-poorly there).  Dialogue boxes stamp palette 0 over their whole
-footprint (`ui_draw_dialogue`) so the box shows the palette set's
-background tone (white in the field) with black font ink instead of
-inheriting world-tile palettes.  Enemy art is
+poorly there).  Dialogue boxes stamp the **paper palette** (CRAM slot 4,
+re-programmed to a pure white/black document ramp by `ui_draw_dialogue`)
+over their whole footprint, so the box is white with black font ink in
+every tileset -- palette 0 cannot be used because it anchors the world
+tiles' background tone (tan in the village).  Slot 4 is free in every
+world tileset (quick screen poison tints are its only other consumer and
+cannot be open during a dialogue); every screen transition re-programs
+CRAM, restoring the set's own slot-4 ramp.  Enemy art is
 CENTERED on the 6-column name slot: `battle_enemy_art_x()` offsets the
 stamp (and the 3-col caret) by (6-w)/2.  Hero/deck
 row positions are layout-driven: label at (hero_label_row,

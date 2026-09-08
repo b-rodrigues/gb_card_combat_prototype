@@ -91,6 +91,12 @@ void ui_actors_sprites_banked(void);
 #define UI_COLOR_ICE    2
 #define UI_COLOR_FIELD  3
 #define UI_COLOR_POISON 4
+/* Paper: CRAM slot 4 re-programmed to a white/black document ramp while a
+ * dialogue box is open (no world tileset assigns slot 4 to any tile, and
+ * the quick screen -- its only other consumer -- cannot be open during a
+ * dialogue).  Every screen transition re-programs CRAM, which restores
+ * the set's own slot-4 ramp. */
+#define UI_COLOR_PAPER  4
 #define UI_COLOR_WOOD   5
 #define UI_COLOR_GOLD   6
 #define UI_COLOR_DIM    7
