@@ -47,12 +47,12 @@ static const EnemyTypeDef g_enemy_type_kobold = {
     "BATTLE_KOBOLD",
     8,
     CURRENCY_ID_GOLD,
-    255,
-    0,
-    0,
-    0,
-    0,
-    0,
+    4,
+    1,
+    1,
+    3,
+    2,
+    54,
     102,
     1,
     1,
@@ -139,16 +139,16 @@ static const EnemyTypeDef g_enemy_type_spider = {
     "BATTLE_SPIDER",
     15,
     CURRENCY_ID_GOLD,
-    255,
+    5,
+    1,
     0,
-    0,
-    0,
-    0,
-    0,
-    255,
-    0,
-    0,
-    0,
+    3,
+    2,
+    66,
+    112,
+    1,
+    1,
+    2,
     0
 };
 
@@ -162,4 +162,4 @@ const EnemyTypeDef* const g_enemy_types[6] = {
 };
 const uint8_t g_enemy_type_count = 6;
 
-const uint8_t g_enemy_ow_tile_count = 12;
+const uint8_t g_enemy_ow_tile_count = 14;

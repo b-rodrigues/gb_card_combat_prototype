@@ -1390,6 +1390,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                       <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
                       <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
                       <option value="AI_CHASE">AI_CHASE</option>
+                      <option value="AI_PATROL_VERT">AI_PATROL_VERT (up/down 3 tiles)</option>
                       </select>
                     </div>
                     <div className="form-group">

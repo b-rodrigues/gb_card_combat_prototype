@@ -223,7 +223,8 @@ def validate_enemy_type(path: Path, art_ids) -> dict:
         print("WARNING: %s: category '%s' not in [minion, elite, boss]" % (path.name, cat))
 
     # Validate AI types
-    valid_ai = ['AI_NONE', 'AI_PATROL_CROSS', 'AI_PATROL_CIRCLE', 'AI_CHASE']
+    valid_ai = ['AI_NONE', 'AI_PATROL_CROSS', 'AI_PATROL_CIRCLE', 'AI_CHASE',
+                'AI_PATROL_VERT']
     for ai in data.get('ai_types', []):
         if ai not in valid_ai:
             print("WARNING: %s: invalid AI type '%s'" % (path.name, ai))

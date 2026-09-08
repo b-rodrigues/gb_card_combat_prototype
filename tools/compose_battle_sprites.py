@@ -9,7 +9,8 @@ combat), downscales NEAREST to 8x8, and lays out 3 cols x N rows of cells:
   row 2: slime anim_*      row 8: mimic top_*
   row 3: bat top_*         row 9: mimic bottom_*
   row 4: bat bottom_*      row 10: blank
-  row 5: boss horns_*
+  row 5: boss horns_*      row 11-12: kobold top_*/bottom_*
+                           row 13-14: spider top_*/bottom_*
 
 The boss glow-eyes cells (combat_*_boss_2) are intentionally excluded:
 they use 5 colors, over the 4-color 2bpp tile budget (make gfx fails).
@@ -32,6 +33,10 @@ LAYOUT = [
     ['combat_bottom_left_boss', 'combat_bottom_middle_boss', 'combat_bottom_right_boss'],
     ['combat_top_left_mimic', 'combat_top_middle_mimic', 'combat_top_right_mimic'],
     ['combat_bottom_left_mimic', 'combat_bottom_middle_mimic', 'combat_bottom_right_mimic'],
+    ['combat_top_left_kobold', 'combat_top_middle_kobold', 'combat_top_right_kobold'],
+    ['combat_bottom_left_kobold', 'combat_bottom_middle_kobold', 'combat_bottom_right_kobold'],
+    ['combat_top_left_spider', 'combat_top_middle_spider', 'combat_top_right_spider'],
+    ['combat_bottom_left_spider', 'combat_bottom_middle_spider', 'combat_bottom_right_spider'],
     [None, None, None],
 ]
 

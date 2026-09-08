@@ -189,13 +189,15 @@ def verify_hostile_sprites(sess):
     check("south_field bat renders as shared bat OAM tile (100|101)",
           1, (100 <= bat <= 101))
 
-    print("== Boss sprite rendering (castle: bat + mimic + 2x2 boss OAM sprite) ==")
+    print("== Boss sprite rendering (castle: bat + mimic + spider + 2x2 boss OAM sprite) ==")
     boss = load_scenario(sess, "boss_appears.json")
     sess.load_scenario(boss)
     sess.step(1)
     # Actor slot 0 (BAT) = OAM entry 1; slot 1 (MIMIC, 1x1) = entry 2;
-    # slot 2 (SLIME_LORD/BOSS) = entries 3-6 (a 2x2 grid of four
-    # shared-enemy OAM tiles).  Mimic tile base = 104.  Boss blob base = 108.
+    # slot 2 (SPIDER, 1x1) = entry 3; slot 3 (SLIME_LORD/BOSS) = entries
+    # 4-7 (a 2x2 grid of four shared-enemy OAM tiles).  Mimic tile base
+    # = 104.  Boss blob base = 108.  (The castle spider insertion moved
+    # the boss from slot 2 to slot 3.)
     castle_bat = shadow_oam_slot_tile(sess, 1)
     castle_mimic = shadow_oam_slot_tile(sess, 2)
     check("castle bat renders as shared bat OAM tile (100|101)",
@@ -206,14 +208,14 @@ def verify_hostile_sprites(sess):
     # positions span a 2x2 area (row 0 at world y, row 1 at world y+1, cols
     # at world x and x+1).  The four OAM entries must be present and laid
     # out as a grid (same x for a column, y increasing by 8 down a row).
-    boss0 = sess._memread(0xC000 + 4 * 3)  # entry 3 y byte (top-left)
-    boss1 = sess._memread(0xC000 + 4 * 4)  # entry 4 y byte (top-right)
-    boss2 = sess._memread(0xC000 + 4 * 5)  # entry 5 y byte (bot-left)
-    boss3 = sess._memread(0xC000 + 4 * 6)  # entry 6 y byte (bot-right)
-    t0 = shadow_oam_slot_tile(sess, 3)
-    t1 = shadow_oam_slot_tile(sess, 4)
-    t2 = shadow_oam_slot_tile(sess, 5)
-    t3 = shadow_oam_slot_tile(sess, 6)
+    boss0 = sess._memread(0xC000 + 4 * 4)  # entry 4 y byte (top-left)
+    boss1 = sess._memread(0xC000 + 4 * 5)  # entry 5 y byte (top-right)
+    boss2 = sess._memread(0xC000 + 4 * 6)  # entry 6 y byte (bot-left)
+    boss3 = sess._memread(0xC000 + 4 * 7)  # entry 7 y byte (bot-right)
+    t0 = shadow_oam_slot_tile(sess, 4)
+    t1 = shadow_oam_slot_tile(sess, 5)
+    t2 = shadow_oam_slot_tile(sess, 6)
+    t3 = shadow_oam_slot_tile(sess, 7)
     check("boss renders as shared boss OAM tiles (108|109|110|111)",
           1, (108 <= t0 <= 111 and 108 <= t1 <= 111 and
               108 <= t2 <= 111 and 108 <= t3 <= 111))

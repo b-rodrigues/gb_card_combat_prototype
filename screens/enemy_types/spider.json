@@ -3,12 +3,13 @@
   "id": "spider",
   "label": "Spider",
   "category": "elite",
-  "sprite": null,
+  "sprite": { "art": "spider", "frames": 1 },
+  "overworld": { "cells": ["spider_f0", "spider_f1"], "palette": 0 },
   "name": "SPIDER",
   "hp": 16,
   "max_hp": 16,
   "battle_id": "BATTLE_SPIDER",
-  "ai_types": ["AI_PATROL_CROSS", "AI_PATROL_CIRCLE"],
+  "ai_types": ["AI_PATROL_VERT"],
   "gold_reward": 15,
   "reward_currency": "CURRENCY_ID_GOLD"
 }

@@ -36,7 +36,8 @@ typedef enum {
     BATTLE_BAT = 2,
     BATTLE_SLIME_TRIO = 3,
     BATTLE_MIMIC = 4,
-    BATTLE_KOBOLD = 5
+    BATTLE_KOBOLD = 5,
+    BATTLE_SPIDER = 6
 } BattleId;
 
 /* Overworld autonomous patrol/AI behavior type. */
@@ -44,8 +45,14 @@ typedef enum {
     AI_NONE          = 0,
     AI_PATROL_CIRCLE = 1,   /* Clockwise 2x2 circle around spawn (Bats) */
     AI_PATROL_CROSS  = 2,   /* + cross pattern around spawn (Slimes) */
-    AI_CHASE         = 3    /* Step toward the player every AI tick (Kobolds) */
+    AI_CHASE         = 3,   /* Step toward the player every AI tick (Kobolds) */
+    AI_PATROL_VERT   = 4    /* Bounce vertically up/down 3 tiles from spawn
+                             * (castle Spiders); direction held in ai_step
+                             * bit 0, flips at the bound or a blocked path */
 } ActorAiType;
+
+/* Vertical patrol amplitude: bounce up/down this many tiles from spawn. */
+#define AI_PATROL_VERT_TILES 3
 
 /* Static, scene-owned actor configuration.  No mutable gameplay state.
  * actor_id is the stable persistent instance id (ActorId) used to track

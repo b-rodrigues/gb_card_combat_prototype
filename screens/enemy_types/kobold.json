@@ -3,7 +3,7 @@
   "id": "kobold",
   "label": "Kobold",
   "category": "minion",
-  "sprite": null,
+  "sprite": { "art": "kobold", "frames": 1 },
   "overworld": { "cells": ["kobold_f0", "kobold_f1"], "palette": 2 },
   "name": "KOBOLD",
   "hp": 12,
