@@ -3,7 +3,9 @@ import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level'
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
+import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
+import { fetchUsedActorIds } from './io/saveLevel';
 
 
 interface InspectorProps {
@@ -1417,37 +1419,46 @@ export const Inspector: React.FC<InspectorProps> = ({
                           if (!props.flags) props.flags = ['HOSTILE', 'BLOCKING', 'INTERACTABLE'];
                           props.visual = (props.visual as string) ||
                             ((typeId[0] || 'E').toUpperCase());
-                          // Auto-assign the next free actor_id within the
-                          // level (cross-scene uniqueness is compile-checked).
-                          if (!props.actor_id) {
-                            const used = new Set<number>(
-                              level.objects
-                                .map((o) => (o.properties || {}).actor_id as number)
-                                .filter((n) => typeof n === 'number' && n > 0));
-                            let next = 1;
-                            while (used.has(next)) next++;
-                            props.actor_id = next;
-                          }
                           onUpdateObject(selectedEntityIndex, nextObj);
                           const objIndex = selectedEntityIndex;
-                          // Stats/battle come from the type JSON (async;
-                          // capture the index so a click-away in the
-                          // fetch window cannot update the wrong object).
-                          fetchEnemyType(typeId).then((t) => {
+                          const localUsed = new Set<number>(
+                            level.objects
+                              .map((o) => (o.properties || {}).actor_id as number)
+                              .filter((n) => typeof n === 'number' && n > 0));
+                          // Stats/battle come from the type JSON and the
+                          // actor_id is assigned across ALL scenes
+                          // (ActorIds must be unique scene-to-scene, so a
+                          // within-level pick collides with e.g. the
+                          // forest slime at compile).  One async merge
+                          // (monotonic max-used + 1); the captured index
+                          // keeps a click-away in the fetch window from
+                          // updating the wrong object.
+                          Promise.all([
+                            fetchEnemyType(typeId).catch(() => null),
+                            fetchUsedActorIds().catch(() => null),
+                          ]).then(([t, usedList]) => {
                             const cur = { ...props };
-                            cur.display_name = t.name || typeId.toUpperCase();
-                            cur.battle = t.battle_id || cur.battle;
-                            cur.hp = t.hp ?? 1;
-                            cur.max_hp = t.max_hp ?? t.hp ?? 1;
-                            cur.gold_reward = t.gold_reward ?? 0;
-                            if (t.reward_currency) cur.reward_currency = t.reward_currency;
-                            if (Array.isArray(t.ai_types) && t.ai_types.length > 0) {
-                              cur.ai = t.ai_types[0];
+                            if (t) {
+                              cur.display_name = t.name || typeId.toUpperCase();
+                              cur.battle = t.battle_id || cur.battle;
+                              cur.hp = t.hp ?? 1;
+                              cur.max_hp = t.max_hp ?? t.hp ?? 1;
+                              cur.gold_reward = t.gold_reward ?? 0;
+                              if (t.reward_currency) cur.reward_currency = t.reward_currency;
+                              if (Array.isArray(t.ai_types) && t.ai_types.length > 0) {
+                                cur.ai = t.ai_types[0];
+                              }
+                              if (t.label) cur.visual = (t.label[0] || 'E').toUpperCase();
                             }
-                            if (t.label) cur.visual = (t.label[0] || 'E').toUpperCase();
-                            const latest = { ...nextObj, properties: cur };
-                            onUpdateObject(objIndex, latest);
-                          }).catch(() => undefined);
+                            if (!cur.actor_id) {
+                              const used = new Set<number>(localUsed);
+                              (usedList || []).forEach((u) => used.add(u.id));
+                              let next = 1;
+                              used.forEach((v) => { if (v >= next) next = v + 1; });
+                              cur.actor_id = next;
+                            }
+                            onUpdateObject(objIndex, { ...nextObj, properties: cur });
+                          });
                         }}
                       >
                         <option value="">-- choose enemy type --</option>
@@ -1457,6 +1468,124 @@ export const Inspector: React.FC<InspectorProps> = ({
                       </select>
                       <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
                         Sprite/art is configured in the Enemies view (art-only) — this dropdown picks which enemy type the placement is.
+                      </div>
+                    </div>
+                    {/* Per-instance actor overrides: stats seeded from
+                        the enemy type defaults, editable here per
+                        placement.  Art/category stay type-owned (Enemies
+                        view). */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>HP</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.hp ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, hp: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Max HP</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.max_hp ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, max_hp: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Gold Reward</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.gold_reward ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, gold_reward: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Battle</label>
+                        <select
+                          value={selectedObject.properties?.battle || 'BATTLE_NONE'}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, battle: e.target.value },
+                            })
+                          }
+                        >
+                          {BATTLE_IDS.map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                          {!BATTLE_IDS.includes(selectedObject.properties?.battle) && selectedObject.properties?.battle && (
+                            <option value={selectedObject.properties.battle}>
+                              {selectedObject.properties.battle} (custom)
+                            </option>
+                          )}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Facing</label>
+                        <select
+                          value={selectedObject.properties?.facing || 'DOWN'}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, facing: e.target.value },
+                            })
+                          }
+                        >
+                          <option value="UP">UP / North</option>
+                          <option value="DOWN">DOWN / South</option>
+                          <option value="LEFT">LEFT / West</option>
+                          <option value="RIGHT">RIGHT / East</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Visual Glyph</label>
+                        <input
+                          type="text"
+                          maxLength={1}
+                          value={selectedObject.properties?.visual || ''}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, visual: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Actor ID (0 = auto)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.actor_id ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, actor_id: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
                       </div>
                     </div>
                     <div className="form-group">

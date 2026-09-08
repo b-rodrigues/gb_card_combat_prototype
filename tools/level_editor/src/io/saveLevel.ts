@@ -23,6 +23,16 @@ export async function saveLevelToServer(level: EditorLevel): Promise<{ success: 
   }
 }
 
+export async function fetchUsedActorIds(exclude?: string): Promise<Array<{ id: number; level: string }>> {
+  const q = exclude ? `?exclude=${encodeURIComponent(exclude)}` : '';
+  const res = await fetch(`/api/actor-ids${q}`);
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || `actor-id fetch failed with status ${res.status}`);
+  }
+  return data.used || [];
+}
+
 export async function compileRom(): Promise<{ success: boolean; log?: string; romPath?: string[]; error?: string }> {
   try {
     const res = await fetch('/api/compile-rom', { method: 'POST' });

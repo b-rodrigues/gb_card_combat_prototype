@@ -9,6 +9,27 @@ export type ObjectType =
   | 'item'
   | 'signpost';
 
+// Valid BattleId enum values (src/world/actor.h).  Keep in sync when a
+// battle id is added on the ROM side.
+export const BATTLE_IDS = [
+  'BATTLE_NONE',
+  'BATTLE_SLIME',
+  'BATTLE_BAT',
+  'BATTLE_SLIME_TRIO',
+  'BATTLE_MIMIC',
+  'BATTLE_KOBOLD',
+  'BATTLE_SPIDER',
+] as const;
+
+// Valid AI kinds (src/world/actor.h AIKind).
+export const AI_IDS = [
+  'AI_NONE',
+  'AI_PATROL_CROSS',
+  'AI_PATROL_CIRCLE',
+  'AI_CHASE',
+  'AI_PATROL_VERT',
+] as const;
+
 export interface LevelObject {
   id: string;
   type: ObjectType;

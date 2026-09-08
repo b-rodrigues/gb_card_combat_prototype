@@ -5,6 +5,7 @@ import {
   fetchCombatArtList,
 } from './io/combatArt';
 import { BUILTIN_TILESETS } from './model/Tileset';
+import { BATTLE_IDS, AI_IDS } from './model/Objects';
 
 /** Enemies view (art-only): one record per enemy type.  The level view
  *  owns placement; this view owns looks.  Per type it edits the shared
@@ -280,7 +281,46 @@ export const EnemyManager: React.FC<{ onOpenComposer: () => void; initialId?: st
             <div style={{ fontSize: 12, color: '#555', margin: '4px 0 8px' }}>
               Category determines battle screen filtering (screens/battle/*.json allowed_categories).
             </div>
-            <button onClick={save} disabled={!dirty}>Save enemy{dirty ? ' *' : ''}</button>
+
+            <h3 style={{ margin: '8px 0 4px' }}>Defaults</h3>
+            <div style={{ fontSize: 12, color: '#555', margin: '0 0 8px' }}>
+              Seeded into new placements by the map editor's Enemy Type dropdown; per-instance values edited there override these.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, alignItems: 'end' }}>
+              <label style={{ fontSize: 12 }}>Name
+                <input style={{ width: '100%' }} type="text" value={(full && full.name) || ''}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, name: e.target.value })); setDirty(true); }} />
+              </label>
+              <label style={{ fontSize: 12 }}>Battle
+                <select style={{ width: '100%' }} value={(full && full.battle_id) || 'BATTLE_NONE'}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, battle_id: e.target.value })); setDirty(true); }}>
+                  {BATTLE_IDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {full && full.battle_id && !BATTLE_IDS.includes(full.battle_id) && (
+                    <option value={full.battle_id}>{full.battle_id} (custom)</option>
+                  )}
+                </select>
+              </label>
+              <label style={{ fontSize: 12 }}>HP
+                <input style={{ width: '100%' }} type="number" min={0} value={(full && full.hp) ?? 1}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, hp: parseInt(e.target.value) || 0 })); setDirty(true); }} />
+              </label>
+              <label style={{ fontSize: 12 }}>Max HP
+                <input style={{ width: '100%' }} type="number" min={0} value={(full && full.max_hp) ?? 1}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, max_hp: parseInt(e.target.value) || 0 })); setDirty(true); }} />
+              </label>
+              <label style={{ fontSize: 12 }}>Gold reward
+                <input style={{ width: '100%' }} type="number" min={0} value={(full && full.gold_reward) ?? 0}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, gold_reward: parseInt(e.target.value) || 0 })); setDirty(true); }} />
+              </label>
+              <label style={{ fontSize: 12 }}>AI
+                <select style={{ width: '100%' }} value={(full && full.ai_types && full.ai_types[0]) || 'AI_NONE'}
+                  onChange={(e) => { setFull((prev: any) => ({ ...prev, ai_types: [e.target.value] })); setDirty(true); }}>
+                  {AI_IDS.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <button style={{ marginTop: 10 }} onClick={save} disabled={!dirty}>Save enemy{dirty ? ' *' : ''}</button>
             {status && <div style={{ marginTop: 8, fontSize: 13 }}>{status}</div>}
           </div>
         </div>

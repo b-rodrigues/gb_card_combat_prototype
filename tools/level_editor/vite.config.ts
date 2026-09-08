@@ -109,6 +109,36 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Actor-id registry across ALL scenes: ActorIds must be unique
+        // across levels (the toolchain's cross-file check), so the
+        // editor's auto-assign and browser validation need the global
+        // picture, not just the current level.  ?exclude=<levelId>
+        // omits one level (used when validating that level itself).
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/actor-ids')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const exclude = u.searchParams.get('exclude') || '';
+            const used: Array<{ id: number; level: string }> = [];
+            const dir = path.join(repoRoot, 'levels');
+            for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
+              const levelId = f.replace(/\.json$/, '');
+              if (exclude && levelId === exclude) continue;
+              const data = readJsonFile(path.join('levels', f));
+              for (const o of (data.objects || []) as Array<{ properties?: Record<string, unknown> }>) {
+                const aid = ((o.properties || {}) as Record<string, unknown>).actor_id;
+                if (typeof aid === 'number' && Number.isInteger(aid) && aid > 0) {
+                  used.push({ id: aid, level: levelId });
+                }
+              }
+            }
+            sendJson({ success: true, used });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
         if (req.method === 'GET' && (req.url || '').startsWith('/api/level')) {
           try {
             const u = new URL(req.url || '', 'http://localhost');

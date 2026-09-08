@@ -7,7 +7,7 @@ import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
-import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
+import { downloadLevelJson, saveLevelToServer, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { fetchEnemyTypeList } from './io/combatArt';
 import { promptLoadLevelFile } from './io/loadLevel';
@@ -77,6 +77,18 @@ export const App: React.FC = () => {
 
   // Modals
   const [showValidateModal, setShowValidateModal] = useState<boolean>(false);
+  // Actor ids claimed by OTHER scenes (levels/*.json on disk).  Makes
+  // the browser validation catch the cross-scene uniqueness rule the
+  // toolchain enforces at compile; refreshed on level load and each
+  // time the Validate modal opens.
+  const [crossActorIds, setCrossActorIds] = useState<Array<{ id: number; level: string }>>([]);
+  const refreshCrossActorIds = useCallback(() => {
+    fetchUsedActorIds(level.id).then(setCrossActorIds).catch(() => setCrossActorIds([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level.id]);
+  useEffect(() => {
+    refreshCrossActorIds();
+  }, [refreshCrossActorIds]);
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
   const [showSoundTestModal, setShowSoundTestModal] = useState<boolean>(false);
   const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
@@ -651,13 +663,21 @@ export const App: React.FC = () => {
           objectsOk = false;
         } else if (aid > 0) {
           // 0 = unset (toolchain default); only real ids must be unique
-          // within the level (cross-scene uniqueness is compile-checked).
+          // within the level...
           const owner = seenActorIds.get(aid);
           if (owner) {
             errors.push(`Duplicate actor_id ${aid} on '${owner}' and '${oid}'`);
             objectsOk = false;
           } else {
             seenActorIds.set(aid, oid);
+          }
+          // ...and across scenes: ActorIds are global (the toolchain's
+          // cross-file check), so flag ids already claimed by another
+          // level on disk.
+          const other = crossActorIds.find((c) => c.id === aid);
+          if (other) {
+            errors.push(`actor_id ${aid} on '${oid}' also used in scene '${other.level}'`);
+            objectsOk = false;
           }
         }
         const facing = (props.facing as string) || 'DOWN';
@@ -862,7 +882,7 @@ export const App: React.FC = () => {
               alert(`Failed to load level: ${err}`);
             }
           }}
-          onValidate={() => setShowValidateModal(true)}
+          onValidate={() => { refreshCrossActorIds(); setShowValidateModal(true); }}
           onDescribe={() => setShowDescribeModal(true)}
           onSoundTest={() => setShowSoundTestModal(true)}
           onNew={handleCreateNewLevel}
@@ -1037,10 +1057,10 @@ export const App: React.FC = () => {
             <div className="modal-body">
               <div style={{ marginBottom: '12px', fontSize: '13px', opacity: 0.85 }}>
                 Browser checks mirror the toolchain's object rules (enemy
-                hp/max_hp/battle/ai, actor-id range and within-level
-                uniqueness).  The toolchain still runs the full
-                <code>validate.py</code> (per-tile rules, cross-file
-                actor-id uniqueness) server-side at Compile ROM time.
+                hp/max_hp/battle/ai, actor-id range, within-level and
+                cross-scene uniqueness — cross-scene ids are read live from
+                <code> levels/*.json</code>).  The toolchain still runs the full
+                <code>validate.py</code> (per-tile rules) server-side at Compile ROM time.
               </div>
               <div className="validation-list">
                 {validationResult.passed.map((p, i) => (
