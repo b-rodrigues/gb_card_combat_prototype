@@ -70,6 +70,22 @@ static void battle_put_char(uint8_t x, uint8_t y, char ch)
     }
 }
 
+/* Put a non-font tile (e.g. the select-arrow icon) with the same
+ * skip-guard as battle_put_char: the semantic screen buffer keeps a
+ * representative ASCII char ('^' for the selection carets) so harness
+ * text assertions are unchanged, while VRAM gets the real tile. */
+static void battle_put_tile(uint8_t x, uint8_t y, char buf_char, uint8_t tile)
+{
+    if (y < 18 && x < 20) {
+        if (g_ui_screen_buf[y][x] != buf_char) {
+            volatile uint8_t *dst = (volatile uint8_t *)(0x9800 + ((uint16_t)y << 5) + x);
+            VBK_REG = 0;
+            battle_vram_sync_write(dst, tile);
+            g_ui_screen_buf[y][x] = buf_char;
+        }
+    }
+}
+
 static void battle_draw_text_line(uint8_t x, uint8_t y, const char *text,
                                   uint8_t max_chars)
 {
@@ -496,12 +512,15 @@ static void battle_draw_enemy_columns(const volatile Battle *battle)
             battle_put_char((uint8_t)(x + 5), hp_row, ' ');
             if (k == battle->target_idx &&
                 (battle->phase == BATTLE_PHASE_PLAYER_SELECT || battle->phase == BATTLE_PHASE_PLAYER_DEFEND)) {
-                /* Caret spans exactly the art width (3 cols), centered on
+                /* Arrow spans exactly the art width (3 cols), centered on
                  * the art like the art is centered on the name: on the
                  * boss screen a 3x3 art fills rows 3-5 with the caret on
                  * row 6, so a 6-wide caret would run into the hero HP
-                 * block. */
-                battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, "  ^", 3);
+                 * block.  VRAM gets the select-arrow tile; the semantic
+                 * buffer keeps '^' for harness text assertions. */
+                battle_draw_text_line(battle_enemy_art_x(x, k), cur_row, "   ", 3);
+                battle_put_tile((uint8_t)(battle_enemy_art_x(x, k) + 2), cur_row,
+                                '^', UI_TILE_SELECT_ARROW);
                 continue;
             }
         } else {
@@ -759,7 +778,8 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             battle_color_span((uint8_t)(col + 2), srow, 1, UI_COLOR_NONE);
         }
         if (i == cur) {
-            battle_put_char((uint8_t)(col + 1), mark_row, '^');
+            battle_put_tile((uint8_t)(col + 1), mark_row, '^',
+                            UI_TILE_SELECT_ARROW);
             battle_color_span((uint8_t)(col + 1), mark_row, 1, 0);
         } else {
             battle_put_char((uint8_t)(col + 1), mark_row, s_sel_marker);
@@ -784,22 +804,24 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
 
 /* Battle UI tile loader (bank-3 body behind the fixed-bank
  * ui_card_tiles_load() wrapper, dispatched once from ui_init with the LCD
- * off): streams the card frame tiles, the turn-timer bar segments and the
- * HUD hp/ap/deck icons from THIS bank's generated card_frame_tiles.h into
- * VRAM block 1.  Reads its own bank-local data directly (no banked_copy,
- * which would restore the home bank mid-body -- banked.h ABI) and writes
- * VRAM at the unsigned tile addresses (0x8000 + id*16), the same physical
- * mapping the battle art loader uses.  VRAM: frames 118-126, bar
- * filled 117 / empty 127, HUD icons overwrite the atlas data at
- * 113 (hp/heart), 114 (ap/bolt) and 116 (deck). */
+ * off): streams the card frame tiles, the turn-timer bar segments, the
+ * HUD hp/ap/deck icons and the select arrow from THIS bank's generated
+ * card_frame_tiles.h into VRAM block 1.  Reads its own bank-local data
+ * directly (no banked_copy, which would restore the home bank mid-body --
+ * banked.h ABI) and writes VRAM at the SIGNED BG tile addresses
+ * (0x9000 + id*16 -- LCDC.4 = 0, see the loop comment below and
+ * AGENTS.md 52.22).  VRAM: frames 118-126, bar filled 117 / empty 127,
+ * HUD icons overwrite the atlas data at 113 (hp/heart), 114 (ap/bolt)
+ * and 116 (deck), select arrow at 96. */
 /* Sheet order (compose_card_frames.py): frames are tiles 0-8 (VRAM
  * 118-126), filled is tile 9 (VRAM 117), empty is tile 10 (VRAM 127),
- * HUD icons are tiles 11-13 (VRAM 113/114/116).  The trailing blank pad
- * (sheet tile 14) is never loaded. */
-static const uint8_t s_card_tile_vram_ids[14] = {
+ * HUD icons are tiles 11-13 (VRAM 113/114/116), the select arrow is
+ * tile 14 (VRAM 96). */
+static const uint8_t s_card_tile_vram_ids[15] = {
     118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
     117, 127,                                     /* bar filled, empty */
     113, 114, 116,                                /* HUD: hp, ap, deck */
+    96,                                           /* select arrow */
 };
 
 void ui_card_tiles_load_banked(void)
@@ -808,8 +830,16 @@ void ui_card_tiles_load_banked(void)
     volatile uint8_t *dst;
     const uint8_t *src;
 
-    for (i = 0; i < 14; i++) {
-        dst = (volatile uint8_t *)(0x8000u + ((uint16_t)s_card_tile_vram_ids[i] << 4));
+    for (i = 0; i < 15; i++) {
+        /* Signed BG tile addressing (LCDC.4 = 0, set in ui_init and never
+         * restored): BG tile ids < 128 are fetched by the PPU from
+         * 0x9000 + id*16, NOT from the sprite-addressable 0x8000 block.
+         * All 15 ids are <= 127, so the physical address is 0x9000-based.
+         * Raw writes to 0x8000 + id*16 land in VRAM the BG never reads
+         * (mGBA watchpoint regression: AGENTS.md 52.22).  Ids >= 128
+         * (world/enemy art) map to 0x8800 + (id-128)*16, which their own
+         * raw writer already targets. */
+        dst = (volatile uint8_t *)(0x9000u + ((uint16_t)s_card_tile_vram_ids[i] << 4));
         src = card_frame_tiles + ((uint16_t)i << 4);
         for (j = 0; j < 16; j++) {
             dst[j] = src[j];

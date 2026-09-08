@@ -43,7 +43,7 @@
       "type": "tilemap_attr",
       "row": 3,
       "col": 9,
-      "expected": 2
+      "expected": 5
     },
     {
       "type": "tilemap_cell",
@@ -55,7 +55,7 @@
       "type": "tilemap_attr",
       "row": 3,
       "col": 11,
-      "expected": 2
+      "expected": 5
     },
     {
       "type": "tilemap_cell",

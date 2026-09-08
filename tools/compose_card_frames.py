@@ -7,9 +7,10 @@ and lays out 3 cols x 3 rows of 8x8 cells in VRAM-load order:
   row 1: card middle band  (left_side, center, right_side)
   row 2: card bottom border (bottom_left_corner, bottom_middle, bottom_right_corner)
 
-png2gb converts the sheet to src/gfx/card_frame_tiles.h; the ROM loads the
-9 tiles at UI_TILE_CARD_FRAME_BASE (118, VRAM block 1 -- battle enemy art
-starts at 128) and the bank-3 renderer stamps 3x4 card boxes from them.
+png2gb converts the sheet to src/gfx/card_frame_tiles.h; the ROM loads all
+15 tiles (9 frame tiles at UI_TILE_CARD_FRAME_BASE 118, bar segments,
+HUD icons, select arrow -- VRAM block 1, battle enemy art starts at 128)
+and the bank-3 renderer stamps 3x4 card boxes from them.
 
 Deterministic: rerunning reproduces the sheet byte-identically.
 """
@@ -22,13 +23,13 @@ LAYOUT = [
     ['combat_bottom_left_card_corner', 'combat_bottom_middle_card', 'combat_bottom_right_card_corner'],
     # Turn-timer bar segments (HUD skin): filled / empty, then the HUD
     # icons from the combat tileset (combat-tileset-description.csv):
-    # hp / ap / deck.  VRAM: frames at UI_TILE_CARD_FRAME_BASE (118-126),
-    # filled at UI_TILE_TIMER_FILLED (117), empty at 127, HUD icons
-    # overwrite the atlas data at 113/114/116.  The trailing blank pad
-    # keeps the 3-column sheet layout; the loader consumes tiles 0-13
-    # only (pad = sheet tile 14, never loaded).
+    # hp / ap / deck, then the up-arrow select icon (replaces the '^'
+    # caret on the battle marker/target rows).  VRAM: frames at
+    # UI_TILE_CARD_FRAME_BASE (118-126), filled at UI_TIMER_FILLED (117),
+    # empty at 127, HUD icons overwrite the atlas data at 113/114/116,
+    # arrow at UI_TILE_SELECT_ARROW (96).
     ['combat_timer_bar_filled', 'combat_timer_bar_empty', 'combat_hp_icon'],
-    ['combat_ap_icon', 'combat_deck_icon', None],
+    ['combat_ap_icon', 'combat_deck_icon', 'combat_arrow_pointing_up'],
 ]
 
 

@@ -2149,7 +2149,10 @@ row; each card is a 3-wide x `box_h`-tall frame from the compiled
 `card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on
 the first interior row, power digit on the last; the semantic screen
 buffer keeps the type code + digit on row 13 for assertions), `15`
-markers (`1-5` selection-order digits, `^` cursor), `16` card
+markers (`1-5` selection-order digits; the cursor and the enemy-target
+caret render the up-arrow select icon tile `UI_TILE_SELECT_ARROW` 96
+(combat tileset "arrow pointing up", card_frames sheet tile 14) while
+the semantic buffer keeps `^` for text assertions), `16` card
 description (`card_get_description`), `17` timer bar (window row,
 `0x9A20`).  Card visuals are data-driven: `screens/cards_skin.json` via
 `battle_compile.py` emits `g_card_skin` (bank 4), staged into the
@@ -2358,6 +2361,45 @@ close-name hints).  `make test-scenario` flattens everything to rc=2 —
 never use make's exit code to decide whether a scenario name exists;
 that ambiguity once produced a triage listing nonexistent scenarios as
 "failing".
+
+## 52.22 Signed BG tile addressing: raw tile-data writers must use 0x9000+
+
+`ui_init()` clears LCDC bit 4 (`LCDC_REG &= ~0x90`) and nothing ever sets
+it back, so the BG runs in **signed tile addressing** for the whole game:
+
+* BG tile ids 0-127 are fetched by the PPU from `0x9000 + id*16`.
+* BG tile ids 128-255 are fetched from `0x8800 + (id-128)*16`.
+* OAM sprites ALWAYS fetch from `0x8000 + id*16` (bit 4 never affects
+  sprites).
+
+Consequence: any tile-data write to an id < 128 must target
+`0x9000 + id*16`.  Writers that do this correctly:
+
+* GBDK `set_bkg_data` (font 0-95, atlas icons 104-116) -- bank/mode aware.
+* World tileset / enemy-art / NPC overlays (ids >= 128 at raw
+  `0x8000 + id*16` = the same physical block both addressing modes use
+  for ids >= 128).
+
+The bug class: `ui_card_tiles_load_banked` (card frames 118-126, bar
+117/127, HUD icons 113/114/116) originally wrote raw `0x8000 + id*16`.
+The data landed in the sprite-only block the BG never fetches, so the
+combat icons never appeared (the atlas heart/bolt/deck at the signed
+locations kept rendering) and the card "frames" were unwritten flat
+tiles.  **No harness assert can catch this**: scenarios assert tilemap
+ids, never tile data; the mirror tracks ids only.  Regression tools:
+
+* mGBA write watchpoint on the FETCHED address (e.g. `watch/w 0x9710`
+  for tile 113): expect the atlas write first, then the loader's
+  overwrite.  Watchpoints on 0x8000-block addresses silently validate
+  the wrong block.
+* Visual: `make screenshots` -- the hp/ap/deck cells must show the
+  2-shade combat glyphs and the hand cards must show bordered frames.
+
+PyBoy caveat: `pb.memory[0x8000..0x97FF]` exposes whichever VRAM block
+its internal VBK state selects at read time, while the renderer fetches
+per the LCDC.4 mode -- a memory dump and the rendered frame can
+legitimately disagree without either being wrong.  Never treat a PyBoy
+VRAM read as proof of BG visibility.
 
 ---
 

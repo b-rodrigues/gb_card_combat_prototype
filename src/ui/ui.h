@@ -33,6 +33,11 @@ extern uint8_t g_is_cgb;
  * icon block (104-116) and the world / battle-art blocks (128+). */
 #define UI_TILE_TIMER_FILLED     117u
 #define UI_TILE_TIMER_EMPTY      127u
+/* Up-arrow select icon (combat tileset "arrow pointing up", card_frames
+ * sheet tile 14): replaces the '^' font caret on the battle marker /
+ * target rows.  BG tile ids 96-103 are the only free block-1 slots
+ * (font 0-95, atlas 104-116); the BG never referenced them before. */
+#define UI_TILE_SELECT_ARROW     96u
 /* Battle hand-card frame tiles (VRAM Block 1, 0x8800): 9 tiles in frame
  * order TL TM TR / L C R / BL BM BR (generated card_frame_tiles.h from
  * assets/card_frames.png).  Sits between the icon block (104-116) and the
