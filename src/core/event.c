@@ -103,12 +103,23 @@ static const EventDefinition *event_first_match(Game *g, EventTriggerType trigge
                                                 EntityId actor, MapId map)
 {
     uint8_t i;
+    MapId match_map;
     if (!g_events) return NULL;
+    /* Frozen harness-test fixtures run on TEST_* maps (6..11) while the
+     * single event table is written against the real maps (0..5): alias
+     * test maps to their real counterparts so one table drives both
+     * worlds (no duplicated event content to drift).  Release builds
+     * never see ids 6..11 (guarded at every lookup), so this is a no-op
+     * there. */
+    match_map = map;
+    if (map != EVENT_MAP_ANY && map >= MAP_TEST_FIELD && map <= MAP_TEST_SOUTH_FIELD) {
+        match_map = (MapId)(map - MAP_TEST_FIELD);
+    }
     for (i = 0; i < g_event_count; i++) {
         const EventDefinition *def = event_get_row(i);
         if (def->trigger != trigger) continue;
         if (actor != ENTITY_ID_NONE && def->actor != ENTITY_ID_NONE && def->actor != actor) continue;
-        if (map != EVENT_MAP_ANY && def->map != EVENT_MAP_ANY && def->map != map) continue;
+        if (map != EVENT_MAP_ANY && def->map != EVENT_MAP_ANY && def->map != match_map) continue;
         if (!event_conds_met(&g->state, def)) continue;
         return def;
     }

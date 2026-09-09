@@ -43,7 +43,7 @@
   }
  ],
  "initial_state": {
-  "scene": "FIELD",
+  "scene": "TEST_FIELD",
   "player": {
    "x": 2,
    "y": 7,
@@ -52,9 +52,6 @@
   "seed": 1000,
   "flags": {
    "ARRIVED_TOWN": true
-  },
-  "world": {
-   "SPIDER_FIELD": "DEFEATED"
   }
  }
 }

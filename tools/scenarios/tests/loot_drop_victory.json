@@ -4,7 +4,7 @@
  "description": "Victory loot drop hook (docs/loot.md 34.5): defeating the slime trio always rolls one combat card from the isolated loot RNG. Seed 5002 deterministically yields a WOOD POISON DAGGER (derived id 0x8B = 139); asserts LOOT_CARD_ADDED telemetry payload and that the CARDS tab shows the synthesized identity name (W P DA).",
  "scenario_id": "FIRST_ENCOUNTER",
  "initial_state": {
-  "scene": "FIELD",
+  "scene": "TEST_FIELD",
   "player": {
    "x": 13,
    "y": 8,
@@ -16,9 +16,6 @@
     "hp": 60,
     "max_hp": 60
    }
-  },
-  "world": {
-   "SPIDER_FIELD": "DEFEATED"
   }
  },
  "actions": [

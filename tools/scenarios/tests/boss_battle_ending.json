@@ -355,7 +355,7 @@
   }
  ],
  "initial_state": {
-  "scene": "CASTLE",
+  "scene": "TEST_CASTLE",
   "player": {
    "x": 9,
    "y": 5,
@@ -377,8 +377,7 @@
   },
   "start_battle": true,
   "world": {
-   "BAT_CASTLE": "DEFEATED",
-   "SPIDER_FIELD": "DEFEATED"
+   "BAT_CASTLE": "DEFEATED"
   },
   "deck": {
    "FIRE_SWORD": 20

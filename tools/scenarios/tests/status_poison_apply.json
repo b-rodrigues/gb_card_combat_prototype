@@ -213,16 +213,13 @@
   }
  ],
  "initial_state": {
-  "scene": "FIELD",
+  "scene": "TEST_FIELD",
   "player": {
    "x": 13,
    "y": 8,
    "facing": "DOWN"
   },
   "seed": 8408,
-  "start_battle": true,
-  "world": {
-   "SPIDER_FIELD": "DEFEATED"
-  }
+  "start_battle": true
  }
 }

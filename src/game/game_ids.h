@@ -105,4 +105,10 @@ typedef enum {
 #define GAME_EVENT_COUNT 12
 #define GAME_DIALOGUE_COUNT 13
 
+/* Frozen harness-test content (TEST_LEVELS, debug build only): the test
+ * scenes/actors compile into ROM bank 4 (battle-art bank, which has the
+ * headroom) so the release budgets are untouched, the debug link stays
+ * at 8 banks (-yo8), and the fixtures can diverge freely. */
+#define GAME_TEST_CONTENT_BANK 4
+
 #endif /* GAME_IDS_H */

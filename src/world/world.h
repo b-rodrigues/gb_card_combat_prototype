@@ -66,7 +66,16 @@ typedef enum {
     MAP_FOREST        = 2,
     MAP_MOUNTAIN_PASS = 3,
     MAP_CASTLE        = 4,
-    MAP_SOUTH_FIELD   = 5
+    MAP_SOUTH_FIELD   = 5,
+    /* Frozen harness-test fixtures (TEST_LEVELS, debug build only): the
+     * scenario suite runs against these so real content edits can never
+     * break it.  The release ROM never contains them. */
+    MAP_TEST_FIELD         = 6,
+    MAP_TEST_TOWN          = 7,
+    MAP_TEST_FOREST        = 8,
+    MAP_TEST_MOUNTAIN_PASS = 9,
+    MAP_TEST_CASTLE        = 10,
+    MAP_TEST_SOUTH_FIELD   = 11
 } MapId;
 
 /* A single generic exit tile type; the scene definition owns the

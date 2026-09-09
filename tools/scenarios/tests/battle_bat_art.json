@@ -1,64 +1,64 @@
 {
-  "name": "battle_bat_art",
-  "test": true,
-  "description": "Bat trio battle renders the bat combat art (3x1 wings-spread frame0 at the art base, second row holding the blank/white padding cells of the folded frame) under the HP line -- pins the bat wiring end to end.  Parked on the bat's first patrol leg so the circle walk bumps the hero.  The art cells pin the folded-wings frame (frame index 1 at capture timing; the spread-wings frame renders at even (timer>>4) parity).",
-  "scenario_id": "CASTLE_BOOT",
-  "actions": [
-    {
-      "type": "wait",
-      "frames": 100
-    }
-  ],
-  "assertions": [
-    {
-      "type": "screen",
-      "expected": "BATTLE"
-    },
-    {
-      "type": "event_occurred",
-      "event": "BATTLE_STARTED"
-    },
-    {
-      "type": "music_track",
-      "expected": "BATTLE"
-    },
-    {
-      "type": "screen_row",
-      "row": 2,
-      "contains": "8/ 8   8/ 8   8/ 8"
-    },
-    {
-      "type": "tilemap_cell",
-      "row": 3,
-      "col": 1,
-      "expected": 134
-    },
-    {
-      "type": "tilemap_cell",
-      "row": 3,
-      "col": 2,
-      "expected": 135
-    },
-    {
-      "type": "tilemap_cell",
-      "row": 3,
-      "col": 3,
-      "expected": 136
-    },
-    {
-      "type": "tilemap_cell",
-      "row": 4,
-      "col": 1,
-      "expected": 137
-    }
-  ],
-  "initial_state": {
-    "scene": "SOUTH_FIELD",
-    "player": {
-      "x": 15,
-      "y": 10,
-      "facing": "DOWN"
-    },
-    "seed": 777
+ "name": "battle_bat_art",
+ "test": true,
+ "description": "Bat trio battle renders the bat combat art (3x1 wings-spread frame0 at the art base, second row holding the blank/white padding cells of the folded frame) under the HP line -- pins the bat wiring end to end.  Parked on the bat's first patrol leg so the circle walk bumps the hero.  The art cells pin the folded-wings frame (frame index 1 at capture timing; the spread-wings frame renders at even (timer>>4) parity).",
+ "scenario_id": "CASTLE_BOOT",
+ "actions": [
+  {
+   "type": "wait",
+   "frames": 100
   }
+ ],
+ "assertions": [
+  {
+   "type": "screen",
+   "expected": "BATTLE"
+  },
+  {
+   "type": "event_occurred",
+   "event": "BATTLE_STARTED"
+  },
+  {
+   "type": "music_track",
+   "expected": "BATTLE"
+  },
+  {
+   "type": "screen_row",
+   "row": 2,
+   "contains": "8/ 8   8/ 8   8/ 8"
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 3,
+   "col": 1,
+   "expected": 134
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 3,
+   "col": 2,
+   "expected": 135
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 3,
+   "col": 3,
+   "expected": 136
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 4,
+   "col": 1,
+   "expected": 137
+  }
+ ],
+ "initial_state": {
+  "scene": "TEST_SOUTH_FIELD",
+  "player": {
+   "x": 15,
+   "y": 10,
+   "facing": "DOWN"
+  },
+  "seed": 777
+ }
 }

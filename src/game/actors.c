@@ -12,5 +12,11 @@ extern const WorldActorTable g_actor_tables[];
 
 void game_actors_register(void)
 {
+#ifdef TEST_LEVELS
+    /* Debug/harness build: register the frozen fixture actor tables
+     * (compiled into bank 8, never the real content). */
+    actor_register_tables(g_actor_tables, GAME_ACTOR_TABLE_COUNT, GAME_TEST_CONTENT_BANK);
+#else
     actor_register_tables(g_actor_tables, GAME_ACTOR_TABLE_COUNT, GAME_CONTENT_BANK);
+#endif
 }

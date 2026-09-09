@@ -31,7 +31,15 @@ KNOWN_SCENES = {
     "forest": "SCENE_FOREST",
     "mountain_pass": "SCENE_MOUNTAIN_PASS",
     "castle": "SCENE_CASTLE",
-    "south_field": "SCENE_SOUTH_FIELD"
+    "south_field": "SCENE_SOUTH_FIELD",
+    # Frozen harness-test fixtures (tools/scenarios/fixtures/levels/):
+    # their exits legitimately retarget to the test scenes.
+    "test_field": "SCENE_TEST_FIELD",
+    "test_town": "SCENE_TEST_TOWN",
+    "test_forest": "SCENE_TEST_FOREST",
+    "test_mountain_pass": "SCENE_TEST_MOUNTAIN_PASS",
+    "test_castle": "SCENE_TEST_CASTLE",
+    "test_south_field": "SCENE_TEST_SOUTH_FIELD"
 }
 
 KNOWN_MAP_IDS = {
@@ -40,7 +48,13 @@ KNOWN_MAP_IDS = {
     "MAP_FOREST": 2,
     "MAP_MOUNTAIN_PASS": 3,
     "MAP_CASTLE": 4,
-    "MAP_SOUTH_FIELD": 5
+    "MAP_SOUTH_FIELD": 5,
+    "MAP_TEST_FIELD": 6,
+    "MAP_TEST_TOWN": 7,
+    "MAP_TEST_FOREST": 8,
+    "MAP_TEST_MOUNTAIN_PASS": 9,
+    "MAP_TEST_CASTLE": 10,
+    "MAP_TEST_SOUTH_FIELD": 11
 }
 
 

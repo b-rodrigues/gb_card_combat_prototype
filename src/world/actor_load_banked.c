@@ -1,4 +1,8 @@
+#ifdef TEST_LEVELS
+#pragma bank 4
+#else
 #pragma bank 2
+#endif
 
 #include "actor.h"
 #include "world.h"

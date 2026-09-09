@@ -477,7 +477,7 @@
   }
  ],
  "initial_state": {
-  "scene": "FIELD",
+  "scene": "TEST_FIELD",
   "player": {
    "x": 13,
    "y": 8,
@@ -493,9 +493,6 @@
     "hp": 60,
     "max_hp": 60
    }
-  },
-  "world": {
-   "SPIDER_FIELD": "DEFEATED"
   }
  }
 }

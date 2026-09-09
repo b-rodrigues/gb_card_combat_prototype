@@ -83,7 +83,12 @@ void world_init(World *w, const GameState *state)
     entity_init(&w->player, ENTITY_ID_PLAYER,
                 state->scene.player_x, state->scene.player_y, 10, 10);
     w->player.facing = (Direction)state->scene.player_facing;
-    world_load_map(w, MAP_FIELD, state);
+    /* Load the canonical scene's map (set by game_new_game before this
+     * call).  Never hardcode MAP_FIELD here: harness builds boot test
+     * scenes, and a hardcoded map would silently overwrite the staged
+     * world (and scene_sync_from_world would then clobber the staged
+     * scene id every frame). */
+    world_load_map(w, scene_id_to_map(state->scene.scene_id), state);
 }
 
 void world_change_map(World *w, MapId map_id, uint8_t spawn_x, uint8_t spawn_y,

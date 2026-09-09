@@ -26,6 +26,15 @@ INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle
 ALL_SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 BANK5_EARLY_SRCS = $(SRC_DIR)/world/scene_load.c
 SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
+# Frozen harness-test content (tools/scenarios/fixtures/levels/, compiled
+# with --bank 4 into src/game/*_content_test.c): compiled ONLY into the
+# debug (harness) build so the scenario suite sees a stable world while
+# real content (levels/) evolves freely.  The release build must never
+# see these symbols (same g_scenes/g_actor_tables names).
+TEST_CONTENT_SRCS = $(SRC_DIR)/game/scenes_content_test.c $(SRC_DIR)/game/actors_content_test.c
+CONTENT_SRCS = $(SRC_DIR)/game/scenes_content.c $(SRC_DIR)/game/actors_content.c
+SRCS := $(filter-out $(TEST_CONTENT_SRCS),$(SRCS))
+DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events);
@@ -55,12 +64,12 @@ HUGEDRIVER_B7_OBJ = $(BUILD_DIR)/lib/hUGEDriver_b7.o
 HUGEDRIVER_B7_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver_b7.o
 
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ) $(HUGEDRIVER_B7_OBJ)
-OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG) $(HUGEDRIVER_B7_OBJ_DEBUG)
+OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG) $(HUGEDRIVER_B7_OBJ_DEBUG)
 
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -211,6 +220,28 @@ levels-check:
 
 src/game/scenes_content.c: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+
+# Frozen harness-test fixtures (tools/scenarios/fixtures/levels/): the
+# debug (harness) ROM links ONLY these, so real content edits can never
+# break the scenario suite.  Compiled with --bank 4 (GAME_TEST_CONTENT_BANK)
+# so the release budgets (banks 2/5) are untouched.  Committed C must equal
+# fresh compile (no hand edits, same convention as the real content).
+LEVELS_TEST_DIR = tools/scenarios/fixtures/levels
+
+levels-test:
+	@python3 tools/level_compiler/validate.py $(LEVELS_TEST_DIR)/*.json
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c
+	@echo "All test fixture levels compiled to src/game/scenes_content_test.c"
+
+levels-test-check:
+	@python3 tools/level_compiler/validate.py $(LEVELS_TEST_DIR)/*.json
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c --check
+
+src/game/scenes_content_test.c src/game/actors_content_test.c &: $(wildcard $(LEVELS_TEST_DIR)/*.json)
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c
 
 # Screen content compiler (docs/level-editor.md Phase 17): screens/*.json is
 # the source of truth for title + battle mockup data, just as levels/*.json
@@ -376,6 +407,37 @@ $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
+# -DTEST_LEVELS reaches ONLY the files that consume it (engine content
+# selection + the content-reading banked bodies, which move to bank 4 in
+# the test build).  Compiling it into every debug object shifts every
+# banked body's layout; SDCC miscompiles are layout-sensitive
+# (AGENTS.md 52.19) and the full-flag variant broke the patrol
+# sentinels.  Explicit rules win over the generic pattern above (same
+# mechanism as the 52.20 alloc-cap rules).
+build/debug/world/scene.o: src/world/scene.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/game/actors.o: src/game/actors.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/world/scene_load.o: src/world/scene_load.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/world/actor_load_banked.o: src/world/actor_load_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/world/actor.o: src/world/actor.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/game/content.o: src/game/content.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
 music: $(MUSIC_SRCS) sfx
 
 # Tracker SFX -> synth step tables (Path C transcription). Deterministic:
@@ -535,7 +597,7 @@ $(TARGET): gfx tiles levels screens music $(OBJS) build/crt0.o $(GB_LITE) $(SM83
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels screens music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels levels-test screens music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@

@@ -1693,6 +1693,41 @@ Do not wait until the end of a feature to think about testability.
 
 The scenario is part of the feature.
 
+## 42.1 Two-tier content: fixtures vs working content
+
+The scenario suite must never break because someone placed content on a
+map.  Two tiers enforce that:
+
+* **Tier 1 — test fixtures** (`tools/scenarios/fixtures/levels/test_*.json`):
+  frozen copies of the levels as the scenarios know them (headline
+  hostile last, no user-placed extras).  The **debug (harness) ROM links
+  ONLY these** (`scenes_content_test.c` / `actors_content_test.c`, bank 4,
+  `--bank 4`), selected at compile time by `-DTEST_LEVELS` + the
+  `TEST_*` scene ids (6..11).  Scenarios stage `scene: TEST_FIELD` etc.
+* **Tier 2 — working content** (`levels/`): everything the editor, the
+  LLM, and collaborators edit freely.  Feeds the **release ROM only**.
+  Adding a level, enemy, or actor here cannot break a scenario.
+
+Rules:
+
+* Never point a scenario at a real scene; never let the editor list or
+  edit the fixtures dir.
+* A new mechanic gets a new fixture + scenario deliberately; routine
+  content never touches the fixtures.
+* The event table is shared (TEST maps alias to real maps at match
+  time in `core/event.c`); `game_new_game`/`world_init` derive the
+  spawn map from canonical state, never a hardcoded real scene.
+* `-DTEST_LEVELS` reaches ONLY the files that consume it, via explicit
+  Makefile rules (scene/actors/scene_load/actor_load/content): the flag
+  shifts codegen, and SDCC miscompiles are layout-sensitive (§52.19) —
+  the full-flag variant broke the patrol sentinels.  If a new file
+  needs the flag, add an explicit rule AND verify the three sentinels
+  (`patrol_slime_cross`, `patrol_enemy_bumps_player`,
+  `battle_multi_enemy_cycle_kill`) still pass.
+* `make levels-test` / `levels-test-check` validate and compile the
+  fixtures; `make debug` chains `levels-test` automatically.  memmap
+  guards the bank-4 fixture budget.
+
 ---
 
 # 43. Bug Reproduction
