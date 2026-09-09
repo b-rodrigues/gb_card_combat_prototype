@@ -162,6 +162,13 @@ static const WorldActorDefinition g_south_field_actors[] = {
         0, 0,
          SPRITE_KIND_ENEMY, 0, 0
     },
+    {
+        13, ENTITY_ID_KOBOLD, 17, 1, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'K', "KOBOLD", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_KOBOLD, AI_CHASE, 12, 12, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 1, 0
+    },
 };
 
 const WorldActorTable g_actor_tables[] = {
