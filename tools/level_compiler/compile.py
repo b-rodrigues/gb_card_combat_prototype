@@ -348,11 +348,10 @@ def emit_c_code(levels_by_id, tilesets, bank=5):
     for sid in ordered_ids:
         lvl = levels_by_id[sid]
         map_id_enum = MAP_ENUM_MAP.get(sid, f"MAP_{sid.upper()}")
+        # Music names pass through verbatim: the single name everywhere
+        # is the C enum name (MUSIC_*), enforced by validation — no
+        # normalization/aliasing of legacy spellings.
         music_enum = lvl["map"].get("music", "MUSIC_OVERWORLD")
-        if music_enum in ("MUSIC_DESOLATE_LANDSCAPE", "desolate_landscape"):
-            music_enum = "MUSIC_DESOLATE"
-        elif music_enum in ("MUSIC_FOREST", "forest", "Forest"):
-            music_enum = "MUSIC_FOREST"
         width = lvl["map"]["width"]
         height = lvl["map"]["height"]
         start_idx, count = exit_offsets[sid]

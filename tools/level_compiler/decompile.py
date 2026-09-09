@@ -570,9 +570,10 @@ def decompile_levels(levels_dir, write):
                     warnings.append(f"{sid}: terrain block at {key} has no C row; dropped")
         level.setdefault("layers", {})["terrain"] = terrain_blocks
 
-        # -- scenes metadata: preserve spellings that map to the same enums
+        # -- scenes metadata: music is the single C enum name everywhere;
+        # no aliasing of legacy spellings (compile.py passes through too).
         music = level.get("map", {}).get("music", "")
-        if compiler_music_enum(music) != sc["music"]:
+        if music != sc["music"]:
             level["map"]["music"] = sc["music"]
         ts_now = level.get("map", {}).get("tileset", "")
         if TILESET_KIND_MAP.get(ts_now, None) != sc["tileset_kind"]:
@@ -726,14 +727,6 @@ def decompile_levels(levels_dir, write):
             if write:
                 path.write_text(new_text)
     return changed, warnings
-
-
-def compiler_music_enum(spelling):
-    if spelling in ("MUSIC_DESOLATE_LANDSCAPE", "desolate_landscape"):
-        return "MUSIC_DESOLATE"
-    if spelling in ("MUSIC_FOREST", "forest", "Forest"):
-        return "MUSIC_FOREST"
-    return spelling
 
 
 def dump_canonical(level):

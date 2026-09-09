@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "desolate_landscape",
-    "music": "MUSIC_DESOLATE_LANDSCAPE",
+    "music": "MUSIC_DESOLATE",
     "map_id": "MAP_MOUNTAIN_PASS"
   },
   "default_walkable": "desolate_landscape.desolate_landscape_plain_floor_1",

@@ -42,7 +42,6 @@ interface InspectorProps {
 const MUSIC_PREVIEW_FILES: Record<string, string> = {
   MUSIC_BATTLE: '/audio/battle.wav',
   MUSIC_DESOLATE: '/audio/desolate_landscape.wav',
-  MUSIC_DESOLATE_LANDSCAPE: '/audio/desolate_landscape.wav',
   MUSIC_FOREST: '/audio/forest.wav',
   MUSIC_BOSS: '/audio/boss_fight.wav',
   MUSIC_TOWN: '/audio/village.wav',
@@ -309,8 +308,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="MUSIC_TOWN">MUSIC_TOWN (Village.uge)</option>
                 <option value="MUSIC_DUNGEON">MUSIC_DUNGEON (castle.uge)</option>
                 <option value="MUSIC_BATTLE">MUSIC_BATTLE</option>
-                <option value="MUSIC_DESOLATE">MUSIC_DESOLATE</option>
-                <option value="MUSIC_DESOLATE_LANDSCAPE">MUSIC_DESOLATE_LANDSCAPE (desolate_landscape.uge)</option>
+                <option value="MUSIC_DESOLATE">MUSIC_DESOLATE (desolate_landscape.uge)</option>
                 <option value="MUSIC_FOREST">MUSIC_FOREST (Forest.uge)</option>
                 <option value="MUSIC_BOSS">MUSIC_BOSS (Boss fight.uge)</option>
                 </select>
