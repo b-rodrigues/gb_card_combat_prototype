@@ -1634,6 +1634,21 @@ across transitions (battle, scene change, dialogue).  It catches VBlank-timed
 sprite bugs that the SameBoy harness cannot observe (AGENTS.md §52.15).  This
 step is **required**, not optional — CI runs it on every push.
 
+Then run:
+
+```bash
+make verify-walkthrough
+```
+
+`verify-walkthrough` (docs/verify-walkthrough.md) drives the RELEASE ROM —
+the real `levels/` content the fixtures never touch — headlessly under
+PyBoy and asserts canonical gameplay state read from WRAM via the ROM's
+`.sym` (scene ids, flags, gold, party HP, battle hand, music, save/load
+roundtrip).  It is the real-content counterweight to the two-tier fixture
+suite (§42.1) and is **required on push** (CI).  Host-side only: no ROM
+changes → it does not replace `make test-harness` for ROM work, it
+complements it.
+
 If rendering or UI changed, also run:
 
 ```bash
@@ -2859,7 +2874,16 @@ the commit/PR without booting anything.
 
 * Headless PyBoy (`window="null"`) boots the **real release ROM** — no debug
   ROM, no harness mode, no scenario loader.  What is captured is exactly what
-  a player would see.
+  a player would see.  `make verify-walkthrough` runs the same script with
+  semantic assertions (docs/verify-walkthrough.md); the package lives in
+  `tools/walkthrough/` (`state_reader.py` WRAM reader, `route.py` BFS
+  planner, `session.py` driver, `walks.py` walk definitions).
+* Semantic state comes from **WRAM symbol reads** (StateReader): `g_game`
+  from the ROM's `.sym`, struct offsets mirrored from the headers and
+  validated by boot anchors every session.  The BFS route planner reuses
+  the level compiler's `derive_collision` + `load_tilesets` and reads
+  patrol boxes/actors/exits from `levels/*.json`, so editor content
+  changes update the walk automatically.
 * The player entity is located in WRAM via its deterministic boot pattern
   (same technique as `tools/vram_dialogue_check.py`); the walk is
   **position-based**, not press-count based: each step is a single short
@@ -2915,7 +2939,7 @@ the commit/PR without booting anything.
 08-quests-tab        QUEST tab
 09-battle            slime encounter (battle screen)
 10-battle-attack     after a player attack (damage dealt)
-11-battle-run        after fleeing (result line)
+11-battle-victory    VICTORY result over the slime trio (loot gold asserted)
 11-battle-aftermath  overworld after leaving the fight (VRAM restore)
 12-wizard-save       save menu at the wizard
 13-wizard-saved      after saving to Slot 1
@@ -2931,21 +2955,29 @@ the commit/PR without booting anything.
 22-tutorial-slide6   SHIELD CARD
 ```
 
-Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land
-inside the transient save-confirmation TTL and show the message mid-display.
-If a regen diffs only that frame, re-run before hunting a rendering bug.
+Frame `12-wizard-save` is gated on a stable menu/message state before the
+capture (the transient save-confirmation TTL used to poison it); if a
+regen diffs it, re-run before hunting a rendering bug.
 
 ## 56.4 Rules
 
-* **Screenshots are a visual-review aid only.**  They are not assertions and
-  must never gate CI.  Semantic state, telemetry, and the scenario harness
-  (`make test-harness`) remain authoritative (§7, §40).  Prefer a scenario
-  assertion over a screenshot for any behavior that has a semantic
-  representation.
+* **The screenshot PNGs are a visual-review aid only** — they never gate
+  CI.  The SEMANTIC CHECKS inside the same run (`make verify-walkthrough`,
+  docs/verify-walkthrough.md) DO gate: the walkthrough drives the release
+  ROM and asserts canonical gameplay state (scene ids, story flags, gold,
+  party HP, battle hand, music, save/load roundtrip) read from WRAM via
+  the ROM's `.sym`.  A run failing its checks returns non-zero even
+  though every PNG saved fine.
 * The milestone list should grow when a feature visibly changes the screen
-  (a new screen, a new tab, a reworked battle view).  Keep each milestone
-  reachable by position-based walking; do not add a milestone that requires
-  a non-deterministic sequence (e.g. surviving random damage rolls).
+  (a new screen, a new tab, a reworked battle view).  Routes are planned by
+  BFS from `levels/*.json` (`tools/walkthrough/route.py` — reuses the level
+  compiler's collision derivation), so content edits in the editor update
+  the walk automatically; do not hardcode waypoints in walk bodies.
+* Expected values are read from `levels/*.json` and the ROM's own const
+  tables (card prices, shop stock, gold rewards) — never hardcoded.  When
+  a gameplay constant must be mirrored (struct offsets, enum values), it
+  cites its header and is validated by the boot anchors, which fail
+  loudly on layout drift.
 * Colors come from PyBoy's renderer and may differ slightly from SameBoy;
   layout and placement are what the frames are for.  The dialogue-box frame
   (`03-*`) is the ground-truth check for camera-scroll overlay alignment,

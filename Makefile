@@ -69,7 +69,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(M
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
 
 all: $(TARGET)
 
@@ -659,6 +659,15 @@ parity: debug
 	@python3 tools/parity_check.py
 
 screenshots: $(TARGET)
+	@python3 tools/capture_walkthrough.py
+
+# Semantic real-content gate (docs/verify-walkthrough.md): drives the
+# RELEASE ROM (real levels/ content) headlessly and asserts canonical
+# gameplay state read from WRAM.  This is the counterweight to the
+# two-tier fixture suite (AGENTS.md 42.1): engine regressions that only
+# fire with working content are caught here.  Required on push (CI).
+# The saved PNGs stay a non-gating visual aid (AGENTS.md 56.4).
+verify-walkthrough: release
 	@python3 tools/capture_walkthrough.py
 
 # Verify the player sprite's real-OAM transition-hide across screen changes
