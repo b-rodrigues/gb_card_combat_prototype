@@ -342,12 +342,16 @@ def main():
     # (2,8) -> west of the guard at (9,8).  The camera scrolls horizontally on FIELD (32 wide) and
     # vertically in TOWN (18 tall), so the dialogue box is exercised with a
     # scrolled camera.
-    ok = walk("right", lambda: pos()[0] >= 22)
+    # The placed field spider patrols x=23, y=6..12 (AI_PATROL_VERT), so
+    # the straight row-7 route would cross its patrol box.  Dip to row 13
+    # (south of the patrol), cross east, then climb back to the gate row.
+    ok = walk("down", lambda: pos()[1] == 13)
+    ok = walk("right", lambda: pos()[0] >= 22) and ok
     check("walk: camera scrolled (x>=22)", ok)
     wait(20)
     shoot(pb, "01-field-scrolled")
     ok = walk("right", lambda: pos()[0] == 30) and ok
-    ok = walk("down", lambda: pos()[1] == 7) and ok
+    ok = walk("up", lambda: pos()[1] == 7) and ok
     ok = walk("right", lambda: pos()[0] == 2) and ok
     wait(20)
     shoot(pb, "02-town-arrived")
