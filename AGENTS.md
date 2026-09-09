@@ -2973,6 +2973,15 @@ regen diffs it, re-run before hunting a rendering bug.
   BFS from `levels/*.json` (`tools/walkthrough/route.py` — reuses the level
   compiler's collision derivation), so content edits in the editor update
   the walk automatically; do not hardcode waypoints in walk bodies.
+* **Content sweep** (`walk_sweep`): every level in `levels/` is visited on
+  every run — a fresh session per level, BFS route from the field spawn,
+  scene-id + music asserts from the level JSON, `sweep-<name>.png` per
+  level.  A NEW level added by the editor is swept automatically on the
+  next run (the planner assigns its scene id in the compiler's order);
+  an UNREACHABLE level fails loudly (no exit targets it — content bug).
+  Engine-only coverage of NPC dialogues / new enemies stays on the
+  fixture suite (§42.1); the sweep proves every level boots, is enterable,
+  and plays its music.
 * Expected values are read from `levels/*.json` and the ROM's own const
   tables (card prices, shop stock, gold rewards) — never hardcoded.  When
   a gameplay constant must be mirrored (struct offsets, enum values), it

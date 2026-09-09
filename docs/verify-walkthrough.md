@@ -1,8 +1,8 @@
 # verify-walkthrough — Real-Content Semantic Verifier
 
 Status: **implemented** — `make verify-walkthrough`, required on push (CI).
-159 checks green; PNG output byte-stable across runs; negative tests
-(offset drift, route failure) verified to fail loudly.
+291 checks green (incl. the content sweep); PNG output byte-stable across
+runs; negative tests (offset drift, route failure) verified to fail loudly.
 
 ## 1. Purpose
 
@@ -96,6 +96,10 @@ tools/walkthrough/
 5. **Scene asserts** on Forest/Pass/Castle arrivals (`reader.scene_id`).
 6. **Quick-screen deck toggle**: deck a card → assert `deck_count`
    changed.
+7. **Content sweep** (`walk_sweep`): every level in `levels/` is visited
+   on every run — fresh session per level, BFS route from the spawn,
+   scene-id + music asserts, `sweep-<name>.png`.  New levels are swept
+   automatically; unreachable levels fail loudly.
 
 ### Phase 5 — Stability
 

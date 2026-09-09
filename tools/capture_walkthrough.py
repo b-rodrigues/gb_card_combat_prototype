@@ -47,6 +47,7 @@ def run():
         ("walk-b", lambda: W.walk_b(planner, failures)),
         ("walk-c", lambda: W.walk_c(planner, failures)),
         ("walk-e", lambda: W.walk_e(planner, failures)),
+        ("walk-sweep", lambda: W.walk_sweep(planner, failures)),
         ("walk-d", lambda: W.walk_d(failures)),
         ("walk-l", lambda: W.walk_l(failures, saved[0])),
     ]

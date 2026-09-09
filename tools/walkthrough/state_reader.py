@@ -139,6 +139,10 @@ MUSIC_BOSS = 7
 MUSIC_MIMIC = 8
 MUSIC_DESOLATE = 9
 MUSIC_FOREST = 10
+# Level JSONs spell this track MUSIC_DESOLATE_LANDSCAPE (the compiled C
+# normalizes to MUSIC_DESOLATE); the mirror carries the JSON spelling
+# until the single-name cleanup lands.
+MUSIC_DESOLATE_LANDSCAPE = MUSIC_DESOLATE
 
 # Story flags (src/game/game_ids.h)
 STORY_FLAG_ID_ARRIVED_TOWN = 1

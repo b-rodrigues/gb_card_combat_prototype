@@ -106,13 +106,33 @@ class Scene:
 
 class Planner:
     def __init__(self, levels_dir=LEVELS_DIR):
+        """Mirror the compiler's content registry: every levels/*.json
+        becomes a scene; ids are assigned SCENE_ORDER first, then the
+        remaining files alphabetically — exactly the order compile.py
+        appends unknown levels to its table, so planner scene ids match
+        the ROM's compiled ids.  A NEW level added by the editor gets a
+        scene id automatically and is swept by walk_sweep."""
         self.scenes = {}
         tilesets = load_tilesets()
-        for scene_id, name in enumerate(SCENE_ORDER):
-            path = os.path.join(levels_dir, name + ".json")
-            level = json.load(open(path))
+        names = sorted(os.path.splitext(f)[0]
+                       for f in os.listdir(levels_dir)
+                       if f.endswith(".json"))
+        ordered = [n for n in SCENE_ORDER if n in names]
+        ordered += [n for n in names if n not in SCENE_ORDER]
+        for scene_id, name in enumerate(ordered):
+            level = json.load(open(os.path.join(levels_dir,
+                                                name + ".json")))
             ts = tilesets.get(level["map"]["tileset"], {})
             self.scenes[name] = Scene(name, scene_id, level, ts)
+
+    def arrival_pos(self, name):
+        """The tile the player lands on when entering scene `name`
+        (any parent exit's target).  None if no exit leads there."""
+        for scene in self.scenes.values():
+            for e in scene.exits:
+                if e["target_scene"] == name:
+                    return (e["target_x"], e["target_y"])
+        return None
 
     def scene_of(self, scene_id):
         for s in self.scenes.values():

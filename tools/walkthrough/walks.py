@@ -400,6 +400,62 @@ def walk_e(planner, checks):
     s.close()
 
 
+# ── Walk S: content sweep — every level in levels/ is visited ────────
+
+def walk_sweep(planner, checks):
+    """Sweep every level the editor can produce: for each level reachable
+    from the field spawn, boot a fresh session, BFS-route there, assert
+    the ROM booted the right scene with the right music, and capture
+    sweep-<name>.png.  A NEW level added to levels/ is automatically
+    swept on the next run; an UNREACHABLE level fails loudly (you can't
+    walk to it — likely a content bug, e.g. no exit points at it).
+    One session per level: every walk starts coherent at the spawn, so
+    a failure isolates to exactly one level."""
+    field = _level("field")
+    spawn = (field["player"]["spawn"]["x"], field["player"]["spawn"]["y"])
+    for name in sorted(planner.scenes):
+        scene = planner.scenes[name]
+        want_music = _music_enum(scene.level["map"].get("music"))
+        if want_music is None:
+            checks.append(("sweep", "sweep %s music" % name, False,
+                           "MUSIC_* mirror in state_reader.py",
+                           str(scene.level["map"].get("music"))))
+            want_music = -1
+        s = Session(checks, "sweep")
+        if name == "field":
+            st = s.reader.scene_state()
+            s.check_eq("sweep %s scene" % name, st["scene_id"],
+                       scene.scene_id)
+            s.check_eq("sweep %s music" % name,
+                       s.reader.music_track(), want_music)
+            s.shoot("sweep-%s" % name)
+            s.close()
+            continue
+        goal = planner.arrival_pos(name)
+        if goal is None:
+            s.check("sweep %s reachable" % name, False,
+                    expected="some exit targets it",
+                    actual="unreachable (no exit -> %s)" % name)
+            s.close()
+            continue
+        follow(s, planner, "field", spawn, name, goal)
+        s.settle_scene(expected_scene=scene.scene_id)
+        st = s.reader.scene_state()
+        s.check_eq("sweep %s scene" % name, st["scene_id"], scene.scene_id)
+        s.check_eq("sweep %s music" % name, s.reader.music_track(),
+                   want_music)
+        s.shoot("sweep-%s" % name)
+        s.close()
+
+
+def _music_enum(name):
+    """Map a level JSON music name (MUSIC_FOREST) to the mirrored enum;
+    an unknown name becomes a check failure, never a crash."""
+    from walkthrough import state_reader as sr
+    value = getattr(sr, name, None) if name else None
+    return value
+
+
 # ── Walk D: title menu + tutorial slides (no planner) ────────────────
 
 def walk_d(checks):
