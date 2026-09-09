@@ -25,6 +25,33 @@ static uint8_t pad_state = 0;
 static uint8_t prev_pad_state = 0;
 static uint8_t injected_pad_state = 0;
 
+#ifdef DEBUG_BUILD
+/* Cross-emulator joypad probe (diagnostic, harness/host reads it via the
+ * symbol table): [0] = raw joypad() sample, [1] = P1 register byte as seen
+ * right after the sample, [2] = post-injection pad_state, [3] = write
+ * heartbeat (increments once per input_update), [4] = action-row read,
+ * [5] = direction-row read. */
+volatile uint8_t g_input_probe[6] = {0, 0, 0, 0, 0, 0};
+
+/* Instrumented copy of GBDK's joypad() read pattern (select row, settle
+ * dummy reads, sample) so the two raw row values are observable from the
+ * host.  Same write/read sequence as the library function. */
+static uint8_t probe_joypad(void)
+{
+    uint8_t actions, dirs;
+    P1_REG = 0x20;
+    (void)P1_REG; (void)P1_REG; (void)P1_REG;
+    actions = P1_REG & 0x0F;
+    P1_REG = 0x10;
+    (void)P1_REG; (void)P1_REG; (void)P1_REG; (void)P1_REG; (void)P1_REG;
+    dirs = P1_REG & 0x0F;
+    g_input_probe[4] = actions;
+    g_input_probe[5] = dirs;
+    return (uint8_t)(((~actions) & 0x0F) << 4) | (uint8_t)(((~dirs) & 0x0F));
+}
+#define joypad() probe_joypad()
+#endif
+
 const uint8_t g_input_button_bits[8] = {
     (uint8_t)(1 << INPUT_RIGHT),
     (uint8_t)(1 << INPUT_LEFT),
@@ -71,6 +98,13 @@ void input_update(void)
     }
     pad_state = physical_pad_state | injected_pad_state;
     injected_pad_state = 0;
+    g_input_probe[0] = physical_pad_state;
+    g_input_probe[1] = P1_REG;
+    g_input_probe[2] = pad_state;
+    g_input_probe[3]++;
+    /* NOTE: do NOT telemetry_emit pad edges here -- the 32-event ring is
+     * semantic state (BATTLE_WON etc.) and per-button noise floods it out
+     * (host-side joypad diagnosis reads g_input_probe via the debugger). */
 #else
     /* Honor the debug injection channel outside DEBUG_BUILD too: without
      * this, g_inp_mask writes are silently discarded (the mask is cleared

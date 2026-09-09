@@ -90,6 +90,25 @@ void huge_music_mute_channel(uint8_t ch, uint8_t mute)
     }
 }
 
+void huge_music_mute_channel_isr(uint8_t ch, uint8_t mute)
+{
+    /* ISR-context variant of huge_music_mute_channel: NO __critical.
+     * SDCC's __critical emits di/ei -- the ei() would re-enable nested
+     * timer interrupts while this already runs inside the timer ISR
+     * (256 Hz), stacking ISR frames until the WRAM below the stack is
+     * smashed (observed as ghost joypad input: pad_state/prev_pad_state
+     * accumulate pressed bits and releases never register).  Inside the
+     * ISR no user code can run concurrently, so no di is needed either;
+     * just switch banks, call the driver, restore home bank. */
+    *(volatile uint8_t *)0x2000 = s_huge_music_bank;
+    if (s_huge_music_bank == HUGE_MUSIC_BANK_B7) {
+        hUGE_mute_channel_b7((enum hUGE_channel_t)ch, (enum hUGE_mute_t)mute);
+    } else {
+        hUGE_mute_channel((enum hUGE_channel_t)ch, (enum hUGE_mute_t)mute);
+    }
+    *(volatile uint8_t *)0x2000 = 1;
+}
+
 void huge_music_update(void)
 {
     if (!s_huge_playing) return;

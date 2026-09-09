@@ -226,11 +226,13 @@ void audio_update(void)
             if (sfx_step_tick()) {
                 if (sfx_muted & 0x01) {
                     NR22_REG = 0x00;
-                    huge_music_mute_channel(HT_CH2, HT_CH_PLAY);
+                    /* ISR context: the __critical wrapper's ei() would
+                     * nest timer interrupts (WRAM smash, ghost input). */
+                    huge_music_mute_channel_isr(HT_CH2, HT_CH_PLAY);
                 }
                 if (sfx_muted & 0x02) {
                     NR42_REG = 0x00;
-                    huge_music_mute_channel(HT_CH4, HT_CH_PLAY);
+                    huge_music_mute_channel_isr(HT_CH4, HT_CH_PLAY);
                 }
                 sfx_muted = 0;
                 sfx_id = SFX_NONE;

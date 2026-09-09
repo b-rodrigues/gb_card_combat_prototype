@@ -1350,6 +1350,19 @@ Soundtrack tracks authored in **hUGETracker** (`.uge`, e.g. `assets/music/Battle
 * **SFX Coexistence (Channel Muting)**:
   * Sound effects (CH2 tone pulses, CH4 noise bursts) call `huge_music_mute_channel(HT_CH2 / HT_CH4, HT_CH_MUTE)` on playback start.
   * When the SFX completes, `audio_update()` restores the channel with `HT_CH_PLAY` so the tracker music continues seamlessly without channel clicks.
+* **NEVER `__critical`/`ei()` inside the timer ISR**: SDCC's `__critical`
+  emits `di`/`ei` -- an `ei()` executed while already inside the 256 Hz
+  timer ISR re-enables nested timer interrupts, stacking ISR frames until
+  the WRAM below the stack is smashed.  Observed symptom (Sep 2026):
+  ghost joypad input -- `pad_state`/`prev_pad_state` accumulate pressed
+  bits and releases never register, freezing the intro screen in every
+  real-timing emulator (mGBA, Gambatte) while PyBoy's frame pacing masked
+  it.  `audio_update()`'s ISR-side unmute therefore calls
+  `huge_music_mute_channel_isr()` (bank switch + driver call + restore,
+  no di/ei); the user-context calls in `audio_play_sfx()` keep the
+  `__critical` wrapper.  Rule: any driver call reachable from
+  `audio_update()` must use the `_isr` (no-lock) variant, never the
+  critical one.
 
 ---
 
