@@ -66,6 +66,13 @@ static const WorldActorDefinition g_field_actors[] = {
         0, 0,
          SPRITE_KIND_ASCII, 0xFF, 0
     },
+    {
+        12, ENTITY_ID_SPIDER, 23, 9, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
 };
 
 static const WorldActorDefinition g_forest_actors[] = {

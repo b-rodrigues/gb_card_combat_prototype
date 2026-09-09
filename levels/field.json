@@ -720,6 +720,33 @@
         "gold_reward": 0,
         "ai": "AI_NONE"
       }
+    },
+    {
+      "id": "obj_3645",
+      "type": "enemy",
+      "position": {
+        "x": 23,
+        "y": 9
+      },
+      "properties": {
+        "display_name": "SPIDER",
+        "battle": "BATTLE_SPIDER",
+        "ai": "AI_PATROL_VERT",
+        "enemy_type": "spider",
+        "entity_id": "ENTITY_ID_SPIDER",
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "S",
+        "hp": 16,
+        "max_hp": 16,
+        "gold_reward": 15,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "actor_id": 12
+      }
     }
   ],
   "regions": [
