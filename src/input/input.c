@@ -29,27 +29,11 @@ static uint8_t injected_pad_state = 0;
 /* Cross-emulator joypad probe (diagnostic, harness/host reads it via the
  * symbol table): [0] = raw joypad() sample, [1] = P1 register byte as seen
  * right after the sample, [2] = post-injection pad_state, [3] = write
- * heartbeat (increments once per input_update), [4] = action-row read,
- * [5] = direction-row read. */
-volatile uint8_t g_input_probe[6] = {0, 0, 0, 0, 0, 0};
-
-/* Instrumented copy of GBDK's joypad() read pattern (select row, settle
- * dummy reads, sample) so the two raw row values are observable from the
- * host.  Same write/read sequence as the library function. */
-static uint8_t probe_joypad(void)
-{
-    uint8_t actions, dirs;
-    P1_REG = 0x20;
-    (void)P1_REG; (void)P1_REG; (void)P1_REG;
-    actions = P1_REG & 0x0F;
-    P1_REG = 0x10;
-    (void)P1_REG; (void)P1_REG; (void)P1_REG; (void)P1_REG; (void)P1_REG;
-    dirs = P1_REG & 0x0F;
-    g_input_probe[4] = actions;
-    g_input_probe[5] = dirs;
-    return (uint8_t)(((~actions) & 0x0F) << 4) | (uint8_t)(((~dirs) & 0x0F));
-}
-#define joypad() probe_joypad()
+ * heartbeat (increments once per input_update).  Passive only: the actual
+ * P1 sampling stays GBDK's joypad() (which ends with both rows
+ * deselected); a local reimplementation that leaves a row selected
+ * returns stale data on the next call in strict emulators. */
+volatile uint8_t g_input_probe[4] = {0, 0, 0, 0};
 #endif
 
 const uint8_t g_input_button_bits[8] = {
