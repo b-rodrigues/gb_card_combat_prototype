@@ -392,7 +392,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </label>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, margin: '6px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, margin: '6px 0' }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Col X</label>
                   <input
@@ -600,7 +600,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             {/* PRESS START Prompt */}
             <div className="form-group">
               <label style={{ fontWeight: 600 }}>🕹️ &ldquo;PRESS START&rdquo; Prompt</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 6 }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Text</label>
                   <input
@@ -687,7 +687,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </label>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6, marginTop: 4 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 6, marginTop: 4 }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Credits Text</label>
                   <input

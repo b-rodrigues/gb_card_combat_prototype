@@ -723,6 +723,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0; /* shrink inside grid/flex rows instead of overflowing */
 }
 
 .form-group label {
@@ -741,6 +742,9 @@ body {
   border-radius: 4px;
   font-size: 12px;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box; /* fill the column; spinner stays inside view */
+  min-width: 0;
 }
 
 .form-group input:focus,
@@ -752,8 +756,22 @@ body {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr) kills the inputs' auto-minimum width, which pushed
+     the row wider than the 360px inspector panel and clipped the right
+     cell (Position Y) outside the visible area. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+/* Raw inputs inside the inspector (not wrapped in .form-group — e.g.
+   the title-layout and prompt grids) get the same treatment: fill the
+   track instead of overflowing the fixed 360px panel. */
+.inspector-content input,
+.inspector-content select,
+.inspector-content textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .entity-list {
