@@ -149,6 +149,10 @@ def load_scenarios(scenarios_dir="tools/scenarios"):
     scenarios = []
     pattern = os.path.join(scenarios_dir, "**", "*.json")
     for filepath in sorted(glob.glob(pattern, recursive=True)):
+        # Frozen test-content fixtures live under a fixtures/ dir and are
+        # level JSON, not scenarios -- never load them as tests.
+        if "fixtures" in filepath.split(os.sep):
+            continue
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
