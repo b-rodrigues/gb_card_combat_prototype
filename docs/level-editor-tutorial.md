@@ -136,6 +136,13 @@ the SELL action on the quick screen's CARDS detail page. Point an NPC at a
 shop with the Inspector's **Shop** field; `make shops` compiles the table
 and `make shops-check` guards drift + dangling references.
 
+In the Exits tab, **🔁 Return exits → Check** shows, per exit, whether the
+target scene has a return exit. A level no exit targets is unreachable —
+the walkthrough sweep fails on that. Missing returns show the gate it
+would add; **Create** writes the reciprocal into the target (opposite
+side, one tile inside, landing on the spawn row/col) and upserts the
+from-exit, so the pair can never drift. Recompile to apply.
+
 ## 6. Tilesets & the tile importer
 
 The palette's `🎨 Import/Review Tiles` button opens the Tileset Reviewer:

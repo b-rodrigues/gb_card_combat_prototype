@@ -873,6 +873,121 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // ── Auto exits ────────────────────────────────────────────────
+        // A one-directional exit (the hand-authored norm) leaves a level
+        // unreachable from the other side.  These endpoints compute the
+        // reciprocal ("return") exit so the editor can preview it and
+        // assign it in one click.  Placement is deterministic:
+        //   direction  -> opposite side of the target map
+        //   gate       -> one tile inside that side, on the landing row/col
+        //   return spawn -> the tile just inside the from-gate
+        const EXIT_OPPOSITE: Record<string, string> = {
+          NORTH: 'SOUTH', SOUTH: 'NORTH', EAST: 'WEST', WEST: 'EAST',
+        };
+        const EXIT_VEC: Record<string, [number, number]> = {
+          NORTH: [0, -1], SOUTH: [0, 1], EAST: [1, 0], WEST: [-1, 0],
+        };
+        const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+        const readLevel = (id: string) => {
+          if (!isSafeId(id)) throw new Error(`invalid level id '${id}'`);
+          return readJsonFile(path.join('levels', `${id}.json`));
+        };
+        const proposeReturn = (fromId: string, ex: any) => {
+          const toId = ex?.target_scene;
+          if (!toId || !isSafeId(toId)) throw new Error('exit has no valid target scene');
+          if (toId === fromId) throw new Error('exit targets its own level');
+          const to = readLevel(toId);
+          const bw: number = to.map?.width, bh: number = to.map?.height;
+          if (!bw || !bh) throw new Error(`level ${toId} has no map size`);
+          const dir = ex.direction || 'SOUTH';
+          const rdir = EXIT_OPPOSITE[dir];
+          if (!rdir) throw new Error(`exit direction '${dir}' is invalid`);
+          let gx: number, gy: number;
+          if (rdir === 'WEST') { gx = 1; gy = clamp(ex.target_y ?? 1, 1, bh - 2); }
+          else if (rdir === 'EAST') { gx = bw - 2; gy = clamp(ex.target_y ?? 1, 1, bh - 2); }
+          else if (rdir === 'NORTH') { gy = 1; gx = clamp(ex.target_x ?? 1, 1, bw - 2); }
+          else { gy = bh - 2; gx = clamp(ex.target_x ?? 1, 1, bw - 2); }
+          const from = readLevel(fromId);
+          const fw: number = from.map?.width, fh: number = from.map?.height;
+          const dv = EXIT_VEC[dir] || [0, 1];
+          const sx = clamp((ex.x ?? 0) - dv[0], 0, (fw || 1) - 1);
+          const sy = clamp((ex.y ?? 0) - dv[1], 0, (fh || 1) - 1);
+          return {
+            x: gx, y: gy, target_scene: fromId,
+            target_x: sx, target_y: sy, direction: rdir,
+            tile_char: rdir === 'WEST' ? '<' : '>',
+          };
+        };
+        const findReturn = (toLevel: any, fromId: string) =>
+          (toLevel.exits || []).find((e: any) => e.target_scene === fromId) || null;
+
+        // Preview: for each exit of `from_id`, does the target already
+        // have a return, and if not, what would we create?
+        if (req.method === 'POST' && req.url === '/api/exit-status') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { from_id, exits } = JSON.parse(body);
+              if (!isSafeId(from_id)) throw new Error(`invalid from_id '${from_id}'`);
+              const items = (Array.isArray(exits) ? exits : []).map((ex: any, i: number) => {
+                try {
+                  const to = readLevel(ex.target_scene);
+                  const ret = findReturn(to, from_id);
+                  return { index: i, target: ex.target_scene, has_return: !!ret,
+                           return_exit: ret, proposal: ret ? null : proposeReturn(from_id, ex),
+                           error: null };
+                } catch (e: any) {
+                  return { index: i, target: ex?.target_scene || '?', has_return: false,
+                           return_exit: null, proposal: null, error: e.message };
+                }
+              });
+              sendJson({ success: true, items });
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Assign: upsert the exit into the from-level and create the
+        // reciprocal in the target level when missing.  Both files are
+        // written atomically; existing returns are never duplicated.
+        if (req.method === 'POST' && req.url === '/api/connect-levels') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { from_id, exit } = JSON.parse(body);
+              if (!isSafeId(from_id)) throw new Error(`invalid from_id '${from_id}'`);
+              const a = readLevel(from_id);
+              a.exits = a.exits || [];
+              const idx = a.exits.findIndex((e: any) =>
+                e.x === exit.x && e.y === exit.y && e.target_scene === exit.target_scene);
+              if (idx >= 0) a.exits[idx] = exit; else a.exits.push(exit);
+              writeJsonAtomic(levelAbs(from_id), a);
+
+              const toId = exit.target_scene;
+              const to = readLevel(toId);
+              let toExit = findReturn(to, from_id);
+              let created = false;
+              if (!toExit) {
+                toExit = proposeReturn(from_id, exit);
+                to.exits = to.exits || [];
+                to.exits.push(toExit);
+                writeJsonAtomic(levelAbs(toId), to);
+                created = true;
+              }
+              sendJson({ success: true, from_exit: exit, to_exit: toExit, created });
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         if (req.method === 'POST' && req.url === '/api/save-tileset') {
           let body = '';
           req.on('data', chunk => { body += chunk; });

@@ -109,10 +109,11 @@ static const EventDefinition *event_first_match(Game *g, EventTriggerType trigge
      * single event table is written against the real maps (0..5): alias
      * test maps to their real counterparts so one table drives both
      * worlds (no duplicated event content to drift).  Release builds
-     * never see ids 6..11 (guarded at every lookup), so this is a no-op
-     * there. */
+     * never see the TEST block (guarded at every lookup), so this is a
+     * no-op there. */
     match_map = map;
-    if (map != EVENT_MAP_ANY && map >= MAP_TEST_FIELD && map <= MAP_TEST_SOUTH_FIELD) {
+    if (map != EVENT_MAP_ANY && map >= MAP_TEST_FIELD
+        && map < (MapId)(MAP_TEST_FIELD + MAP_TEST_COUNT)) {
         match_map = (MapId)(map - MAP_TEST_FIELD);
     }
     for (i = 0; i < g_event_count; i++) {

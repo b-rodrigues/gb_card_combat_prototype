@@ -22,11 +22,11 @@ static SceneExit s_exit_scratch;
 const SceneDefinition *scene_definition_for_map(MapId map_id)
 {
 #ifdef TEST_LEVELS
-    if (map_id < MAP_TEST_FIELD || map_id > MAP_TEST_SOUTH_FIELD) return NULL;
+    if (map_id < MAP_TEST_FIELD || map_id >= (MapId)(MAP_TEST_FIELD + MAP_TEST_COUNT)) return NULL;
     banked_copy(SCENE_CONTENT_BANK, &s_scene_scratch,
                 &g_scenes[map_id - MAP_TEST_FIELD], sizeof(SceneDefinition));
 #else
-    if (map_id > MAP_SOUTH_FIELD) return NULL;
+    if (map_id >= MAP_REAL_COUNT) return NULL;
     banked_copy(SCENE_CONTENT_BANK, &s_scene_scratch,
                 &g_scenes[map_id], sizeof(SceneDefinition));
 #endif

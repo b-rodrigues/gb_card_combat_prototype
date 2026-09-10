@@ -7,6 +7,7 @@ import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 import { fetchDialogueList } from './io/dialogue';
 import { fetchShopList } from './io/shops';
+import { ExitConnector } from './ExitConnector';
 import { TutorialEditor } from './TutorialEditor';
 import { fetchUsedActorIds } from './io/saveLevel';
 import { FilterCombo } from './FilterCombo';
@@ -1343,6 +1344,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 ))}
               </div>
             )}
+            <ExitConnector levelId={level.id} exits={level.exits} />
           </div>
         )}
 

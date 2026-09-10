@@ -13,6 +13,11 @@
 #define MAP_SOUTH_FIELD 5
 #define MAP_FOREST2 6
 
+/* Real scene count (= max id + 1, ids are dense).  Engine guards
+ * MUST use these, never a named max id: adding a level past the
+ * current last id otherwise silently defaults its map/music. */
+#define MAP_REAL_COUNT 7
+
 #define SCENE_FIELD 0
 #define SCENE_TOWN 1
 #define SCENE_FOREST 2
@@ -29,6 +34,8 @@
 #define MAP_TEST_MOUNTAIN_PASS 243
 #define MAP_TEST_CASTLE 244
 #define MAP_TEST_SOUTH_FIELD 245
+
+#define MAP_TEST_COUNT 6
 
 #define SCENE_TEST_FIELD 240
 #define SCENE_TEST_TOWN 241

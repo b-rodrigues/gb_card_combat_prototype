@@ -97,6 +97,11 @@ def emit_ids_header(registry=None):
         num = registry["scenes"][sid]
         lines.append(f"#define MAP_{sid.upper()} {num}")
     lines.append("")
+    lines.append("/* Real scene count (= max id + 1, ids are dense).  Engine guards")
+    lines.append(" * MUST use these, never a named max id: adding a level past the")
+    lines.append(" * current last id otherwise silently defaults its map/music. */")
+    lines.append(f"#define MAP_REAL_COUNT {len(registry['scenes'])}")
+    lines.append("")
     for sid in sorted(registry["scenes"], key=lambda s: registry["scenes"][s]):
         num = registry["scenes"][sid]
         lines.append(f"#define SCENE_{sid.upper()} {num}")
@@ -105,6 +110,8 @@ def emit_ids_header(registry=None):
     lines.append(" * never moves: real ids grow upward from 0 and can never reach it. */")
     for sid in TEST_SCENE_ORDER:
         lines.append(f"#define MAP_{sid.upper()} {test_ids[sid]}")
+    lines.append("")
+    lines.append(f"#define MAP_TEST_COUNT {len(TEST_SCENE_ORDER)}")
     lines.append("")
     for sid in TEST_SCENE_ORDER:
         lines.append(f"#define SCENE_{sid.upper()} {test_ids[sid]}")
