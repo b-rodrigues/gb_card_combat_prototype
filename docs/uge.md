@@ -510,10 +510,14 @@ transition test
 > `s_note_freqs`, `play_note`, the `lacrimosa` (overworld), `victory`, and
 > `title` note arrays and the `s_track_*` tables were deleted from
 > `src/audio/audio.c`; `audio_update` only steps hUGEDriver now.  The title
-> theme plays an authored `.uge` (currently `title short.uge`, bank 6);
-> MUSIC_OVERWORLD / MUSIC_VICTORY are silent until `.uge` assets exist.
+> theme plays `title short.uge` (bank 6) and the battle-victory jingle plays
+> `victory.uge` (bank 7); MUSIC_OVERWORLD is silent until an asset exists.
 > `tools/compile_music.py` also patches the empty `waves[]` table some
 > wave-less songs emit (SDCC error 286).
+>
+> Bank headroom is now the constraint (bank 6: 1032 B, bank 7: 1432 B).
+> `title long.uge` (3005 B) does not fit either bank alongside the existing
+> songs and victory; see the roadmap note on adding a third driver bank.
 
 Once every track has been converted:
 

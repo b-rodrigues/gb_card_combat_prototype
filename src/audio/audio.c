@@ -116,9 +116,11 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_castle);
     } else if (track == MUSIC_TITLE) {
         huge_music_play(&song_title);
+    } else if (track == MUSIC_VICTORY) {
+        huge_music_play_banked(&song_victory, HUGE_MUSIC_BANK_B7);
     }
-    /* MUSIC_OVERWORLD / MUSIC_VICTORY have no authored .uge yet: they
-     * stay silent (the track still reports correctly via telemetry). */
+    /* MUSIC_OVERWORLD has no authored .uge yet: it stays silent (the
+     * track still reports correctly via telemetry). */
 
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
      * the track actually changes, so callers never forget it. */

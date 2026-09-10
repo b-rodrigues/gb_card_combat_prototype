@@ -42,7 +42,7 @@ DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c $(GENERATED_MUSIC_DIR)/title.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c $(GENERATED_MUSIC_DIR)/title.c $(GENERATED_MUSIC_DIR)/victory.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
@@ -504,8 +504,8 @@ music: $(MUSIC_SRCS) sfx
 # rerunning reproduces generated/sfx/sfx_tables.c byte-identically.
 sfx: $(SFX_TABLES)
 
-$(SFX_TABLES): $(SFX_ALL_UGE) $(SFX_REGISTRY) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
-	python3 tools/transcribe_sfx.py --out "$@"
+$(SFX_TABLES) &: $(SFX_ALL_UGE) $(SFX_REGISTRY) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
+	python3 tools/transcribe_sfx.py --out $(GENERATED_SFX_DIR)/sfx_tables.c
 
 $(GENERATED_SFX_DIR):
 	mkdir -p $(GENERATED_SFX_DIR)
@@ -549,6 +549,11 @@ $(GENERATED_MUSIC_DIR)/mimic.c: assets/music/Mimic.uge tools/compile_music.py | 
 # the legacy music engine is gone (docs/uge.md Phase 6).
 $(GENERATED_MUSIC_DIR)/title.c: assets/music/title\ short.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_title "$@"
+
+# Battle-victory jingle (one-shot source).  Replaces the old hardcoded
+# 4-note victory table.  Bank 6 is nearly full, so it plays from bank 7.
+$(GENERATED_MUSIC_DIR)/victory.c: assets/music/victory.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 7 song_victory "$@"
 
 # WAV previews for the level editor's BGM toggle (Inspector Map Info).
 # Rendered from the generated song C by tools/render_music_preview.py

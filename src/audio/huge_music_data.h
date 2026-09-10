@@ -11,5 +11,6 @@ extern const hUGESong_t song_mimic;      /* bank 7 (HUGE_MUSIC_BANK_B7) */
 extern const hUGESong_t song_village;
 extern const hUGESong_t song_castle;
 extern const hUGESong_t song_title;
+extern const hUGESong_t song_victory;
 
 #endif /* HUGE_MUSIC_DATA_H */
