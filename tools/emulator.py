@@ -4,7 +4,29 @@ mgba CLI debugger transport for Game Boy RPG development harness.
 Uses mgba's command-line debugger (-d) via PTY with raw TTY mode.
 Authoritative bridge for Game Boy snapshot, telemetry, and screen inspection.
 """
-import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal
+import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal, json
+from pathlib import Path
+
+_REPOROOT = Path(__file__).resolve().parent.parent
+
+
+def _scene_id_maps():
+    """SCENE_MAP / MAP_NAME_MAP derived from levels/registry.json (+ fixed
+    TEST block): display names for snapshot bytes.  Unknown ids fall back
+    to UNKNOWN_<n> at the use sites, so a stale map degrades loudly."""
+    try:
+        reg = json.loads((_REPOROOT / "levels" / "registry.json").read_text(
+            encoding="utf-8"))
+        scenes = reg.get("scenes", {})
+        base = reg.get("_test_base", 240)
+    except (OSError, ValueError):
+        scenes, base = {}, 240
+    test_names = ["test_field", "test_town", "test_forest",
+                  "test_mountain_pass", "test_castle", "test_south_field"]
+    real = {num: sid.upper() for sid, num in scenes.items()
+            if isinstance(num, int)}
+    test = {base + i: sid.upper() for i, sid in enumerate(test_names)}
+    return {**real, **test}
 
 DEBUG_PROTOCOL_VERSION = 1
 
@@ -15,17 +37,13 @@ GAME_STATE_MAP = {0: "OVERWORLD", 1: "BATTLE", 2: "GAME_OVER", 3: "THANKS"}
 SCREEN_MAP = {0: "OVERWORLD", 1: "DIALOGUE", 2: "BATTLE", 3: "GAME_OVER", 4: "THANKS",
               5: "SHOP", 6: "ITEM", 7: "ENDING", 8: "SAVE_LOAD", 9: "TITLE", 10: "INTRO",
               11: "TUTORIAL"}
-SCENE_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE", 5: "SOUTH_FIELD",
-             6: "TEST_FIELD", 7: "TEST_TOWN", 8: "TEST_FOREST",
-             9: "TEST_MOUNTAIN_PASS", 10: "TEST_CASTLE", 11: "TEST_SOUTH_FIELD"}
+SCENE_MAP = _scene_id_maps()
 MUSIC_TRACK_MAP = {0: "NONE", 1: "OVERWORLD", 2: "BATTLE", 3: "VICTORY",
                    4: "TITLE", 5: "TOWN", 6: "DUNGEON", 7: "BOSS", 8: "MIMIC",
                    9: "DESOLATE", 10: "FOREST"}
 BATTLE_TURN_MAP = {0: "PLAYER", 1: "ENEMY_DELAY", 2: "ENEMY", 3: "RESULT"}
 BATTLE_RESULT_MAP = {0: "NONE", 1: "VICTORY", 2: "DEFEAT", 3: "FLED"}
-MAP_NAME_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE", 5: "SOUTH_FIELD",
-                6: "TEST_FIELD", 7: "TEST_TOWN", 8: "TEST_FOREST",
-                9: "TEST_MOUNTAIN_PASS", 10: "TEST_CASTLE", 11: "TEST_SOUTH_FIELD"}
+MAP_NAME_MAP = dict(SCENE_MAP)
 STORY_FLAG_ID_MAP = {1: "ARRIVED_TOWN", 2: "MET_MAYOR"}
 # Per-game content range base (mirrors *_FIRST_GAME in the engine headers).
 GAME_ID_BASE = 0x80

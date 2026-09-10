@@ -1718,10 +1718,36 @@ map.  Two tiers enforce that:
   hostile last, no user-placed extras).  The **debug (harness) ROM links
   ONLY these** (`scenes_content_test.c` / `actors_content_test.c`, bank 4,
   `--bank 4`), selected at compile time by `-DTEST_LEVELS` + the
-  `TEST_*` scene ids (6..11).  Scenarios stage `scene: TEST_FIELD` etc.
+  `TEST_*` scene ids (fixed block at 240+, never moves).  Scenarios stage
+  `scene: TEST_FIELD` etc.
 * **Tier 2 — working content** (`levels/`): everything the editor, the
   LLM, and collaborators edit freely.  Feeds the **release ROM only**.
   Adding a level, enemy, or actor here cannot break a scenario.
+
+## 42.2 Adding a level (human workflow — no agent required)
+
+Scene ids are data, not code.  `levels/registry.json` is the single
+source of truth (real scenes 0..N dense, TEST block fixed at 240+,
+retired ids tombstoned and never reused); `src/world/scene_ids_generated.h`
+is emitted from it by `compile.py --all` and carries every `MAP_*` /
+`SCENE_*` value the engine needs (`world.h` / `screen.h` hold only the
+`uint8_t` typedefs).
+
+Human flow: create the level in the editor → **save it** (the dev server
+assigns the next scene id on first save — no clicks, no C edits) → link
+exits via the Target Scene combobox → compile.  Rules for agents:
+
+* Never hand-edit ids in headers, `compile.py`, `validate.py`,
+  `emulator.py`, or the walkthrough — they all derive from the registry.
+  The only hand-written scene list left is `TEST_SCENE_ORDER` (the fixed
+  fixture names).
+* `validate.py` fails loudly on any registry/file disagreement (missing
+  entry → "save the level in the editor"; missing file → "restore from
+  git or retire the id"); `compile.py` refuses unknown sids the same way.
+* Retired ids stay holes in `g_scenes[]` (inert empty rows keep direct
+  indexing valid); never compact or reuse them.
+* A new level is unreachable until some exit targets it — the content
+  sweep fails loudly on unreachable levels by design, not by accident.
 
 Rules:
 

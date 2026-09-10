@@ -21,7 +21,7 @@ from walkthrough.session import LEVELS_DIR, REPO
 # Import the level compiler's derivation (single source of truth).
 sys.path.insert(0, os.path.join(REPO, "tools", "level_compiler"))
 from validate import load_tilesets          # noqa: E402
-from compile import derive_collision, SCENE_ORDER   # noqa: E402
+from compile import derive_collision, scene_table_order, is_level_file   # noqa: E402
 
 # Patrol boxes (src/world/actor.h): blocked cells for routing — the
 # walkthrough must not steer through a hostile's patrol path.
@@ -106,24 +106,28 @@ class Scene:
 
 class Planner:
     def __init__(self, levels_dir=LEVELS_DIR):
-        """Mirror the compiler's content registry: every levels/*.json
-        becomes a scene; ids are assigned SCENE_ORDER first, then the
-        remaining files alphabetically — exactly the order compile.py
-        appends unknown levels to its table, so planner scene ids match
-        the ROM's compiled ids.  A NEW level added by the editor gets a
-        scene id automatically and is swept by walk_sweep."""
+        """Mirror the compiler's content registry: scene ids come from
+        levels/registry.json (same scene_table_order() the ROM tables
+        use), so planner scene ids match the ROM's compiled ids.  A NEW
+        level added by the editor gets a scene id automatically and is
+        swept by walk_sweep."""
         self.scenes = {}
         tilesets = load_tilesets()
         names = sorted(os.path.splitext(f)[0]
                        for f in os.listdir(levels_dir)
-                       if f.endswith(".json"))
-        ordered = [n for n in SCENE_ORDER if n in names]
-        ordered += [n for n in names if n not in SCENE_ORDER]
-        for scene_id, name in enumerate(ordered):
-            level = json.load(open(os.path.join(levels_dir,
-                                                name + ".json")))
+                       if f.endswith(".json") and is_level_file(f))
+        levels = {}
+        for name in names:
+            data = json.load(open(os.path.join(levels_dir,
+                                               name + ".json")))
+            levels[data["id"]] = data
+        ordered, _ = scene_table_order(levels)
+        for pos, name in enumerate(ordered):
+            if name is None:
+                continue  # retired hole
+            level = levels[name]
             ts = tilesets.get(level["map"]["tileset"], {})
-            self.scenes[name] = Scene(name, scene_id, level, ts)
+            self.scenes[name] = Scene(name, pos, level, ts)
 
     def arrival_pos(self, name):
         """The tile the player lands on when entering scene `name`

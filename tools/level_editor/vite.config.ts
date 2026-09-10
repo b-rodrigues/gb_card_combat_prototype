@@ -73,6 +73,43 @@ function levelEditorApiPlugin(): Plugin {
         const isSafeId = (id: unknown) =>
           typeof id === 'string' && /^[A-Za-z0-9_]+$/.test(id);
 
+        // Scene id registry (levels/registry.json): single source of
+        // truth for real-scene ids.  ensureRegistryEntry assigns the next
+        // dense id on first save of an unknown level; ids are append-only
+        // and never reused (deleted levels tombstone, protecting saves).
+        // TEST names/ids are refused — the TEST block is fixed.
+        const REGISTRY_REL = path.join('levels', 'registry.json');
+        const readRegistry = () => JSON.parse(
+          fs.readFileSync(path.join(repoRoot, REGISTRY_REL), 'utf-8'));
+        const ensureRegistryEntry = (sid: string): number => {
+          if (!/^[a-z][a-z0-9_]*$/.test(sid)) {
+            throw new Error(
+              `invalid scene id '${sid}': lowercase letters, digits and underscores, starting with a letter`);
+          }
+          if (sid.startsWith('test_')) {
+            throw new Error(
+              `scene id '${sid}' is reserved for harness fixtures (TEST block)`);
+          }
+          const reg = readRegistry();
+          const scenes = reg.scenes || {};
+          if (typeof scenes[sid] === 'number') return scenes[sid];
+          const used: number[] = Object.values(scenes).filter(
+            (v): v is number => typeof v === 'number');
+          const retired: number[] = Object.values(reg._retired || {}).filter(
+            (v): v is number => typeof v === 'number');
+          const testBase: number = reg._test_base ?? 240;
+          const next = [...used, ...retired, -1].reduce((a, b) => Math.max(a, b), -1) + 1;
+          if (next >= testBase) {
+            throw new Error(
+              `scene id space exhausted (next ${next} hits TEST block at ${testBase})`);
+          }
+          scenes[sid] = next;
+          reg.scenes = scenes;
+          fs.writeFileSync(path.join(repoRoot, REGISTRY_REL),
+            JSON.stringify(reg, null, 2) + '\n', 'utf-8');
+          return next;
+        };
+
         // Live disk reads (no editor rebuild needed after editing JSON by
         // hand or via another tool).  Bundled static imports in App.tsx /
         // Tileset.ts remain as the fallback for built bundles served
@@ -88,11 +125,18 @@ function levelEditorApiPlugin(): Plugin {
         };
         if (req.method === 'GET' && req.url === '/api/levels') {
           try {
+            let sceneIds: Record<string, number> = {};
+            try {
+              sceneIds = readRegistry().scenes || {};
+            } catch { /* registry unreadable: scene_id stays null */ }
             const levels = fs.readdirSync(path.join(repoRoot, 'levels'))
-              .filter((f) => f.endsWith('.json'))
+              .filter((f) => f.endsWith('.json') && f !== 'registry.json')
               .map((f) => {
                 const data = readJsonFile(path.join('levels', f));
-                return { id: data.id || f.replace(/\.json$/, ''), name: data.name || f, category: 'levels' };
+                const id = data.id || f.replace(/\.json$/, '');
+                const sid = sceneIds[id];
+                return { id, name: data.name || f, category: 'levels',
+                         scene_id: typeof sid === 'number' ? sid : null };
               });
             const screens: Array<{ id: string; name: string; category: string }> = [];
             for (const [id, rel] of Object.entries(SCREEN_ID_TO_PATH)) {
@@ -423,8 +467,20 @@ function levelEditorApiPlugin(): Plugin {
               const targetPath = path.join(repoRoot, 'levels', `${id}.json`);
               fs.mkdirSync(path.dirname(targetPath), { recursive: true });
               fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
+              // Scene registry: first save of an unknown level id assigns
+              // the next dense scene id (append-only, never reused).
+              // Humans add levels by saving in the editor — no agent, no
+              // header edits.  Atomic with the save: both land or neither.
+              let sceneId: number | null = null;
+              try {
+                sceneId = ensureRegistryEntry(id);
+              } catch (regErr: any) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: String(regErr.message || regErr) }));
+                return;
+              }
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, path: targetPath }));
+              res.end(JSON.stringify({ success: true, path: targetPath, scene_id: sceneId }));
             } catch (err: any) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: err.message }));

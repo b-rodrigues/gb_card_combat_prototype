@@ -218,8 +218,11 @@ levels-check:
 	@python3 tools/level_compiler/validate.py levels/*.json
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
 
-src/game/scenes_content.c: $(wildcard levels/*.json)
+src/game/scenes_content.c src/world/scene_ids_generated.h &: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+# ^ Also (re)generates src/world/scene_ids_generated.h (MAP_*/SCENE_* values
+# from levels/registry.json) as a side effect; the wildcard above includes
+# registry.json so id assignments trigger a rebuild.  --check verifies it too.
 
 # Frozen harness-test fixtures (tools/scenarios/fixtures/levels/): the
 # debug (harness) ROM links ONLY these, so real content edits can never

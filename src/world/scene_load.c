@@ -25,13 +25,14 @@ void scene_load_tiles_banked(void)
 
     if (!w) return;
 #ifdef TEST_LEVELS
-    /* Frozen harness fixtures (bank 4): TEST MapIds 6..11 index the
-     * fixture table from 0.  The engine must not touch real scenes
-     * here (the test build contains no real content). */
+    /* Frozen harness fixtures (bank 4): TEST MapIds (fixed block at
+     * MAP_TEST_FIELD) index the fixture table from 0.  The engine must
+     * not touch real scenes here (the test build contains no real
+     * content). */
     if (map_id < MAP_TEST_FIELD || map_id > MAP_TEST_SOUTH_FIELD) return;
     def = &g_scenes[map_id - MAP_TEST_FIELD];
 #else
-    if (map_id > MAP_SOUTH_FIELD) return;
+    if (map_id >= MAP_TEST_FIELD) return;
     def = &g_scenes[map_id];
 #endif
 
@@ -87,7 +88,7 @@ void scene_spawn_banked(void)
     }
     def = &g_scenes[map_id - MAP_TEST_FIELD];
 #else
-    if (map_id > MAP_SOUTH_FIELD) {
+    if (map_id >= MAP_TEST_FIELD) {
         g_bk_byte_b = 4;
         g_bk_byte_c = 4;
         g_bk_byte_d = (uint8_t)DIRECTION_DOWN;

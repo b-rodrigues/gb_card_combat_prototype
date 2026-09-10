@@ -10,6 +10,7 @@ import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson, saveLevelToServer, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { fetchEnemyTypeList } from './io/combatArt';
+import { FilterCombo } from './FilterCombo';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
@@ -33,6 +34,9 @@ interface ExistingLevelItem {
   name: string;
   data: any;
   category?: 'levels' | 'screens';
+  /** Assigned scene id from the disk catalogue; null/undefined means
+   * unregistered (save the level to assign one). */
+  scene_id?: number | null;
 }
 
 const EXISTING_LEVELS: ExistingLevelItem[] = [
@@ -146,7 +150,8 @@ export const App: React.FC = () => {
         for (const it of items) {
           try {
             const data = await fetchLevelData(it.category, it.id);
-            fresh.push({ id: it.id, name: it.name, data, category: it.category });
+            fresh.push({ id: it.id, name: it.name, data, category: it.category,
+                         scene_id: it.scene_id ?? null });
           } catch {
             const b = byId.get(it.id);
             if (b) fresh.push(b);
@@ -186,7 +191,8 @@ export const App: React.FC = () => {
         for (const it of items) {
           if (!known.has(it.id)) {
             try {
-              added.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category });
+              added.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                           scene_id: it.scene_id ?? null });
             } catch {
               // Leave it out; the next save retries.
             }
@@ -828,54 +834,43 @@ export const App: React.FC = () => {
           <label htmlFor="level-select-dropdown" className="header-levels-label">
             Level:
           </label>
-          <select
-            id="level-select-dropdown"
-            className="level-select"
+          <FilterCombo
+            items={[
+              ...levelItems
+                .filter((l) => l.category === 'levels')
+                .map((lvl) => ({
+                  value: lvl.id,
+                  label: `${lvl.name} (${lvl.id}.json)`,
+                  group: 'Overworld Levels',
+                })),
+              ...levelItems
+                .filter((l) => l.category === 'screens')
+                .map((lvl) => ({
+                  value: lvl.id,
+                  label: `${lvl.name} (screens/${lvl.id}.json)`,
+                  group: 'Screens',
+                })),
+              ...enemyItems.map((e) => ({
+                value: `enemy:${e.id}`,
+                label: `${e.name} (enemy type)`,
+                group: 'Enemies',
+              })),
+              { value: 'hero', label: 'Hero (art + stats + starter deck)', group: 'Hero' },
+              { value: 'cards', label: 'Battle (HUD + layout + cards)', group: 'Battle' },
+              ...(!levelItems.some((l) => l.id === currentLevelId)
+                ? [{
+                    value: currentLevelId,
+                    label: `${level.name || currentLevelId} (${currentLevelId}.json)`,
+                    group: 'Current Level',
+                  }]
+                : []),
+              { value: '__new__', label: '➕ + New Level...', group: 'Actions' },
+            ]}
             value={heroView ? 'hero' : cardView ? 'cards' : enemyView ? `enemy:${enemyView}` : currentLevelId}
-            onChange={(e) => handleSelectLevel(e.target.value)}
-          >
-            <optgroup label="Overworld Levels">
-              {levelItems.filter((l) => l.category === 'levels').map((lvl) => (
-                <option key={lvl.id} value={lvl.id}>
-                  {lvl.name} ({lvl.id}.json)
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Screens">
-              {levelItems.filter((l) => l.category === 'screens').map((lvl) => (
-                <option key={lvl.id} value={lvl.id}>
-                  {lvl.name} (screens/{lvl.id}.json)
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Enemies">
-              {enemyItems.map((e) => (
-                <option key={e.id} value={`enemy:${e.id}`}>
-                  {e.name} (enemy type)
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Hero">
-              <option key="hero" value="hero">
-                Hero (art + stats + starter deck)
-              </option>
-            </optgroup>
-            <optgroup label="Battle">
-              <option key="cards" value="cards">
-                Battle (HUD + layout + cards)
-              </option>
-            </optgroup>
-            {!levelItems.some((l) => l.id === currentLevelId) && (
-              <optgroup label="Current Level">
-                <option value={currentLevelId}>
-                  {level.name || currentLevelId} ({currentLevelId}.json)
-                </option>
-              </optgroup>
-            )}
-            <optgroup label="Actions">
-              <option value="__new__">➕ + New Level...</option>
-            </optgroup>
-          </select>
+            onPick={(v) => handleSelectLevel(v)}
+            staleLabel={(v) => `${v} (unknown — pick below)`}
+            placeholder="Filter levels..."
+          />
         </div>
       </header>
 
@@ -1064,6 +1059,9 @@ export const App: React.FC = () => {
               onAddRegion={handleAddRegion}
               onUpdateRegion={handleUpdateRegion}
               onDeleteRegion={handleDeleteRegion}
+              sceneOptions={levelItems
+                .filter((l) => l.category === 'levels')
+                .map(({ id, name, scene_id }) => ({ id, name, scene_id: scene_id ?? null }))}
             />
           </aside>
           </>

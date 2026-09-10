@@ -22,40 +22,64 @@ import json
 import glob
 from pathlib import Path
 
+from scene_registry import (
+    TEST_SCENE_ORDER, load_registry, is_level_file,
+)
+
 MAX_WORLD_WIDTH = 40
 MAX_WORLD_HEIGHT = 24
 
-KNOWN_SCENES = {
-    "field": "SCENE_FIELD",
-    "town": "SCENE_TOWN",
-    "forest": "SCENE_FOREST",
-    "mountain_pass": "SCENE_MOUNTAIN_PASS",
-    "castle": "SCENE_CASTLE",
-    "south_field": "SCENE_SOUTH_FIELD",
-    # Frozen harness-test fixtures (tools/scenarios/fixtures/levels/):
-    # their exits legitimately retarget to the test scenes.
-    "test_field": "SCENE_TEST_FIELD",
-    "test_town": "SCENE_TEST_TOWN",
-    "test_forest": "SCENE_TEST_FOREST",
-    "test_mountain_pass": "SCENE_TEST_MOUNTAIN_PASS",
-    "test_castle": "SCENE_TEST_CASTLE",
-    "test_south_field": "SCENE_TEST_SOUTH_FIELD"
-}
 
-KNOWN_MAP_IDS = {
-    "MAP_FIELD": 0,
-    "MAP_TOWN": 1,
-    "MAP_FOREST": 2,
-    "MAP_MOUNTAIN_PASS": 3,
-    "MAP_CASTLE": 4,
-    "MAP_SOUTH_FIELD": 5,
-    "MAP_TEST_FIELD": 6,
-    "MAP_TEST_TOWN": 7,
-    "MAP_TEST_FOREST": 8,
-    "MAP_TEST_MOUNTAIN_PASS": 9,
-    "MAP_TEST_CASTLE": 10,
-    "MAP_TEST_SOUTH_FIELD": 11
-}
+def known_scene_names(registry=None):
+    """Every sid an exit may legally target: registry scenes + TEST fixtures."""
+    registry = registry or load_registry()
+    return set(registry["scenes"]) | set(TEST_SCENE_ORDER)
+
+
+def validate_registry_consistency(levels_dir=None):
+    """The registry and the levels/ directory must agree: every level file
+    (minus registry.json) needs a registry entry, and every live entry
+    needs its file.  Returns a list of error strings (empty = consistent).
+    This is the loud failure that replaces the old lcc error for
+    unregistered levels: fix = open the level in the editor and save it
+    (the editor assigns the next scene id on first save)."""
+    from pathlib import Path as _Path
+    errors = []
+    try:
+        registry = load_registry()
+    except SystemExit as exc:
+        return [str(exc)]
+    levels_dir = _Path(levels_dir) if levels_dir else (
+        _Path(__file__).resolve().parent.parent.parent / "levels")
+    files = {p.stem for p in levels_dir.glob("*.json") if is_level_file(p)}
+    try:
+        disk_ids = set()
+        for stem in files:
+            try:
+                data = json.loads((levels_dir / f"{stem}.json").read_text(
+                    encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                errors.append(f"Cannot read levels/{stem}.json: {exc}")
+                continue
+            if data.get("id", stem) != stem:
+                errors.append(
+                    f"levels/{stem}.json has id '{data.get('id')}' but the "
+                    f"registry keys scenes by filename — rename the file or "
+                    f"fix the id so they match.")
+            else:
+                disk_ids.add(stem)
+    except OSError as exc:
+        return [f"Cannot list {levels_dir}: {exc}"]
+    for sid in sorted(disk_ids - set(registry["scenes"])):
+        errors.append(
+            f"Level '{sid}' has no registry entry (no scene id assigned). "
+            f"Open it in the editor and save it — the editor assigns the "
+            f"next scene id on first save — then recompile.")
+    for sid in sorted(set(registry["scenes"]) - disk_ids):
+        errors.append(
+            f"Registry lists '{sid}' but levels/{sid}.json is missing. "
+            f"Restore the file from git, or retire the id properly.")
+    return errors
 
 
 def load_tilesets(tilesets_dir=None):
@@ -282,7 +306,7 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
             errors.append(f"Exit {e_idx} gate position ({ex}, {ey}) is outside map bounds ({width}x{height})")
             exits_ok = False
 
-        if target not in KNOWN_SCENES and (all_level_ids is None or target not in all_level_ids):
+        if target not in known_scene_names() and (all_level_ids is None or target not in all_level_ids):
             warnings.append(f"Exit {e_idx} target '{target}' is not in known scenes list")
 
     if exits_ok:
@@ -421,6 +445,11 @@ def main():
         else:
             file_paths.append(arg)
 
+    # The scene id registry is tooling state, not a level — never validate
+    # it as one (the shell glob levels/*.json matches it).
+    file_paths = [p for p in file_paths
+                  if os.path.basename(p) != "registry.json"]
+
     # Collect all level IDs first
     all_level_ids = set()
     loaded_levels = []
@@ -436,6 +465,16 @@ def main():
             sys.exit(1)
 
     overall_success = True
+
+    # Registry agreement (runs with real levels in the set — fixture
+    # runs validate the frozen TEST set, which intentionally has no
+    # registry entries): every level file needs a registry id and every
+    # live registry entry needs its file.  This is the loud failure for
+    # unregistered levels (fix: save the level in the editor).
+    if any(not sid.startswith("test_") for sid in all_level_ids):
+        for err in validate_registry_consistency():
+            print(f"ERROR: {err}")
+            overall_success = False
 
     # Cross-file check: nonzero actor_id values drive persistent defeat
     # tracking in GameState.world and must be unique across scenes.

@@ -6,6 +6,7 @@ import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 import { fetchUsedActorIds } from './io/saveLevel';
+import { FilterCombo } from './FilterCombo';
 
 
 interface InspectorProps {
@@ -34,6 +35,11 @@ interface InspectorProps {
   onAddRegion: (region: LevelRegion) => void;
   onUpdateRegion: (index: number, region: LevelRegion) => void;
   onDeleteRegion: (index: number) => void;
+  // All available level scenes, fed from App's catalogue (refreshed
+  // from disk on boot and after every save). Required: the exit target
+  // is always picked from real data, never typed blind. scene_id null
+  // means unregistered (save the level to assign one).
+  sceneOptions: Array<{ id: string; name: string; scene_id: number | null }>;
 }
 
 // BGM preview files rendered by tools/render_music_preview.py
@@ -137,6 +143,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onAddRegion,
   onUpdateRegion,
   onDeleteRegion,
+  sceneOptions,
 }) => {
   const isTitleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title'));
   const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'title'>('context');
@@ -1126,6 +1133,27 @@ export const Inspector: React.FC<InspectorProps> = ({
 
         {tab === 'context' && activeLayer === 'exits' && (
           <div className="inspector-section">
+            {(() => {
+              const entry = sceneOptions.find((s) => s.id === level.id);
+              if (entry && entry.scene_id !== null) return null;
+              return (
+                <div
+                  className="banner-warn"
+                  style={{
+                    background: '#3a2b00',
+                    border: '1px solid #a80',
+                    borderRadius: 4,
+                    padding: 8,
+                    marginBottom: 8,
+                    fontSize: 12,
+                  }}
+                >
+                  This level has no scene id yet — the ROM cannot compile
+                  it. Save the level to register one automatically, then
+                  recompile.
+                </div>
+              );
+            })()}
             <div className="section-header-row">
               <h4>Exits ({level.exits.length})</h4>
               <button
@@ -1175,12 +1203,17 @@ export const Inspector: React.FC<InspectorProps> = ({
 
                 <div className="form-group">
                   <label>Target Scene</label>
-                  <input
-                    type="text"
+                  <FilterCombo
+                    items={sceneOptions.map((s) => ({
+                      value: s.id,
+                      label: `${s.name} (${s.id}.json)`,
+                    }))}
                     value={selectedExit.target_scene}
-                    onChange={(e) =>
-                      onUpdateExit(selectedEntityIndex, { ...selectedExit, target_scene: e.target.value })
+                    onPick={(v) =>
+                      onUpdateExit(selectedEntityIndex, { ...selectedExit, target_scene: v })
                     }
+                    staleLabel={(v) => `${v} (unknown — pick a scene below)`}
+                    placeholder="Filter scenes..."
                   />
                 </div>
 

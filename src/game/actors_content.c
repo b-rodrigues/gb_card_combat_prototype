@@ -13,6 +13,30 @@
  * recorded persistently in GameState.world and survive scene reloads.
  */
 
+static const WorldActorDefinition g_field_actors[] = {
+    {
+        1, ENTITY_ID_SLIME, 14, 8, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME_TRIO, AI_PATROL_CROSS, 10, 10, 5, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 2, 4, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "SIGNPOST", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_SIGNPOST, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+    {
+        12, ENTITY_ID_SPIDER, 23, 9, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+};
+
 static const WorldActorDefinition g_town_actors[] = {
     {
         0, ENTITY_ID_MAYOR, 10, 5, DIRECTION_DOWN,
@@ -83,30 +107,6 @@ static const WorldActorDefinition g_town_actors[] = {
         '?', "DOG", INTERACTION_NONE, 0, DIALOGUE_ID_NONE, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
         0, 0,
          SPRITE_KIND_ENEMY, 1, 0
-    },
-};
-
-static const WorldActorDefinition g_field_actors[] = {
-    {
-        1, ENTITY_ID_SLIME, 14, 8, DIRECTION_DOWN,
-        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME_TRIO, AI_PATROL_CROSS, 10, 10, 5, CURRENCY_ID_GOLD,
-        0, 0,
-         SPRITE_KIND_ENEMY, 5, 0
-    },
-    {
-        0, ENTITY_ID_SIGNPOST, 2, 4, DIRECTION_DOWN,
-        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        '?', "SIGNPOST", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_SIGNPOST, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
-        0, 0,
-         SPRITE_KIND_ASCII, 0xFF, 0
-    },
-    {
-        12, ENTITY_ID_SPIDER, 23, 9, DIRECTION_DOWN,
-        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
-        0, 0,
-         SPRITE_KIND_ENEMY, 7, 0
     },
 };
 
@@ -217,10 +217,10 @@ static const WorldActorDefinition g_forest2_actors[] = {
 };
 
 const WorldActorTable g_actor_tables[] = {
-    { MAP_TOWN,            g_town_actors,
-        (uint8_t)(sizeof(g_town_actors) / sizeof(g_town_actors[0])) },
     { MAP_FIELD,           g_field_actors,
         (uint8_t)(sizeof(g_field_actors) / sizeof(g_field_actors[0])) },
+    { MAP_TOWN,            g_town_actors,
+        (uint8_t)(sizeof(g_town_actors) / sizeof(g_town_actors[0])) },
     { MAP_FOREST,          g_forest_actors,
         (uint8_t)(sizeof(g_forest_actors) / sizeof(g_forest_actors[0])) },
     { MAP_MOUNTAIN_PASS,   g_mountain_pass_actors,

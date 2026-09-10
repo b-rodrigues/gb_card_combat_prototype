@@ -1,0 +1,13 @@
+{
+  "scenes": {
+    "field": 0,
+    "town": 1,
+    "forest": 2,
+    "mountain_pass": 3,
+    "castle": 4,
+    "south_field": 5,
+    "forest2": 6
+  },
+  "_retired": {},
+  "_test_base": 240
+}

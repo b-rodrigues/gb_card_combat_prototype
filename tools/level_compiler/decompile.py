@@ -41,8 +41,8 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from validate import validate_level, load_tilesets
 import compile as compiler
 from compile import (
-    SCENE_ORDER, MAP_ENUM_MAP, SCENE_ENUM_MAP, TILESET_KIND_MAP,
-    REPO_ROOT as CREPO, resolve_sprite_kind, load_enemy_types,
+    TILESET_KIND_MAP, REPO_ROOT as CREPO, resolve_sprite_kind,
+    load_enemy_types, scene_maps,
 )
 
 SCENES_C = CREPO / "src" / "game" / "scenes_content.c"
@@ -480,8 +480,9 @@ def decompile_levels(levels_dir, write):
     exits, scenes, terrain = parse_scenes(scenes_text, name_to_value)
     actor_tables = parse_actor_tables(actors_text)
 
-    map_to_sid = {v: k for k, v in MAP_ENUM_MAP.items()}
-    scene_to_sid = {v: k for k, v in SCENE_ENUM_MAP.items()}
+    map_enum, scene_enum = scene_maps()
+    map_to_sid = {v: k for k, v in map_enum.items()}
+    scene_to_sid = {v: k for k, v in scene_enum.items()}
     kind_to_tileset = {}
     for ts, kind in TILESET_KIND_MAP.items():
         kind_to_tileset.setdefault(kind, ts)
@@ -764,6 +765,8 @@ def cmd_roundtrip():
         for p in (REPO_ROOT / "levels").glob("*.json"):
             if p.name == "schema":
                 continue
+            if p.name == compiler.REGISTRY_FILENAME:
+                continue  # registry is tooling state, not a level
             shutil.copy(p, tmp / "levels" / p.name)
         changed, warnings = decompile_levels(tmp / "levels", write=True)
         for w in warnings:

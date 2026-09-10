@@ -60,23 +60,12 @@ typedef enum {
     MOVE_RESULT_ENCOUNTER   = 4
 } WorldMoveResult;
 
-typedef enum {
-    MAP_FIELD         = 0,
-    MAP_TOWN          = 1,
-    MAP_FOREST        = 2,
-    MAP_MOUNTAIN_PASS = 3,
-    MAP_CASTLE        = 4,
-    MAP_SOUTH_FIELD   = 5,
-    /* Frozen harness-test fixtures (TEST_LEVELS, debug build only): the
-     * scenario suite runs against these so real content edits can never
-     * break it.  The release ROM never contains them. */
-    MAP_TEST_FIELD         = 6,
-    MAP_TEST_TOWN          = 7,
-    MAP_TEST_FOREST        = 8,
-    MAP_TEST_MOUNTAIN_PASS = 9,
-    MAP_TEST_CASTLE        = 10,
-    MAP_TEST_SOUTH_FIELD   = 11
-} MapId;
+/* MapId is a plain uint8_t; its VALUES come from the generated
+ * src/world/scene_ids_generated.h (single source of truth:
+ * levels/registry.json, emitted by tools/level_compiler/compile.py).
+ * Humans add levels in the editor — never hand-edit ids here. */
+typedef uint8_t MapId;
+#include "scene_ids_generated.h"
 
 /* A single generic exit tile type; the scene definition owns the
  * destination/spawn/visual of each exit. */

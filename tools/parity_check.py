@@ -272,6 +272,8 @@ def main(argv):
     tilesets = load_tilesets()
     levels_by_id = {}
     for p in sorted(LEVELS_DIR.glob("*.json")):
+        if p.name == "registry.json":
+            continue  # scene id registry, not a level
         data = json.loads(p.read_text())
         levels_by_id[data["id"]] = data
     if only:

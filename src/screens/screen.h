@@ -28,24 +28,11 @@ typedef enum {
 
 /*
  * SceneId identifies a specific overworld location.  Many scenes share the
- * same SCREEN_OVERWORLD screen implementation.
+ * same SCREEN_OVERWORLD screen implementation.  Like MapId, values come
+ * from the generated src/world/scene_ids_generated.h (see world.h).
  */
-typedef enum {
-    SCENE_FIELD         = 0,
-    SCENE_TOWN          = 1,
-    SCENE_FOREST        = 2,
-    SCENE_MOUNTAIN_PASS = 3,
-    SCENE_CASTLE        = 4,
-    SCENE_SOUTH_FIELD   = 5,
-    /* Frozen harness-test fixtures (TEST_LEVELS, debug build only).  See
-     * MapId: release data never references these. */
-    SCENE_TEST_FIELD         = 6,
-    SCENE_TEST_TOWN          = 7,
-    SCENE_TEST_FOREST        = 8,
-    SCENE_TEST_MOUNTAIN_PASS = 9,
-    SCENE_TEST_CASTLE        = 10,
-    SCENE_TEST_SOUTH_FIELD   = 11
-} SceneId;
+typedef uint8_t SceneId;
+#include "scene_ids_generated.h"
 
 /* ── Screen manager ─────────────────────────────────────────────── */
 
