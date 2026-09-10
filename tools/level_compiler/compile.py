@@ -100,10 +100,13 @@ def emit_ids_header(registry=None):
         num = registry["scenes"][sid]
         lines.append(f"#define MAP_{sid.upper()} {num}")
     lines.append("")
-    lines.append("/* Real scene count (= max id + 1, ids are dense).  Engine guards")
-    lines.append(" * MUST use these, never a named max id: adding a level past the")
-    lines.append(" * current last id otherwise silently defaults its map/music. */")
-    lines.append(f"#define MAP_REAL_COUNT {len(registry['scenes'])}")
+    lines.append("/* Real scene table length = max live id + 1.  The table keeps a")
+    lines.append(" * hole per retired id (scene_table_order), so this is NOT the live")
+    lines.append(" * count: after a delete, ids are sparse and the old len(scenes)")
+    lines.append(" * would reject the highest live id at runtime (NULL scene def).")
+    lines.append(" * Engine guards MUST use this, never a named max id. */")
+    real_count = max(registry["scenes"].values()) + 1 if registry["scenes"] else 0
+    lines.append(f"#define MAP_REAL_COUNT {real_count}")
     lines.append("")
     for sid in sorted(registry["scenes"], key=lambda s: registry["scenes"][s]):
         num = registry["scenes"][sid]

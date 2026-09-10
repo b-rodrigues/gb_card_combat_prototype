@@ -13,9 +13,11 @@
 #define MAP_SOUTH_FIELD 5
 #define MAP_FOREST2 6
 
-/* Real scene count (= max id + 1, ids are dense).  Engine guards
- * MUST use these, never a named max id: adding a level past the
- * current last id otherwise silently defaults its map/music. */
+/* Real scene table length = max live id + 1.  The table keeps a
+ * hole per retired id (scene_table_order), so this is NOT the live
+ * count: after a delete, ids are sparse and the old len(scenes)
+ * would reject the highest live id at runtime (NULL scene def).
+ * Engine guards MUST use this, never a named max id. */
 #define MAP_REAL_COUNT 7
 
 #define SCENE_FIELD 0

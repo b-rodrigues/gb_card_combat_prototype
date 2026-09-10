@@ -10,6 +10,7 @@ import { MapCanvas } from './MapCanvas';
 import { downloadLevelJson, saveLevelToServer, deleteLevel, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { fetchEnemyTypeList } from './io/combatArt';
+import { fetchEntityTypeList } from './io/entityTypes';
 import { FilterCombo } from './FilterCombo';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
@@ -115,6 +116,9 @@ export const App: React.FC = () => {
   // cards_skin.json) — the whole battle-time view, editable from here.
   const [cardView, setCardView] = useState<boolean>(false);
   const [enemyItems, setEnemyItems] = useState<Array<{ id: string; name: string }>>([]);
+  // Known ENTITY_ID_* values (entity-type registry); used by browser
+  // validation so it never says "valid" for an id the compiler rejects.
+  const [entityTypeIds, setEntityTypeIds] = useState<Set<string>>(new Set());
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
   // Compilation & Run State
@@ -140,6 +144,13 @@ export const App: React.FC = () => {
         setEnemyItems(items.map((e) => ({ id: e.id, name: e.label || e.id })));
       } catch {
         // Offline: EnemyManager shows its own load error.
+      }
+      try {
+        const types = await fetchEntityTypeList();
+        if (cancelled) return;
+        setEntityTypeIds(new Set(types.map((t) => t.entity_id)));
+      } catch {
+        // Offline: entity-id membership checks are skipped (compile still gates).
       }
     })();
     return () => { cancelled = true; };
@@ -753,15 +764,28 @@ export const App: React.FC = () => {
       const props = (obj.properties || {}) as Record<string, unknown>;
       const otype = obj.type;
       if (!props.entity_id) {
-        warnings.push(
-          `Object '${oid}' has no entity_id: kept verbatim, ignored by compile`);
-        (['actor_id', 'hp', 'max_hp', 'battle', 'ai'] as const).forEach((key) => {
-          if (key in props) {
-            errors.push(`Object '${oid}' has no entity_id but carries actor slot '${key}'`);
-            objectsOk = false;
-          }
-        });
+        if (otype === 'enemy') {
+          // compile.py hard-errors on an enemy with no entity id
+          // (actor_interaction emits COMBAT; validate.py requires the id).
+          errors.push(`Enemy object '${oid}' has no entity_id (pick an Enemy Type)`);
+          objectsOk = false;
+        } else {
+          warnings.push(
+            `Object '${oid}' has no entity_id: kept verbatim, ignored by compile`);
+          (['actor_id', 'hp', 'max_hp', 'battle', 'ai'] as const).forEach((key) => {
+            if (key in props) {
+              errors.push(`Object '${oid}' has no entity_id but carries actor slot '${key}'`);
+              objectsOk = false;
+            }
+          });
+        }
       } else {
+        if (entityTypeIds.size > 0 && !entityTypeIds.has(props.entity_id as string)) {
+          errors.push(
+            `Object '${oid}' entity_id '${props.entity_id}' is not a known entity type ` +
+            `— create it with the Entity ID picker's "New entity type"`);
+          objectsOk = false;
+        }
         const aid = typeof props.actor_id === 'number' && Number.isInteger(props.actor_id)
           ? props.actor_id
           : 0;
@@ -827,15 +851,17 @@ export const App: React.FC = () => {
     // Engine actor-slot caps (mirrors tools/level_compiler/validate.py):
     // actor_load_banked() spawns hostile rows into
     // World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
-    // g_static_actors (cap 6); rows beyond the cap are silently dropped
-    // at runtime.
+    // g_static_actors (MAX_STATIC_ACTORS=10; src/world/actor.h); rows past
+    // the cap are silently dropped at runtime.  Enemies count as hostile
+    // even when flags are absent (compile.py defaults them HOSTILE).
+    const isHostile = (o: any) =>
+      o.type === 'enemy' ||
+      ((((o.properties || {}).flags as string[]) || []).includes('HOSTILE'));
     const hostileRows = level.objects
-      .filter((o) => (o.properties || {}).entity_id &&
-        (((o.properties || {}).flags as string[]) || []).includes('HOSTILE'))
+      .filter((o) => (o.properties || {}).entity_id && isHostile(o))
       .map((o) => o.id);
     const staticRows = level.objects
-      .filter((o) => (o.properties || {}).entity_id &&
-        !(((o.properties || {}).flags as string[]) || []).includes('HOSTILE'))
+      .filter((o) => (o.properties || {}).entity_id && !isHostile(o))
       .map((o) => o.id);
     if (hostileRows.length > 4) {
       errors.push(
@@ -843,10 +869,10 @@ export const App: React.FC = () => {
         `MAX_WORLD_ACTORS=4; extra would be silently dropped: ${JSON.stringify(hostileRows.slice(4))}`);
       objectsOk = false;
     }
-    if (staticRows.length > 6) {
+    if (staticRows.length > 10) {
       errors.push(
-        `Level has ${staticRows.length} friendly actors but the engine loads at most 6 ` +
-        `static rows; extra would be silently dropped: ${JSON.stringify(staticRows.slice(6))}`);
+        `Level has ${staticRows.length} friendly actors but the engine loads at most 10 ` +
+        `static rows; extra would be silently dropped: ${JSON.stringify(staticRows.slice(10))}`);
       objectsOk = false;
     }
     if (!objectsOk) passed.pop();

@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "level_compiler"))
 
 import scene_registry as sr  # noqa: E402
 import validate as vd  # noqa: E402
+import compile as lc  # noqa: E402
 from validate import (  # noqa: E402
     validate_registry_consistency, registry_warnings,
 )
@@ -129,6 +130,17 @@ def main():
         retired = set(reg["retired"].values())
         check("retired id never reused",
               not (used & retired))
+
+        # MAP_REAL_COUNT must be max live id + 1 (the scene table length,
+        # holes included), not the live count: after a delete, ids are
+        # sparse and a level added at max+1 would otherwise be rejected at
+        # runtime (NULL scene def -> default map/music/no actors).
+        write(tmp, {"field": 0, "forest": 2}, retired={"gone": 1},
+              version=1, level_ids=("field", "forest"))
+        reg = sr.load_registry()
+        hdr = lc.emit_ids_header(reg)
+        check("MAP_REAL_COUNT = max id + 1 with retired holes",
+              "#define MAP_REAL_COUNT 3" in hdr)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
