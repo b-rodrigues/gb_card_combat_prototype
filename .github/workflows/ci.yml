@@ -20,7 +20,7 @@ jobs:
 
       - name: Lint + release + memory budget + harness + OAM + walkthrough
         run: |
-          nix develop -c bash -c "make clean && make lint && make test && make memmap && make registry-check && make dialogues-check && make shops-check && make screens-check && make test-harness JOBS=4 && make verify-oam && make verify-walkthrough"
+          nix develop -c bash -c "make clean && make lint && make test && make memmap && make registry-check && make dialogues-check && make shops-check && make entities-check && make screens-check && make test-harness JOBS=4 && make verify-oam && make verify-walkthrough"
         timeout-minutes: 50
 
       - name: Generated tile headers in sync with assets

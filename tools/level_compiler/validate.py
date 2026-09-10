@@ -272,15 +272,17 @@ _KNOWN_ENTITY_IDS = None
 
 
 def known_entity_ids():
-    """Parse ENTITY_ID_* #defines out of src/game/game_ids.h (the single
-    source of truth for the game-layer entity id range)."""
+    """ENTITY_ID_* names, derived from the entity-type registries
+    (screens/enemy_types/*.json + screens/entity_types/*.json) — the same
+    source entity_compile.py uses to generate the C header.  Adding a type
+    in the editor makes it valid here with no C edit."""
     global _KNOWN_ENTITY_IDS
     if _KNOWN_ENTITY_IDS is None:
-        import re
-        path = (Path(__file__).resolve().parent.parent.parent
-                / "src" / "game" / "game_ids.h")
-        text = path.read_text()
-        _KNOWN_ENTITY_IDS = set(re.findall(r"#define\s+(ENTITY_ID_\w+)", text))
+        tools_dir = Path(__file__).resolve().parent.parent
+        if str(tools_dir / "screen_compiler") not in sys.path:
+            sys.path.insert(0, str(tools_dir / "screen_compiler"))
+        from entity_ids import entity_type_ids
+        _KNOWN_ENTITY_IDS = {"ENTITY_ID_" + t.upper() for t in entity_type_ids()}
         _KNOWN_ENTITY_IDS.add("ENTITY_ID_PLAYER")
     return _KNOWN_ENTITY_IDS
 

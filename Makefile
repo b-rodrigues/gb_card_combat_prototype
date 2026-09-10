@@ -78,7 +78,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(M
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check shops shops-check registry-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check shops shops-check entities entities-check registry-check editor clean
 
 all: $(TARGET)
 
@@ -292,6 +292,16 @@ shops-check:
 	@python3 tools/screen_compiler/shops_compile.py --all --check
 	@python3 tools/level_compiler/validate.py --shop-refs
 
+# Entity types: screens/enemy_types/*.json + screens/entity_types/*.json are
+# the single source of truth for the ENTITY_ID_* game range.  Adding a type
+# in the editor regenerates src/game/entity_ids_generated.h with no C edit.
+entities:
+	@python3 tools/screen_compiler/entity_compile.py --all -o src/game/entity_ids_generated.h
+	@echo "All entity types compiled to src/game/entity_ids_generated.h"
+
+entities-check:
+	@python3 tools/screen_compiler/entity_compile.py --all --check
+
 # Registry invariants (levels/registry.json contract): versioning,
 # append-only ids, never-reuse of retired ids, registry/file agreement.
 # Locks the contract the editor's save/rename/delete operations satisfy.
@@ -306,6 +316,9 @@ src/game/dialogue_content.c src/game/dialogue_ids_generated.h &: $(wildcard scre
 
 src/game/shops_content.c: $(wildcard screens/shops/*.json) tools/screen_compiler/shops_compile.py
 	@python3 tools/screen_compiler/shops_compile.py --all -o src/game/shops_content.c
+
+src/game/entity_ids_generated.h: $(wildcard screens/enemy_types/*.json) $(wildcard screens/entity_types/*.json) tools/screen_compiler/entity_compile.py tools/screen_compiler/entity_ids.py
+	@python3 tools/screen_compiler/entity_compile.py --all -o src/game/entity_ids_generated.h
 
 src/game/title_data.c: screens/title.json
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
@@ -662,12 +675,12 @@ $(GB_LITE) $(SM83_LITE) &: $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx tiles levels screens dialogues shops music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels screens dialogues shops entities music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops entities music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@

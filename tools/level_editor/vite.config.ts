@@ -426,6 +426,92 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Entity types (screens/enemy_types/*.json + screens/entity_types/*.json)
+        // are the single source of truth for the ENTITY_ID_* game range
+        // (tools/screen_compiler/entity_compile.py).  The editor lists them
+        // for the NPC Entity-ID picker and can create/delete either kind.
+        const ENTITY_DIRS: Array<[string, string]> = [
+          ['enemy_types', 'enemy'],
+          ['entity_types', 'entity'],
+        ];
+        const entityTypeDirs = () => {
+          const out: Array<{ id: string; label: string; kind: string; dir: string }> = [];
+          for (const [dir, kind] of ENTITY_DIRS) {
+            for (const f of fs.readdirSync(path.join(repoRoot, 'screens', dir))) {
+              if (!f.endsWith('.json')) continue;
+              let label = f.replace(/\.json$/, '');
+              try { const d = readJsonFile(path.join('screens', dir, f)); label = d.label || label; } catch { /* keep stem */ }
+              out.push({ id: f.replace(/\.json$/, ''), label, kind, dir });
+            }
+          }
+          out.sort((a, b) => a.id.localeCompare(b.id));
+          return out;
+        };
+        if (req.method === 'GET' && req.url === '/api/entity-types') {
+          try {
+            sendJson({ success: true, items: entityTypeDirs().map((e) => ({
+              id: e.id, label: e.label, kind: e.kind,
+              entity_id: 'ENTITY_ID_' + e.id.toUpperCase(),
+            })) });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/entity-type')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            const dir = u.searchParams.get('dir') || 'entity_types';
+            sendJson({ success: true, id, data: readJsonFile(path.join('screens', dir, `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+        if (req.method === 'POST' && req.url === '/api/save-entity-type') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, dir, data } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+              const dirs = ENTITY_DIRS.map((e) => e[0]);
+              if (!dirs.includes(dir)) throw new Error(`invalid dir '${dir}'`);
+              if (!data || typeof data !== 'object') throw new Error('data must be an object');
+              data.id = id;
+              writeJsonAtomic(path.join(repoRoot, 'screens', dir, `${id}.json`), data);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+        if (req.method === 'POST' && req.url === '/api/delete-entity-type') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, dir } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+              const dirs = ENTITY_DIRS.map((e) => e[0]);
+              if (!dirs.includes(dir)) throw new Error(`invalid dir '${dir}'`);
+              fs.unlinkSync(path.join(repoRoot, 'screens', dir, `${id}.json`));
+              sendJson({ success: true });
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         // Dialogue content (screens/dialogue/*.json): list, single read,
         // and save for the dialogue text editor.  Ids assign by sorted
         // filename at compile time; the UI edits speaker + lines only.

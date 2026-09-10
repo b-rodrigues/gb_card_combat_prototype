@@ -14,22 +14,13 @@
  * *_FIRST_GAME bases, so a different RPG built on the same engine defines
  * its own ids here without ever touching the engine headers. */
 
-/* ── Entity types (engine range: NONE=0, PLAYER=1; game range >= 0x80) ── */
-#define ENTITY_ID_SLIME       (ENTITY_ID_FIRST_GAME + 0)
-#define ENTITY_ID_MAYOR       (ENTITY_ID_FIRST_GAME + 1)
-#define ENTITY_ID_GUARD       (ENTITY_ID_FIRST_GAME + 2)
-#define ENTITY_ID_SHOPKEEPER  (ENTITY_ID_FIRST_GAME + 3)
-#define ENTITY_ID_BAT         (ENTITY_ID_FIRST_GAME + 4)
-#define ENTITY_ID_SLIME_LORD  (ENTITY_ID_FIRST_GAME + 5)
-#define ENTITY_ID_MERCHANT    (ENTITY_ID_FIRST_GAME + 6)
-#define ENTITY_ID_AMULET      (ENTITY_ID_FIRST_GAME + 7)
-#define ENTITY_ID_WIZARD      (ENTITY_ID_FIRST_GAME + 8)
-#define ENTITY_ID_SIGNPOST    (ENTITY_ID_FIRST_GAME + 9)
-#define ENTITY_ID_MIMIC       (ENTITY_ID_FIRST_GAME + 10)
-#define ENTITY_ID_SPIDER      (ENTITY_ID_FIRST_GAME + 11)
-#define ENTITY_ID_KOBOLD      (ENTITY_ID_FIRST_GAME + 12)
-#define ENTITY_ID_FIRE        (ENTITY_ID_FIRST_GAME + 13)
-#define ENTITY_ID_DOG         (ENTITY_ID_FIRST_GAME + 14)
+/* ── Entity types (engine range: NONE=0, PLAYER=1; game range >= 0x80) ──
+ * Values come from the generated entity_ids_generated.h (single source of
+ * truth: the entity-type JSON registries in screens/enemy_types and
+ * screens/entity_types, emitted by
+ * tools/screen_compiler/entity_compile.py).  Humans add entity types in
+ * the editor — never hand-allocate ids here. */
+#include "entity_ids_generated.h"
 
 /* ── Cards (engine range: NONE=0; game range >= CARD_FIRST_GAME) ── */
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)

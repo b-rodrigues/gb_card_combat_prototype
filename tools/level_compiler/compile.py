@@ -25,7 +25,10 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 sys.path.insert(0, str(SCRIPT_DIR))
+if str(REPO_ROOT / "tools" / "screen_compiler") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "tools" / "screen_compiler"))
 
+from entity_ids import load_entity_types  # noqa: E402
 from validate import validate_level, load_tilesets, validate_registry_consistency
 from scene_registry import (
     TEST_SCENE_ORDER, REGISTRY_FILENAME, registry_path, is_level_file,
@@ -584,7 +587,7 @@ resolve_enemy_ow); this fallback only serves untyped objects (boss
 background, chests, NPC tiles, ASCII).  The old per-tileset kobold/bat
 substring branches are gone: every hostile resolves through its enemy
 type to one shared transparent sprite."""
-def resolve_sprite_kind(obj):
+def resolve_sprite_kind(obj, entity_types=None):
     frames = obj.get("animation_frames") or []
     names = " ".join(str(f) for f in frames) + " " + str(obj.get("overworld_sprite") or "")
     for token, kind in (("boss", "SPRITE_KIND_BOSS"),
@@ -592,12 +595,18 @@ def resolve_sprite_kind(obj):
         if token in names:
             return kind
     ent = (obj.get("properties") or {}).get("entity_id", "")
-    if "ENTITY_ID_SLIME_LORD" in ent:
+    if ent == "ENTITY_ID_SLIME_LORD":
         return "SPRITE_KIND_BOSS"
-    if ent in ("ENTITY_ID_MAYOR", "ENTITY_ID_GUARD",
-               "ENTITY_ID_SHOPKEEPER", "ENTITY_ID_MERCHANT",
-               "ENTITY_ID_WIZARD"):
+    # Data-driven fallback: the entity type's sprite_kind (friendly NPCs
+    # authored in the editor resolve here without a hardcoded id list).
+    tid = ent[len("ENTITY_ID_"):].lower() if ent.startswith("ENTITY_ID_") else ""
+    sk = ((entity_types or {}).get(tid) or {}).get("sprite_kind")
+    if sk == "tile":
         return "SPRITE_KIND_TILE"
+    if sk == "chest":
+        return "SPRITE_KIND_CHEST"
+    if sk == "boss":
+        return "SPRITE_KIND_BOSS"
     return "SPRITE_KIND_ASCII"
 
 
@@ -645,17 +654,19 @@ def default_actor_flags(otype):
     return ["BLOCKING", "INTERACTABLE"]
 
 
-def default_actor_visual(obj):
+def default_actor_visual(obj, entity_types=None):
     props = obj.get("properties", {})
     ent = props.get("entity_id", "")
+    tid = ent[len("ENTITY_ID_"):].lower() if ent.startswith("ENTITY_ID_") else ""
+    et = (entity_types or {}).get(tid) or {}
+    if et.get("visual"):
+        return et["visual"]
     if ent == "ENTITY_ID_SLIME":
         return "E"
     if ent == "ENTITY_ID_BAT":
         return "V"
     if ent == "ENTITY_ID_SLIME_LORD":
         return "L"
-    if ent in ("ENTITY_ID_SIGNPOST", "ENTITY_ID_AMULET"):
-        return "?"
     name = props.get("display_name", "?")
     return name[0] if name else "?"
 
@@ -673,7 +684,7 @@ def actor_interaction(obj):
     return "INTERACTION_NONE"
 
 
-def emit_actor_row(obj, enemy_ids):
+def emit_actor_row(obj, enemy_ids, entity_types):
     props = obj.get("properties", {})
     pos = obj.get("position", {})
     ent = props.get("entity_id")
@@ -686,7 +697,7 @@ def emit_actor_row(obj, enemy_ids):
     if flags is None:
         flags = default_actor_flags(obj.get("type"))
     flag_expr = " | ".join("ACTOR_FLAG_" + f for f in flags) if flags else "0"
-    visual = "'" + props.get("visual", default_actor_visual(obj)) + "'"
+    visual = "'" + props.get("visual", default_actor_visual(obj, entity_types)) + "'"
     inter = actor_interaction(obj)
     shop = props.get("shop", 0)
     # Empty strings from the editor templates fall back to sane defaults
@@ -703,7 +714,7 @@ def emit_actor_row(obj, enemy_ids):
     cur = props.get("reward_currency", "0")
     svar = props.get("quest_var", "0")
     sval = props.get("quest_val", 0)
-    spk = resolve_sprite_kind(obj)
+    spk = resolve_sprite_kind(obj, entity_types)
     ow_idx = resolve_enemy_ow(obj, enemy_ids)
     if ow_idx is not None:
         # Type-owned art wins over per-instance sprite names: one shared
@@ -728,6 +739,7 @@ def emit_actors_code(levels_by_id, bank=2, registry=None):
     registry = registry or load_registry()
     map_enum, _ = scene_maps(registry)
     enemy_ids = load_enemy_types()
+    entity_types = load_entity_types()
     # Actor tables are matched by map_id at runtime (actor_load_banked),
     # so emission order is cosmetic — but deterministic: registry order.
     ordered, _ = scene_table_order(levels_by_id, registry)
@@ -751,7 +763,7 @@ def emit_actors_code(levels_by_id, bank=2, registry=None):
             props = obj.get("properties", {}) or {}
             if not props.get("entity_id"):
                 continue  # decoration object: no engine row
-            out.append(emit_actor_row(obj, enemy_ids))
+            out.append(emit_actor_row(obj, enemy_ids, entity_types))
         out.append("};\n")
     out.append("const WorldActorTable g_actor_tables[] = {")
     for sid in ordered:

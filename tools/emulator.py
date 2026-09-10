@@ -51,12 +51,21 @@ MAP_NAME_MAP = dict(SCENE_MAP)
 STORY_FLAG_ID_MAP = {1: "ARRIVED_TOWN", 2: "MET_MAYOR"}
 # Per-game content range base (mirrors *_FIRST_GAME in the engine headers).
 GAME_ID_BASE = 0x80
-ENTITY_ID_MAP = {0: "NONE", 1: "PLAYER",
-                 GAME_ID_BASE + 0: "SLIME", GAME_ID_BASE + 1: "MAYOR",
-                 GAME_ID_BASE + 2: "GUARD", GAME_ID_BASE + 3: "SHOPKEEPER",
-                 GAME_ID_BASE + 4: "BAT", GAME_ID_BASE + 5: "SLIME_LORD",
-                 GAME_ID_BASE + 6: "MERCHANT", GAME_ID_BASE + 7: "AMULET",
-                 GAME_ID_BASE + 8: "WIZARD", GAME_ID_BASE + 9: "SIGNPOST"}
+
+
+def _entity_id_map():
+    """ENTITY_ID_MAP derived from the entity-type registries
+    (tools/screen_compiler/entity_ids.py), the same source the ROM's
+    generated header uses.  Falls back to the engine sentinels if the
+    content is unreadable."""
+    try:
+        from entity_ids import entity_id_map
+        return entity_id_map()
+    except Exception:
+        return {0: "NONE", 1: "PLAYER"}
+
+
+ENTITY_ID_MAP = _entity_id_map()
 INTERACTION_ID_MAP = {0: "NONE", 1: "DIALOGUE", 2: "COMBAT", 3: "SHOP", 4: "SAVE"}
 
 

@@ -151,7 +151,13 @@ any of them. Click a tile/enemy, compare it under every ramp, then
 **assign** the one you want: BG assignment writes an explicit `palette`
 into the tileset JSON (honored by `palette_compiler.py`); enemy/hero
 assignment writes `overworld.palette` (already data-driven). Recompile to
-apply.
+apply. Entity types are data: `screens/enemy_types/*.json` +
+`screens/entity_types/*.json` are the single source of truth for the
+`ENTITY_ID_*` game range (`tools/screen_compiler/entity_compile.py` ->
+`src/game/entity_ids_generated.h`). Adding a type — the Inspector's
+**＋ New entity type...** on an NPC, or an Enemies-view enemy type — needs
+no C edit; the next compile generates its `ENTITY_ID_*` and validator
+entry automatically. The NPC Entity ID field is a picker over all types.
 
 ## 6. Tilesets & the tile importer
 

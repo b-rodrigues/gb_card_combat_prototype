@@ -7,6 +7,7 @@ import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 import { fetchDialogueList } from './io/dialogue';
 import { fetchShopList } from './io/shops';
+import { fetchEntityTypeList, saveEntityType } from './io/entityTypes';
 import { ExitConnector } from './ExitConnector';
 import { TutorialEditor } from './TutorialEditor';
 import { fetchUsedActorIds } from './io/saveLevel';
@@ -191,6 +192,12 @@ export const Inspector: React.FC<InspectorProps> = ({
   const [enemyTypeList, setEnemyTypeList] = useState<Array<{ id: string; label: string }>>([]);
   const [dialogueList, setDialogueList] = useState<Array<{ id: string; label: string }>>([]);
   const [shopList, setShopList] = useState<Array<{ id: number; label: string; owns: number }>>([]);
+  const [entityTypeList, setEntityTypeList] = useState<Array<{ id: string; label: string; entity_id: string }>>([]);
+  const refreshEntityTypes = () => {
+    fetchEntityTypeList().then((items) => {
+      setEntityTypeList(items.map((e) => ({ id: e.id, label: e.label || e.id, entity_id: e.entity_id })));
+    }).catch(() => undefined);
+  };
   useEffect(() => {
     fetchEnemyTypeList().then((items) => {
       setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
@@ -202,6 +209,7 @@ export const Inspector: React.FC<InspectorProps> = ({
     fetchShopList().then((items) => {
       setShopList(items.map((s) => ({ id: s.id, label: s.label || `Shop ${s.id}`, owns: s.buys })));
     }).catch(() => undefined);
+    refreshEntityTypes();
   }, []);
   const selectedEnemyType = (() => {
     if (!selectedObject || (selectedObject.type !== 'enemy' && selectedObject.type !== 'npc')) return null;
@@ -1453,21 +1461,59 @@ export const Inspector: React.FC<InspectorProps> = ({
                     compile as decoration).  Art Type reuses the shared
                     enemy-types registry — SPRITE_KIND_ENEMY works for
                     statics too (sprite_tile_for is hostile-agnostic). */}
-                {selectedObject.type === 'npc' && (
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
                   <>
                     <div className="form-group">
                       <label>Entity ID (required for engine actors)</label>
-                      <input
-                        type="text"
-                        placeholder="ENTITY_ID_DOG"
+                      <FilterCombo
+                        items={[
+                          { value: '', label: '(none — decoration, no interaction)' },
+                          ...entityTypeList.map((t) => ({
+                            value: t.entity_id,
+                            label: `${t.label} (${t.entity_id})`,
+                          })),
+                        ]}
                         value={selectedObject.properties?.entity_id || ''}
-                        onChange={(e) => {
+                        onPick={(v) => {
                           const props = { ...(selectedObject.properties || {}) };
-                          const v = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
                           if (v) props.entity_id = v; else delete props.entity_id;
                           onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
                         }}
+                        staleLabel={(v) => `${v} (unknown type — pick below or create one)`}
+                        placeholder="Filter entity types..."
                       />
+                      <button
+                        className="btn btn-sm"
+                        style={{ marginTop: 4 }}
+                        onClick={async () => {
+                          const raw = window.prompt('New entity type id (lowercase, underscores):', 'new_npc');
+                          if (!raw) return;
+                          const id = raw.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                          if (!id) return;
+                          const label = window.prompt('Display label:', id.replace(/_/g, ' ')) || id;
+                          try {
+                            await saveEntityType('entity_types', {
+                              id, label, kind: 'npc',
+                              name: label.toUpperCase().slice(0, 20),
+                              visual: (label[0] || 'N').toUpperCase(),
+                              sprite_kind: 'tile',
+                            });
+                            refreshEntityTypes();
+                            const props = {
+                              ...(selectedObject.properties || {}),
+                              entity_id: 'ENTITY_ID_' + id.toUpperCase(),
+                            };
+                            onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                          } catch (err: any) {
+                            window.alert(`Create failed: ${err.message}`);
+                          }
+                        }}
+                      >
+                        ＋ New entity type...
+                      </button>
+                      <span style={{ fontSize: 11, color: '#777' }}>
+                        New types get an ENTITY_ID_* automatically on the next compile.
+                      </span>
                     </div>
                     <div className="form-group">
                       <label>Art Type (shared sprite from the type registry)</label>
@@ -1723,7 +1769,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                   </>
                 )}
 
-                {selectedObject.type === 'npc' && (
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
                   <div className="form-group">
                     <label>Dialogue ID</label>
                     <FilterCombo
@@ -2229,7 +2275,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </div>
                 )}
 
-                {selectedObject.type === 'npc' && (
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
                   <div className="form-group">
                     <label>Dialogue ID</label>
                     <FilterCombo
