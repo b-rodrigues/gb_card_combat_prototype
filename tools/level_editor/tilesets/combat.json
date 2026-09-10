@@ -1,7 +1,7 @@
 {
   "id": "combat",
-  "label": "Combat",
-  "gb_tileset_kind": "ui",
+  "label": "Combat Icons",
+  "gb_tileset_kind": "WORLD_TILESET_FOREST",
   "tiles": [
     {
       "id": "combat_sword_icon",
@@ -548,7 +548,7 @@
       "label": "top left spider",
       "gb_constant": "TILE_COMBAT_TOP_LEFT_SPIDER",
       "walkable": false,
-      "color": "#cecece",
+      "color": "#cdcdcd",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_top_left_spider.png",
       "category": "enemy"
@@ -611,7 +611,7 @@
       "color": "#ccc4b7",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_top_left_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_top_middle_mimic",
@@ -621,7 +621,7 @@
       "color": "#968568",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_top_middle_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_top_right_mimic",
@@ -631,7 +631,7 @@
       "color": "#a6987e",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_top_right_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_black_emptyness_1",
@@ -651,7 +651,7 @@
       "color": "#c2b9a8",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_bottom_left_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_bottom_middle_mimic",
@@ -661,7 +661,7 @@
       "color": "#76674e",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_bottom_middle_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_bottom_right_mimic",
@@ -671,7 +671,7 @@
       "color": "#9c907c",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_bottom_right_mimic.png",
-      "category": "terrain"
+      "category": "enemy"
     },
     {
       "id": "combat_left_middle_boss_2",
@@ -724,6 +724,56 @@
       "category": "terrain"
     },
     {
+      "id": "combat_4_arrows_left",
+      "label": "4_arrows_left",
+      "gb_constant": "TILE_COMBAT_4_ARROWS_LEFT",
+      "walkable": false,
+      "color": "#bc9a69",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_4_arrows_left.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_3_arrows_left",
+      "label": "3_arrows_left",
+      "gb_constant": "TILE_COMBAT_3_ARROWS_LEFT",
+      "walkable": false,
+      "color": "#c3a06f",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_3_arrows_left.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_2_arrows_left",
+      "label": "2_arrows_left",
+      "gb_constant": "TILE_COMBAT_2_ARROWS_LEFT",
+      "walkable": false,
+      "color": "#caa776",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_2_arrows_left.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_1_arrow_left",
+      "label": "1_arrow_left",
+      "gb_constant": "TILE_COMBAT_1_ARROW_LEFT",
+      "walkable": false,
+      "color": "#d2ae7c",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_1_arrow_left.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_zero_icon",
+      "label": "zero icon",
+      "gb_constant": "TILE_COMBAT_ZERO_ICON",
+      "walkable": false,
+      "color": "#b09164",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_zero_icon.png",
+      "category": "terrain"
+    },
+    {
       "id": "combat_black_emptyness_2",
       "label": "empty",
       "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
@@ -751,76 +801,6 @@
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_black_emptyness_4.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_5",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_5.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_6",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_6.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_7",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_7.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_8",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_8.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_9",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_9.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_10",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_10.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_11",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_11.png",
       "category": "object"
     }
   ]

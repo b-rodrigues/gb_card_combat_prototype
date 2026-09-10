@@ -18,5 +18,8 @@ const CardSkinDef g_card_skin = {
      * JSON 'fire' = STATUS_BURN, 'ice' = STATUS_FREEZE) */
     { 0, 112, 110, 111 },
     /* elem_color: none poison fire ice */
-    { 0, 4, 1, 2 }
+    { 0, 4, 1, 2 },
+    /* uses_type (0xFF = none), uses_tile: uses 0..4 */
+    2,
+    { 102, 101, 100, 99, 98 }
 };

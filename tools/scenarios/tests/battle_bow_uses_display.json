@@ -1,0 +1,59 @@
+{
+ "name": "battle_bow_uses_display",
+ "test": true,
+ "description": "The bow draws its remaining-uses arrow counter on the card's digit row: a fresh (uses=4) bow shows the 4-arrows glyph; after one play the hand redraws with the 3-arrows glyph and the semantic row reads BO3 instead of the power digit.",
+ "scenario_id": "BATTLE_BOOT",
+ "initial_state": {
+  "scene": "TEST_FIELD",
+  "player": {
+   "x": 13,
+   "y": 8,
+   "facing": "DOWN"
+  },
+  "seed": 7002,
+  "start_battle": true
+ },
+ "actions": [
+  {
+   "type": "wait",
+   "frames": 5
+  },
+  {
+   "type": "set_hand_card",
+   "index": 0,
+   "card_type": "BO",
+   "value": 10
+  },
+ {
+  "type": "set_hand_card_meta",
+  "index": 0,
+  "cost": 2,
+  "uses": 3
+ },
+ {
+  "type": "press",
+  "button": "RIGHT"
+ },
+ {
+  "type": "wait",
+  "frames": 20
+ }
+ ],
+ "assertions": [
+  {
+   "type": "screen",
+   "expected": "BATTLE"
+  },
+  {
+   "type": "screen_row",
+   "row": 13,
+   "contains": "BO3"
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 13,
+   "col": 1,
+   "expected": 99
+  }
+ ]
+}

@@ -291,7 +291,7 @@ static void battle_clear_card_box(uint8_t x, uint8_t y)
 }
 
 static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t value,
-                                uint8_t is_heal)
+                                uint8_t uses, uint8_t is_heal)
 {
     uint8_t tile_wpn;
     const char *code;
@@ -314,7 +314,14 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     code = battle_card_type_code(type);
 
     tile_wpn = battle_card_weapon_tile(type, is_heal);
-    digit_tile = (uint8_t)('0' - ' ' + value);
+    /* Finite-use cards of the skin's arrow-counter type draw the
+     * remaining-uses glyph (4/3/2/1/zero, clamped) on the digit row
+     * instead of the power digit; unlimited cards keep the power digit. */
+    if (uses != 0xFF && type == g_card_skin_wram.uses_type) {
+        digit_tile = g_card_skin_wram.uses_tile[uses > 4 ? 4 : uses];
+    } else {
+        digit_tile = (uint8_t)('0' - ' ' + value);
+    }
 
     top = (uint8_t)(y - (bh - 1));
 
@@ -371,12 +378,17 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     /* Element riders are shown by the card's tint (battle_card_box_color),
      * not a floating icon. */
 
-    /* Semantic screen buffer keeps the type code + power digit on the
-     * digit row (harness/LLM assertions read text, not art tiles). */
+    /* Semantic screen buffer keeps the type code + the digit that the
+     * row represents (arrow-counter cards show their remaining uses;
+     * harness/LLM assertions read text, not art tiles). */
     buf = &g_ui_screen_buf[y - 1][x];
     buf[0] = code[0];
     buf[1] = code[1];
-    buf[2] = (char)('0' + value);
+    if (uses != 0xFF && type == g_card_skin_wram.uses_type) {
+        buf[2] = (char)('0' + (uses > 4 ? 4 : uses));
+    } else {
+        buf[2] = (char)('0' + value);
+    }
 }
 
 /* Enemy battle-sprite stamper.  Layout (hud_layout in the battle screen
@@ -737,7 +749,7 @@ static void battle_draw_battle_combo(const volatile Battle *battle)
 static void battle_draw_battle_hand(const volatile Battle *battle)
 {
     uint8_t i, k;
-    uint8_t col, ctype, cvalue, cstat, cring, ceffect, ccolor;
+    uint8_t col, ctype, cvalue, cstat, cring, ceffect, ccolor, cuses;
     /* Snapshot ALL volatile struct fields into locals before the loops.
      * SDCC 4.4.1 caches &struct.field in stack slots (§52.19); the
      * battle_draw_card_at call + timer ISR (di/wait/ei on real hardware)
@@ -782,12 +794,16 @@ static void battle_draw_battle_hand(const volatile Battle *battle)
             }
         }
         uint8_t is_heal = (cring != 0) || (ctype == BATTLE_CARD_TYPE_HEAL) || (ceffect == CARD_EFFECT_HEAL_HP);
-        battle_draw_card_at(col, cards_row, ctype, cvalue, is_heal);
+        cuses = battle->hand[i].uses_remaining;
+        battle_draw_card_at(col, cards_row, ctype, cvalue, cuses, is_heal);
         /* Tint the whole card by element (heal green, fire reddish, ice
          * blueish, poison mauve); material color for riderless cards.
-         * Poison grey-out (status.h): greyed player cards render dim. */
+         * Poison grey-out (status.h): greyed player cards render dim.
+         * Finite-use cards of the arrow-counter type grey out too once
+         * their uses are spent (matches the unplayable nav rule). */
         ccolor = battle_card_box_color(ctype, cstat, is_heal);
-        if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0) {
+        if ((s_grey_mask[0] & (uint8_t)(1u << i)) != 0 ||
+            (ctype == g_card_skin_wram.uses_type && cuses == 0)) {
             ccolor = UI_COLOR_DIM;
         }
         for (r = 0; r < bh; r++) {
@@ -834,7 +850,7 @@ static void battle_draw_banner_line(uint8_t y, const char *text, uint8_t width)
  * HUD icons are tiles 11-13 (VRAM 113/114/116), the select arrow is
  * tile 14 (VRAM 96), status tiles are 15-17 (VRAM 110/111/112 --
  * overwrite the atlas Flame Spire / Snowflake Star / Toxic Vial). */
-static const uint8_t s_card_tile_vram_ids[24] = {
+static const uint8_t s_card_tile_vram_ids[30] = {
     118, 119, 120, 121, 122, 123, 124, 125, 126,  /* card frame TL..BR */
     117, 127,                                     /* bar filled, empty */
     113, 114, 116,                                /* HUD: hp, ap, deck */
@@ -842,6 +858,13 @@ static const uint8_t s_card_tile_vram_ids[24] = {
     110, 111, 112,                                /* status: fire, ice, poison */
     104, 105, 106, 107, 108,                      /* weapons: sword, shield, bow, dagger, ring */
     97,                                           /* spare blank (unused scratch) */
+    /* Limited-use arrow counters (bow digit row): uses 4/3/2/1 then the
+     * depleted marker, plus the trailing blank cell mapped to the unused
+     * BG fetch slot 103.  Ids 98-103 are free BG fetch slots: the atlas
+     * only loads 104-116, the font 0-95, and no tilemap ever references
+     * 98-103 (their same-numbered OAM ids live in the 0x8000 sprite
+     * block — a different physical address, AGENTS.md 52.22). */
+    98, 99, 100, 101, 102, 103,                   /* arrows 4, 3, 2, 1, zero, blank */
 };
 
 void ui_card_tiles_load_banked(void)
@@ -850,7 +873,7 @@ void ui_card_tiles_load_banked(void)
     volatile uint8_t *dst;
     const uint8_t *src;
 
-    for (i = 0; i < 24; i++) {
+    for (i = 0; i < 30; i++) {
         /* Signed BG tile addressing (LCDC.4 = 0, set in ui_init and never
          * restored): BG tile ids < 128 are fetched by the PPU from
          * 0x9000 + id*16, NOT from the sprite-addressable 0x8000 block.
