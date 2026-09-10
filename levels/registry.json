@@ -7,8 +7,10 @@
     "mountain_pass": 3,
     "castle": 4,
     "south_field": 5,
+    "forestbis": 7
+  },
+  "_retired": {
     "forest2": 6
   },
-  "_retired": {},
   "_test_base": 240
 }
