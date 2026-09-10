@@ -6,6 +6,7 @@ import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
 import { fetchDialogueList } from './io/dialogue';
+import { fetchShopList } from './io/shops';
 import { TutorialEditor } from './TutorialEditor';
 import { fetchUsedActorIds } from './io/saveLevel';
 import { FilterCombo } from './FilterCombo';
@@ -188,6 +189,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   const [owEnemyIds, setOwEnemyIds] = useState<Set<string>>(new Set());
   const [enemyTypeList, setEnemyTypeList] = useState<Array<{ id: string; label: string }>>([]);
   const [dialogueList, setDialogueList] = useState<Array<{ id: string; label: string }>>([]);
+  const [shopList, setShopList] = useState<Array<{ id: number; label: string; owns: number }>>([]);
   useEffect(() => {
     fetchEnemyTypeList().then((items) => {
       setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
@@ -195,6 +197,9 @@ export const Inspector: React.FC<InspectorProps> = ({
     }).catch(() => undefined);
     fetchDialogueList().then((items) => {
       setDialogueList(items.map((d) => ({ id: 'DIALOGUE_ID_' + d.id.toUpperCase(), label: d.label || d.id })));
+    }).catch(() => undefined);
+    fetchShopList().then((items) => {
+      setShopList(items.map((s) => ({ id: s.id, label: s.label || `Shop ${s.id}`, owns: s.buys })));
     }).catch(() => undefined);
   }, []);
   const selectedEnemyType = (() => {
@@ -1736,6 +1741,30 @@ export const Inspector: React.FC<InspectorProps> = ({
                       }
                       staleLabel={(v) => `${v} (unknown — pick below)`}
                       placeholder="Filter dialogues..."
+                    />
+                  </div>
+                )}
+
+                {selectedObject.type === 'npc' && (
+                  <div className="form-group">
+                    <label>Shop (stock list)</label>
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no shop)' },
+                        ...shopList.map((s) => ({
+                          value: String(s.id),
+                          label: `${s.label} (id ${s.id})${s.owns ? ' · merchant' : ''}`,
+                        })),
+                      ]}
+                      value={selectedObject.properties?.shop != null ? String(selectedObject.properties.shop) : ''}
+                      onPick={(v) => {
+                        const next = { ...selectedObject.properties };
+                        if (v === '') delete next.shop;
+                        else next.shop = Number(v);
+                        onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: next });
+                      }}
+                      staleLabel={(v) => `shop ${v} (unknown — pick below)`}
+                      placeholder="Filter shops..."
                     />
                   </div>
                 )}

@@ -41,9 +41,11 @@ CARD_DEF_SIZE = 23
 CARD_DEF_PRICE = 8
 CARD_DEF_ID = 0
 
-# ShopDefinition (src/game/shops.h): id count buys items[4] = 7 B.
-SHOP_DEF_SIZE = 7
+# ShopDefinition (src/game/shops.h): id count buys items[SHOP_MAX_ITEMS]
+# = 3 + 50 bytes (SDCC packs uint8_t fields, no padding).
+SHOP_DEF_SIZE = 53
 SHOP_DEF_ITEMS = 3
+SHOP_MAX_ITEMS = 50
 
 # CharacterState (src/rpg/state.h): id, hp, max_hp.
 CHARACTER_STATE_SIZE = 3
@@ -361,7 +363,7 @@ class StateReader:
         base = SHOP_DEF_SIZE * shop_idx
         count = self.rom_rd("g_shops", base + 1, 1)[0]
         items = self.rom_rd("g_shops", base + SHOP_DEF_ITEMS,
-                            min(count, 4))
+                            min(count, SHOP_MAX_ITEMS))
         return list(items)
 
     # ── boot anchors (§3 Phase 1) ────────────────────────────────────

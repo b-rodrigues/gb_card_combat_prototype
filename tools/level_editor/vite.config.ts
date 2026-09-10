@@ -559,6 +559,113 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Card catalogue (src/game/cards_content.c): parsed by
+        // tools/card_catalog.py so the editor's shop picker shows the real
+        // symbols/names/prices without a second source of truth.
+        if (req.method === 'GET' && req.url === '/api/cards') {
+          try {
+            const out = execSync('python3 tools/card_catalog.py --json', {
+              cwd: repoRoot, encoding: 'utf-8',
+            });
+            sendJson({ success: true, cards: JSON.parse(out) });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        // Shop registry (screens/shops/<id>.json): id = filename stem, items
+        // are CARD_* symbols.  The same files are compiled by
+        // tools/screen_compiler/shops_compile.py (make shops).
+        const SHOP_MAX_ITEMS = 50;
+        const shopPath = (id: number) => path.join(repoRoot, 'screens', 'shops', `${id}.json`);
+        const needShopId = (raw: unknown): number => {
+          const n = Number(raw);
+          if (!Number.isInteger(n) || n < 1 || n > 255) {
+            throw new Error(`invalid shop id '${raw}'`);
+          }
+          return n;
+        };
+        if (req.method === 'GET' && req.url === '/api/shops') {
+          try {
+            const dir = path.join(repoRoot, 'screens', 'shops');
+            const items = fs.readdirSync(dir)
+              .filter((f) => /^\d+\.json$/.test(f))
+              .map((f) => {
+                const id = parseInt(f, 10);
+                const d = readJsonFile(path.join('screens', 'shops', f));
+                return { id, label: d.label || `Shop ${id}`, buys: d.buys ? 1 : 0,
+                         items: Array.isArray(d.items) ? d.items : [],
+                         count: Array.isArray(d.items) ? d.items.length : 0 };
+              })
+              .sort((a, b) => a.id - b.id);
+            sendJson({ success: true, items });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/shop')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = needShopId(u.searchParams.get('id'));
+            sendJson({ success: true, id,
+                       data: readJsonFile(path.join('screens', 'shops', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+        if (req.method === 'POST' && req.url === '/api/save-shop') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id: rawId, data } = JSON.parse(body);
+              const id = needShopId(rawId);
+              const items = Array.isArray(data.items) ? data.items : [];
+              if (items.length > SHOP_MAX_ITEMS) {
+                throw new Error(`${items.length} items exceeds SHOP_MAX_ITEMS (${SHOP_MAX_ITEMS})`);
+              }
+              for (const it of items) {
+                if (typeof it !== 'string' || !/^CARD_[A-Z0-9_]+$/.test(it)) {
+                  throw new Error(`invalid card symbol '${it}'`);
+                }
+              }
+              const out = {
+                label: typeof data.label === 'string' ? data.label : '',
+                buys: data.buys ? 1 : 0,
+                items,
+              };
+              writeJsonAtomic(shopPath(id), out);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: shopPath(id) }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+        if (req.method === 'POST' && req.url === '/api/delete-shop') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const id = needShopId(JSON.parse(body).id);
+              fs.unlinkSync(shopPath(id));
+              sendJson({ success: true });
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         // Hero definition (screens/hero.json): single read + save for the
         // hero manager (art, stats, starter deck).  The client sends and
         // receives the hero object directly (not wrapped).

@@ -136,6 +136,7 @@ void overworld_screen_update(Game *g)
             start_battle_from_world(g);
         } else if (engage == ENGAGE_SHOP) {
             g->item_menu_index = 0;
+            g->item_menu_scroll = 0;
             screen_change(g, SCREEN_SHOP);
         } else if (engage == ENGAGE_SAVE) {
             g->save_slot_mode = 1;

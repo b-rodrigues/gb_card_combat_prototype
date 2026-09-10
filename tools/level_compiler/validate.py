@@ -130,6 +130,48 @@ def validate_dialogue_refs(levels_dir=None):
     return errors, warnings
 
 
+def validate_shop_refs(levels_dir=None):
+    """Actor `shop` props must name a real shop (screens/shops/<id>.json).
+
+    A dangling id compiles fine but the ROM then stocks nothing at that
+    NPC (game_shop_for_id returns NULL) — a silent content bug.  Errors
+    only; unreferenced shops are allowed (write-before-wire)."""
+    errors = []
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    shops_dir = repo_root / "screens" / "shops"
+    known = set()
+    for p in shops_dir.glob("*.json"):
+        try:
+            known.add(int(p.stem))
+        except ValueError:
+            errors.append(f"{p.name}: shop filename must be a numeric id")
+    levels_dir = Path(levels_dir) if levels_dir else (repo_root / "levels")
+    for path in sorted(levels_dir.glob("*.json")):
+        if not is_level_file(path):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            errors.append(f"Cannot read {path}: {exc}")
+            continue
+        for obj in data.get("objects", []):
+            props = (obj.get("properties", {}) or {})
+            if "shop" not in props:
+                continue
+            try:
+                sid = int(props["shop"])
+            except (TypeError, ValueError):
+                errors.append(
+                    f"{path.name}/{obj.get('id')}: shop prop "
+                    f"'{props['shop']}' is not a numeric shop id")
+                continue
+            if sid not in known:
+                errors.append(
+                    f"{path.name}/{obj.get('id')}: unknown shop id {sid} "
+                    f"— add screens/shops/{sid}.json in the editor's Shop view")
+    return errors
+
+
 def validate_registry_consistency(levels_dir=None):
     """The registry and the levels/ directory must agree: every level file
     (minus registry.json) needs a registry entry, and every live entry
@@ -556,9 +598,18 @@ def main():
             sys.exit(1)
         print(f"dialogue refs OK ({len(warnings)} warning(s))")
         return
+    if len(sys.argv) >= 2 and sys.argv[1] == "--shop-refs":
+        errors = validate_shop_refs()
+        for e in errors:
+            print(f"ERROR: {e}")
+        if errors:
+            sys.exit(1)
+        print("shop refs OK")
+        return
     if len(sys.argv) < 2:
         print("Usage: validate.py <level1.json> [level2.json ...]")
         print("       validate.py --dialogue-refs")
+        print("       validate.py --shop-refs")
         sys.exit(1)
 
     tilesets = load_tilesets()

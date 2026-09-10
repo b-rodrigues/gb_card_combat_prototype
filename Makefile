@@ -78,7 +78,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(M
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check registry-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check shops shops-check registry-check editor clean
 
 all: $(TARGET)
 
@@ -281,6 +281,17 @@ dialogues-check:
 	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ --check
 	@python3 tools/level_compiler/validate.py --dialogue-refs
 
+# Shop content: screens/shops/<id>.json is the source of truth for
+# g_shops[] (id = filename stem; items are CARD_* symbols).  Referenced by
+# each actor's `shop` property.  The editor's Shop view edits the same JSON.
+shops:
+	@python3 tools/screen_compiler/shops_compile.py --all -o src/game/shops_content.c
+	@echo "All shops compiled to src/game/shops_content.c"
+
+shops-check:
+	@python3 tools/screen_compiler/shops_compile.py --all --check
+	@python3 tools/level_compiler/validate.py --shop-refs
+
 # Registry invariants (levels/registry.json contract): versioning,
 # append-only ids, never-reuse of retired ids, registry/file agreement.
 # Locks the contract the editor's save/rename/delete operations satisfy.
@@ -292,6 +303,9 @@ src/screens/tutorial_text_generated.h src/screens/tutorial_count_generated.h &: 
 
 src/game/dialogue_content.c src/game/dialogue_ids_generated.h &: $(wildcard screens/dialogue/*.json)
 	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/
+
+src/game/shops_content.c: $(wildcard screens/shops/*.json) tools/screen_compiler/shops_compile.py
+	@python3 tools/screen_compiler/shops_compile.py --all -o src/game/shops_content.c
 
 src/game/title_data.c: screens/title.json
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
@@ -638,12 +652,12 @@ $(GB_LITE) $(SM83_LITE) &: $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx tiles levels screens dialogues music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels screens dialogues shops music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
