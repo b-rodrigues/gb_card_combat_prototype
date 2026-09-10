@@ -85,6 +85,7 @@ export const FilterCombo: React.FC<FilterComboProps> = ({
     >
       <input
         type="text"
+        className="filter-combo-input"
         value={shown}
         placeholder={placeholder}
         onFocus={() => setOpen(true)}
@@ -109,57 +110,34 @@ export const FilterCombo: React.FC<FilterComboProps> = ({
             setQuery(null);
           }
         }}
-        style={{ width: '100%' }}
       />
-      {open && filtered.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            zIndex: 50,
-            left: 0,
-            right: 0,
-            maxHeight: 220,
-            overflowY: 'auto',
-            background: 'var(--bg-primary, #fff)',
-            border: '1px solid var(--border-color, #ccc)',
-            borderRadius: 4,
-          }}
-        >
-          {filtered.map((item, idx) => (
-            <div key={item.group + '/' + item.value}>
-              {idx === 0 ||
-              filtered[idx - 1].group !== item.group ? (
-                item.group ? (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: '4px 8px 2px',
-                      opacity: 0.7,
-                    }}
-                  >
-                    {item.group}
-                  </div>
-                ) : null
-              ) : null}
-              <div
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  pick(item.value);
-                }}
-                onMouseEnter={() => setHighlight(idx)}
-                style={{
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  background:
-                    idx === highlight ? 'var(--accent, #06c)' : undefined,
-                  color: idx === highlight ? '#fff' : undefined,
-                }}
-              >
-                {item.label}
+      {open && (
+        <div className="filter-combo-menu">
+          {filtered.length === 0 ? (
+            <div className="filter-combo-empty">No matches</div>
+          ) : (
+            filtered.map((item, idx) => (
+              <div key={item.group + '/' + item.value}>
+                {item.group && (idx === 0 || filtered[idx - 1].group !== item.group) ? (
+                  <div className="filter-combo-group">{item.group}</div>
+                ) : null}
+                <div
+                  className="filter-combo-item"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(item.value);
+                  }}
+                  onMouseEnter={() => setHighlight(idx)}
+                  style={{
+                    background: idx === highlight ? 'var(--accent, #06c)' : undefined,
+                    color: idx === highlight ? '#fff' : undefined,
+                  }}
+                >
+                  {item.label}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
     </div>
