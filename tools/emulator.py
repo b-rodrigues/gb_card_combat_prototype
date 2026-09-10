@@ -4,7 +4,33 @@ mgba CLI debugger transport for Game Boy RPG development harness.
 Uses mgba's command-line debugger (-d) via PTY with raw TTY mode.
 Authoritative bridge for Game Boy snapshot, telemetry, and screen inspection.
 """
-import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal
+import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal, json, sys
+from pathlib import Path
+
+_TOOLS_DIR = Path(__file__).resolve().parent
+if str(_TOOLS_DIR / "screen_compiler") not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DIR / "screen_compiler"))
+
+_REPOROOT = Path(__file__).resolve().parent.parent
+
+
+def _scene_id_maps():
+    """SCENE_MAP / MAP_NAME_MAP derived from levels/registry.json (+ fixed
+    TEST block): display names for snapshot bytes.  Unknown ids fall back
+    to UNKNOWN_<n> at the use sites, so a stale map degrades loudly."""
+    try:
+        reg = json.loads((_REPOROOT / "levels" / "registry.json").read_text(
+            encoding="utf-8"))
+        scenes = reg.get("scenes", {})
+        base = reg.get("_test_base", 240)
+    except (OSError, ValueError):
+        scenes, base = {}, 240
+    test_names = ["test_field", "test_town", "test_forest",
+                  "test_mountain_pass", "test_castle", "test_south_field"]
+    real = {num: sid.upper() for sid, num in scenes.items()
+            if isinstance(num, int)}
+    test = {base + i: sid.upper() for i, sid in enumerate(test_names)}
+    return {**real, **test}
 
 DEBUG_PROTOCOL_VERSION = 1
 
@@ -15,35 +41,55 @@ GAME_STATE_MAP = {0: "OVERWORLD", 1: "BATTLE", 2: "GAME_OVER", 3: "THANKS"}
 SCREEN_MAP = {0: "OVERWORLD", 1: "DIALOGUE", 2: "BATTLE", 3: "GAME_OVER", 4: "THANKS",
               5: "SHOP", 6: "ITEM", 7: "ENDING", 8: "SAVE_LOAD", 9: "TITLE", 10: "INTRO",
               11: "TUTORIAL"}
-SCENE_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE", 5: "SOUTH_FIELD"}
+SCENE_MAP = _scene_id_maps()
 MUSIC_TRACK_MAP = {0: "NONE", 1: "OVERWORLD", 2: "BATTLE", 3: "VICTORY",
-                   4: "TITLE", 5: "TOWN", 6: "DUNGEON", 7: "BOSS", 8: "DESOLATE", 9: "FOREST"}
+                   4: "TITLE", 5: "TOWN", 6: "DUNGEON", 7: "BOSS", 8: "MIMIC",
+                   9: "DESOLATE", 10: "FOREST"}
 BATTLE_TURN_MAP = {0: "PLAYER", 1: "ENEMY_DELAY", 2: "ENEMY", 3: "RESULT"}
 BATTLE_RESULT_MAP = {0: "NONE", 1: "VICTORY", 2: "DEFEAT", 3: "FLED"}
-MAP_NAME_MAP = {0: "FIELD", 1: "TOWN", 2: "FOREST", 3: "MOUNTAIN_PASS", 4: "CASTLE", 5: "SOUTH_FIELD"}
+MAP_NAME_MAP = dict(SCENE_MAP)
 STORY_FLAG_ID_MAP = {1: "ARRIVED_TOWN", 2: "MET_MAYOR"}
 # Per-game content range base (mirrors *_FIRST_GAME in the engine headers).
 GAME_ID_BASE = 0x80
-ENTITY_ID_MAP = {0: "NONE", 1: "PLAYER",
-                 GAME_ID_BASE + 0: "SLIME", GAME_ID_BASE + 1: "MAYOR",
-                 GAME_ID_BASE + 2: "GUARD", GAME_ID_BASE + 3: "SHOPKEEPER",
-                 GAME_ID_BASE + 4: "BAT", GAME_ID_BASE + 5: "SLIME_LORD",
-                 GAME_ID_BASE + 6: "MERCHANT", GAME_ID_BASE + 7: "AMULET",
-                 GAME_ID_BASE + 8: "WIZARD", GAME_ID_BASE + 9: "SIGNPOST"}
+
+
+def _entity_id_map():
+    """ENTITY_ID_MAP derived from the entity-type registries
+    (tools/screen_compiler/entity_ids.py), the same source the ROM's
+    generated header uses.  Falls back to the engine sentinels if the
+    content is unreadable."""
+    try:
+        from entity_ids import entity_id_map
+        return entity_id_map()
+    except Exception:
+        return {0: "NONE", 1: "PLAYER"}
+
+
+ENTITY_ID_MAP = _entity_id_map()
 INTERACTION_ID_MAP = {0: "NONE", 1: "DIALOGUE", 2: "COMBAT", 3: "SHOP", 4: "SAVE"}
-DIALOGUE_ID_MAP = {0: "NONE",
-                   GAME_ID_BASE + 0: "MAYOR_GREETING",
-                   GAME_ID_BASE + 1: "GUARD_GREETING",
-                   GAME_ID_BASE + 2: "SHOPKEEPER_GREETING",
-                   GAME_ID_BASE + 3: "MAYOR_INTRO",
-                   GAME_ID_BASE + 4: "GUARD_AFTER_MAYOR",
-                   GAME_ID_BASE + 5: "QUEST_ACTIVE",
-                   GAME_ID_BASE + 6: "QUEST_COMPLETE",
-                   GAME_ID_BASE + 7: "QUEST_DONE",
-                   GAME_ID_BASE + 8: "MERCHANT_INTRO",
-                   GAME_ID_BASE + 9: "MERCHANT_THANKS",
-                   GAME_ID_BASE + 10: "AMULET_FOUND",
-                   GAME_ID_BASE + 11: "AMULET_NOTHING"}
+
+
+def _dialogue_id_map():
+    """DIALOGUE_ID_MAP derived from screens/dialogue/*.json (same
+    sorted-filename assignment as dialogue_compile.py).  Falls back to
+    {} (plus NONE) if the content is unreadable — callers render
+    UNKNOWN_<n> for unmapped ids."""
+    from dialogue_ids import dialogue_files, load_dialogue_json
+    out = {0: "NONE"}
+    try:
+        files = dialogue_files()
+    except OSError:
+        return out
+    for i, path in enumerate(files):
+        try:
+            data = load_dialogue_json(path)
+        except (OSError, ValueError):
+            continue
+        out[0x80 + i] = data["_id"].upper()
+    return out
+
+
+DIALOGUE_ID_MAP = _dialogue_id_map()
 BATTLE_ID_MAP = {0: "NONE", 1: "SLIME", 2: "BAT"}
 EVENT_TYPE_MAP = {
     0: "PLAYER_MOVED", 1: "COLLISION", 2: "ENCOUNTER_STARTED",
@@ -184,8 +230,9 @@ ITEM_ID_MAP = {"NONE": 0,
                "IRON_SWORD": 0x40, "WOODEN_SHIELD": 0x41,
                "WOOD_RING": 0x42, "FIRE_SWORD": 0x43,
                "POISON_DAGGER": 0x44, "AMULET": 0x45,
-               "BOW_10": 0x46}
+               "BOW_9": 0x46}
 ACTOR_ID_MAP = {"SLIME_FIELD": 1, "SLIME_FOREST": 2, "BAT_FOREST": 3,
+                "SPIDER_FIELD": 12,
                 "SLIME_MOUNTAIN_PASS": 4, "BAT_CASTLE": 5}
 ACTOR_STATE_NAME_MAP = {"ALIVE": 0, "DEFEATED": 1}
 # Status IDs (mirrors src/rpg/status.h StatusId enum)

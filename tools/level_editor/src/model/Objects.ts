@@ -9,6 +9,27 @@ export type ObjectType =
   | 'item'
   | 'signpost';
 
+// Valid BattleId enum values (src/world/actor.h).  Keep in sync when a
+// battle id is added on the ROM side.
+export const BATTLE_IDS = [
+  'BATTLE_NONE',
+  'BATTLE_SLIME',
+  'BATTLE_BAT',
+  'BATTLE_SLIME_TRIO',
+  'BATTLE_MIMIC',
+  'BATTLE_KOBOLD',
+  'BATTLE_SPIDER',
+] as const;
+
+// Valid AI kinds (src/world/actor.h AIKind).
+export const AI_IDS = [
+  'AI_NONE',
+  'AI_PATROL_CROSS',
+  'AI_PATROL_CIRCLE',
+  'AI_CHASE',
+  'AI_PATROL_VERT',
+] as const;
+
 export interface LevelObject {
   id: string;
   type: ObjectType;
@@ -23,10 +44,8 @@ export interface LevelObject {
   animation_speed?: number;   // Animation ticks per frame (default 16 or 250ms)
   battle_sprite?: string;     // tileset.tile_name for battle rendering
   battle_name?: string;       // name shown in battle UI (overrides display_name)
-  sprite_width?: number;      // Width in tiles (e.g. 9 for a 9x9 boss meta-tile)
-  sprite_height?: number;     // Height in tiles (e.g. 9 for a 9x9 boss meta-tile)
-  is_boss?: boolean;          // Flag indicating this is a boss
-  meta_tiles?: string[][];    // 2D grid of tile identifiers (e.g. 9x9 tiles)
+  sprite_width?: number;      // Width in tiles (multi-tile preview objects, 1-4)
+  sprite_height?: number;     // Height in tiles (multi-tile preview objects, 1-4)
 }
 
 export interface ObjectTemplate {
@@ -55,52 +74,14 @@ export const OBJECT_TEMPLATES: ObjectTemplate[] = [
   },
   {
     type: 'enemy',
-    label: 'Enemy / Monster',
-    defaultId: 'enemy_slime',
+    label: 'Enemy',
+    defaultId: 'enemy',
     color: '#e74c3c',
     icon: '👾',
     defaultProps: {
-      display_name: 'SLIME',
-      battle: 'BATTLE_SLIME',
-      ai: 'AI_PATROL_CROSS',
-      overworld_sprite: 'combat.slime_bottom_mid',
-      battle_sprite: 'combat.slime_bottom_mid',
-      battle_name: 'SLIME',
-      animation_frames: ['combat.slime_bottom_mid', 'combat.slime_anim_mid']
-    }
-  },
-  {
-    type: 'enemy',
-    label: 'Bat Enemy (Animated)',
-    defaultId: 'enemy_bat',
-    color: '#9b59b6',
-    icon: '🦇',
-    defaultProps: {
-      display_name: 'BAT',
-      battle: 'BATTLE_BAT',
-      ai: 'AI_PATROL_CIRCLE',
-      overworld_sprite: 'combat.bat_0_body',
-      battle_sprite: 'combat.bat_0_body',
-      battle_name: 'CAVE BAT',
-      animation_frames: ['combat.bat_0_body', 'combat.bat_1_body']
-    }
-  },
-  {
-    type: 'enemy',
-    label: 'Boss Enemy (9x9 Meta-Tile)',
-    defaultId: 'enemy_boss',
-    color: '#8e44ad',
-    icon: '👑',
-    defaultProps: {
-      display_name: 'LORD GIAUSAR',
-      battle: 'BATTLE_BOSS',
-      ai: 'AI_NONE',
-      is_boss: true,
-      sprite_width: 9,
-      sprite_height: 9,
-      overworld_sprite: 'combat.boss_head_mid',
-      battle_sprite: 'combat.boss_head_mid',
-      battle_name: 'LORD GIAUSAR'
+      display_name: 'ENEMY',
+      battle: 'BATTLE_NONE',
+      ai: 'AI_PATROL_CROSS'
     }
   },
   {

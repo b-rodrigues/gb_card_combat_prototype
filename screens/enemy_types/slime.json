@@ -4,6 +4,7 @@
   "label": "Slime",
   "category": "minion",
   "sprite": { "art": "slime", "frames": 2 },
+  "overworld": { "cells": ["slime_f0", "slime_f1"], "palette": 3 },
   "name": "SLIME",
   "hp": 10,
   "max_hp": 10,

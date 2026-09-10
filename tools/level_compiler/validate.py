@@ -22,26 +22,215 @@ import json
 import glob
 from pathlib import Path
 
+from scene_registry import (
+    TEST_SCENE_ORDER, load_registry, is_level_file,
+)
+
 MAX_WORLD_WIDTH = 40
 MAX_WORLD_HEIGHT = 24
 
-KNOWN_SCENES = {
-    "field": "SCENE_FIELD",
-    "town": "SCENE_TOWN",
-    "forest": "SCENE_FOREST",
-    "mountain_pass": "SCENE_MOUNTAIN_PASS",
-    "castle": "SCENE_CASTLE",
-    "south_field": "SCENE_SOUTH_FIELD"
-}
 
-KNOWN_MAP_IDS = {
-    "MAP_FIELD": 0,
-    "MAP_TOWN": 1,
-    "MAP_FOREST": 2,
-    "MAP_MOUNTAIN_PASS": 3,
-    "MAP_CASTLE": 4,
-    "MAP_SOUTH_FIELD": 5
-}
+def known_scene_names(registry=None):
+    """Every sid an exit may legally target: registry scenes + TEST fixtures."""
+    registry = registry or load_registry()
+    return set(registry["scenes"]) | set(TEST_SCENE_ORDER)
+
+
+def dialogue_id_names():
+    """DIALOGUE_ID_* names from screens/dialogue/*.json (same assignment
+    dialogue_compile.py uses).  Imported lazily: screen_compiler is a
+    sibling package, and validate.py must stay importable without it."""
+    tools_dir = Path(__file__).resolve().parent.parent
+    if str(tools_dir / "screen_compiler") not in sys.path:
+        sys.path.insert(0, str(tools_dir / "screen_compiler"))
+    from dialogue_ids import dialogue_files, load_dialogue_json
+    names = {}
+    for path in dialogue_files():
+        try:
+            data = load_dialogue_json(path)
+        except (OSError, ValueError) as exc:
+            raise SystemExit(f"ERROR: cannot read {path}: {exc}")
+        name = "DIALOGUE_ID_" + data["_id"].upper()
+        if name in names:
+            raise SystemExit(
+                f"ERROR: duplicate dialogue id '{data['_id']}' "
+                f"({path} and {names[name]}).")
+        names[name] = path.name
+    return names
+
+
+def validate_dialogue_refs(levels_dir=None):
+    """Cross-references between dialogue content and its users.
+
+    Errors (loud, with the fix): actor `dialogue` props and
+    EVENT_ACTION_DIALOGUE args in src/game/events.c that name no dialogue
+    JSON.  Warnings: dialogues no actor or event references (write-before-
+    wire is normal authoring; the warning keeps dead content visible).
+    Flags/events/scenarios stay LLM-driven — this checks references only.
+    """
+    import re
+    errors, warnings = [], []
+    known = dialogue_id_names()
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    levels_dir = Path(levels_dir) if levels_dir else (repo_root / "levels")
+
+    referenced = set()
+    for path in sorted(levels_dir.glob("*.json")):
+        if not is_level_file(path):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            errors.append(f"Cannot read {path}: {exc}")
+            continue
+        for obj in data.get("objects", []):
+            props = (obj.get("properties", {}) or {})
+            dlg = props.get("dialogue", "")
+            if not dlg:
+                continue
+            if not props.get("entity_id"):
+                # Decoration object: the compiler emits no actor row, so
+                # this text can never fire.  Warn, don't error (e.g. the
+                # south campfire's flavor line predates entity wiring).
+                warnings.append(
+                    f"{path.name}/{obj.get('id')}: dialogue text on an "
+                    f"entity-less object is unreachable (no actor row).")
+                continue
+            referenced.add(dlg)
+            if dlg not in known:
+                if not dlg.startswith("DIALOGUE_ID_"):
+                    errors.append(
+                        f"{path.name}/{obj.get('id')}: dialogue prop is raw "
+                        f"text, not a dialogue id — the compiler emits it "
+                        f"verbatim into C. Use a DIALOGUE_ID_* id (pick one "
+                        f"in the editor's dialogue dropdown).")
+                else:
+                    errors.append(
+                        f"{path.name}/{obj.get('id')}: unknown dialogue "
+                        f"'{dlg}' — pick one in the editor's dialogue "
+                        f"dropdown or add screens/dialogue/<id>.json.")
+
+    events_c = repo_root / "src" / "game" / "events_content.c"
+    try:
+        events_text = events_c.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Cannot read {events_c}: {exc}")
+        events_text = ""
+    for m in re.finditer(r"\b(DIALOGUE_ID_[A-Z0-9_]+)\b", events_text):
+        name = m.group(1)
+        referenced.add(name)
+        if name not in known:
+            errors.append(
+                f"src/game/events.c references unknown dialogue '{name}' "
+                f"— add screens/dialogue/<id>.json (LLM-driven).")
+
+    for name in sorted(set(known) - referenced):
+        warnings.append(
+            f"Dialogue '{name}' is referenced by no actor or event.")
+    return errors, warnings
+
+
+def validate_shop_refs(levels_dir=None):
+    """Actor `shop` props must name a real shop (screens/shops/<id>.json).
+
+    A dangling id compiles fine but the ROM then stocks nothing at that
+    NPC (game_shop_for_id returns NULL) — a silent content bug.  Errors
+    only; unreferenced shops are allowed (write-before-wire)."""
+    errors = []
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    shops_dir = repo_root / "screens" / "shops"
+    known = set()
+    for p in shops_dir.glob("*.json"):
+        try:
+            known.add(int(p.stem))
+        except ValueError:
+            errors.append(f"{p.name}: shop filename must be a numeric id")
+    levels_dir = Path(levels_dir) if levels_dir else (repo_root / "levels")
+    for path in sorted(levels_dir.glob("*.json")):
+        if not is_level_file(path):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            errors.append(f"Cannot read {path}: {exc}")
+            continue
+        for obj in data.get("objects", []):
+            props = (obj.get("properties", {}) or {})
+            if "shop" not in props:
+                continue
+            try:
+                sid = int(props["shop"])
+            except (TypeError, ValueError):
+                errors.append(
+                    f"{path.name}/{obj.get('id')}: shop prop "
+                    f"'{props['shop']}' is not a numeric shop id")
+                continue
+            if sid not in known:
+                errors.append(
+                    f"{path.name}/{obj.get('id')}: unknown shop id {sid} "
+                    f"— add screens/shops/{sid}.json in the editor's Shop view")
+    return errors
+
+
+def validate_registry_consistency(levels_dir=None):
+    """The registry and the levels/ directory must agree: every level file
+    (minus registry.json) needs a registry entry, and every live entry
+    needs its file.  Returns a list of error strings (empty = consistent).
+    This is the loud failure that replaces the old lcc error for
+    unregistered levels: fix = open the level in the editor and save it
+    (the editor assigns the next scene id on first save)."""
+    from pathlib import Path as _Path
+    errors = []
+    try:
+        registry = load_registry()
+    except SystemExit as exc:
+        return [str(exc)]
+    levels_dir = _Path(levels_dir) if levels_dir else (
+        _Path(__file__).resolve().parent.parent.parent / "levels")
+    files = {p.stem for p in levels_dir.glob("*.json") if is_level_file(p)}
+    try:
+        disk_ids = set()
+        for stem in files:
+            try:
+                data = json.loads((levels_dir / f"{stem}.json").read_text(
+                    encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                errors.append(f"Cannot read levels/{stem}.json: {exc}")
+                continue
+            if data.get("id", stem) != stem:
+                errors.append(
+                    f"levels/{stem}.json has id '{data.get('id')}' but the "
+                    f"registry keys scenes by filename — rename the file or "
+                    f"fix the id so they match.")
+            else:
+                disk_ids.add(stem)
+    except OSError as exc:
+        return [f"Cannot list {levels_dir}: {exc}"]
+    retired = registry.get("retired", {})
+    for sid in sorted(disk_ids - set(registry["scenes"])):
+        if sid in retired:
+            errors.append(
+                f"Level '{sid}' has a RETIRED scene id (tombstoned, never "
+                f"reused), but levels/{sid}.json still exists. Delete the "
+                f"stale file — the editor's Map Info 'Clean retired orphans' "
+                f"button removes every such file — then recompile.")
+        else:
+            errors.append(
+                f"Level '{sid}' has no registry entry (no scene id assigned). "
+                f"Open it in the editor and save it — the editor assigns the "
+                f"next scene id on first save — then recompile.")
+    for sid in sorted(set(registry["scenes"]) - disk_ids):
+        errors.append(
+            f"Registry lists '{sid}' but levels/{sid}.json is missing. "
+            f"Restore the file from git, or retire the id properly.")
+    return errors
+
+
+def registry_warnings(levels_dir=None):
+    """Non-fatal registry hygiene warnings (reserved for future checks; a
+    retired id whose file still exists is now a hard error in
+    validate_registry_consistency)."""
+    return []
 
 
 def load_tilesets(tilesets_dir=None):
@@ -72,6 +261,25 @@ def load_tilesets(tilesets_dir=None):
                 except Exception:
                     pass
     return tilesets
+
+
+_KNOWN_ENTITY_IDS = None
+
+
+def known_entity_ids():
+    """ENTITY_ID_* names, derived from the entity-type registries
+    (screens/enemy_types/*.json + screens/entity_types/*.json) — the same
+    source entity_compile.py uses to generate the C header.  Adding a type
+    in the editor makes it valid here with no C edit."""
+    global _KNOWN_ENTITY_IDS
+    if _KNOWN_ENTITY_IDS is None:
+        tools_dir = Path(__file__).resolve().parent.parent
+        if str(tools_dir / "screen_compiler") not in sys.path:
+            sys.path.insert(0, str(tools_dir / "screen_compiler"))
+        from entity_ids import entity_type_ids
+        _KNOWN_ENTITY_IDS = {"ENTITY_ID_" + t.upper() for t in entity_type_ids()}
+        _KNOWN_ENTITY_IDS.add("ENTITY_ID_PLAYER")
+    return _KNOWN_ENTITY_IDS
 
 
 def validate_level(level_data, tilesets=None, all_level_ids=None):
@@ -251,7 +459,7 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
             errors.append(f"Exit {e_idx} gate position ({ex}, {ey}) is outside map bounds ({width}x{height})")
             exits_ok = False
 
-        if target not in KNOWN_SCENES and (all_level_ids is None or target not in all_level_ids):
+        if target not in known_scene_names() and (all_level_ids is None or target not in all_level_ids):
             warnings.append(f"Exit {e_idx} target '{target}' is not in known scenes list")
 
     if exits_ok:
@@ -297,6 +505,17 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
                     errors.append(f"Object '{oid}' has no entity_id but carries actor slot '{key}'")
                     objects_ok = False
             continue
+        # Entity ids must exist in the game layer (src/game/game_ids.h
+        # defines; single source of truth, parsed so the list never
+        # drifts).  Unknown ids would raise at C-compile time anyway —
+        # surface them here with the fix instead.
+        known_entities = known_entity_ids()
+        ent_id = props.get("entity_id")
+        if ent_id not in known_entities:
+            errors.append(
+                f"Object '{oid}': unknown entity_id '{ent_id}' — add "
+                f"#define {ent_id} (ENTITY_ID_FIRST_GAME + N) to src/game/game_ids.h")
+            objects_ok = False
         aid = props.get("actor_id", 0)
         if not isinstance(aid, int) or aid < 0 or aid > 65535:
             errors.append(f"Object '{oid}' has invalid actor_id '{aid}' (0..65535)")
@@ -326,6 +545,38 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
                 errors.append(f"Object '{oid}' has invalid {key} '{props[key]}'")
                 objects_ok = False
 
+    # Engine actor-slot caps: actor_load_banked() spawns hostile rows into
+    # World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
+    # g_static_actors (MAX_STATIC_ACTORS, parsed from src/world/actor.h —
+    # single source of truth).  Rows beyond the cap are SILENTLY DROPPED
+    # at runtime -- catch the overflow at validation time instead.
+    def _engine_cap(name):
+        import re
+        src = (Path(__file__).resolve().parent.parent.parent
+               / "src" / "world" / "actor.h").read_text()
+        m = re.search(r"#define %s\s+(\d+)" % name, src)
+        return int(m.group(1)) if m else None
+
+    hostile_cap = _engine_cap("MAX_WORLD_ACTORS")
+    static_cap = _engine_cap("MAX_STATIC_ACTORS")
+    hostile_rows = [o.get("id") for o in objects
+                    if (o.get("properties") or {}).get("entity_id")
+                    and "HOSTILE" in ((o.get("properties") or {}).get("flags") or [])]
+    static_rows = [o.get("id") for o in objects
+                   if (o.get("properties") or {}).get("entity_id")
+                   and "HOSTILE" not in ((o.get("properties") or {}).get("flags") or [])]
+    if hostile_cap and len(hostile_rows) > hostile_cap:
+        errors.append(
+            f"Level has {len(hostile_rows)} hostile actors but the engine spawns at most "
+            f"MAX_WORLD_ACTORS={hostile_cap}; extra would be silently dropped: {hostile_rows[hostile_cap:]}")
+        objects_ok = False
+    if static_cap and len(static_rows) > static_cap:
+        errors.append(
+            f"Level has {len(static_rows)} friendly actors but the engine loads at most "
+            f"{static_cap} static rows (MAX_STATIC_ACTORS, src/world/actor.h); extra would be "
+            f"silently dropped: {static_rows[static_cap:]}")
+        objects_ok = False
+
     if objects_ok:
         passed.append("Objects valid")
 
@@ -334,8 +585,28 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
 
 
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] == "--dialogue-refs":
+        errors, warnings = validate_dialogue_refs()
+        for w in warnings:
+            print(f"WARNING: {w}")
+        for e in errors:
+            print(f"ERROR: {e}")
+        if errors:
+            sys.exit(1)
+        print(f"dialogue refs OK ({len(warnings)} warning(s))")
+        return
+    if len(sys.argv) >= 2 and sys.argv[1] == "--shop-refs":
+        errors = validate_shop_refs()
+        for e in errors:
+            print(f"ERROR: {e}")
+        if errors:
+            sys.exit(1)
+        print("shop refs OK")
+        return
     if len(sys.argv) < 2:
         print("Usage: validate.py <level1.json> [level2.json ...]")
+        print("       validate.py --dialogue-refs")
+        print("       validate.py --shop-refs")
         sys.exit(1)
 
     tilesets = load_tilesets()
@@ -346,6 +617,11 @@ def main():
             file_paths.extend(matches)
         else:
             file_paths.append(arg)
+
+    # The scene id registry is tooling state, not a level — never validate
+    # it as one (the shell glob levels/*.json matches it).
+    file_paths = [p for p in file_paths
+                  if os.path.basename(p) != "registry.json"]
 
     # Collect all level IDs first
     all_level_ids = set()
@@ -362,6 +638,18 @@ def main():
             sys.exit(1)
 
     overall_success = True
+
+    # Registry agreement (runs with real levels in the set — fixture
+    # runs validate the frozen TEST set, which intentionally has no
+    # registry entries): every level file needs a registry id and every
+    # live registry entry needs its file.  This is the loud failure for
+    # unregistered levels (fix: save the level in the editor).
+    if any(not sid.startswith("test_") for sid in all_level_ids):
+        for warn in registry_warnings():
+            print(f"WARNING: {warn}")
+        for err in validate_registry_consistency():
+            print(f"ERROR: {err}")
+            overall_success = False
 
     # Cross-file check: nonzero actor_id values drive persistent defeat
     # tracking in GameState.world and must be unique across scenes.

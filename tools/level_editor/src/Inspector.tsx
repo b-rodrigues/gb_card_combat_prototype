@@ -3,65 +3,16 @@ import { EditorLevel, LevelExit, LevelRegion, PlayerSpawn } from './model/Level'
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
+import { BATTLE_IDS } from './model/Objects';
+import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
+import { fetchDialogueList } from './io/dialogue';
+import { fetchShopList } from './io/shops';
+import { fetchEntityTypeList, saveEntityType } from './io/entityTypes';
+import { ExitConnector } from './ExitConnector';
+import { TutorialEditor } from './TutorialEditor';
+import { fetchUsedActorIds } from './io/saveLevel';
+import { FilterCombo } from './FilterCombo';
 
-const BOSS_9X9_TEMPLATES: Record<string, { name: string; tiles: string[][] }> = {
-  giausar: {
-    name: 'LORD GIAUSAR',
-    tiles: [
-      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
-      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
-      ['combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_left', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_mid', 'combat.boss_horns_right', 'combat.boss_horns_right', 'combat.boss_horns_right'],
-      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
-      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
-      ['combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_left', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_mid', 'combat.boss_head_right', 'combat.boss_head_right', 'combat.boss_head_right'],
-      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right'],
-      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right'],
-      ['combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_left', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_mid', 'combat.boss_torso_right', 'combat.boss_torso_right', 'combat.boss_torso_right']
-    ]
-  },
-  dragon: {
-    name: 'COLOSSAL DRAGON',
-    tiles: [
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor'],
-      ['dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor'],
-      ['dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down'],
-      ['dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor'],
-      ['dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
-    ]
-  },
-  demon: {
-    name: 'DEMON OVERLORD',
-    tiles: [
-      ['dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall'],
-      ['dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall'],
-      ['dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor'],
-      ['dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
-    ]
-  },
-  titan: {
-    name: 'OBSIDIAN TITAN',
-    tiles: [
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.wall', 'dungeon.floor', 'dungeon.wall', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.stairs_down', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.floor', 'dungeon.wall'],
-      ['dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall', 'dungeon.wall']
-    ]
-  }
-};
 
 interface InspectorProps {
   level: EditorLevel;
@@ -89,6 +40,17 @@ interface InspectorProps {
   onAddRegion: (region: LevelRegion) => void;
   onUpdateRegion: (index: number, region: LevelRegion) => void;
   onDeleteRegion: (index: number) => void;
+  // All available level scenes, fed from App's catalogue (refreshed
+  // from disk on boot and after every save). Required: the exit target
+  // is always picked from real data, never typed blind. scene_id null
+  // means unregistered (save the level to assign one).
+  sceneOptions: Array<{ id: string; name: string; scene_id: number | null }>;
+  /** Numeric scene id assigned to the open level (null = unregistered). */
+  sceneId?: number | null;
+  /** Delete the open level (retires its id, clears referring exits). */
+  onDeleteLevel?: () => void;
+  /** Remove every level file whose scene id is retired (tombstoned). */
+  onCleanRetiredOrphans?: () => void;
 }
 
 // BGM preview files rendered by tools/render_music_preview.py
@@ -97,7 +59,6 @@ interface InspectorProps {
 const MUSIC_PREVIEW_FILES: Record<string, string> = {
   MUSIC_BATTLE: '/audio/battle.wav',
   MUSIC_DESOLATE: '/audio/desolate_landscape.wav',
-  MUSIC_DESOLATE_LANDSCAPE: '/audio/desolate_landscape.wav',
   MUSIC_FOREST: '/audio/forest.wav',
   MUSIC_BOSS: '/audio/boss_fight.wav',
   MUSIC_TOWN: '/audio/village.wav',
@@ -193,18 +154,19 @@ export const Inspector: React.FC<InspectorProps> = ({
   onAddRegion,
   onUpdateRegion,
   onDeleteRegion,
+  sceneOptions,
+  sceneId,
+  onDeleteLevel,
+  onCleanRetiredOrphans,
 }) => {
-  const isBattleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle')));
   const isTitleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title'));
-  const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'battle' | 'title'>('context');
+  const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'title'>('context');
 
   useEffect(() => {
-    if (isBattleScreen) {
-      setTab('battle');
-    } else if (isTitleScreen) {
+    if (isTitleScreen) {
       setTab('title');
     }
-  }, [level.id, isBattleScreen, isTitleScreen]);
+  }, [level.id, isTitleScreen]);
   const [previewTick, setPreviewTick] = useState<number>(0);
   useEffect(() => {
     const timer = setInterval(() => {
@@ -226,6 +188,44 @@ export const Inspector: React.FC<InspectorProps> = ({
   const selectedExit = activeLayer === 'exits' && selectedEntityIndex !== null ? level.exits[selectedEntityIndex] : null;
   const selectedObject = activeLayer === 'objects' && selectedEntityIndex !== null ? level.objects[selectedEntityIndex] : null;
   const selectedRegion = activeLayer === 'regions' && selectedEntityIndex !== null ? level.regions[selectedEntityIndex] : null;
+
+  // Enemy types with shared overworld art (id -> id): placements of these
+  // types ignore per-instance sprite names (type-owned art wins in ROM).
+  const [owEnemyIds, setOwEnemyIds] = useState<Set<string>>(new Set());
+  const [enemyTypeList, setEnemyTypeList] = useState<Array<{ id: string; label: string }>>([]);
+  const [dialogueList, setDialogueList] = useState<Array<{ id: string; label: string }>>([]);
+  const [shopList, setShopList] = useState<Array<{ id: number; label: string; owns: number }>>([]);
+  const [entityTypeList, setEntityTypeList] = useState<Array<{ id: string; label: string; entity_id: string }>>([]);
+  const refreshEntityTypes = () => {
+    fetchEntityTypeList().then((items) => {
+      setEntityTypeList(items.map((e) => ({ id: e.id, label: e.label || e.id, entity_id: e.entity_id })));
+    }).catch(() => undefined);
+  };
+  useEffect(() => {
+    fetchEnemyTypeList().then((items) => {
+      setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
+      setEnemyTypeList(items.map((e) => ({ id: e.id, label: e.label || e.id })));
+    }).catch(() => undefined);
+    fetchDialogueList().then((items) => {
+      setDialogueList(items.map((d) => ({ id: 'DIALOGUE_ID_' + d.id.toUpperCase(), label: d.label || d.id })));
+    }).catch(() => undefined);
+    fetchShopList().then((items) => {
+      setShopList(items.map((s) => ({ id: s.id, label: s.label || `Shop ${s.id}`, owns: s.buys })));
+    }).catch(() => undefined);
+    refreshEntityTypes();
+  }, []);
+  const selectedEnemyType = (() => {
+    if (!selectedObject || (selectedObject.type !== 'enemy' && selectedObject.type !== 'npc')) return null;
+    const props = selectedObject.properties || {};
+    const explicit = props.enemy_type;
+    if (explicit && owEnemyIds.has(explicit)) return explicit;
+    const ent = props.entity_id || '';
+    if (ent.startsWith('ENTITY_ID_')) {
+      const conv = ent.slice('ENTITY_ID_'.length).toLowerCase();
+      if (owEnemyIds.has(conv)) return conv;
+    }
+    return null;
+  })();
 
   return (
     <div className="panel inspector-panel">
@@ -259,15 +259,6 @@ export const Inspector: React.FC<InspectorProps> = ({
         >
           ⚙️ Map Info
         </button>
-        {isBattleScreen && (
-          <button
-            className={`tab-btn ${tab === 'battle' ? 'active' : ''}`}
-            onClick={() => setTab('battle')}
-            title="Battle HUD Layout and Coordinates"
-          >
-            ⚔️ Battle HUD
-          </button>
-        )}
         {isTitleScreen && (
           <button
             className={`tab-btn ${tab === 'title' ? 'active' : ''}`}
@@ -309,8 +300,16 @@ export const Inspector: React.FC<InspectorProps> = ({
               <input
                 type="text"
                 value={level.id}
+                disabled={level.isScreen}
                 onChange={(e) => onUpdateLevelMeta({ id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
               />
+              {!level.isScreen && (
+                <span style={{ fontSize: 11, color: '#888' }}>
+                  {sceneId !== null && sceneId !== undefined
+                    ? `scene id ${sceneId} — renaming on save keeps the id and rewires exits`
+                    : 'not registered yet — saving assigns the next scene id'}
+                </span>
+              )}
             </div>
             <div className="form-group">
               <label>Scene Name</label>
@@ -353,8 +352,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 <option value="MUSIC_TOWN">MUSIC_TOWN (Village.uge)</option>
                 <option value="MUSIC_DUNGEON">MUSIC_DUNGEON (castle.uge)</option>
                 <option value="MUSIC_BATTLE">MUSIC_BATTLE</option>
-                <option value="MUSIC_DESOLATE">MUSIC_DESOLATE</option>
-                <option value="MUSIC_DESOLATE_LANDSCAPE">MUSIC_DESOLATE_LANDSCAPE (desolate_landscape.uge)</option>
+                <option value="MUSIC_DESOLATE">MUSIC_DESOLATE (desolate_landscape.uge)</option>
                 <option value="MUSIC_FOREST">MUSIC_FOREST (Forest.uge)</option>
                 <option value="MUSIC_BOSS">MUSIC_BOSS (Boss fight.uge)</option>
                 </select>
@@ -368,573 +366,33 @@ export const Inspector: React.FC<InspectorProps> = ({
                 onChange={(e) => onUpdateLevelMeta({ mapId: e.target.value })}
               />
             </div>
+            {!level.isScreen && sceneId !== null && sceneId !== undefined && onDeleteLevel && (
+              <div className="form-group">
+                <label style={{ color: '#a66' }}>Danger Zone</label>
+                <button
+                  className="btn btn-sm"
+                  style={{ background: '#7a2020', color: '#fff' }}
+                  onClick={onDeleteLevel}
+                  title="Retires the scene id (never reused) and clears exits that target it"
+                >
+                  🗑 Delete Level
+                </button>
+              </div>
+            )}
+            {!level.isScreen && onCleanRetiredOrphans && (
+              <div className="form-group">
+                <button
+                  className="btn btn-sm"
+                  onClick={onCleanRetiredOrphans}
+                  title="Delete every levels/<id>.json whose scene id is retired — a leftover file blocks Compile ROM and keeps its actor ids reserved"
+                >
+                  🧹 Clean retired orphans
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {tab === 'battle' && (
-          <div className="inspector-section">
-            <h4>⚔️ Battle Screen HUD Layout</h4>
-            <p className="hint-text">
-              Configure row and column coordinates for every battle screen HUD element (matches <code>assets/battle_screen_mockup.jpg</code>).
-            </p>
-
-            {/* Turn Banner */}
-            <div className="form-group">
-              <label>Turn Banner Row (0-17)</label>
-              <input
-                type="number"
-                min={0}
-                max={17}
-                value={level.battleHudLayout?.turn_banner_row ?? 0}
-                onChange={(e) =>
-                  onUpdateLevelMeta({
-                    battleHudLayout: {
-                      ...(level.battleHudLayout || {}),
-                      turn_banner_row: parseInt(e.target.value) || 0,
-                    },
-                  })
-                }
-              />
-            </div>
-
-            {/* 👑 Boss 9x9 Meta-Tile Configuration */}
-            <div className="form-group" style={{ background: 'rgba(142, 68, 173, 0.15)', border: '1px solid #8e44ad', borderRadius: 6, padding: 8, margin: '8px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>👑 Boss 9×9 Meta-Tile</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                  <input
-                    type="checkbox"
-                    checked={level.bossMetaTile?.enabled ?? (level.id === 'boss' || level.id.includes('boss'))}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        bossMetaTile: {
-                          ...(level.bossMetaTile || { width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', hp: 100, max_hp: 100, tiles: BOSS_9X9_TEMPLATES.dragon.tiles }),
-                          enabled: e.target.checked,
-                        },
-                      })
-                    }
-                  />
-                  Enable Boss Meta-Tile
-                </label>
-              </div>
-
-              {(level.bossMetaTile?.enabled ?? (level.id === 'boss' || level.id.includes('boss'))) && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6 }}>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Boss Name</label>
-                      <input
-                        type="text"
-                        value={level.bossMetaTile?.name ?? 'LORD GIAUSAR'}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, hp: 100, max_hp: 100 }),
-                              name: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>HP</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={999}
-                        value={level.bossMetaTile?.hp ?? 100}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', max_hp: 100 }),
-                              hp: parseInt(e.target.value) || 100,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Max HP</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={999}
-                        value={level.bossMetaTile?.max_hp ?? 100}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1, name: 'LORD GIAUSAR', hp: 100 }),
-                              max_hp: parseInt(e.target.value) || 100,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, margin: '6px 0' }}>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Col X</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={19}
-                        value={level.bossMetaTile?.x ?? 5}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, y: 1 }),
-                              x: parseInt(e.target.value) || 0,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Row Y</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={17}
-                        value={level.bossMetaTile?.y ?? 1}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5 }),
-                              y: parseInt(e.target.value) || 0,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Width</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={level.bossMetaTile?.width ?? 9}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, height: 9, x: 5, y: 1 }),
-                              width: parseInt(e.target.value) || 9,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Height</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={level.bossMetaTile?.height ?? 9}
-                        onChange={(e) =>
-                          onUpdateLevelMeta({
-                            bossMetaTile: {
-                              ...(level.bossMetaTile || { enabled: true, width: 9, x: 5, y: 1 }),
-                              height: parseInt(e.target.value) || 9,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {/* 9x9 Quick Templates */}
-                  <div style={{ margin: '6px 0' }}>
-                    <label style={{ fontSize: 10, color: '#cbd5e1' }}>9×9 Boss Presets:</label>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
-                      {Object.entries(BOSS_9X9_TEMPLATES).map(([key, tmpl]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          className="btn btn-sm"
-                          style={{ fontSize: 10, padding: '2px 6px' }}
-                          onClick={() =>
-                            onUpdateLevelMeta({
-                              bossMetaTile: {
-                                ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1 }),
-                                name: tmpl.name,
-                                tiles: JSON.parse(JSON.stringify(tmpl.tiles)),
-                              },
-                            })
-                          }
-                        >
-                          👑 {tmpl.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 9x9 Tile Matrix Visual Editor */}
-                  <label style={{ fontSize: 11 }}>9×9 Meta-Tile Matrix Grid (Click cell to cycle tile):</label>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: `repeat(${level.bossMetaTile?.width || 9}, 18px)`,
-                      gap: 2,
-                      background: '#090d16',
-                      padding: 6,
-                      borderRadius: 4,
-                      justifyContent: 'center',
-                      overflowX: 'auto',
-                    }}
-                  >
-                    {Array.from({ length: level.bossMetaTile?.height || 9 }).map((_, r) =>
-                      Array.from({ length: level.bossMetaTile?.width || 9 }).map((_, c) => {
-                        const curTile = level.bossMetaTile?.tiles?.[r]?.[c] || 'dungeon.floor';
-                        const tDef = allTilesWithScope.find((t) => t.scopedId === curTile || t.id === curTile);
-                        return (
-                          <div
-                            key={`${r}-${c}`}
-                            title={`[${r},${c}] ${curTile}`}
-                            onClick={() => {
-                              const newTiles = level.bossMetaTile?.tiles
-                                ? JSON.parse(JSON.stringify(level.bossMetaTile.tiles))
-                                : Array.from({ length: 9 }, () => Array(9).fill('dungeon.floor'));
-                              while (newTiles.length <= r) newTiles.push(Array(9).fill('dungeon.floor'));
-                              while (newTiles[r].length <= c) newTiles[r].push('dungeon.floor');
-                              newTiles[r][c] =
-                                curTile === 'dungeon.wall'
-                                  ? 'dungeon.stairs_down'
-                                  : curTile === 'dungeon.stairs_down'
-                                  ? 'dungeon.floor'
-                                  : 'dungeon.wall';
-                              onUpdateLevelMeta({
-                                bossMetaTile: {
-                                  ...(level.bossMetaTile || { enabled: true, width: 9, height: 9, x: 5, y: 1 }),
-                                  tiles: newTiles,
-                                },
-                              });
-                            }}
-                            style={{
-                              width: 18,
-                              height: 18,
-                              border: '1px solid rgba(245, 158, 11, 0.4)',
-                              borderRadius: 2,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: curTile.includes('wall') ? '#450a0a' : curTile.includes('stairs') ? '#7f1d1d' : '#1e1b4b',
-                            }}
-                          >
-                            {tDef?.image_url ? (
-                              <img src={tDef.image_url} alt="" style={{ width: 14, height: 14, imageRendering: 'pixelated' }} />
-                            ) : (
-                              <span style={{ fontSize: 8, color: '#fca5a5' }}>{curTile.slice(0, 2)}</span>
-                            )}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Enemy Roster Layout */}
-            <div className="form-group">
-              <label style={{ fontWeight: 600 }}>👾 Enemy Roster Layout</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <div>
-                  <label style={{ fontSize: 11 }}>HP Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.enemy_hp_row ?? 1}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          enemy_hp_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Sprite Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.enemy_sprite_row ?? 2}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          enemy_sprite_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Target Arrow Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.enemy_cursor_row ?? 4}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          enemy_cursor_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Column Step</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={level.battleHudLayout?.enemy_col_step ?? 7}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          enemy_col_step: parseInt(e.target.value) || 7,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Dual-Column Status Panel */}
-            <div className="form-group">
-              <label style={{ fontWeight: 600 }}>👤 Hero & Status Panel (Rows 6 & 7)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <div>
-                  <label style={{ fontSize: 11 }}>Hero Label Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.hero_label_row ?? 6}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          hero_label_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Heart HP Row / Col</label>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <input
-                      type="number"
-                      min={0}
-                      max={17}
-                      value={level.battleHudLayout?.hero_hp_row ?? 6}
-                      onChange={(e) =>
-                        onUpdateLevelMeta({
-                          battleHudLayout: {
-                            ...(level.battleHudLayout || {}),
-                            hero_hp_row: parseInt(e.target.value) || 0,
-                          },
-                        })
-                      }
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      max={19}
-                      value={level.battleHudLayout?.hero_hp_col ?? 13}
-                      onChange={(e) =>
-                        onUpdateLevelMeta({
-                          battleHudLayout: {
-                            ...(level.battleHudLayout || {}),
-                            hero_hp_col: parseInt(e.target.value) || 0,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Deck Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.deck_row ?? 7}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          deck_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Battery AP Row / Col</label>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <input
-                      type="number"
-                      min={0}
-                      max={17}
-                      value={level.battleHudLayout?.ap_row ?? 7}
-                      onChange={(e) =>
-                        onUpdateLevelMeta({
-                          battleHudLayout: {
-                            ...(level.battleHudLayout || {}),
-                            ap_row: parseInt(e.target.value) || 0,
-                          },
-                        })
-                      }
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      max={19}
-                      value={level.battleHudLayout?.ap_col ?? 13}
-                      onChange={(e) =>
-                        onUpdateLevelMeta({
-                          battleHudLayout: {
-                            ...(level.battleHudLayout || {}),
-                            ap_col: parseInt(e.target.value) || 0,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Hand Cards & Description */}
-            <div className="form-group">
-              <label style={{ fontWeight: 600 }}>🎴 Framed Cards Hand (Rows 10–15)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <div>
-                  <label style={{ fontSize: 11 }}>Combo Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.combo_row ?? 9}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          combo_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Cards Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.cards_row ?? 10}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          cards_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Card Cursor Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.card_cursor_row ?? 14}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          card_cursor_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Description Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.card_desc_row ?? 15}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          card_desc_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Turn Timer Bar */}
-            <div className="form-group">
-              <label style={{ fontWeight: 600 }}>⏱️ Turn Timer Bar</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <div>
-                  <label style={{ fontSize: 11 }}>Timer Row</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={17}
-                    value={level.battleHudLayout?.timer_row ?? 16}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          timer_row: parseInt(e.target.value) || 0,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11 }}>Timer Width (tiles)</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={level.battleHudLayout?.timer_width ?? 11}
-                    onChange={(e) =>
-                      onUpdateLevelMeta({
-                        battleHudLayout: {
-                          ...(level.battleHudLayout || {}),
-                          timer_width: parseInt(e.target.value) || 11,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {tab === 'title' && (
           <div className="inspector-section">
@@ -942,6 +400,8 @@ export const Inspector: React.FC<InspectorProps> = ({
             <p className="hint-text">
               Completely data-driven Title Screen: customize the Big Title Graphic, Game Title, Centered &ldquo;PRESS START&rdquo;, and Bottom-Row Credits.
             </p>
+
+            <TutorialEditor />
 
             {/* Game Title & Subtitle */}
             <div className="form-group">
@@ -1002,7 +462,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </label>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, margin: '6px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, margin: '6px 0' }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Col X</label>
                   <input
@@ -1210,7 +670,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             {/* PRESS START Prompt */}
             <div className="form-group">
               <label style={{ fontWeight: 600 }}>🕹️ &ldquo;PRESS START&rdquo; Prompt</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 6 }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Text</label>
                   <input
@@ -1297,7 +757,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 </label>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 6, marginTop: 4 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 6, marginTop: 4 }}>
                 <div>
                   <label style={{ fontSize: 11 }}>Credits Text</label>
                   <input
@@ -1502,8 +962,8 @@ export const Inspector: React.FC<InspectorProps> = ({
                     onUpdateSpawn({
                       ...level.spawn,
                       animation_frames: [
-                        'desolate_landscape.desolate_hero_01',
-                        'desolate_landscape.desolate_hero_02',
+                        'actors.actors_hero_frame_1',
+                        'actors.actors_hero_frame_2',
                       ],
                     });
                   }}
@@ -1736,6 +1196,27 @@ export const Inspector: React.FC<InspectorProps> = ({
 
         {tab === 'context' && activeLayer === 'exits' && (
           <div className="inspector-section">
+            {(() => {
+              const entry = sceneOptions.find((s) => s.id === level.id);
+              if (entry && entry.scene_id !== null) return null;
+              return (
+                <div
+                  className="banner-warn"
+                  style={{
+                    background: '#3a2b00',
+                    border: '1px solid #a80',
+                    borderRadius: 4,
+                    padding: 8,
+                    marginBottom: 8,
+                    fontSize: 12,
+                  }}
+                >
+                  This level has no scene id yet — the ROM cannot compile
+                  it. Save the level to register one automatically, then
+                  recompile.
+                </div>
+              );
+            })()}
             <div className="section-header-row">
               <h4>Exits ({level.exits.length})</h4>
               <button
@@ -1785,12 +1266,17 @@ export const Inspector: React.FC<InspectorProps> = ({
 
                 <div className="form-group">
                   <label>Target Scene</label>
-                  <input
-                    type="text"
+                  <FilterCombo
+                    items={sceneOptions.map((s) => ({
+                      value: s.id,
+                      label: `${s.name} (${s.id}.json)`,
+                    }))}
                     value={selectedExit.target_scene}
-                    onChange={(e) =>
-                      onUpdateExit(selectedEntityIndex, { ...selectedExit, target_scene: e.target.value })
+                    onPick={(v) =>
+                      onUpdateExit(selectedEntityIndex, { ...selectedExit, target_scene: v })
                     }
+                    staleLabel={(v) => `${v} (unknown — pick a scene below)`}
+                    placeholder="Filter scenes..."
                   />
                 </div>
 
@@ -1880,6 +1366,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                 ))}
               </div>
             )}
+            <ExitConnector levelId={level.id} exits={level.exits} />
           </div>
         )}
 
@@ -1983,212 +1470,378 @@ export const Inspector: React.FC<InspectorProps> = ({
                   />
                 </div>
 
-                {/* 👑 Boss Meta-Tile (e.g. 9x9 Boss) */}
-                <div className="form-group" style={{ background: 'rgba(142, 68, 173, 0.15)', border: '1px solid #8e44ad', borderRadius: 6, padding: 8, margin: '8px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>👑 Boss Meta-Tile</label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedObject.is_boss ?? (selectedObject.sprite_width === 9)}
-                        onChange={(e) => {
-                          const isBoss = e.target.checked;
-                          onUpdateObject(selectedEntityIndex, {
-                            ...selectedObject,
-                            is_boss: isBoss,
-                            sprite_width: isBoss ? 9 : 1,
-                            sprite_height: isBoss ? 9 : 1,
-                            meta_tiles: isBoss ? (selectedObject.meta_tiles || BOSS_9X9_TEMPLATES.dragon.tiles) : undefined,
-                          });
+                {/* NPC object identity: the entity id is required for the
+                    object to become an engine actor (entity-less objects
+                    compile as decoration).  Art Type reuses the shared
+                    enemy-types registry — SPRITE_KIND_ENEMY works for
+                    statics too (sprite_tile_for is hostile-agnostic). */}
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
+                  <>
+                    <div className="form-group">
+                      <label>Entity ID (required for engine actors)</label>
+                      <FilterCombo
+                        items={[
+                          { value: '', label: '(none — decoration, no interaction)' },
+                          ...entityTypeList.map((t) => ({
+                            value: t.entity_id,
+                            label: `${t.label} (${t.entity_id})`,
+                          })),
+                        ]}
+                        value={selectedObject.properties?.entity_id || ''}
+                        onPick={(v) => {
+                          const props = { ...(selectedObject.properties || {}) };
+                          if (v) props.entity_id = v; else delete props.entity_id;
+                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
                         }}
+                        staleLabel={(v) => `${v} (unknown type — pick below or create one)`}
+                        placeholder="Filter entity types..."
                       />
-                      Is Boss
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 6, marginTop: 6, alignItems: 'flex-end' }}>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Width (Tiles)</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={selectedObject.sprite_width ?? (selectedObject.is_boss ? 9 : 1)}
-                        onChange={(e) =>
-                          onUpdateObject(selectedEntityIndex, {
-                            ...selectedObject,
-                            sprite_width: parseInt(e.target.value) || 1,
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11 }}>Height (Tiles)</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={selectedObject.sprite_height ?? (selectedObject.is_boss ? 9 : 1)}
-                        onChange={(e) =>
-                          onUpdateObject(selectedEntityIndex, {
-                            ...selectedObject,
-                            sprite_height: parseInt(e.target.value) || 1,
-                          })
-                        }
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      style={{ height: 32, fontSize: 11 }}
-                      title="Set to 9x9 Colossal Boss Meta-Tile"
-                      onClick={() =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          is_boss: true,
-                          sprite_width: 9,
-                          sprite_height: 9,
-                          meta_tiles: BOSS_9X9_TEMPLATES.dragon.tiles,
-                        })
-                      }
-                    >
-                      👑 9×9 Boss
-                    </button>
-                  </div>
-
-                  {/* Quick Presets if Boss or multi-tile */}
-                  {(selectedObject.is_boss || (selectedObject.sprite_width && selectedObject.sprite_width >= 3)) && (
-                    <div style={{ marginTop: 8 }}>
-                      <label style={{ fontSize: 10, color: '#cbd5e1' }}>9×9 Meta-Tile Presets:</label>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', margin: '4px 0' }}>
-                        {Object.entries(BOSS_9X9_TEMPLATES).map(([key, tmpl]) => (
-                          <button
-                            key={key}
-                            type="button"
-                            className="btn btn-sm"
-                            style={{ fontSize: 10, padding: '2px 6px' }}
-                            onClick={() =>
-                              onUpdateObject(selectedEntityIndex, {
-                                ...selectedObject,
-                                is_boss: true,
-                                sprite_width: 9,
-                                sprite_height: 9,
-                                meta_tiles: JSON.parse(JSON.stringify(tmpl.tiles)),
-                                properties: {
-                                  ...(selectedObject.properties || {}),
-                                  display_name: tmpl.name,
-                                },
-                              })
-                            }
-                          >
-                            👑 {tmpl.name}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* 9x9 Visual Grid */}
-                      <label style={{ fontSize: 11 }}>9×9 Meta-Tile Grid (Click cell to cycle tile):</label>
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${selectedObject.sprite_width || 9}, 18px)`,
-                          gap: 2,
-                          background: '#090d16',
-                          padding: 6,
-                          borderRadius: 4,
-                          justifyContent: 'center',
-                          overflowX: 'auto',
+                      <button
+                        className="btn btn-sm"
+                        style={{ marginTop: 4 }}
+                        onClick={async () => {
+                          const raw = window.prompt('New entity type id (lowercase, underscores):', 'new_npc');
+                          if (!raw) return;
+                          const id = raw.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                          if (!id) return;
+                          const label = window.prompt('Display label:', id.replace(/_/g, ' ')) || id;
+                          try {
+                            await saveEntityType('entity_types', {
+                              id, label, kind: 'npc',
+                              name: label.toUpperCase().slice(0, 20),
+                              visual: (label[0] || 'N').toUpperCase(),
+                              sprite_kind: 'tile',
+                            });
+                            refreshEntityTypes();
+                            const props = {
+                              ...(selectedObject.properties || {}),
+                              entity_id: 'ENTITY_ID_' + id.toUpperCase(),
+                            };
+                            onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                          } catch (err: any) {
+                            window.alert(`Create failed: ${err.message}`);
+                          }
                         }}
                       >
-                        {Array.from({ length: selectedObject.sprite_height || 9 }).map((_, r) =>
-                          Array.from({ length: selectedObject.sprite_width || 9 }).map((_, c) => {
-                            const curTile = selectedObject.meta_tiles?.[r]?.[c] || 'dungeon.floor';
-                            const tDef = allTilesWithScope.find((t) => t.scopedId === curTile || t.id === curTile);
-                            return (
-                              <div
-                                key={`${r}-${c}`}
-                                title={`[${r},${c}] ${curTile}`}
-                                onClick={() => {
-                                  const newTiles = selectedObject.meta_tiles
-                                    ? JSON.parse(JSON.stringify(selectedObject.meta_tiles))
-                                    : Array.from({ length: 9 }, () => Array(9).fill('dungeon.floor'));
-                                  while (newTiles.length <= r) newTiles.push(Array(9).fill('dungeon.floor'));
-                                  while (newTiles[r].length <= c) newTiles[r].push('dungeon.floor');
-                                  newTiles[r][c] =
-                                    curTile === 'dungeon.wall'
-                                      ? 'dungeon.stairs_down'
-                                      : curTile === 'dungeon.stairs_down'
-                                      ? 'dungeon.floor'
-                                      : 'dungeon.wall';
-                                  onUpdateObject(selectedEntityIndex, {
-                                    ...selectedObject,
-                                    meta_tiles: newTiles,
-                                  });
-                                }}
-                                style={{
-                                  width: 18,
-                                  height: 18,
-                                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                                  borderRadius: 2,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  background: curTile.includes('wall') ? '#450a0a' : curTile.includes('stairs') ? '#7f1d1d' : '#1e1b4b',
-                                }}
-                              >
-                                {tDef?.image_url ? (
-                                  <img src={tDef.image_url} alt="" style={{ width: 14, height: 14, imageRendering: 'pixelated' }} />
-                                ) : (
-                                  <span style={{ fontSize: 8, color: '#fca5a5' }}>{curTile.slice(0, 2)}</span>
-                                )}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
+                        ＋ New entity type...
+                      </button>
+                      <span style={{ fontSize: 11, color: '#777' }}>
+                        New types get an ENTITY_ID_* automatically on the next compile.
+                      </span>
                     </div>
-                  )}
-                </div>
+                    <div className="form-group">
+                      <label>Art Type (shared sprite from the type registry)</label>
+                      <select
+                        value={selectedEnemyType || ''}
+                        onChange={(e) => {
+                          const props = { ...(selectedObject.properties || {}) };
+                          if (!e.target.value) {
+                            delete props.enemy_type;
+                          } else {
+                            props.enemy_type = e.target.value;
+                          }
+                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                        }}
+                      >
+                        <option value="">(none — tile/ASCII fallback)</option>
+                        {enemyTypeList.map((t) => (
+                          <option key={t.id} value={t.id}>{t.label} ({t.id})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
 
                 {selectedObject.type === 'enemy' && (
-                  <div className="form-group">
-                    <label>AI Pattern</label>
-                    <select
-                      value={selectedObject.properties?.ai || 'AI_PATROL_CROSS'}
-                      onChange={(e) =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          properties: { ...selectedObject.properties, ai: e.target.value },
-                        })
-                      }
-                    >
-                      <option value="AI_NONE">AI_NONE</option>
+                  <>
+                    <div className="form-group">
+                      <label>AI Pattern</label>
+                      <select
+                        value={selectedObject.properties?.ai || 'AI_PATROL_CROSS'}
+                        onChange={(e) =>
+                          onUpdateObject(selectedEntityIndex, {
+                            ...selectedObject,
+                            properties: { ...selectedObject.properties, ai: e.target.value },
+                          })
+                        }
+                      >
+<option value="AI_NONE">AI_NONE</option>
                       <option value="AI_PATROL_CROSS">AI_PATROL_CROSS</option>
                       <option value="AI_PATROL_CIRCLE">AI_PATROL_CIRCLE</option>
-                    </select>
+                      <option value="AI_CHASE">AI_CHASE</option>
+                      <option value="AI_PATROL_VERT">AI_PATROL_VERT (up/down 3 tiles)</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Enemy Type</label>
+                      <select
+                        value={selectedEnemyType || ''}
+                        onChange={(e) => {
+                          const typeId = e.target.value;
+                          const props = { ...(selectedObject.properties || {}) };
+                          if (!typeId) {
+                            delete props.enemy_type;
+                            onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                            return;
+                          }
+                          props.enemy_type = typeId;
+                          if (!props.entity_id) props.entity_id = `ENTITY_ID_${typeId.toUpperCase()}`;
+                          // Full-actor prefill from the type JSON (always
+                          // overwrite): display name, battle routing,
+                          // stats, AI, gold, flags -- the complete row
+                          // compile.py needs for a hostile actor.  Every
+                          // field stays editable afterward.
+                          const nextObj: LevelObject = { ...selectedObject, properties: props };
+                          props.facing = props.facing || 'DOWN';
+                          if (!props.flags) props.flags = ['HOSTILE', 'BLOCKING', 'INTERACTABLE'];
+                          props.visual = (props.visual as string) ||
+                            ((typeId[0] || 'E').toUpperCase());
+                          onUpdateObject(selectedEntityIndex, nextObj);
+                          const objIndex = selectedEntityIndex;
+                          const localUsed = new Set<number>(
+                            level.objects
+                              .map((o) => (o.properties || {}).actor_id as number)
+                              .filter((n) => typeof n === 'number' && n > 0));
+                          // Stats/battle come from the type JSON and the
+                          // actor_id is assigned across ALL scenes
+                          // (ActorIds must be unique scene-to-scene, so a
+                          // within-level pick collides with e.g. the
+                          // forest slime at compile).  One async merge
+                          // (monotonic max-used + 1); the captured index
+                          // keeps a click-away in the fetch window from
+                          // updating the wrong object.
+                          Promise.all([
+                            fetchEnemyType(typeId).catch(() => null),
+                            fetchUsedActorIds().catch(() => null),
+                          ]).then(([t, usedList]) => {
+                            const cur = { ...props };
+                            if (t) {
+                              cur.display_name = t.name || typeId.toUpperCase();
+                              cur.battle = t.battle_id || cur.battle;
+                              cur.hp = t.hp ?? 1;
+                              cur.max_hp = t.max_hp ?? t.hp ?? 1;
+                              cur.gold_reward = t.gold_reward ?? 0;
+                              if (t.reward_currency) cur.reward_currency = t.reward_currency;
+                              if (Array.isArray(t.ai_types) && t.ai_types.length > 0) {
+                                cur.ai = t.ai_types[0];
+                              }
+                              if (t.label) cur.visual = (t.label[0] || 'E').toUpperCase();
+                            }
+                            if (!cur.actor_id) {
+                              const used = new Set<number>(localUsed);
+                              (usedList || []).forEach((u) => used.add(u.id));
+                              let next = 1;
+                              used.forEach((v) => { if (v >= next) next = v + 1; });
+                              cur.actor_id = next;
+                            }
+                            onUpdateObject(objIndex, { ...nextObj, properties: cur });
+                          });
+                        }}
+                      >
+                        <option value="">-- choose enemy type --</option>
+                        {enemyTypeList.map((t) => (
+                          <option key={t.id} value={t.id}>{t.label} ({t.id})</option>
+                        ))}
+                      </select>
+                      <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
+                        Sprite/art is configured in the Enemies view (art-only) — this dropdown picks which enemy type the placement is.
+                      </div>
+                    </div>
+                    {/* Per-instance actor overrides: stats seeded from
+                        the enemy type defaults, editable here per
+                        placement.  Art/category stay type-owned (Enemies
+                        view). */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>HP</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.hp ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, hp: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Max HP</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.max_hp ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, max_hp: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Gold Reward</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.gold_reward ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, gold_reward: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Battle</label>
+                        <select
+                          value={selectedObject.properties?.battle || 'BATTLE_NONE'}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, battle: e.target.value },
+                            })
+                          }
+                        >
+                          {BATTLE_IDS.map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                          {!BATTLE_IDS.includes(selectedObject.properties?.battle) && selectedObject.properties?.battle && (
+                            <option value={selectedObject.properties.battle}>
+                              {selectedObject.properties.battle} (custom)
+                            </option>
+                          )}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Facing</label>
+                        <select
+                          value={selectedObject.properties?.facing || 'DOWN'}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, facing: e.target.value },
+                            })
+                          }
+                        >
+                          <option value="UP">UP / North</option>
+                          <option value="DOWN">DOWN / South</option>
+                          <option value="LEFT">LEFT / West</option>
+                          <option value="RIGHT">RIGHT / East</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Visual Glyph</label>
+                        <input
+                          type="text"
+                          maxLength={1}
+                          value={selectedObject.properties?.visual || ''}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, visual: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Actor ID (0 = auto)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={selectedObject.properties?.actor_id ?? 0}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, actor_id: parseInt(e.target.value) || 0 },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!!selectedObject.properties?.solo}
+                          onChange={(e) =>
+                            onUpdateObject(selectedEntityIndex, {
+                              ...selectedObject,
+                              properties: { ...selectedObject.properties, solo: e.target.checked },
+                            })
+                          }
+                        />{' '}
+                        Solo (engage alone, no trio clones)
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
+                  <div className="form-group">
+                    <label>Dialogue ID</label>
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no dialogue)' },
+                        ...dialogueList.map((d) => ({
+                          value: d.id,
+                          label: `${d.label} (${d.id})`,
+                        })),
+                      ]}
+                      value={selectedObject.properties?.dialogue || ''}
+                      onPick={(v) =>
+                        onUpdateObject(selectedEntityIndex, {
+                          ...selectedObject,
+                          properties: { ...selectedObject.properties, dialogue: v },
+                        })
+                      }
+                      staleLabel={(v) => `${v} (unknown — pick below)`}
+                      placeholder="Filter dialogues..."
+                    />
                   </div>
                 )}
 
                 {selectedObject.type === 'npc' && (
                   <div className="form-group">
-                    <label>Dialogue ID</label>
-                    <input
-                      type="text"
-                      value={selectedObject.properties?.dialogue || ''}
-                      onChange={(e) =>
-                        onUpdateObject(selectedEntityIndex, {
-                          ...selectedObject,
-                          properties: { ...selectedObject.properties, dialogue: e.target.value },
-                        })
-                      }
+                    <label>Shop (stock list)</label>
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no shop)' },
+                        ...shopList.map((s) => ({
+                          value: String(s.id),
+                          label: `${s.label} (id ${s.id})${s.owns ? ' · merchant' : ''}`,
+                        })),
+                      ]}
+                      value={selectedObject.properties?.shop != null ? String(selectedObject.properties.shop) : ''}
+                      onPick={(v) => {
+                        const next = { ...selectedObject.properties };
+                        if (v === '') delete next.shop;
+                        else next.shop = Number(v);
+                        onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: next });
+                      }}
+                      staleLabel={(v) => `shop ${v} (unknown — pick below)`}
+                      placeholder="Filter shops..."
                     />
                   </div>
                 )}
 
-                {/* Sprite/Tile Configuration */}
+                {/* Sprite/Tile Configuration (hidden for enemies: art is
+                    configured in the dedicated Enemies view) */}
+                {selectedObject.type !== 'enemy' && (
                 <div className="inspector-section">
                   <h5>🎨 Sprite/Tile Configuration</h5>
+                  {selectedEnemyType && (
+                    <div style={{ fontSize: 12, background: '#eef6ee', border: '1px solid #9b9', padding: 6, marginBottom: 8 }}>
+                      Overworld art controlled by enemy type <code>{selectedEnemyType}</code> (Enemies view) — one
+                      shared sprite everywhere this enemy appears. Per-instance names below are ignored for it.
+                    </div>
+                  )}
                   
                   <div className="form-group">
                     <label>Overworld Sprite</label>
@@ -2634,19 +2287,28 @@ export const Inspector: React.FC<InspectorProps> = ({
                     />
                   </div>
                 </div>
+                )}
 
-                {selectedObject.type === 'npc' && (
+                {['npc', 'item', 'signpost'].includes(selectedObject.type) && (
                   <div className="form-group">
                     <label>Dialogue ID</label>
-                    <input
-                      type="text"
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no dialogue)' },
+                        ...dialogueList.map((d) => ({
+                          value: d.id,
+                          label: `${d.label} (${d.id})`,
+                        })),
+                      ]}
                       value={selectedObject.properties?.dialogue || ''}
-                      onChange={(e) =>
+                      onPick={(v) =>
                         onUpdateObject(selectedEntityIndex, {
                           ...selectedObject,
-                          properties: { ...selectedObject.properties, dialogue: e.target.value },
+                          properties: { ...selectedObject.properties, dialogue: v },
                         })
                       }
+                      staleLabel={(v) => `${v} (unknown — pick below)`}
+                      placeholder="Filter dialogues..."
                     />
                   </div>
                 )}

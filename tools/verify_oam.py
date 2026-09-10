@@ -174,51 +174,74 @@ def verify_hostile_sprites(sess):
     check("amulet background cell is floor, not '?'",
           160, mirror_at(sess, mirror, 16, 10))
 
-    print("== Hostile sprite tiles (south_field kobold / bat) ==")
+    print("== Hostile sprite tiles (south_field slime / bat) ==")
     south = load_scenario(sess, "south_field_boot.json")
     sess.load_scenario(south)
     sess.step(2)
     # Actor slot 0 (SLIME) = OAM entry 1; slot 1 (BAT) = OAM entry 2.
-    kobold = shadow_oam_slot_tile(sess, 1)
+    # Shared per-enemy sprites (ENEMY_OW_BASE 100): blob order is sorted
+    # enemy ids with overworld (bat, kobold, mimic, slime, slime_lord).
+    # bat frames 100|101, mimic frames 104|105, slime frames 106|107.
+    slime = shadow_oam_slot_tile(sess, 1)
     bat = shadow_oam_slot_tile(sess, 2)
-    check("south_field slime renders as kobold OAM tile (96|97)",
-          1, (96 <= kobold <= 97))
-    check("south_field bat renders as desolate bat OAM tile (88|89)",
-          1, (88 <= bat <= 89))
+    check("south_field slime renders as shared slime OAM tile (106|107)",
+          1, (106 <= slime <= 107))
+    check("south_field bat renders as shared bat OAM tile (100|101)",
+          1, (100 <= bat <= 101))
 
-    print("== Boss sprite rendering (castle: bat + 2x2 boss block) ==")
+    print("== Boss sprite rendering (castle: bat + mimic + spider + 2x2 boss OAM sprite) ==")
     boss = load_scenario(sess, "boss_appears.json")
     sess.load_scenario(boss)
     sess.step(1)
-    # Actor slot 0 (BAT) = OAM entry 1; slot 1 (SLIME_LORD/BOSS) = entry 2.
+    # Actor slot 0 (BAT) = OAM entry 1; slot 1 (MIMIC, 1x1) = entry 2;
+    # slot 2 (SPIDER, 1x1) = entry 3; slot 3 (SLIME_LORD/BOSS) = entries
+    # 4-7 (a 2x2 grid of four shared-enemy OAM tiles).  Mimic tile base
+    # = 104.  Boss blob base = 108.  (The castle spider insertion moved
+    # the boss from slot 2 to slot 3.)
     castle_bat = shadow_oam_slot_tile(sess, 1)
-    # The boss is hidden from OAM (y=0); read the entry's y byte.  The tile
-    # byte may hold a stale value from a prior actor in this slot, so assert
-    # the semantic "not drawn as a sprite" via y==0 (hidden), not tile==0.
-    boss_y = sess._memread(0xC000 + 4 * 2)  # entry 2 y byte
-    check("castle bat renders as castle bat OAM tile (92|93)",
-          1, (92 <= castle_bat <= 93))
-    check("boss is not hidden from OAM (y==0)",
-          0, boss_y)
-    # Boss 2x2 background block at (10,5): castle tile indices 7,8,16,17
-    # -> RPG_TILE_BASE_WORLD (128) + 7/8/16/17 = 135/136/144/145 in mirror.
+    castle_mimic = shadow_oam_slot_tile(sess, 2)
+    check("castle bat renders as shared bat OAM tile (100|101)",
+          1, (100 <= castle_bat <= 101))
+    check("castle mimic renders as shared mimic OAM tile (104|105)",
+          1, (104 <= castle_mimic <= 105))
+    # Boss 2x2 OAM grid at actor (10,5): tiles 108-111 (boss_ow_tl/tr/bl/br),
+    # positions span a 2x2 area (row 0 at world y, row 1 at world y+1, cols
+    # at world x and x+1).  The four OAM entries must be present and laid
+    # out as a grid (same x for a column, y increasing by 8 down a row).
+    boss0 = sess._memread(0xC000 + 4 * 4)  # entry 4 y byte (top-left)
+    boss1 = sess._memread(0xC000 + 4 * 5)  # entry 5 y byte (top-right)
+    boss2 = sess._memread(0xC000 + 4 * 6)  # entry 6 y byte (bot-left)
+    boss3 = sess._memread(0xC000 + 4 * 7)  # entry 7 y byte (bot-right)
+    t0 = shadow_oam_slot_tile(sess, 4)
+    t1 = shadow_oam_slot_tile(sess, 5)
+    t2 = shadow_oam_slot_tile(sess, 6)
+    t3 = shadow_oam_slot_tile(sess, 7)
+    check("boss renders as shared boss OAM tiles (108|109|110|111)",
+          1, (108 <= t0 <= 111 and 108 <= t1 <= 111 and
+              108 <= t2 <= 111 and 108 <= t3 <= 111))
+    check("boss is a 2x2 OAM grid (top row y, bottom row y+8)",
+          1, (boss0 == boss1 and boss2 == boss3 and
+              boss2 == boss0 + 8 and boss0 > 0))
+    # The boss must no longer draw the legacy 2x2 background block at
+    # (10,5): the ground underneath stays the castle floor, not the
+    # background boss corners (RPG_TILE_BASE_WORLD + 7/8/16/17).
     mirror = sess.get_symbol("g_tilemap_mirror")
-    check("boss top-left  background tile in mirror", 135, mirror_at(sess, mirror, 10, 5))
-    check("boss top-right background tile in mirror", 136, mirror_at(sess, mirror, 11, 5))
-    check("boss bot-left  background tile in mirror", 144, mirror_at(sess, mirror, 10, 6))
-    check("boss bot-right background tile in mirror", 145, mirror_at(sess, mirror, 11, 6))
+    corner = mirror_at(sess, mirror, 10, 5)
+    check("boss background block removed (floor under boss)",
+          0, (135 == corner or 136 == corner or 144 == corner or 145 == corner))
 
 
 def verify_exit_art(sess):
     """Tileset-specific exit art (manifest vram_block exit markings):
     gate cells render the tileset's exit tile, not the generic gate.
     town (forest) -> 128+8, south_field (desolate) -> 128+40,
-    castle -> 128+26.  RPG_TILE_BASE_* are all 128."""
+    castle (reworked 8x2 sheet) -> 128+7 (castle_stairs at index 7).
+    RPG_TILE_BASE_* are all 128."""
     print("== Exit art (per-tileset gate tiles) ==")
     cases = (("town_boot.json", (1, 7), 168),
              ("south_field_boot.json", (12, 0), 168),
              ("south_field_boot.json", (12, 11), 168),
-             ("castle_boot.json", (12, 11), 154))
+             ("castle_boot.json", (12, 11), 135))
     mirror = sess.get_symbol("g_tilemap_mirror")
     for name, (x, y), want in cases:
         sess.load_scenario(load_scenario(sess, name))

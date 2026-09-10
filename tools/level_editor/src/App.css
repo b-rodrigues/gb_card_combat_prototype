@@ -57,7 +57,10 @@ body {
   justify-content: space-between;
   padding: 0 16px;
   position: relative;
-  z-index: 105;
+  /* Above the toolbar (z-index 105): the header's FilterCombo popup is a
+   * child of this stacking context, and equal z-index + later DOM order
+   * let the toolbar paint over it (the menu looked clipped/scrolling). */
+  z-index: 200;
 }
 
 .header-title {
@@ -77,6 +80,92 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Filterable level/scene picker in the header.  The FilterCombo root is an
+ * auto-width div, so without an explicit width the input collapses; this
+ * gives it a comfortable, responsive size and lets the dropdown match. */
+.header-level-combo {
+  width: clamp(320px, 46vw, 680px);
+}
+
+.filter-combo-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-tertiary, #2a2a2a);
+  color: var(--text-main, #eee);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.filter-combo-input:focus {
+  border-color: var(--accent, #06c);
+}
+
+.filter-combo-input::placeholder {
+  color: var(--text-muted, #888);
+}
+
+/* FilterCombo dropdown (header level picker + inspector scene/dialogue/shop
+ * pickers).  Rendered inside the control's stacking context; the header sits
+ * above the toolbar so it is never covered. */
+.filter-combo-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 6px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  padding: 4px 0;
+}
+
+.filter-combo-menu::-webkit-scrollbar {
+  width: 10px;
+}
+.filter-combo-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.filter-combo-menu::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.45);
+  border-radius: 5px;
+}
+.filter-combo-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
+}
+
+.filter-combo-group {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 6px 10px 2px;
+  opacity: 0.6;
+}
+
+.filter-combo-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-combo-empty {
+  padding: 10px;
+  font-size: 12px;
+  opacity: 0.6;
 }
 
 .header-levels-label {
@@ -723,6 +812,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0; /* shrink inside grid/flex rows instead of overflowing */
 }
 
 .form-group label {
@@ -741,6 +831,9 @@ body {
   border-radius: 4px;
   font-size: 12px;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box; /* fill the column; spinner stays inside view */
+  min-width: 0;
 }
 
 .form-group input:focus,
@@ -752,8 +845,22 @@ body {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr) kills the inputs' auto-minimum width, which pushed
+     the row wider than the 360px inspector panel and clipped the right
+     cell (Position Y) outside the visible area. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+/* Raw inputs inside the inspector (not wrapped in .form-group — e.g.
+   the title-layout and prompt grids) get the same treatment: fill the
+   track instead of overflowing the fixed 360px panel. */
+.inspector-content input,
+.inspector-content select,
+.inspector-content textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .entity-list {

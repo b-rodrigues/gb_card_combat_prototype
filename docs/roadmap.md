@@ -1284,6 +1284,54 @@ Missing:
 * status effects;
 * richer rewards (XP/leveling from battle, loot);
 * flee chance / consequences.
+* **data-driven battle HUD (Option B) — DONE:** `screens/battle/*.json`
+  compiles to `BattleScreenDef`, and the ROM now reads it: `battle_start`
+  dispatches a bank-4 body (`battle_hud_load_banked`, co-located with
+  `g_battle_screens`) that stages positions + ticks + HUD rows into the
+  WRAM `g_battle_hud` cache (`BattleHudCache`, `battle_data.h`), and the
+  bank-3 renderer (`ui_battle_content.c`) draws every row/column from the
+  cache.  Boss fights (`BATTLE_NONE`) select the `boss` screen, everything
+  else `default`; `ambush`/`duo` remain compiled-but-unselected future
+  variants.  All 4 battle JSONs are canonicalized to the ROM geometry and
+  `make screens-check` pins generated C to source.  The editor preview
+  still mirrors the same geometry with `hud_layout` reserved.  Validated:
+  181/181 harness, `make test`, `make verify-oam`, `make memmap` OK
+  (`make lint` has one pre-existing `rng_next` warning in untouched
+  `battle.c` status code).
+* **combat-art meta-tiles — DONE (ROM + compiler + editor):** enemies draw
+  combat art from data, not hardcoded sets.  `screens/combat_art/*.json`
+  declares named WxH sets (tiles, dims, palette, order;
+  `combat_art.schema.json`); `battle_compile.py` emits blob offsets +
+  dims into `battle_types.c` and the gfx `--tile-coords` order, replacing
+  the hardcoded `ART_SETS`/Makefile coord literal (`battle_enemy_art.h`
+  regenerates byte-identical).  The ROM loader stages per-slot geometry +
+  cumulative VRAM bases (128-tile budget cap, text fallback past it) and
+  the bank-3 stamper draws WxH from the cache with mult-free arithmetic
+  (8-bit `*` would pull mult routines into fixed `_CODE`, §52.18).  Art
+  resolves per battle through the game layer
+  (`game_battle_enemy_type_id`, bank 4, same-bank call: fixed bank pays
+  nothing).  The Combat Art Studio (editor toolbar) composes meta-tiles up
+  to 6x4 from sheet tiles with frame-0/1, assigns combat art per enemy
+  type, and the battle preview renders real meta-tiles per slot.  New sets
+  append at the end (blob offsets stay stable).  Validated: 181/181
+  harness, `make test`, `make verify-oam`, `make memmap` OK.
+* **enemy overworld sprites — DONE (shared, type-owned):** the Enemies
+  view (level dropdown) defines one transparent-background overworld
+  sprite per enemy type (`screens/enemy_types`
+  `overworld.cells/palette`, with optional `width`/`height` for multi-tile
+  grids like the 2x2 boss), applied everywhere the type is placed.
+  Pixels live in the shared `assets/enemy_sprites.png` (composed from
+  `public/tiles/enemies/`); the gfx rule + compiler `--ow-coords` build the
+  OAM blob (base 100, 28-tile budget, enemies-only: the hero uses its own
+  `HERO_DESOLATE` sprite) and per-type base/frames/w/h/palette in
+  `battle_types.c`.  Spawn resolves the type by the `ENTITY_ID_X`
+  convention (explicit `enemy_type` wins) into a new actor `ow_type`
+  field; the OAM writer reads the bank-4 row directly (`SPRITE_KIND_ENEMY`),
+  writing a w*h grid of OAM entries for multi-tile sprites and falling back
+  to ASCII.  Per-instance `overworld_sprite` names are ignored for typed
+  enemies (Inspector says so).  Validated: 181/181 harness, `make test`,
+  `make verify-oam` (boss asserted as a 2x2 OAM grid), `make memmap`,
+  `screens-check` + `levels-check` OK.
 
 ### 9.1 Deck management UI — DONE
 

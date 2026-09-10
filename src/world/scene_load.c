@@ -1,4 +1,8 @@
+#ifdef TEST_LEVELS
+#pragma bank 4
+#else
 #pragma bank 5
+#endif
 
 #include "scene.h"
 #include "banked.h"
@@ -20,8 +24,17 @@ void scene_load_tiles_banked(void)
     uint8_t i, x, y;
 
     if (!w) return;
-    if (map_id > MAP_SOUTH_FIELD) return;
+#ifdef TEST_LEVELS
+    /* Frozen harness fixtures (bank 4): TEST MapIds (fixed block at
+     * MAP_TEST_FIELD) index the fixture table from 0.  The engine must
+     * not touch real scenes here (the test build contains no real
+     * content). */
+    if (map_id < MAP_TEST_FIELD || map_id >= (MapId)(MAP_TEST_FIELD + MAP_TEST_COUNT)) return;
+    def = &g_scenes[map_id - MAP_TEST_FIELD];
+#else
+    if (map_id >= MAP_REAL_COUNT) return;
     def = &g_scenes[map_id];
+#endif
 
     for (y = 0; y < w->height; y++) {
         uint8_t *row = w->map[y];
@@ -66,13 +79,23 @@ void scene_spawn_banked(void)
     MapId map_id = (MapId)g_bk_byte_a;
     const SceneDefinition *def;
 
-    if (map_id > MAP_SOUTH_FIELD) {
+#ifdef TEST_LEVELS
+    if (map_id < MAP_TEST_FIELD || map_id >= (MapId)(MAP_TEST_FIELD + MAP_TEST_COUNT)) {
+        g_bk_byte_b = 4;
+        g_bk_byte_c = 4;
+        g_bk_byte_d = (uint8_t)DIRECTION_DOWN;
+        return;
+    }
+    def = &g_scenes[map_id - MAP_TEST_FIELD];
+#else
+    if (map_id >= MAP_REAL_COUNT) {
         g_bk_byte_b = 4;
         g_bk_byte_c = 4;
         g_bk_byte_d = (uint8_t)DIRECTION_DOWN;
         return;
     }
     def = &g_scenes[map_id];
+#endif
     g_bk_byte_b = def->spawn_x;
     g_bk_byte_c = def->spawn_y;
     g_bk_byte_d = def->spawn_facing;

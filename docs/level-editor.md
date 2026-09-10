@@ -1030,11 +1030,11 @@ The web editor must never be a stale snapshot of the JSON:
   Full hud_layout-driven positioning beyond the art rows is still future
   work; see `docs/BATTLE_SCREENS_COMPILER_ISSUE.md`.
 - Enemy battle art: `screens/enemy_types/*.json` `sprite: { art, frames }`
-  selects a 3x2 art set from `assets/battle_sprites.png` (composed by
-  `tools/compose_battle_sprites.py` from the curated combat PNGs; cell
-  order pinned by `ART_SETS` in `battle_compile.py` and mirrored by the
+  selects a variable-size art set from `assets/battle_sprites.png` (composed
+  by `tools/compose_battle_sprites.py` from the curated combat PNGs; cell
+  order pinned by the per-set `width`/`height` and mirrored by the
   `make gfx` rule).  The bank-4 loader (`battle_art_load_banked`)
-  resolves art per battle, streams 12 tiles per enemy slot into BG tiles
+  resolves art per battle, streams w*h tiles per enemy slot into BG tiles
   at battle entry (LCD-off), and the bank-3 stamper draws them at the
   compiled hud_layout rows (HP row 1, art rows 3-4, caret row 5).
   Per-enemy art lives in WRAM globals, never in `Battle` (struct growth
@@ -1046,3 +1046,43 @@ The web editor must never be a stale snapshot of the JSON:
 - Legacy note: `src/game/battle_data.c` (`screens/battle.json`) is orphan
   output no current generator writes and nothing reads; leave it alone
   until the renderer-consumption work decides its fate.
+
+# Phase 19 — Future-proof content persistence (scene id registry)
+
+`levels/registry.json` is the single source of truth for real-scene ids.
+The editor writes it; the compiler and every host tool derive from it.
+
+## Contract
+
+* **Versioned**: `version` (currently `1`).  `scene_registry.load_registry`
+  accepts `1`; a missing version is treated as pre-version and upgraded on
+  the next write; an unknown (newer) version is a loud error.  Bump
+  `REGISTRY_VERSION` only with an explicit migration.
+* **Append-only, never reused**: a new level gets
+  `max(scenes ∪ _retired) + 1`.  Deleted levels tombstone their id into
+  `_retired`, so an id can never be handed to a different level (protecting
+  saves and persistent-actor state).
+* **Fixed TEST block**: `_test_base` (240) reserves the fixture range;
+  real ids may never reach it.  `test_*` filenames are refused.
+* **Registry ↔ files agree**: `validate.py` fails loudly when a level file
+  has no id, or a registered id has no file.  A retired id with a lingering
+  file is a warning (`registry_warnings`).
+* **Atomic writes**: every level JSON and the registry are written to a
+  sibling `.tmp` and renamed over the target, so a crash can never corrupt
+  the registry.
+
+## Editor operations
+
+* **New / edit**: `/api/save-level` assigns the next id on first save of an
+  unknown level, then writes the file and registry atomically.
+* **Rename**: edit the Scene ID and save (the client sends `previousId`).
+  The **numeric scene id is preserved** (saves/references stay valid), the
+  file is renamed, and every `target_scene` referencing the old id is
+  rewritten across other levels.  Engine-wired scenes (whose `MAP_*` /
+  `SCENE_*` symbols appear in hand-written C — e.g. `field`) are refused
+  with a clear message.
+* **Delete**: `POST /api/delete-level` retires the id, clears every exit
+  that targeted it (returns the count), and unlinks the file.  Same
+  engine-wired guard.
+* `make registry-check` locks the contract (versioning, never-reuse,
+  registry/file agreement) against a temp root.

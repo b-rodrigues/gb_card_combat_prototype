@@ -5,7 +5,9 @@
 #include "actor.h"
 #include "ui.h"
 #include "banked.h"
+#include "battle_data.h"
 #include "gfx/rpg_tile_lookup.h"
+#include "gfx/enemy_ow_tiles.h"
 
 /* ── Overworld actor sprites + castle boss background (bank-3 body) ──
  * The data-driven SPRITE_KIND_* OAM choice, the per-actor shadow-OAM write
@@ -36,7 +38,9 @@ const uint8_t s_bat_tiles[32] = {
  * so the fixed-bank caller need not loop over actors. */
 #define SHADOW_OAM_BASE 0xC000u
 #define OAM_SLOT_ACTOR0 1u  /* slot 0 -> OAM entry 1 (entry 0 is the player) */
-#define OAM_SLOT_STATIC0 (OAM_SLOT_ACTOR0 + MAX_WORLD_ACTORS)
+/* (Static actors follow the hostile block via a running cursor; their base
+ * is OAM_SLOT_ACTOR0 + the sum of each hostile's w*h sprite cells, which
+ * equals OAM_SLOT_ACTOR0 + MAX_WORLD_ACTORS when every hostile is 1x1.) */
 
 /* Sub-tile position of an actor mid-step (replica of world_actor_px/py,
  * see src/world/px_banked.c).  bank-3 bodies must not call fixed-bank code. */
@@ -56,9 +60,11 @@ static uint8_t spr_axis_px(const WorldActorRuntime *a, uint8_t axis)
 /* SPRITE_KIND_* -> OAM tile/prop.  Single source for both loops below.
  * Bats use the grey ramp (black bodies); kobolds and chests use the brown
  * wood palette (OBJ palette 2); the chest art is 1 frame in both anim
- * slots, so + anim stays uniform. */
+ * slots, so + anim stays uniform.  SPRITE_KIND_ENEMY reads the actor's
+ * enemy-type row (same bank: direct read) for its shared OAM base,
+ * frames, and palette; unknown rows fall back to the ASCII glyph. */
 static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
-                               uint8_t anim, uint8_t *prop)
+                                uint8_t anim, uint8_t ow_type, uint8_t *prop)
 {
     switch (kind) {
         case SPRITE_KIND_KOBOLD:
@@ -71,6 +77,19 @@ static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
         case SPRITE_KIND_CHEST:
             *prop = 2;
             return (uint8_t)(CHEST_SPRITE_TILE_ID + anim);
+        case SPRITE_KIND_ENEMY:
+            if (ow_type < g_enemy_type_count) {
+                const EnemyTypeDef *t = g_enemy_types[ow_type];
+                if (t->ow_tile != 0xFF) {
+                    *prop = t->ow_palette;
+                    if (t->ow_frames > 1) {
+                        return (uint8_t)(t->ow_tile + anim);
+                    }
+                    return t->ow_tile;
+                }
+            }
+            *prop = 0;
+            return (uint8_t)(ui_font_tile_base + (uint8_t)(visual - ' '));
         case SPRITE_KIND_BOSS:
         case SPRITE_KIND_TILE: /* background-art: cell owns the visuals */
             *prop = 0;
@@ -89,7 +108,13 @@ static uint8_t sprite_tile_for(uint8_t kind, uint8_t visual, uint8_t castle,
  * drawn into the background tilemap as a 2x2 block instead.
  * Args: g_bk_ptr_a = const World * (WRAM), g_bk_byte_a = castle flag,
  * g_bk_byte_b = anim_step.  Inactive and SPRITE_KIND_BOSS actors get their
- * OAM entry hidden (y=0). */
+ * OAM entries hidden (y=0).
+ *
+ * OAM layout: a running cursor starts at OAM_SLOT_ACTOR0 and advances by
+ * the actor's sprite size (1 for single-tile actors, w*h for a SPRITE_KIND
+ * _ENEMY grid like the 2x2 boss).  When every hostile is 1x1 the cursor
+ * reproduces the historic fixed layout exactly (statics at
+ * OAM_SLOT_ACTOR0 + MAX_WORLD_ACTORS). */
 void ui_actors_sprites_banked(void)
 {
     const World *w = (const World *)g_bk_ptr_a;
@@ -97,36 +122,82 @@ void ui_actors_sprites_banked(void)
     uint8_t anim = g_bk_byte_b;
     uint8_t slot;
     uint8_t i;
+    uint8_t oam_slot = OAM_SLOT_ACTOR0;  /* running OAM entry cursor */
 
     if (!w) return;
     for (slot = 0; slot < MAX_WORLD_ACTORS; slot++) {
         const WorldActorRuntime *a = &w->actors[slot];
-        volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
-                                                   ((OAM_SLOT_ACTOR0 + slot) << 2));
         uint8_t tile = 0;
         uint8_t prop = 0;
         uint8_t px, py;
+        uint8_t gw, gh;
+        uint8_t gx, gy;
+
         if (a->active) {
             tile = sprite_tile_for((uint8_t)a->sprite_kind, a->visual,
-                                   castle, anim, &prop);
+                                   castle, anim, a->ow_type, &prop);
+        }
+        /* Multi-tile shared enemy sprite: replace the single tile with the
+         * grid base + palette and write w*h OAM entries.  The blob is
+         * frame-major: the frame offset is anim*cell_count. */
+        gw = 1;
+        gh = 1;
+        if ((int)a->sprite_kind == SPRITE_KIND_ENEMY &&
+            a->ow_type < g_enemy_type_count) {
+            const EnemyTypeDef *t = g_enemy_types[a->ow_type];
+            if (t->ow_tile != 0xFF && (t->ow_w > 1 || t->ow_h > 1)) {
+                uint8_t ccount;
+                gw = t->ow_w;
+                gh = t->ow_h;
+                tile = t->ow_tile;
+                prop = t->ow_palette;
+                /* cell_count = gw*gh without mult (w,h <= 2) */
+                ccount = (gh == 2) ? (gw == 2 ? 4 : 2) : gw;
+                if (t->ow_frames > 1 && anim) {
+                    tile = (uint8_t)(tile + ccount);
+                }
+            }
         }
         if (tile) {
             px = (uint8_t)(spr_axis_px(a, 0) - w->camera_px_x);
             py = (uint8_t)(spr_axis_px(a, 1) - w->camera_px_y);
-            if (px < 160 && py < 144 && (int)a->sprite_kind != SPRITE_KIND_BOSS) {
-                e[0] = (uint8_t)(py + 16);
-                e[1] = (uint8_t)(px + 8);
-                e[2] = tile;
-                e[3] = prop;
+            if ((int)a->sprite_kind != SPRITE_KIND_BOSS) {
+                uint8_t row = 0;
+                for (gy = 0; gy < gh; gy++) {
+                    uint8_t col = 0;
+                    for (gx = 0; gx < gw; gx++) {
+                        volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
+                                                                   ((uint16_t)(oam_slot + row + col) << 2));
+                        uint8_t tx = (uint8_t)(px + (gx << 3));
+                        uint8_t ty = (uint8_t)(py + (gy << 3));
+                        if (tx < 160 && ty < 144) {
+                            e[0] = (uint8_t)(ty + 16);
+                            e[1] = (uint8_t)(tx + 8);
+                            e[2] = (uint8_t)(tile + row + col);
+                            e[3] = prop;
+                        } else {
+                            e[0] = 0;
+                        }
+                        col = (uint8_t)(col + 1);
+                    }
+                    row = (uint8_t)(row + gw);
+                }
+                /* w*h entries (no mult: w,h <= 2) */
+                oam_slot = (uint8_t)(oam_slot + (gh == 2 ? (gw == 2 ? 4 : 2) : gw));
                 continue;
             }
         }
-        e[0] = 0;  /* hidden */
+        {
+            volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
+                                                       ((uint16_t)oam_slot << 2));
+            e[0] = 0;  /* hidden */
+        }
+        oam_slot = (uint8_t)(oam_slot + (gh == 2 ? (gw == 2 ? 4 : 2) : gw));
     }
     for (i = 0; i < MAX_STATIC_ACTORS; i++) {
-        const WorldActorDefinition *d;
+        const StaticActorDefinition *d;
         volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
-                                                   ((OAM_SLOT_STATIC0 + i) << 2));
+                                                   ((uint16_t)(oam_slot + i) << 2));
         uint8_t tile;
         uint8_t prop = 0;
         uint8_t px, py;
@@ -142,7 +213,7 @@ void ui_actors_sprites_banked(void)
             continue;
         }
         tile = sprite_tile_for((uint8_t)d->sprite_kind, d->visual,
-                               castle, anim, &prop);
+                               castle, anim, d->ow_type, &prop);
         if (!tile) {
             e[0] = 0;
             continue;

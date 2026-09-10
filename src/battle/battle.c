@@ -5,11 +5,13 @@
 #include "rpg/cards.h"
 #include "rpg/deck.h"
 #include "rpg/effects.h"
-#include "rpg/status.h"
-#include "rng.h"
 #include "rpg/loot.h"
+#include "rpg/status.h"
+#include "rpg/loot.h"
+#include "rng.h"
 #include "game/game_ids.h"
 #include "content.h"
+#include "battle_data.h"
 #include <string.h>
 
 /* Per-enemy battle art (see battle.h): uninitialized WRAM arrays (bss, so
@@ -18,11 +20,37 @@
 uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+/* Per-slot combat-art geometry + VRAM base (tile index), staged by the
+ * bank-4 art loader alongside the arrays above.  Slots that fall back to
+ * text (or exceed the VRAM art budget) keep art 0xFF with the standard
+ * 3x2 dims so the bank-3 stamper's blank path clears the usual zone. */
+uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
+uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
+
+/* Active battle screen layout (see battle_data.h): uninitialized WRAM
+ * (bss); staged from the bank-4 BattleScreenDef by game_battle_hud_load()
+ * at every battle entry, read by the bank-3 renderer. */
+BattleHudCache g_battle_hud;
+
+/* Battle hand-card skin (see battle_data.h): uninitialized WRAM (bss);
+ * staged from the bank-4 generated const by battle_hud_load_banked() at
+ * every battle entry, read by the bank-3 renderer. */
+CardSkinDef g_card_skin_wram;
+
+/* Battle HUD skin (see battle_data.h): uninitialized WRAM (bss); same
+ * staging contract as the card skin; read by the fixed-bank timer draw
+ * (ui.c) and the bank-3 renderer. */
+HudSkinDef g_hud_skin_wram;
+
+/* Solo-encounter flag (see battle.h): staged by battle_start, read by
+ * battle_hud_load_banked to pick the single-enemy boss screen. */
+uint8_t g_battle_solo;
 
 /* ── Bridge: persistent DeckState → battle Deck ───────────────────
  * When a DeckState is provided (player has cards), build the battle
  * deck from the player's owned cards.  When NULL, fall back to the
- * hardcoded starter deck (all unlimited uses).
+ * data-driven starter deck (screens/hero.json via hero_content.c).
  *
  * The bridge body lives in ROM bank 2 (src/battle/battle_init_content.c)
  * so it can read the registered card catalog directly without consuming
@@ -53,10 +81,18 @@ static const int g_deck_min_matches_hand_size[
     (DECK_MIN_CARDS == BATTLE_HAND_SIZE) ? 1 : 0
 ];
 
+/* Victim name snapshot for the ANIM banner ("ATTACK <name>"): resolution
+ * may kill the target and auto-advance target_idx before the banner
+ * draws, so the name is captured here at execute time.  Empty when the
+ * ANIM phase runs without an attack (freeze skip, empty combo) -- the
+ * banner then falls back to "PLAYER ATTACK!".  WRAM (fixed bank stays
+ * lean); read by the bank-3 renderer. */
+char g_battle_anim_target_name[12];
+
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds, uint8_t battle_id)
+                  const DeckState *ds, uint8_t battle_id, uint8_t solo)
 {
     uint8_t *p = (uint8_t *)b;
     uint16_t n = sizeof(Battle);
@@ -64,11 +100,12 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
     if (!b) return;
 
     while (n--) *p++ = 0;
+    g_battle_anim_target_name[0] = '\0';
     { const char *s = "Hero"; uint8_t j; for (j = 0; j < 7 && s[j]; j++) b->player.name[j] = s[j]; b->player.name[j] = '\0'; }
     b->player.hp = player_hp;
     b->player.max_hp = player_max_hp;
 
-    { const char *s = enemy_name ? enemy_name : "Enemy"; uint8_t j; for (j = 0; j < 7 && s[j]; j++) b->enemies[0].name[j] = s[j]; b->enemies[0].name[j] = '\0'; }
+    { const char *s = enemy_name ? enemy_name : "Enemy"; uint8_t j; for (j = 0; j < 11 && s[j]; j++) b->enemies[0].name[j] = s[j]; b->enemies[0].name[j] = '\0'; }
     b->enemies[0].hp = enemy_hp;
     b->enemies[0].max_hp = enemy_max_hp;
     b->enemy_count = 1;
@@ -105,6 +142,16 @@ void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
 
     status_reset_battle();
 
+    /* Stage the active screen's layout (rows/cols/positions) into WRAM
+     * for the bank-3 renderer.  Game layer picks the screen by battle
+     * type + solo flag (boss/miniboss vs standard); engine never names
+     * screens itself. */
+    g_battle_solo = solo;
+    g_bk_byte_a = b->enemy_battle_id;
+    g_bk_call_bank = 4;
+    g_bk_call_target = (uint16_t)&battle_hud_load_banked;
+    banked_call_run();
+
     telemetry_emit(EVENT_BATTLE_STARTED, 0, 0, 0, 0);
 }
 
@@ -113,7 +160,7 @@ void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp)
     uint8_t idx;
     if (!b || b->enemy_count >= MAX_BATTLE_ENEMIES) return;
     idx = b->enemy_count++;
-    { const char *nm = name ? name : "Enemy"; uint8_t j; for (j = 0; j < 7 && nm[j]; j++) b->enemies[idx].name[j] = nm[j]; b->enemies[idx].name[j] = '\0'; }
+    { const char *nm = name ? name : "Enemy"; uint8_t j; for (j = 0; j < 11 && nm[j]; j++) b->enemies[idx].name[j] = nm[j]; b->enemies[idx].name[j] = '\0'; }
     b->enemies[idx].hp = hp;
     b->enemies[idx].max_hp = max_hp;
     b->dirty = BATTLE_DIRTY_ALL;
@@ -355,6 +402,7 @@ static void battle_play_hand(Battle *b, bool attack_phase, EffectResult *out)
 void battle_execute_combo(Battle *b)
 {
     EffectResult res;
+    uint8_t j;
     if (!b || b->battle_over) return;
 
     /* STATUS_FREEZE on the player (docs/combo-system.md §12): the whole
@@ -372,6 +420,7 @@ void battle_execute_combo(Battle *b)
         b->phase = BATTLE_PHASE_PLAYER_ANIM;
         b->delay_timer = 30;
         b->dirty = BATTLE_DIRTY_ALL;
+        g_battle_anim_target_name[0] = '\0';
         return;
     }
 
@@ -390,11 +439,23 @@ void battle_execute_combo(Battle *b)
                     b->phase = BATTLE_PHASE_PLAYER_ANIM;
                     b->delay_timer = 30;
                     b->dirty = BATTLE_DIRTY_ALL;
+                    g_battle_anim_target_name[0] = '\0';
                     return;
                 }
             }
             b->selected_indices[0] = b->cursor_pos;
             b->combo_count = 1;
+        }
+        /* Snapshot the victim for the ANIM banner: resolution may kill
+         * it and auto-advance target_idx before the banner draws. */
+        if (b->target_idx < b->enemy_count) {
+            for (j = 0; j < 11 && b->enemies[b->target_idx].name[j]; j++) {
+                g_battle_anim_target_name[j] =
+                    b->enemies[b->target_idx].name[j];
+            }
+            g_battle_anim_target_name[j] = '\0';
+        } else {
+            g_battle_anim_target_name[0] = '\0';
         }
         battle_play_hand(b, true, &res);
         /* Rings heal their power as the combo resolves, whatever the

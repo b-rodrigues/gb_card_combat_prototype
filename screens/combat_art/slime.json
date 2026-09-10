@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema/combat_art.schema.json",
+  "id": "slime",
+  "label": "Slime",
+  "order": 0,
+  "width": 3,
+  "height": 2,
+  "palette": 3,
+  "frame0": [
+    "combat_top_left_slime", "combat_top_middle_slime", "combat_top_right_slime",
+    "combat_bottom_left_slime", "combat_bottom_middle_slime", "combat_bottom_right_slime"
+  ],
+  "frame1": [
+    "combat_top_left_slime_2", "combat_top_middle_slime_2", "combat_top_right_slime_2",
+    "combat_bottom_left_slime", "combat_bottom_middle_slime", "combat_bottom_right_slime"
+  ]
+}

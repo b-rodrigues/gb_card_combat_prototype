@@ -27,6 +27,31 @@ extern uint8_t g_is_cgb;
 #define UI_TILE_BOLT             114u
 #define UI_TILE_COIN             115u
 #define UI_TILE_DECK             116u
+/* Turn-timer bar segment tiles (HUD skin; generated card_frame_tiles.h
+ * sheet row 3, loaded explicitly at these ids by ui_init).  Together with
+ * the card frames these fully allocate the 117-127 BG window between the
+ * icon block (104-116) and the world / battle-art blocks (128+). */
+#define UI_TILE_TIMER_FILLED     117u
+#define UI_TILE_TIMER_EMPTY      127u
+/* Up-arrow select icon (combat tileset "arrow pointing up", card_frames
+ * sheet tile 14): replaces the '^' font caret on the battle marker /
+ * target rows.  BG tile ids 96-103 are the only free block-1 slots
+ * (font 0-95, atlas 104-116); the BG never referenced them before. */
+#define UI_TILE_SELECT_ARROW     96u
+/* Battle hand-card frame tiles (VRAM Block 1, 0x8800): 9 tiles in frame
+ * order TL TM TR / L C R / BL BM BR (generated card_frame_tiles.h from
+ * assets/card_frames.png).  Sits between the icon block (104-116) and the
+ * world / battle-art blocks (128+). */
+#define UI_TILE_CARD_FRAME_BASE  118u
+#define UI_TILE_CARD_FRAME_TL    118u
+#define UI_TILE_CARD_FRAME_TM    119u
+#define UI_TILE_CARD_FRAME_TR    120u
+#define UI_TILE_CARD_FRAME_L     121u
+#define UI_TILE_CARD_FRAME_C     122u
+#define UI_TILE_CARD_FRAME_R     123u
+#define UI_TILE_CARD_FRAME_BL    124u
+#define UI_TILE_CARD_FRAME_BM    125u
+#define UI_TILE_CARD_FRAME_BR    126u
 
 /* Overworld actor OAM sprite tile bases (VRAM Block 0, 0x8000).  Collision
  * rules: must not overlap the font-duplicate block 0..95 used for ASCII
@@ -38,6 +63,16 @@ extern uint8_t g_is_cgb;
 #define BAT_CASTLE_SPRITE_TILE_ID   92u
 /* Chest pickup sprite (single-frame art loaded into both anim slots). */
 #define CHEST_SPRITE_TILE_ID     94u
+/* Shared per-enemy overworld sprites (assets/enemy_sprites.png, base must
+ * match ENEMY_OW_BASE in tools/screen_compiler/battle_compile.py).  The
+ * blob holds concatenated per-enemy frames; ids 128+ alias BG tiles. */
+#define ENEMY_OW_BASE            100u
+#define ENEMY_OW_LIMIT           128u
+
+/* Max shadow-OAM entries the actor pipeline can touch: player (entry 0),
+ * hostile actors up to MAX_WORLD_ACTORS each a w*h sprite (max 2x2 = 4),
+ * then static actors.  Used by the transition-hide sweep. */
+#define OAM_MAX_ACTOR_ENTRIES     (1u + (MAX_WORLD_ACTORS * 4u) + MAX_STATIC_ACTORS)
 
 /* Bank-4 no-arg body behind ui_draw_actors_sprites(): writes each active
  * non-boss actor's shadow-OAM entry (position/tile/prop from SPRITE_KIND_*)
@@ -56,6 +91,12 @@ void ui_actors_sprites_banked(void);
 #define UI_COLOR_ICE    2
 #define UI_COLOR_FIELD  3
 #define UI_COLOR_POISON 4
+/* Paper: CRAM slot 4 re-programmed to a white/black document ramp while a
+ * dialogue box is open (no world tileset assigns slot 4 to any tile, and
+ * the quick screen -- its only other consumer -- cannot be open during a
+ * dialogue).  Every screen transition re-programs CRAM, which restores
+ * the set's own slot-4 ramp. */
+#define UI_COLOR_PAPER  4
 #define UI_COLOR_WOOD   5
 #define UI_COLOR_GOLD   6
 #define UI_COLOR_DIM    7
@@ -155,7 +196,13 @@ void ui_draw_battle_full(const Battle *battle);
 void ui_update_battle(const Battle *battle);
 void ui_update_battle_banked(void);
 void ui_draw_battle_timer(const Battle *battle);
+void ui_draw_battle_timer_banked(void);
 uint8_t ui_calc_timer_bar(uint16_t t);
+
+/* Bank-3 no-arg body behind ui_init's battle-UI tile load (card frames +
+ * bar segments + HUD icons from card_frame_tiles.h); dispatched via
+ * banked_call_run() with the LCD off. */
+void ui_card_tiles_load_banked(void);
 
 void ui_draw_font_test(void);
 

@@ -29,11 +29,17 @@ dosound-tick resolution, plus lengths. Durations are the scored ones
 (envelope decay to silence, verbatim).
 
 Usage:
+    python3 tools/transcribe_sfx.py --out generated/sfx/sfx_tables.c
     python3 tools/transcribe_sfx.py --out generated/sfx/sfx_tables.c assets/sfx/*.uge
+
+The .uge file for each SFX id comes from screens/sfx.json (edited by the
+level editor's Sound view).  With no positional files the whole registry is
+transcribed; positional files are a partial/preview run.
 """
 
 import sys
 import os
+import json
 import re
 import subprocess
 import tempfile
@@ -53,15 +59,43 @@ SFX_BANK_BUDGET = 3072
 
 # SFX id order must match the SFX_* enum in src/audio/audio.h
 SFX_IDS = ["CURSOR", "CONFIRM", "SELECT", "BACK", "ATTACK", "HIT", "BLOCK"]
-# .uge file -> SFX ids it voices (accept doubles for SELECT)
-SFX_SOURCES = {
-    "sfx cursor.uge": ["CURSOR"],
-    "sfx accept.uge": ["CONFIRM", "SELECT"],
-    "sfx back.uge": ["BACK"],
-    "sfx hit2.uge": ["ATTACK"],
-    "sfx hit.uge": ["HIT"],
-    "sfx block.uge": ["BLOCK"],
-}
+# Which .uge voices each SFX id is DATA, not code: screens/sfx.json maps
+# each fixed SFX id to a .uge path (assets/sfx/* or assets/music/*).  The
+# editor's Sound view edits that registry; this tool reads it so the two
+# always agree.  Multiple ids may share one file (SELECT reuses CONFIRM).
+SFX_REGISTRY = REPO_ROOT / "screens" / "sfx.json"
+
+
+def load_sfx_sources():
+    """Read screens/sfx.json -> ({basename: [SFX ids]}, [uge paths]).
+    Fails loudly on unknown/missing ids or files (never guesses)."""
+    try:
+        data = json.loads(SFX_REGISTRY.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise TranscribeError(f"cannot read {SFX_REGISTRY}: {exc}")
+    if not isinstance(data, dict):
+        raise TranscribeError(f"{SFX_REGISTRY}: expected an object")
+    unknown = sorted(set(data) - set(SFX_IDS))
+    missing = sorted(set(SFX_IDS) - set(data))
+    if unknown or missing:
+        raise TranscribeError(
+            f"{SFX_REGISTRY}: ids must be exactly {SFX_IDS} "
+            f"(unknown={unknown}, missing={missing})")
+    sources = {}
+    paths = []
+    for sfx in SFX_IDS:
+        rel = data[sfx]
+        if not isinstance(rel, str) or not rel:
+            raise TranscribeError(f"{SFX_REGISTRY}: {sfx} must name a .uge")
+        p = REPO_ROOT / rel
+        if not p.is_file():
+            raise TranscribeError(f"{SFX_REGISTRY}: {sfx} -> missing file {rel}")
+        if p.suffix != ".uge":
+            raise TranscribeError(f"{SFX_REGISTRY}: {sfx} -> {rel} is not .uge")
+        sources.setdefault(p.name, []).append(sfx)
+        paths.append(str(p))
+    return sources, paths
+
 
 
 class TranscribeError(Exception):
@@ -690,8 +724,11 @@ def main(argv):
             raise TranscribeError(f"unknown flag {a}")
         else:
             uges.append(a)
+    sfx_sources, registry_paths = load_sfx_sources()
     if not uges:
-        raise TranscribeError("usage: transcribe_sfx.py --out <tables.c> assets/sfx/*.uge")
+        uges = registry_paths
+    if not uges:
+        raise TranscribeError("no .uge sources (check screens/sfx.json)")
     note_names = parse_note_defines()
     periods = parse_note_table()
     # The table order must track the SFX_* enum in src/audio/audio.h exactly.
@@ -709,7 +746,7 @@ def main(argv):
     tables = {}
     total_bytes = 0
     wanted = {Path(u).name for u in uges}
-    for fname, ids in SFX_SOURCES.items():
+    for fname, ids in sfx_sources.items():
         if fname not in songs:
             if fname in wanted:
                 raise TranscribeError(f"missing .uge for {ids}: {fname}")

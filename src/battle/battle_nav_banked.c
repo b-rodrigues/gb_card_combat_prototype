@@ -109,7 +109,7 @@ static void nav_target_move(Battle *b, int8_t dir)
         if (b->enemies[t].hp != 0) {
             if (t != old) {
                 b->target_idx = t;
-                b->dirty |= BATTLE_DIRTY_ENEMIES;
+                b->dirty |= (uint8_t)(BATTLE_DIRTY_ENEMIES | BATTLE_DIRTY_BANNER);
             }
             return;
         }

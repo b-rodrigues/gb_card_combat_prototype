@@ -7,11 +7,21 @@ import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
-import { downloadLevelJson, saveLevelToServer, compileRom, runGame } from './io/saveLevel';
+import { downloadLevelJson, saveLevelToServer, deleteLevel, cleanRetiredOrphans, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
+import { fetchEnemyTypeList } from './io/combatArt';
+import { fetchEntityTypeList } from './io/entityTypes';
+import { FilterCombo } from './FilterCombo';
 import { promptLoadLevelFile } from './io/loadLevel';
 import { BUILTIN_TILESETS, getTileset, TileDefinition } from './model/Tileset';
 import { TilesetReviewer } from './TilesetReviewer';
+import { CombatArtStudio } from './CombatArtStudio';
+import { EnemyManager } from './EnemyManager';
+import { HeroManager } from './HeroManager';
+import { BattleManager } from './BattleManager';
+import { DialogueManager } from './DialogueManager';
+import { ShopManager } from './ShopManager';
+import { PaletteManager } from './PaletteManager';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -22,17 +32,15 @@ import townData from '../../../levels/town.json';
 import mountainPassData from '../../../levels/mountain_pass.json';
 import castleData from '../../../levels/castle.json';
 import titleData from '../../../screens/title.json';
-import battleDefaultData from '../../../screens/battle/default.json';
-import battleBossData from '../../../screens/battle/boss.json';
-import battleAmbushData from '../../../screens/battle/ambush.json';
-import battleDuoData from '../../../screens/battle/duo.json';
-import battleLegacyData from '../../../screens/battle.json';
 
 interface ExistingLevelItem {
   id: string;
   name: string;
   data: any;
   category?: 'levels' | 'screens';
+  /** Assigned scene id from the disk catalogue; null/undefined means
+   * unregistered (save the level to assign one). */
+  scene_id?: number | null;
 }
 
 const EXISTING_LEVELS: ExistingLevelItem[] = [
@@ -43,11 +51,6 @@ const EXISTING_LEVELS: ExistingLevelItem[] = [
   { id: 'mountain_pass', name: mountainPassData.name || 'Mountain Pass', data: mountainPassData, category: 'levels' },
   { id: 'castle', name: castleData.name || 'Castle', data: castleData, category: 'levels' },
   { id: 'title', name: 'Title Screen', data: titleData, category: 'screens' },
-  { id: 'battle_default', name: 'Battle (Standard / Mockup)', data: battleDefaultData, category: 'screens' },
-  { id: 'battle_boss', name: 'Battle (Boss)', data: battleBossData, category: 'screens' },
-  { id: 'battle_ambush', name: 'Battle (Ambush)', data: battleAmbushData, category: 'screens' },
-  { id: 'battle_duo', name: 'Battle (Duo)', data: battleDuoData, category: 'screens' },
-  { id: 'battle', name: 'Battle Screen (Legacy)', data: battleLegacyData, category: 'screens' },
 ];
 
 export const App: React.FC = () => {
@@ -82,9 +85,40 @@ export const App: React.FC = () => {
 
   // Modals
   const [showValidateModal, setShowValidateModal] = useState<boolean>(false);
+  // Actor ids claimed by OTHER scenes (levels/*.json on disk).  Makes
+  // the browser validation catch the cross-scene uniqueness rule the
+  // toolchain enforces at compile; refreshed on level load and each
+  // time the Validate modal opens.
+  const [crossActorIds, setCrossActorIds] = useState<Array<{ id: number; level: string }>>([]);
+  const refreshCrossActorIds = useCallback(() => {
+    fetchUsedActorIds(level.id).then(setCrossActorIds).catch(() => setCrossActorIds([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level.id]);
+  useEffect(() => {
+    refreshCrossActorIds();
+  }, [refreshCrossActorIds]);
   const [showDescribeModal, setShowDescribeModal] = useState<boolean>(false);
   const [showSoundTestModal, setShowSoundTestModal] = useState<boolean>(false);
   const [showTilesetReviewer, setShowTilesetReviewer] = useState<boolean>(false);
+  const [showCombatArt, setShowCombatArt] = useState<boolean>(false);
+  // Enemies view (art-only): dropdown value 'enemy:<id>' swaps the main
+  // area to the EnemyManager; the level underneath is left untouched.
+  const [enemyView, setEnemyView] = useState<string | null>(null);
+  const [heroView, setHeroView] = useState<boolean>(false);
+  // Dialogue view (screens/dialogue/*.json): text-only editor; the level
+  // underneath is left untouched.
+  const [dialogueView, setDialogueView] = useState<string | null>(null);
+  // Shop view (screens/shops/<id>.json): stock lists referenced by NPCs.
+  const [shopView, setShopView] = useState<boolean>(false);
+  // Palette view: preview/assign the engine CGB ramps to tiles + enemies.
+  const [paletteView, setPaletteView] = useState<boolean>(false);
+  // Battle view (screens/battle_hud.json + battle/<id>.json layout +
+  // cards_skin.json) — the whole battle-time view, editable from here.
+  const [cardView, setCardView] = useState<boolean>(false);
+  const [enemyItems, setEnemyItems] = useState<Array<{ id: string; name: string }>>([]);
+  // Known ENTITY_ID_* values (entity-type registry); used by browser
+  // validation so it never says "valid" for an id the compiler rejects.
+  const [entityTypeIds, setEntityTypeIds] = useState<Set<string>>(new Set());
   const [describeFormat, setDescribeFormat] = useState<'markdown' | 'json'>('markdown');
 
   // Compilation & Run State
@@ -98,6 +132,29 @@ export const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
+  // Load the enemy catalogue for the Enemies dropdown group (best
+  // effort: the manager falls back to its own fetch when offline).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const items = await fetchEnemyTypeList();
+        if (cancelled) return;
+        setEnemyItems(items.map((e) => ({ id: e.id, name: e.label || e.id })));
+      } catch {
+        // Offline: EnemyManager shows its own load error.
+      }
+      try {
+        const types = await fetchEntityTypeList();
+        if (cancelled) return;
+        setEntityTypeIds(new Set(types.map((t) => t.entity_id)));
+      } catch {
+        // Offline: entity-id membership checks are skipped (compile still gates).
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Load the level catalogue + tilesets from disk once on mount.
   useEffect(() => {
@@ -114,7 +171,8 @@ export const App: React.FC = () => {
         for (const it of items) {
           try {
             const data = await fetchLevelData(it.category, it.id);
-            fresh.push({ id: it.id, name: it.name, data, category: it.category });
+            fresh.push({ id: it.id, name: it.name, data, category: it.category,
+                         scene_id: it.scene_id ?? null });
           } catch {
             const b = byId.get(it.id);
             if (b) fresh.push(b);
@@ -143,8 +201,13 @@ export const App: React.FC = () => {
 
   const handleSaveToServer = async () => {
     setNotification({ message: 'Saving level to disk...', type: 'info' });
-    const res = await saveLevelToServer(level);
+    // currentLevelId is the id the level was loaded under; if the user
+    // edited the Scene ID it differs, which signals a rename (the server
+    // preserves the numeric scene id and rewires exits).
+    const previousId = currentLevelId && currentLevelId !== level.id ? currentLevelId : null;
+    const res = await saveLevelToServer(level, previousId);
     if (res.success) {
+      if (previousId) setCurrentLevelId(level.id);
       setNotification({ message: `Successfully saved ${level.id} to ${res.path}!`, type: 'success' });
       // Refresh the catalogue so newly created ids appear without a rebuild.
       try {
@@ -154,7 +217,8 @@ export const App: React.FC = () => {
         for (const it of items) {
           if (!known.has(it.id)) {
             try {
-              added.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category });
+              added.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                           scene_id: it.scene_id ?? null });
             } catch {
               // Leave it out; the next save retries.
             }
@@ -170,19 +234,94 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleCompileRom = async () => {
-    setIsCompiling(true);
-    setNotification({ message: 'Saving level & compiling Game Boy ROM (make debug)...', type: 'info' });
-    const saved = await saveLevelToServer(level);
-    if (!saved.success) {
-      setIsCompiling(false);
-      setNotification({ message: `Save failed, ROM not compiled: ${saved.error}`, type: 'error' });
+  const handleDeleteLevel = async () => {
+    if (level.isScreen) return;
+    if (!confirm(
+      `Delete level '${level.id}'?\n\n` +
+      `Its scene id is retired (never reused) and any exit in other levels ` +
+      `that targets it is cleared. This cannot be undone.`
+    )) return;
+    const res = await deleteLevel(level.id);
+    if (!res.success) {
+      setNotification({ message: `Delete failed: ${res.error}`, type: 'error' });
       return;
     }
+    setNotification({
+      message: `Deleted '${level.id}' (scene id retired${res.cleared ? `, ${res.cleared} exit(s) cleared` : ''}).`,
+      type: 'success',
+    });
+    try {
+      const items = await fetchLevelList();
+      const remaining = items.filter(
+        (it) => it.category === 'levels' && it.id !== level.id);
+      const next = remaining[0];
+      if (next) {
+        const data = await fetchLevelData('levels', next.id);
+        pushState(levelDataToEditor(data));
+        setCurrentLevelId(next.id);
+      } else {
+        handleCreateNewLevel();
+      }
+      const fresh: ExistingLevelItem[] = [];
+      for (const it of items) {
+        if (it.id === level.id && it.category === 'levels') continue;
+        try {
+          fresh.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                       scene_id: it.scene_id ?? null });
+        } catch { /* skip unreadable */ }
+      }
+      setLevelItems(fresh);
+    } catch {
+      // Catalogue refresh is best-effort; the delete itself succeeded.
+    }
+  };
+
+  // One-click repair for a delete whose unlink did not stick: removes every
+  // levels/<id>.json whose id is retired.  Such a file hard-fails Compile
+  // ROM and keeps its actor ids reserved (see the Inspector banner).
+  const handleCleanRetiredOrphans = async () => {
+    const res = await cleanRetiredOrphans();
+    if (!res.success) {
+      setNotification({ message: `Clean retired orphans failed: ${res.error}`, type: 'error' });
+      return;
+    }
+    const removed = res.removed || [];
+    setNotification({
+      message: removed.length
+        ? `Removed retired orphan file(s): ${removed.join(', ')}. Recompile.`
+        : 'No retired orphan files found.',
+      type: removed.length ? 'success' : 'info',
+    });
+    try {
+      const items = await fetchLevelList();
+      const fresh: ExistingLevelItem[] = [];
+      for (const it of items) {
+        try {
+          fresh.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                       scene_id: it.scene_id ?? null });
+        } catch { /* skip unreadable */ }
+      }
+      setLevelItems(fresh);
+    } catch {
+      // best-effort refresh
+    }
+  };
+
+  const handleCompileRom = async () => {
+    setIsCompiling(true);
+    setNotification({ message: 'Saving level & compiling Game Boy ROMs (make debug + release, parallel)...', type: 'info' });
+    const previousId = currentLevelId && currentLevelId !== level.id ? currentLevelId : null;
+    const saved = await saveLevelToServer(level, previousId);
+    if (!saved.success) {
+      setIsCompiling(false);
+      setNotification({ message: `Save failed, ROMs not compiled: ${saved.error}`, type: 'error' });
+      return;
+    }
+    if (previousId) setCurrentLevelId(level.id);
     const res = await compileRom();
     setIsCompiling(false);
     if (res.success) {
-      setNotification({ message: 'ROM Built Successfully! (build/rpg_card_proto_debug.gb)', type: 'success' });
+      setNotification({ message: 'ROMs Built Successfully! (debug + release)', type: 'success' });
     } else {
       setNotification({ message: `ROM Compilation Failed: ${res.error}`, type: 'error' });
       alert(`Compilation failed:\n\n${res.error}\n\n${res.log || ''}`);
@@ -283,6 +422,70 @@ export const App: React.FC = () => {
       handleCreateNewLevel();
       return;
     }
+    if (selectedId === 'hero') {
+      setHeroView(true);
+      setEnemyView(null);
+      setCardView(false);
+      setDialogueView(null);
+      setShopView(false);
+      setPaletteView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'cards') {
+      setCardView(true);
+      setEnemyView(null);
+      setHeroView(false);
+      setDialogueView(null);
+      setShopView(false);
+      setPaletteView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'shops') {
+      setShopView(true);
+      setEnemyView(null);
+      setHeroView(false);
+      setCardView(false);
+      setDialogueView(null);
+      setPaletteView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'palettes') {
+      setPaletteView(true);
+      setEnemyView(null);
+      setHeroView(false);
+      setCardView(false);
+      setDialogueView(null);
+      setShopView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'dialogues' || selectedId.startsWith('dialogue:')) {
+      setDialogueView(selectedId.startsWith('dialogue:')
+        ? selectedId.slice('dialogue:'.length) : '');
+      setEnemyView(null);
+      setHeroView(false);
+      setCardView(false);
+      setShopView(false);
+      setPaletteView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId.startsWith('enemy:')) {
+      setEnemyView(selectedId.slice('enemy:'.length));
+      setShopView(false);
+      setPaletteView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    setEnemyView(null);
+    setHeroView(false);
+    setCardView(false);
+    setDialogueView(null);
+    setShopView(false);
+    setPaletteView(false);
 
     const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
@@ -572,7 +775,9 @@ export const App: React.FC = () => {
     // Objects
     let objectsOk = true;
     const seenIds = new Set<string>();
+    const seenActorIds = new Map<number, string>();
     level.objects.forEach((obj, i) => {
+      const oid = obj.id || `#${i + 1}`;
       if (!obj.id) {
         errors.push(`Object #${i + 1} has empty ID`);
         objectsOk = false;
@@ -582,8 +787,126 @@ export const App: React.FC = () => {
       } else {
         seenIds.add(obj.id);
       }
+
+      // Property parity with tools/level_compiler/validate.py (the
+      // toolchain runs the same rules inside make's levels target, so
+      // the browser check must not say green for something Compile ROM
+      // rejects).
+      const props = (obj.properties || {}) as Record<string, unknown>;
+      const otype = obj.type;
+      if (!props.entity_id) {
+        if (otype === 'enemy') {
+          // compile.py hard-errors on an enemy with no entity id
+          // (actor_interaction emits COMBAT; validate.py requires the id).
+          errors.push(`Enemy object '${oid}' has no entity_id (pick an Enemy Type)`);
+          objectsOk = false;
+        } else {
+          warnings.push(
+            `Object '${oid}' has no entity_id: kept verbatim, ignored by compile`);
+          (['actor_id', 'hp', 'max_hp', 'battle', 'ai'] as const).forEach((key) => {
+            if (key in props) {
+              errors.push(`Object '${oid}' has no entity_id but carries actor slot '${key}'`);
+              objectsOk = false;
+            }
+          });
+        }
+      } else {
+        if (entityTypeIds.size > 0 && !entityTypeIds.has(props.entity_id as string)) {
+          errors.push(
+            `Object '${oid}' entity_id '${props.entity_id}' is not a known entity type ` +
+            `— create it with the Entity ID picker's "New entity type"`);
+          objectsOk = false;
+        }
+        const aid = typeof props.actor_id === 'number' && Number.isInteger(props.actor_id)
+          ? props.actor_id
+          : 0;
+        if (aid < 0 || aid > 65535) {
+          errors.push(`Object '${oid}' has invalid actor_id '${props.actor_id}' (0..65535)`);
+          objectsOk = false;
+        } else if (aid > 0) {
+          // 0 = unset (toolchain default); only real ids must be unique
+          // within the level...
+          const owner = seenActorIds.get(aid);
+          if (owner) {
+            errors.push(`Duplicate actor_id ${aid} on '${owner}' and '${oid}'`);
+            objectsOk = false;
+          } else {
+            seenActorIds.set(aid, oid);
+          }
+          // ...and across scenes: ActorIds are global (the toolchain's
+          // cross-file check), so flag ids already claimed by another
+          // level on disk.
+          const other = crossActorIds.find((c) => c.id === aid);
+          if (other) {
+            errors.push(`actor_id ${aid} on '${oid}' also used in scene '${other.level}'`);
+            objectsOk = false;
+          }
+        }
+        const facing = (props.facing as string) || 'DOWN';
+        if (!['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(facing)) {
+          errors.push(`Object '${oid}' has invalid facing '${facing}'`);
+          objectsOk = false;
+        }
+        ((props.flags as string[]) || []).forEach((flag) => {
+          if (!['HOSTILE', 'BLOCKING', 'INTERACTABLE'].includes(flag)) {
+            errors.push(`Object '${oid}' has unknown flag '${flag}'`);
+            objectsOk = false;
+          }
+        });
+        const visual = props.visual as string | undefined;
+        if (visual !== undefined && (typeof visual !== 'string' || visual.length !== 1)) {
+          errors.push(`Object '${oid}' visual must be a single character`);
+          objectsOk = false;
+        }
+        if (otype === 'enemy') {
+          (['hp', 'max_hp', 'ai', 'battle'] as const).forEach((key) => {
+            if (!(key in props)) {
+              errors.push(`Enemy object '${oid}' is missing properties.${key}`);
+              objectsOk = false;
+            }
+          });
+        }
+        (['hp', 'max_hp', 'gold_reward'] as const).forEach((key) => {
+          if (key in props) {
+            const v = props[key] as number;
+            if (!Number.isInteger(v) || v < 0) {
+              errors.push(`Object '${oid}' has invalid ${key} '${v}'`);
+              objectsOk = false;
+            }
+          }
+        });
+      }
     });
     if (objectsOk) passed.push('Objects valid');
+
+    // Engine actor-slot caps (mirrors tools/level_compiler/validate.py):
+    // actor_load_banked() spawns hostile rows into
+    // World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
+    // g_static_actors (MAX_STATIC_ACTORS=10; src/world/actor.h); rows past
+    // the cap are silently dropped at runtime.  Enemies count as hostile
+    // even when flags are absent (compile.py defaults them HOSTILE).
+    const isHostile = (o: any) =>
+      o.type === 'enemy' ||
+      ((((o.properties || {}).flags as string[]) || []).includes('HOSTILE'));
+    const hostileRows = level.objects
+      .filter((o) => (o.properties || {}).entity_id && isHostile(o))
+      .map((o) => o.id);
+    const staticRows = level.objects
+      .filter((o) => (o.properties || {}).entity_id && !isHostile(o))
+      .map((o) => o.id);
+    if (hostileRows.length > 4) {
+      errors.push(
+        `Level has ${hostileRows.length} hostile actors but the engine spawns at most ` +
+        `MAX_WORLD_ACTORS=4; extra would be silently dropped: ${JSON.stringify(hostileRows.slice(4))}`);
+      objectsOk = false;
+    }
+    if (staticRows.length > 10) {
+      errors.push(
+        `Level has ${staticRows.length} friendly actors but the engine loads at most 10 ` +
+        `static rows; extra would be silently dropped: ${JSON.stringify(staticRows.slice(10))}`);
+      objectsOk = false;
+    }
+    if (!objectsOk) passed.pop();
 
     return { passed, errors, warnings, isValid: errors.length === 0 };
   };
@@ -669,37 +992,47 @@ export const App: React.FC = () => {
           <label htmlFor="level-select-dropdown" className="header-levels-label">
             Level:
           </label>
-          <select
-            id="level-select-dropdown"
-            className="level-select"
-            value={currentLevelId}
-            onChange={(e) => handleSelectLevel(e.target.value)}
-          >
-            <optgroup label="Overworld Levels">
-              {levelItems.filter((l) => l.category === 'levels').map((lvl) => (
-                <option key={lvl.id} value={lvl.id}>
-                  {lvl.name} ({lvl.id}.json)
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Screens">
-              {levelItems.filter((l) => l.category === 'screens').map((lvl) => (
-                <option key={lvl.id} value={lvl.id}>
-                  {lvl.name} (screens/{lvl.id}.json)
-                </option>
-              ))}
-            </optgroup>
-            {!levelItems.some((l) => l.id === currentLevelId) && (
-              <optgroup label="Current Level">
-                <option value={currentLevelId}>
-                  {level.name || currentLevelId} ({currentLevelId}.json)
-                </option>
-              </optgroup>
-            )}
-            <optgroup label="Actions">
-              <option value="__new__">➕ + New Level...</option>
-            </optgroup>
-          </select>
+          <FilterCombo
+            items={[
+              ...levelItems
+                .filter((l) => l.category === 'levels')
+                .map((lvl) => ({
+                  value: lvl.id,
+                  label: `${lvl.name} (${lvl.id}.json)`,
+                  group: 'Overworld Levels',
+                })),
+              ...levelItems
+                .filter((l) => l.category === 'screens')
+                .map((lvl) => ({
+                  value: lvl.id,
+                  label: `${lvl.name} (screens/${lvl.id}.json)`,
+                  group: 'Screens',
+                })),
+              ...enemyItems.map((e) => ({
+                value: `enemy:${e.id}`,
+                label: `${e.name} (enemy type)`,
+                group: 'Enemies',
+              })),
+              { value: 'hero', label: 'Hero (art + stats + starter deck)', group: 'Hero' },
+              { value: 'cards', label: 'Battle (HUD + layout + cards)', group: 'Battle' },
+              { value: 'dialogues', label: 'Dialogues (speaker + lines)', group: 'Dialogue' },
+              { value: 'shops', label: 'Shops (stock + merchant)', group: 'Shops' },
+              { value: 'palettes', label: 'Palettes (preview + assign)', group: 'Palettes' },
+              ...(!levelItems.some((l) => l.id === currentLevelId)
+                ? [{
+                    value: currentLevelId,
+                    label: `${level.name || currentLevelId} (${currentLevelId}.json)`,
+                    group: 'Current Level',
+                  }]
+                : []),
+              { value: '__new__', label: '➕ + New Level...', group: 'Actions' },
+            ]}
+            value={heroView ? 'hero' : cardView ? 'cards' : shopView ? 'shops' : paletteView ? 'palettes' : dialogueView !== null ? 'dialogues' : enemyView ? `enemy:${enemyView}` : currentLevelId}
+            onPick={(v) => handleSelectLevel(v)}
+            staleLabel={(v) => `${v} (unknown — pick below)`}
+            placeholder="Filter levels..."
+            className="header-level-combo"
+          />
         </div>
       </header>
 
@@ -733,7 +1066,7 @@ export const App: React.FC = () => {
               alert(`Failed to load level: ${err}`);
             }
           }}
-          onValidate={() => setShowValidateModal(true)}
+          onValidate={() => { refreshCrossActorIds(); setShowValidateModal(true); }}
           onDescribe={() => setShowDescribeModal(true)}
           onSoundTest={() => setShowSoundTestModal(true)}
           onNew={handleCreateNewLevel}
@@ -744,6 +1077,8 @@ export const App: React.FC = () => {
           }}
           isTilesetReviewerOpen={showTilesetReviewer}
           onToggleTilesetReviewer={() => setShowTilesetReviewer((prev) => !prev)}
+          isCombatArtOpen={showCombatArt}
+          onToggleCombatArt={() => setShowCombatArt((prev) => !prev)}
         />
 
         {/* Notification Toast */}
@@ -780,6 +1115,27 @@ export const App: React.FC = () => {
         )}
 
         <div className="main-content">
+          {heroView ? (
+            <HeroManager
+              key="hero"
+              onOpenComposer={() => setShowCombatArt(true)}
+            />
+          ) : enemyView ? (
+            <EnemyManager
+              key={enemyView}
+              initialId={enemyView}
+              onOpenComposer={() => setShowCombatArt(true)}
+            />
+          ) : cardView ? (
+            <BattleManager key="cards" />
+          ) : shopView ? (
+            <ShopManager key="shops" />
+          ) : paletteView ? (
+            <PaletteManager key="palettes" />
+          ) : dialogueView !== null ? (
+            <DialogueManager key="dialogues" initialId={dialogueView || undefined} />
+          ) : (
+          <>
           {/* Left Sidebar */}
           <aside className="sidebar-left">
             <TilesetPalette
@@ -871,8 +1227,16 @@ export const App: React.FC = () => {
               onAddRegion={handleAddRegion}
               onUpdateRegion={handleUpdateRegion}
               onDeleteRegion={handleDeleteRegion}
+              sceneOptions={levelItems
+                .filter((l) => l.category === 'levels')
+                .map(({ id, name, scene_id }) => ({ id, name, scene_id: scene_id ?? null }))}
+              sceneId={(levelItems.find((l) => l.id === currentLevelId)?.scene_id) ?? null}
+              onDeleteLevel={handleDeleteLevel}
+              onCleanRetiredOrphans={handleCleanRetiredOrphans}
             />
           </aside>
+          </>
+          )}
         </div>
       </div>
 
@@ -888,9 +1252,11 @@ export const App: React.FC = () => {
             </div>
             <div className="modal-body">
               <div style={{ marginBottom: '12px', fontSize: '13px', opacity: 0.85 }}>
-                Browser checks are a subset of the toolchain validator — the full
-                check (<code>validate.py</code>, per-tile rules, cross-file actor-id
-                uniqueness) runs server-side at Compile ROM time.
+                Browser checks mirror the toolchain's object rules (enemy
+                hp/max_hp/battle/ai, actor-id range, within-level and
+                cross-scene uniqueness — cross-scene ids are read live from
+                <code> levels/*.json</code>).  The toolchain still runs the full
+                <code>validate.py</code> (per-tile rules) server-side at Compile ROM time.
               </div>
               <div className="validation-list">
                 {validationResult.passed.map((p, i) => (
@@ -986,6 +1352,9 @@ export const App: React.FC = () => {
             });
           }}
         />
+      )}
+      {showCombatArt && (
+        <CombatArtStudio onClose={() => setShowCombatArt(false)} />
       )}
     </div>
   );

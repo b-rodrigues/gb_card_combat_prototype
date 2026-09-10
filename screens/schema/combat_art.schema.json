@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Combat art set",
+  "description": "One named combat-art meta-tile set. Cells name curated tiles from tools/level_editor/public/tiles/combat/ (see tools/compose_battle_sprites.py LAYOUT); null is the all-white blank cell. frame1 omitted repeats frame0 (single-frame set).",
+  "type": "object",
+  "required": ["id", "order", "width", "height", "palette", "frame0"],
+  "properties": {
+    "id": { "type": "string" },
+    "label": { "type": "string" },
+    "order": { "type": "integer", "minimum": 0 },
+    "width": { "type": "integer", "minimum": 1, "maximum": 6 },
+    "height": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "palette": { "type": "integer", "minimum": 0 },
+    "frame0": {
+      "type": "array",
+      "items": { "type": ["string", "null"] }
+    },
+    "frame1": {
+      "type": "array",
+      "items": { "type": ["string", "null"] }
+    }
+  }
+}

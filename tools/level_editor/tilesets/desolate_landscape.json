@@ -455,46 +455,6 @@
       "glyph": "O",
       "image_url": "/tiles/desolate_landscape/desolate_landscape_treasure_chest_desolate.png",
       "category": "terrain"
-    },
-    {
-      "id": "desolate_landscape_plain_floor_3",
-      "label": "plain floor",
-      "gb_constant": "TILE_DESOLATE_LANDSCAPE_44",
-      "walkable": true,
-      "color": "#938da1",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_3.png",
-      "category": "terrain"
-    },
-    {
-      "id": "desolate_landscape_plain_floor_4",
-      "label": "plain floor",
-      "gb_constant": "TILE_DESOLATE_LANDSCAPE_45",
-      "walkable": true,
-      "color": "#938da1",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_4.png",
-      "category": "terrain"
-    },
-    {
-      "id": "desolate_landscape_plain_floor_5",
-      "label": "plain floor",
-      "gb_constant": "TILE_DESOLATE_LANDSCAPE_46",
-      "walkable": true,
-      "color": "#938da1",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_5.png",
-      "category": "terrain"
-    },
-    {
-      "id": "desolate_landscape_plain_floor_6",
-      "label": "plain floor",
-      "gb_constant": "TILE_DESOLATE_LANDSCAPE_47",
-      "walkable": true,
-      "color": "#938da1",
-      "ascii": ".",
-      "image_url": "/tiles/desolate_landscape/desolate_landscape_plain_floor_6.png",
-      "category": "terrain"
     }
   ],
   "vram_block": {
@@ -770,25 +730,25 @@
         "x": 12,
         "y": 2,
         "index": 44,
-        "tile": "desolate_landscape_plain_floor_3"
+        "tile": "desolate_landscape_plain_floor_1"
       },
       {
         "x": 13,
         "y": 2,
         "index": 45,
-        "tile": "desolate_landscape_plain_floor_4"
+        "tile": "desolate_landscape_plain_floor_1"
       },
       {
         "x": 14,
         "y": 2,
         "index": 46,
-        "tile": "desolate_landscape_plain_floor_5"
+        "tile": "desolate_landscape_plain_floor_1"
       },
       {
         "x": 15,
         "y": 2,
         "index": 47,
-        "tile": "desolate_landscape_plain_floor_6"
+        "tile": "desolate_landscape_plain_floor_1"
       }
     ]
   }

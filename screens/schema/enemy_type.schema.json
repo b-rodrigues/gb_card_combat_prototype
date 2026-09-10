@@ -7,7 +7,6 @@
   "additionalProperties": false,
   "required": ["id", "label", "category", "sprite", "name", "hp", "max_hp", "battle_id", "gold_reward", "reward_currency"],
   "properties": {
-    "id": {
       "type": "string",
       "pattern": "^[a-z_]+$",
       "description": "Unique identifier for this enemy type (lowercase, underscores only)."
@@ -41,6 +40,38 @@
       "required": ["art", "frames"],
       "additionalProperties": false
     },
+    "overworld": {
+      "type": ["object", "null"],
+      "description": "Shared overworld OAM sprite (one sprite for every world; the sheet background maps to transparent). Absent/null = legacy SPRITE_KIND rendering. cells is a flat frame-major list of width*height*frames tile names: a 1x1 sprite uses one tile per frame (2 cells = 2 animation frames), a 2x2 sprite uses four tiles per frame (4 cells = 1 frame).",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "description": "Overworld sprite width in tiles (default 1). A 2x2 boss uses width 2."
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "description": "Overworld sprite height in tiles (default 1). A 2x2 boss uses height 2."
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Compose-layout tile names (tools/compose_enemy_sprites.py LAYOUT); width*height*frames entries, frame-major (frame0's width*height cells, then frame1's, ...)."
+        },
+        "palette": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7,
+          "description": "CGB OAM palette index."
+        }
+      },
+      "required": ["cells", "palette"],
+      "additionalProperties": false
+    },
     "name": {
       "type": "string",
       "maxLength": 20,
@@ -67,7 +98,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["AI_NONE", "AI_PATROL_CROSS", "AI_PATROL_CIRCLE"]
+        "enum": ["AI_NONE", "AI_PATROL_CROSS", "AI_PATROL_CIRCLE", "AI_CHASE"]
       },
       "description": "Valid AI types for this enemy type."
     },

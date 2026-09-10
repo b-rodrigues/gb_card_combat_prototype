@@ -4,7 +4,13 @@
   "label": "Lord of Slimes",
   "category": "boss",
   "sprite": { "art": "boss", "frames": 1 },
-  "name": "LORD OF SLIMES",
+  "overworld": {
+    "width": 2,
+    "height": 2,
+    "cells": ["boss_ow_tl", "boss_ow_tr", "boss_ow_bl", "boss_ow_br"],
+    "palette": 1
+  },
+  "name": "L.of Slimes",
   "hp": 50,
   "max_hp": 50,
   "battle_id": "BATTLE_SLIME_LORD",

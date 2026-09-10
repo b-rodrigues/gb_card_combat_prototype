@@ -6,17 +6,15 @@
 
 MusicTrack g_audio_current_track = MUSIC_NONE;
 uint8_t g_sound_enabled = 1;
-static uint8_t step_counter = 0;
-static uint8_t note_index = 0;
 
 /* ── SFX layer (transcribed tracker SFX) ────────────────────────────
- * Music runs on channel 1 (see play_note / audio_update below) or via
- * hUGEDriver.  Effect sounds use channels 2 and 4 so they never collide
- * with the CH1 music voice.  Each SFX id voices the step tables in
- * generated/sfx/sfx_tables.c (transcribed from the assets-sfx tracker
- * files by tools/transcribe_sfx.py): score CH1 renders to the CH2 voice, score
- * CH4 renders verbatim.  When hUGEDriver music is active, the used music
- * channels are muted during SFX playback and unmuted at the table end. */
+ * Music runs through hUGEDriver.  Effect sounds use channels 2 and 4 so
+ * they never collide with the CH1 music voice.  Each SFX id voices the
+ * step tables in generated/sfx/sfx_tables.c (transcribed from the
+ * assets-sfx tracker files by tools/transcribe_sfx.py): score CH1 renders
+ * to the CH2 voice, score CH4 renders verbatim.  When hUGEDriver music is
+ * active, the used music channels are muted during SFX playback and
+ * unmuted at the table end. */
 #define SFX_NONE 0xFF
 /* ROM bank holding the transcribed-SFX stepper body + tables
  * (src/audio/sfx_step.c, generated/sfx/sfx_tables.c).  Bank 6 holds the
@@ -68,68 +66,11 @@ void audio_play_sfx(uint8_t s)
 volatile uint16_t g_audio_ticks = 0;
 #endif
 
-#define REST 0
-
-static const uint16_t s_note_freqs[14] = {
-    0x0000, /* 0: REST */
-    0x0642, /* 1: NOTE_D4 */
-    0x0627, /* 2: NOTE_CS4 */
-    0x0672, /* 3: NOTE_E4 */
-    0x0689, /* 4: NOTE_F4 */
-    0x06B2, /* 5: NOTE_G4 */
-    0x06D6, /* 6: NOTE_A4 */
-    0x06E7, /* 7: NOTE_AS4 */
-    0x0721, /* 8: NOTE_D5 */
-    0x0759, /* 9: NOTE_G5 */
-    0x074F, /* 10: NOTE_FS5 */
-    0x0739, /* 11: NOTE_E5 */
-    0x0714, /* 12: NOTE_CS5 */
-    0x069E  /* 13: NOTE_FS4 */
-};
-
-/* Overworld: Mozart's "Lacrimosa" (Requiem K.626) */
-static const uint8_t lacrimosa_notes[32] = {
-    1, 1, 2, 1,  3, 4, 4, 0,
-    6, 6, 7, 6,  5, 4, 3, 0,
-    4, 4, 3, 4,  5, 6, 6, 0,
-    5, 4, 3, 4,  3, 1, 1, 0
-};
-
-/* Battle, town, dungeon, and boss themes play as tracker songs
- * (song_battle, song_village, song_castle, song_boss_fight): they keep no
- * chiptune fallback table.  While a tracker song is active audio_update()
- * returns through the huge path before reaching the tables below, so the
- * slots stay 0 and a stray lookup falls silent. */
-
-/* Victory: 4-note rising fanfare (D4 G4 A4 D5) + closing rest,
- * one-shot -- plays once then falls silent until the next track
- * request. */
-#define VICTORY_NOTE_COUNT 5   /* 4 notes + closing rest */
-#define VICTORY_TICKS_PER_NOTE 20
-static const uint8_t victory_notes[VICTORY_NOTE_COUNT] = {
-    1, 5, 6, 8, 0           /* D4 G4 A4 D5 rest */
-};
-
-/* Title: a slow, open modal theme (D minor-ish), sparse and mysterious.
- * The waking whale / closed-sky motif. */
-static const uint8_t title_notes[16] = {
-    1, 4, 6, 8,  6, 4, 1, 0,
-    13, 6, 5, 3,  1, 3, 4, 0
-};
-
-static void play_note(uint16_t freq)
-{
-    if (freq == 0) {
-        NR12_REG = 0x00;
-        NR14_REG = 0x80;
-        return;
-    }
-    NR10_REG = 0x00;
-    NR11_REG = 0x80;
-    NR12_REG = 0xF1;
-    NR13_REG = (uint8_t)(freq & 0xFF);
-    NR14_REG = 0x80 | (uint8_t)((freq >> 8) & 0x07);
-}
+/* All music is tracked (hUGEDriver) now: the old hardcoded chiptune
+ * note-table engine (note freqs, per-track note arrays, play_note) was
+ * removed per docs/uge.md Phase 6.  MUSIC_OVERWORLD and MUSIC_VICTORY
+ * have no authored .uge yet, so they play nothing; MUSIC_TITLE plays
+ * song_title (assets/music/title short.uge). */
 
 void audio_init(void)
 {
@@ -137,8 +78,6 @@ void audio_init(void)
     NR50_REG = 0x77;
     NR51_REG = 0xFF;
     g_audio_current_track = MUSIC_NONE;
-    step_counter = 0;
-    note_index = 0;
     huge_music_init();
 
     TAC_REG = 0x00;
@@ -155,14 +94,10 @@ void audio_play_music(MusicTrack track)
 {
     if (g_audio_current_track == track) return;
     if (!g_sound_enabled) return;
-    /* Suppress the ISR while switching: set MUSIC_NONE first so the
-     * timer interrupt never sees the new track with a stale note_index
-     * (which could immediately kill a one-shot like MUSIC_VICTORY). */
+    /* Suppress the ISR while switching: set MUSIC_NONE first so the timer
+     * interrupt never steps the new track mid-switch. */
     g_audio_current_track = MUSIC_NONE;
-    step_counter = 0;
-    note_index = 0;
     huge_music_stop();
-    play_note(0);
 
     g_audio_current_track = track;
     if (track == MUSIC_BATTLE) {
@@ -173,11 +108,19 @@ void audio_play_music(MusicTrack track)
         huge_music_play(&song_forest);
     } else if (track == MUSIC_BOSS) {
         huge_music_play(&song_boss_fight);
+    } else if (track == MUSIC_MIMIC) {
+        huge_music_play_banked(&song_mimic, HUGE_MUSIC_BANK_B7);
     } else if (track == MUSIC_TOWN) {
         huge_music_play(&song_village);
     } else if (track == MUSIC_DUNGEON) {
         huge_music_play(&song_castle);
+    } else if (track == MUSIC_TITLE) {
+        huge_music_play(&song_title);
+    } else if (track == MUSIC_VICTORY) {
+        huge_music_play_banked(&song_victory, HUGE_MUSIC_BANK_B7);
     }
+    /* MUSIC_OVERWORLD has no authored .uge yet: it stays silent (the
+     * track still reports correctly via telemetry). */
 
     /* Centralized MUSIC_CHANGED telemetry (AGENTS.md 8): emitted only when
      * the track actually changes, so callers never forget it. */
@@ -189,26 +132,8 @@ MusicTrack audio_get_current_track(void)
     return g_audio_current_track;
 }
 
-/* Per-track playback parameters (indexed by MusicTrack).  Tables live
- * here in the fixed bank because the timer ISR calls audio_update()
- * directly.  len is the note count; loops wrap via mask/compare,
- * VICTORY (one_shot) falls silent after its last note. */
-static const uint8_t *const s_track_notes[MUSIC_FOREST + 1] = {
-    0, lacrimosa_notes, 0, victory_notes,
-    title_notes, 0, 0, 0, 0, 0
-};
-static const uint8_t s_track_len[MUSIC_FOREST + 1] = {
-    0, 32, 0, VICTORY_NOTE_COUNT, 16, 0, 0, 0, 0, 0
-};
-static const uint8_t s_track_ticks[MUSIC_FOREST + 1] = {
-    0, 43, 0, VICTORY_TICKS_PER_NOTE, 60, 0, 0, 0, 0, 0
-};
-
 void audio_update(void)
 {
-    const uint8_t *notes;
-    uint8_t len;
-
 #ifdef DEBUG_BUILD
     g_audio_ticks++;
 #endif
@@ -224,11 +149,13 @@ void audio_update(void)
             if (sfx_step_tick()) {
                 if (sfx_muted & 0x01) {
                     NR22_REG = 0x00;
-                    huge_music_mute_channel(HT_CH2, HT_CH_PLAY);
+                    /* ISR context: the __critical wrapper's ei() would
+                     * nest timer interrupts (WRAM smash, ghost input). */
+                    huge_music_mute_channel_isr(HT_CH2, HT_CH_PLAY);
                 }
                 if (sfx_muted & 0x02) {
                     NR42_REG = 0x00;
-                    huge_music_mute_channel(HT_CH4, HT_CH_PLAY);
+                    huge_music_mute_channel_isr(HT_CH4, HT_CH_PLAY);
                 }
                 sfx_muted = 0;
                 sfx_id = SFX_NONE;
@@ -239,28 +166,9 @@ void audio_update(void)
 
     if (g_audio_current_track == MUSIC_NONE) return;
 
+    /* All playback is tracked now; tracks without a song (OVERWORLD,
+     * VICTORY) simply stay silent. */
     if (huge_music_is_playing()) {
         huge_music_update();
-        return;
-    }
-
-    notes = s_track_notes[g_audio_current_track];
-    if (!notes) return;
-    len = s_track_len[g_audio_current_track];
-
-    if (++step_counter >= s_track_ticks[g_audio_current_track]) {
-        step_counter = 0;
-        if (note_index < len) {
-            play_note(s_note_freqs[notes[note_index]]);
-            note_index++;
-            if (note_index >= len) {
-                if (g_audio_current_track == MUSIC_VICTORY) {
-                    /* One-shot jingle: silence until the next track
-                     * request. */
-                    g_audio_current_track = MUSIC_NONE;
-                }
-                note_index = 0;
-            }
-        }
     }
 }

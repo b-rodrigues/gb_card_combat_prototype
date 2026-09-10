@@ -30,6 +30,8 @@ interface ToolbarProps {
   onNew: () => void;
   isTilesetReviewerOpen?: boolean;
   onToggleTilesetReviewer?: () => void;
+  isCombatArtOpen?: boolean;
+  onToggleCombatArt?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -60,6 +62,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onClearClone,
   isTilesetReviewerOpen,
   onToggleTilesetReviewer,
+  isCombatArtOpen,
+  onToggleCombatArt,
 }) => {
   return (
     <div className="toolbar">
@@ -78,7 +82,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           style={{ background: '#d35400', color: '#fff', fontWeight: 'bold' }}
           onClick={onCompileRom}
           disabled={isCompiling}
-          title="Save Level & Build Game Boy ROM (make debug)"
+          title="Save Level & Build Game Boy ROMs (make debug + release, parallel)"
         >
           {isCompiling ? '⏳ Compiling...' : '🔨 Compile ROM'}
         </button>
@@ -117,6 +121,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             title={isTilesetReviewerOpen ? 'Quit / Close Tileset Reviewer' : 'Review and edit tile asset properties or import a new tileset PNG'}
           >
             🎨 {isTilesetReviewerOpen ? '✕ Close Tiles' : 'Import/Review Tiles'}
+          </button>
+        )}
+        {onToggleCombatArt && (
+          <button
+            className={`btn ${isCombatArtOpen ? 'active' : ''}`}
+            style={{
+              background: isCombatArtOpen ? '#9b59b6' : '#8e44ad',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              border: isCombatArtOpen ? '1px solid #00f0ff' : '1px solid rgba(255,255,255,0.15)',
+              boxShadow: isCombatArtOpen ? '0 0 10px rgba(0, 240, 255, 0.4)' : 'none',
+            }}
+            onClick={onToggleCombatArt}
+            title={isCombatArtOpen ? 'Close Combat Art Studio' : 'Compose enemy combat-art meta-tiles and assign combat sprites'}
+          >
+            ⚔️ {isCombatArtOpen ? '✕ Close Art' : 'Combat Art'}
           </button>
         )}
       </div>

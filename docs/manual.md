@@ -414,7 +414,11 @@ order they are played (selection digits show the order).
 The first (leading) card decides the action:
 
 * A **sword/bow/dagger** lead deals damage.
-* A **ring** lead heals you instead.
+* A **ring** lead heals you instead.  The heal is the whole hand's scaled
+  power (the sword/bow damage becomes healing, §8.4) **plus** the ring's
+  own value — so a ring-first selection trades the attack for a heal.
+  Put the ring second if you want the swords to hit and the ring to just
+  top you up.
 * A **shield** lead still deals the non-shield damage sum (shields are
   "fodder" but count toward your hand shape).
 

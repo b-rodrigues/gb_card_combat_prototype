@@ -5,7 +5,7 @@
     "width": 20,
     "height": 18,
     "tileset": "desolate_landscape",
-    "music": "MUSIC_DESOLATE_LANDSCAPE",
+    "music": "MUSIC_DESOLATE",
     "map_id": "MAP_SOUTH_FIELD"
   },
   "default_walkable": "desolate_landscape.desolate_landscape_plain_floor_1",
@@ -26,8 +26,8 @@
       "y": 1,
       "facing": "DOWN",
       "animation_frames": [
-        "desolate_landscape.desolate_landscape_hero_frame_1_with_green_forest_background",
-        "desolate_landscape.desolate_landscape_hero_frame_2_with_green_forest_background"
+        "actors.actors_hero_frame_1",
+        "actors.actors_hero_frame_2"
       ]
     }
   },
@@ -55,18 +55,25 @@
     {
       "id": "south_slime",
       "type": "enemy",
-      "overworld_sprite": "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
+      "overworld_sprite": "actors.actors_slime_frame_1",
       "animation_frames": [
-        "desolate_landscape.desolate_landscape_enemy_kobold_frame_1",
-        "desolate_landscape.desolate_landscape_enemy_kobold_frame_2"
+        "actors.actors_slime_frame_1",
+        "actors.actors_slime_frame_2"
       ],
-      "position": { "x": 8, "y": 8 },
+      "position": {
+        "x": 8,
+        "y": 8
+      },
       "properties": {
         "entity_id": "ENTITY_ID_SLIME",
         "display_name": "SLIME",
         "actor_id": 7,
         "facing": "DOWN",
-        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
         "visual": "E",
         "hp": 10,
         "max_hp": 10,
@@ -84,13 +91,20 @@
         "desolate_landscape.desolate_landscape_enemy_bats_frame_1",
         "desolate_landscape.desolate_landscape_enemy_bats_frame_2"
       ],
-      "position": { "x": 14, "y": 10 },
+      "position": {
+        "x": 14,
+        "y": 10
+      },
       "properties": {
         "entity_id": "ENTITY_ID_BAT",
         "display_name": "BAT",
         "actor_id": 8,
         "facing": "DOWN",
-        "flags": [ "HOSTILE", "BLOCKING", "INTERACTABLE" ],
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
         "visual": "V",
         "hp": 8,
         "max_hp": 8,
@@ -108,16 +122,57 @@
         "desolate_landscape.desolate_landscape_fire_frame_1",
         "desolate_landscape.desolate_landscape_fire_frame_2"
       ],
-      "position": { "x": 17, "y": 11 },
-      "properties": { "display_name": "CAMPFIRE", "dialogue": "A crackling fire warms the desolate wasteland." }
+      "position": {
+        "x": 17,
+        "y": 11
+      },
+      "properties": {
+        "display_name": "CAMPFIRE",
+        "dialogue": "A crackling fire warms the desolate wasteland."
+      }
+    },
+    {
+      "id": "obj_7044",
+      "type": "enemy",
+      "position": {
+        "x": 17,
+        "y": 1
+      },
+      "properties": {
+        "display_name": "KOBOLD",
+        "battle": "BATTLE_KOBOLD",
+        "ai": "AI_CHASE",
+        "enemy_type": "kobold",
+        "entity_id": "ENTITY_ID_KOBOLD",
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "K",
+        "hp": 12,
+        "max_hp": 12,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "actor_id": 13
+      }
     }
   ],
   "regions": [
     {
       "id": "southern_wilds",
-      "bounds": { "x": 2, "y": 2, "width": 16, "height": 14 },
+      "bounds": {
+        "x": 2,
+        "y": 2,
+        "width": 16,
+        "height": 14
+      },
       "description": "Wild plains south of the starting area teeming with roaming monsters.",
-      "gameplay": { "purpose": "combat_exploration", "difficulty": 1 }
+      "gameplay": {
+        "purpose": "combat_exploration",
+        "difficulty": 1
+      }
     }
   ]
 }

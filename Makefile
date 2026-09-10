@@ -26,6 +26,15 @@ INCLUDES = -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/world -I$(SRC_DIR)/battle
 ALL_SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 BANK5_EARLY_SRCS = $(SRC_DIR)/world/scene_load.c
 SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
+# Frozen harness-test content (tools/scenarios/fixtures/levels/, compiled
+# with --bank 4 into src/game/*_content_test.c): compiled ONLY into the
+# debug (harness) build so the scenario suite sees a stable world while
+# real content (levels/) evolves freely.  The release build must never
+# see these symbols (same g_scenes/g_actor_tables names).
+TEST_CONTENT_SRCS = $(SRC_DIR)/game/scenes_content_test.c $(SRC_DIR)/game/actors_content_test.c
+CONTENT_SRCS = $(SRC_DIR)/game/scenes_content.c $(SRC_DIR)/game/actors_content.c
+SRCS := $(filter-out $(TEST_CONTENT_SRCS),$(SRCS))
+DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events);
@@ -33,13 +42,22 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c $(GENERATED_MUSIC_DIR)/title.c $(GENERATED_MUSIC_DIR)/victory.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
 SFX_UGE = assets/sfx/sfx\ accept.uge assets/sfx/sfx\ back.uge \
           assets/sfx/sfx\ block.uge assets/sfx/sfx\ cursor.uge \
           assets/sfx/sfx\ hit.uge assets/sfx/sfx\ hit2.uge
+# screens/sfx.json may map any SFX id to any .uge (assets/sfx or
+# assets/music), so the tables depend on the registry plus both pools.
+SFX_REGISTRY = screens/sfx.json
+SFX_ALL_UGE = $(SFX_UGE) \
+              assets/music/Battle\ BGM.uge assets/music/Boss\ fight.uge \
+              assets/music/castle.uge assets/music/desolate_landscape.uge \
+              assets/music/Forest.uge assets/music/Mimic.uge \
+              assets/music/title\ long.uge assets/music/title\ short.uge \
+              assets/music/Village.uge
 # Both C files come from one transcriber run (plus sfx_tables.h); the
 # recipe is deterministic, so a double invocation is a harmless no-op.
 SFX_TABLES = $(GENERATED_SFX_DIR)/sfx_tables.c $(GENERATED_SFX_DIR)/sfx_index.c
@@ -48,14 +66,19 @@ MUSIC_OBJS_DEBUG = $(patsubst $(GENERATED_MUSIC_DIR)/%.c,$(BUILD_DIR)/debug/musi
 
 HUGEDRIVER_OBJ = $(BUILD_DIR)/lib/hUGEDriver.o
 HUGEDRIVER_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver.o
+# Second hUGE driver copy in bank 7 (renamed exports, see rules below) so
+# the mimic song can live outside the full bank 6.  The driver reads song
+# bytes through the mapped ROM window, so driver + song must share a bank.
+HUGEDRIVER_B7_OBJ = $(BUILD_DIR)/lib/hUGEDriver_b7.o
+HUGEDRIVER_B7_OBJ_DEBUG = $(BUILD_DIR)/debug/lib/hUGEDriver_b7.o
 
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ)
-OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG)
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RELEASE_SRCS)) $(MUSIC_OBJS) $(SFX_OBJS) $(HUGEDRIVER_OBJ) $(HUGEDRIVER_B7_OBJ)
+OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(MUSIC_OBJS_DEBUG) $(SFX_OBJS_DEBUG) $(HUGEDRIVER_OBJ_DEBUG) $(HUGEDRIVER_B7_OBJ_DEBUG)
 
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check shops shops-check entities entities-check registry-check editor clean
 
 all: $(TARGET)
 
@@ -84,6 +107,13 @@ GFX_OUT_DIR = $(SRC_DIR)/gfx
 
 gfx:
 	@mkdir -p $(GFX_OUT_DIR)
+	# Shared composed sheets (battle art, overworld enemies, hero): the
+	# gfx rules below read these; compose them deterministically from the
+	# curated public/tiles/ PNGs so a clean checkout always has them.
+	@python3 tools/compose_battle_sprites.py
+	@python3 tools/compose_enemy_sprites.py
+	@python3 tools/compose_hero_sprites.py
+	@python3 tools/compose_card_frames.py
 	# ── Intrepid font ─────────────────────────────────────────────────────
 	@python3 tools/png2gb.py assets/intrepid.png --name intrepid_font_tiles \
 		--raw -o $(GFX_OUT_DIR)/intrepid_font_tiles.inc
@@ -108,27 +138,29 @@ gfx:
 	@python3 tools/png2gb.py assets/forest-tile.png --name rpg_forest_stumps \
 		--palette auto --anchor-color "#7bb660" --tile-coords "14,0 15,0 14,1 15,1 15,1" \
 		--raw -o $(GFX_OUT_DIR)/rpg_forest_stumps.inc
-	# Sprite tiles from forest-tile.png
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_hero_sprite_tile \
-		--palette auto --tile-coords "1,2 2,2" \
-		-o $(GFX_OUT_DIR)/forest_hero_sprite_tile.h
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_kobold_sprite_tile \
-		--palette auto --tile-coords "3,2 4,2" \
-		-o $(GFX_OUT_DIR)/forest_kobold_sprite_tile.h
-	@python3 tools/png2gb.py assets/forest-tile.png --name forest_bat_sprite_tile \
-		--palette auto --tile-coords "9,2 10,2" \
-		-o $(GFX_OUT_DIR)/forest_bat_sprite_tile.h
+	# Chest sprite tile from forest-tile.png (tile 11,2 "treasure chest
+	# forest").  Anchor the forest-floor green to shade 0 = OAM transparent;
+	# without it the gold highlight (brightest color) grabs shade 0 and the
+	# green background lands on shade 1, rendering as an opaque tan box.
 	@python3 tools/png2gb.py assets/forest-tile.png --name forest_chest_sprite_tile \
-		--palette auto --tile-coords "11,2" \
+		--palette auto --anchor-color "#7bb660" --tile-coords "11,2" \
 		-o $(GFX_OUT_DIR)/forest_chest_sprite_tile.h
 	# ── Battle enemy art (assets/battle_sprites.png, 3 cols × 8 rows) ────
-	# 36 tiles: 3 art sets × 12 cells (2 frames × 3x2).  Order MUST match
-	# ART_ORDER in tools/screen_compiler/battle_compile.py (slime, bat,
-	# boss); art set N lives at tile offset N*12 in battle_enemy_art.h.
+	# Cell order comes from screens/combat_art/*.json (set order, frame0
+	# then frame1 per set); the compiler also emits per-set blob offsets
+	# into battle_types.c, so the loader needs no fixed set size.
 	# Sheet layout: see tools/compose_battle_sprites.py.
 	@python3 tools/png2gb.py assets/battle_sprites.png --name battle_enemy_art \
-		--palette auto --tile-coords "0,0 1,0 2,0 0,1 1,1 2,1 0,2 1,2 2,2 0,1 1,1 2,1 0,3 1,3 2,3 0,7 0,7 0,7 0,4 1,4 2,4 0,7 0,7 0,7 0,5 1,5 2,5 0,6 1,6 2,6 0,5 1,5 2,5 0,6 1,6 2,6" \
+		--palette auto --tile-coords "$$(python3 tools/screen_compiler/battle_compile.py --gfx-coords)" \
 		-o $(GFX_OUT_DIR)/battle_enemy_art.h
+	# ── Shared overworld enemy sprites (assets/enemy_sprites.png) ──
+	# One transparent-background sprite per enemy type, shared by every
+	# world.  Cell order comes from screens/enemy_types overworld.cells
+	# (sorted enemy-id order); tiles load to OAM at ENEMY_OW_BASE (100).
+	# Sheet layout: see tools/compose_enemy_sprites.py.
+	@python3 tools/png2gb.py assets/enemy_sprites.png --name enemy_ow_tiles \
+		--palette auto --tile-coords "$$(python3 tools/screen_compiler/battle_compile.py --ow-coords)" \
+		-o $(GFX_OUT_DIR)/enemy_ow_tiles.h
 	# ── Desolate landscape (assets/desolate_landscape.png, 16 cols × 3 rows) ──
 	# Full 48-tile world sheet (g_tileset_desolate)
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_world_tiles \
@@ -138,30 +170,33 @@ gfx:
 	@python3 tools/png2gb.py assets/desolate_landscape.png --name rpg_desolate_tiles \
 		--palette auto --anchor-color "#938da1" --tile-coords "0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 12,0 13,0 14,0 15,0 0,1 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 11,1 12,1 13,1 14,1 15,1 0,2 1,2 2,2 3,2 4,2 5,2 6,2 7,2 8,2" \
 		--raw -o $(GFX_OUT_DIR)/rpg_desolate_tiles.inc
-	# Sprite tiles from desolate_landscape.png
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name hero_desolate_sprite_tile \
-		--palette auto --tile-coords "1,2 2,2" \
+	# Player sprite tiles from assets/hero_sprites.png (hero frames 1 & 2)
+	@python3 tools/png2gb.py assets/hero_sprites.png --name hero_desolate_sprite_tile \
+		--palette auto \
 		-o $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name kobold_sprite_tile \
-		--palette auto --tile-coords "3,2 4,2" \
-		-o $(GFX_OUT_DIR)/kobold_sprite_tile.h
-	@python3 tools/png2gb.py assets/desolate_landscape.png --name desolate_bat_sprite_tile \
-		--palette auto --tile-coords "9,2 10,2" \
-		-o $(GFX_OUT_DIR)/desolate_bat_sprite_tile.h
-	# ── Castle tileset (assets/castle-tile.png, 9 cols × 3 rows) ─────────
-	# Full 27-tile world sheet (g_tileset_castle)
+	# ── Castle tileset (assets/castle-tile.png) ─────────
+	# Full world sheet (g_tileset_castle).  Sized by the source PNG.
 	@python3 tools/png2gb.py assets/castle-tile.png --name rpg_castle_tiles \
 		--palette auto --anchor-color "#d7d7d7" --raw -o $(GFX_OUT_DIR)/rpg_castle_tiles.inc
-	# Sprite tiles from castle-tile.png
-	@python3 tools/png2gb.py assets/castle-tile.png --name castle_bat_sprite_tile \
-		--palette auto --tile-coords "5,2 6,2" \
-		-o $(GFX_OUT_DIR)/castle_bat_sprite_tile.h
 	# ── Village tileset (assets/village-tile.png, 16 cols × 3 rows) ────────
 	# Full 48-tile world sheet (g_tileset_village).  Arranged in SheetIndex
 	# order (the tileset JSON's vram_block section numbering = scanning order).
 	@python3 tools/png2gb.py assets/village-tile.png --name rpg_village_world_tiles \
 		--palette auto --anchor-color "#b6a27e" \
 		--raw -o $(GFX_OUT_DIR)/rpg_village_world_tiles.inc
+	# NPC map art (compose from the curated actors tileset; see
+	# tools/compose_npc_tiles.py).  The village sheet's NPC cells are blank
+	# since the art moved to the shared actors tileset; tiles_content.c
+	# overlays these into the village VRAM block after the sheet copy.
+	@python3 tools/compose_npc_tiles.py
+	# ── Battle hand-card frame (assets/card_frames.png, 3 cols × 8 rows) ──
+	# 9 border/background tiles for the boxed battle-hand cards (TL TM TR /
+	# L C R / BL BM BR); loaded to VRAM at UI_TILE_CARD_FRAME_BASE (118).
+	@python3 tools/png2gb.py assets/card_frames.png --name card_frame_tiles \
+		--palette auto -o $(GFX_OUT_DIR)/card_frame_tiles.h
+	@python3 tools/png2gb.py assets/npc_tiles.png --name rpg_actor_npc_tiles \
+		--palette auto --anchor-color "#f1eb03" --raw \
+		-o $(GFX_OUT_DIR)/rpg_actor_npc_tiles.inc
 
 
 
@@ -192,8 +227,33 @@ levels-check:
 	@python3 tools/level_compiler/validate.py levels/*.json
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
 
-src/game/scenes_content.c: $(wildcard levels/*.json)
+src/game/scenes_content.c src/world/scene_ids_generated.h &: $(wildcard levels/*.json)
 	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+# ^ Also (re)generates src/world/scene_ids_generated.h (MAP_*/SCENE_* values
+# from levels/registry.json) as a side effect; the wildcard above includes
+# registry.json so id assignments trigger a rebuild.  --check verifies it too.
+
+# Frozen harness-test fixtures (tools/scenarios/fixtures/levels/): the
+# debug (harness) ROM links ONLY these, so real content edits can never
+# break the scenario suite.  Compiled with --bank 4 (GAME_TEST_CONTENT_BANK)
+# so the release budgets (banks 2/5) are untouched.  Committed C must equal
+# fresh compile (no hand edits, same convention as the real content).
+LEVELS_TEST_DIR = tools/scenarios/fixtures/levels
+
+levels-test:
+	@python3 tools/level_compiler/validate.py $(LEVELS_TEST_DIR)/*.json
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c
+	@echo "All test fixture levels compiled to src/game/scenes_content_test.c"
+
+levels-test-check:
+	@python3 tools/level_compiler/validate.py $(LEVELS_TEST_DIR)/*.json
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c --check
+
+src/game/scenes_content_test.c src/game/actors_content_test.c &: $(wildcard $(LEVELS_TEST_DIR)/*.json)
+	@python3 tools/level_compiler/compile.py $(LEVELS_TEST_DIR)/*.json --bank 4 \
+		-o src/game/scenes_content_test.c --actors-output src/game/actors_content_test.c
 
 # Screen content compiler (docs/level-editor.md Phase 17): screens/*.json is
 # the source of truth for title + battle mockup data, just as levels/*.json
@@ -201,16 +261,69 @@ src/game/scenes_content.c: $(wildcard levels/*.json)
 screens:
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
 	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
-	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types}.c"
+	@python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/
+	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types,card_skin}.c + src/screens/tutorial_*_generated.h"
 
 screens-check:
 	@python3 tools/screen_compiler/title_compile.py --check
 	@python3 tools/screen_compiler/battle_compile.py --all --check
+	@python3 tools/screen_compiler/tutorial_compile.py --all --check
+
+# Dialogue content: screens/dialogue/*.json is the source of truth for the
+# NPC dialogue table (ids assign by sorted filename) and
+# screens/tutorial.json for the title-menu slides.  Text is authored in
+# the editor; flags/events/scenarios stay LLM-authored.
+dialogues:
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/
+	@echo "All dialogue compiled to src/game/{dialogue_content.c,dialogue_ids_generated.h}"
+
+dialogues-check:
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ --check
+	@python3 tools/level_compiler/validate.py --dialogue-refs
+
+# Shop content: screens/shops/<id>.json is the source of truth for
+# g_shops[] (id = filename stem; items are CARD_* symbols).  Referenced by
+# each actor's `shop` property.  The editor's Shop view edits the same JSON.
+shops:
+	@python3 tools/screen_compiler/shops_compile.py --all -o src/game/shops_content.c
+	@echo "All shops compiled to src/game/shops_content.c"
+
+shops-check:
+	@python3 tools/screen_compiler/shops_compile.py --all --check
+	@python3 tools/level_compiler/validate.py --shop-refs
+
+# Entity types: screens/enemy_types/*.json + screens/entity_types/*.json are
+# the single source of truth for the ENTITY_ID_* game range.  Adding a type
+# in the editor regenerates src/game/entity_ids_generated.h with no C edit.
+entities:
+	@python3 tools/screen_compiler/entity_compile.py --all -o src/game/entity_ids_generated.h
+	@echo "All entity types compiled to src/game/entity_ids_generated.h"
+
+entities-check:
+	@python3 tools/screen_compiler/entity_compile.py --all --check
+
+# Registry invariants (levels/registry.json contract): versioning,
+# append-only ids, never-reuse of retired ids, registry/file agreement.
+# Locks the contract the editor's save/rename/delete operations satisfy.
+registry-check:
+	@python3 tools/test_registry.py
+
+src/screens/tutorial_text_generated.h src/screens/tutorial_count_generated.h &: screens/tutorial.json
+	@python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/
+
+src/game/dialogue_content.c src/game/dialogue_ids_generated.h &: $(wildcard screens/dialogue/*.json)
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/
+
+src/game/shops_content.c: $(wildcard screens/shops/*.json) tools/screen_compiler/shops_compile.py
+	@python3 tools/screen_compiler/shops_compile.py --all -o src/game/shops_content.c
+
+src/game/entity_ids_generated.h: $(wildcard screens/enemy_types/*.json) $(wildcard screens/entity_types/*.json) tools/screen_compiler/entity_compile.py tools/screen_compiler/entity_ids.py
+	@python3 tools/screen_compiler/entity_compile.py --all -o src/game/entity_ids_generated.h
 
 src/game/title_data.c: screens/title.json
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
 
-src/game/battle_screens.c src/game/battle_types.c: $(wildcard screens/battle/*.json) $(wildcard screens/enemy_types/*.json)
+src/game/battle_screens.c src/game/battle_types.c src/game/card_skin.c: $(wildcard screens/battle/*.json) $(wildcard screens/enemy_types/*.json) screens/cards_skin.json
 	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
 
 # Extract tile images from source PNGs for the web editor (import_tileset.py)
@@ -239,6 +352,12 @@ extract-tiles:
 		--gb-tileset-kind WORLD_TILESET_VILLAGE \
 		--output-dir tools/level_editor/public/tiles/village \
 		--output-json tools/level_editor/tilesets/village.json
+	@python3 tools/level_editor/import_tileset.py \
+		--sheet assets/actor-sprites.png --csv assets/actor-tileset-description.csv \
+		--tileset-id actors --label "Actors (Shared)" \
+		--gb-tileset-kind WORLD_TILESET_ACTORS \
+		--output-dir tools/level_editor/public/tiles/actors \
+		--output-json tools/level_editor/tilesets/actors.json
 
 # NOTE: extract-tiles is intentionally NOT a dependency here.
 # The tileset JSON files (tools/level_editor/tilesets/*.json) are the sole
@@ -283,6 +402,21 @@ $(BUILD_DIR)/world/world.o $(BUILD_DIR)/world/patrol_banked.o $(BUILD_DIR)/debug
 $(BUILD_DIR)/ui/ui.o $(BUILD_DIR)/debug/ui/ui.o: $(GENERATED_TILE_GLYPH)
 $(BUILD_DIR)/game/tiles_content.o $(BUILD_DIR)/debug/game/tiles_content.o: $(GENERATED_TILE_PALETTE)
 
+# Header-dependency safety net (AGENTS.md 52.2): the compile rules track
+# only .c -> .o mtimes, so an object compiled against an older struct
+# layout links SILENTLY against rebuilt neighbors -- field offsets shift,
+# gameplay reads garbage (wrong HP/positions/hangs), and the symptom looks
+# like a mysterious regression instead of a build bug.  Over-rebuild every
+# object when ANY project header or gfx asset changes; the parallel build
+# makes the full pass cheap (~10s).
+PROJECT_HEADERS = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h) \
+	$(wildcard $(GFX_OUT_DIR)/*.h $(GFX_OUT_DIR)/*.inc)
+# NOTE: generated/tiles/tile_{walk,glyph,palette}.h are deliberately NOT
+# here -- their rule depends on the phony `manifest`, so they remake (new
+# mtime) on every make run and would force a full rebuild every time.
+# Their consumers are wired explicitly above.
+$(OBJS) $(OBJS_DEBUG): $(PROJECT_HEADERS)
+
 # Toolchain self-check: every required native binary must not only resolve
 # but EXECUTE (a broken file shadowing the real one fails at exec time with
 # a cryptic OSError deep inside a build rule). Order-only prerequisite of
@@ -310,6 +444,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c $(INCLUDES) -o $@ $<
 
+# Ensure UI modules rebuild when generated sprite headers change
+$(BUILD_DIR)/ui/ui_world_sprite_banked.o $(BUILD_DIR)/debug/ui/ui_world_sprite_banked.o: $(GFX_OUT_DIR)/enemy_ow_tiles.h
+$(BUILD_DIR)/ui/ui.o $(BUILD_DIR)/debug/ui/ui.o: $(GFX_OUT_DIR)/hero_desolate_sprite_tile.h
+
 # Per-file alloc caps (see docs/roadmap.md post-mortem): the bank-3 patrol
 # path needs a hard-capped budget in these units to keep its commit-path
 # stores intact under SDCC 4.4.1; battle/UI keep their volatile guards with
@@ -334,14 +472,53 @@ $(BUILD_DIR)/debug/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) -c -DDEBUG_BUILD $(INCLUDES) -o $@ $<
 
+# -DTEST_LEVELS reaches ONLY the files that consume it (engine content
+# selection + the content-reading banked bodies, which move to bank 4 in
+# the test build).  Compiling it into every debug object shifts every
+# banked body's layout; SDCC miscompiles are layout-sensitive
+# (AGENTS.md 52.19) and the full-flag variant broke the patrol
+# sentinels.  Explicit rules win over the generic pattern above (same
+# mechanism as the 52.20 alloc-cap rules).
+build/debug/world/scene.o: src/world/scene.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/game/actors.o: src/game/actors.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/world/scene_load.o: src/world/scene_load.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/world/actor_load_banked.o: src/world/actor_load_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+# Alloc cap (52.19): the MAX_STATIC_ACTORS growth re-exposed a latent
+# pointer-cache miscompile when this unit compiled at default flags
+# (hostile spawns silently skipped at cap >= 10).  Keep in sync with the
+# release rule below.
+build/world/actor_load_banked.o: src/world/actor_load_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+build/debug/world/actor.o: src/world/actor.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
+build/debug/game/content.o: src/game/content.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+
 music: $(MUSIC_SRCS) sfx
 
 # Tracker SFX -> synth step tables (Path C transcription). Deterministic:
 # rerunning reproduces generated/sfx/sfx_tables.c byte-identically.
 sfx: $(SFX_TABLES)
 
-$(SFX_TABLES): $(SFX_UGE) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
-	python3 tools/transcribe_sfx.py --out "$@" $(SFX_UGE)
+$(SFX_TABLES) &: $(SFX_ALL_UGE) $(SFX_REGISTRY) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
+	python3 tools/transcribe_sfx.py --out $(GENERATED_SFX_DIR)/sfx_tables.c
 
 $(GENERATED_SFX_DIR):
 	mkdir -p $(GENERATED_SFX_DIR)
@@ -375,12 +552,28 @@ $(GENERATED_MUSIC_DIR)/village.c: assets/music/Village.uge tools/compile_music.p
 $(GENERATED_MUSIC_DIR)/castle.c: assets/music/castle.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 6 song_castle "$@"
 
+# Mimic battle theme.  Bank 6 (driver + six songs) is full, so the song
+# lives in bank 7 alongside a second driver copy (see hUGEDriver_b7
+# rules).  huge_music.c switches to the song's bank around hUGE calls.
+$(GENERATED_MUSIC_DIR)/mimic.c: assets/music/Mimic.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 7 song_mimic "$@"
+
+# Title theme.  Replaces the old hardcoded chiptune title table now that
+# the legacy music engine is gone (docs/uge.md Phase 6).
+$(GENERATED_MUSIC_DIR)/title.c: assets/music/title\ short.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 6 song_title "$@"
+
+# Battle-victory jingle (one-shot source).  Replaces the old hardcoded
+# 4-note victory table.  Bank 6 is nearly full, so it plays from bank 7.
+$(GENERATED_MUSIC_DIR)/victory.c: assets/music/victory.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 7 song_victory "$@"
+
 # WAV previews for the level editor's BGM toggle (Inspector Map Info).
 # Rendered from the generated song C by tools/render_music_preview.py
 # (driver-faithful approximation, not the ROM mix). Explicit target so
 # song builds stay fast; re-run after changing any assets/music/*.uge.
 MUSIC_PREVIEW_DIR = tools/level_editor/public/audio
-MUSIC_PREVIEW_WAVS = $(MUSIC_PREVIEW_DIR)/battle.wav $(MUSIC_PREVIEW_DIR)/desolate_landscape.wav $(MUSIC_PREVIEW_DIR)/forest.wav $(MUSIC_PREVIEW_DIR)/boss_fight.wav $(MUSIC_PREVIEW_DIR)/village.wav $(MUSIC_PREVIEW_DIR)/castle.wav
+MUSIC_PREVIEW_WAVS = $(MUSIC_PREVIEW_DIR)/battle.wav $(MUSIC_PREVIEW_DIR)/desolate_landscape.wav $(MUSIC_PREVIEW_DIR)/forest.wav $(MUSIC_PREVIEW_DIR)/boss_fight.wav $(MUSIC_PREVIEW_DIR)/village.wav $(MUSIC_PREVIEW_DIR)/castle.wav $(MUSIC_PREVIEW_DIR)/mimic.wav
 
 music-preview: music $(MUSIC_PREVIEW_WAVS)
 	@echo "Music previews up to date in $(MUSIC_PREVIEW_DIR)"
@@ -427,7 +620,52 @@ $(HUGEDRIVER_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $
 	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/debug/lib/hUGEDriver.obj $<
 	$(RGB2SDAS) -b 6 -o $@ $(BUILD_DIR)/debug/lib/hUGEDriver.obj
 
-$(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
+# Second hUGE driver copy in bank 7 (renamed exports so the two copies
+# coexist; internal driver references are section-relative and resolve
+# within bank 7).  Paired with the mimic song data in bank 7.
+$(HUGEDRIVER_B7_OBJ): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/lib/hUGEDriver_b7.obj $<
+	$(RGB2SDAS) -b 7 \
+		-r hUGE_init=hUGE_init_b7 \
+		-r _hUGE_init=_hUGE_init_b7 \
+		-r hUGE_dosound=hUGE_dosound_b7 \
+		-r _hUGE_dosound=_hUGE_dosound_b7 \
+		-r hUGE_mute_channel=hUGE_mute_channel_b7 \
+		-r _hUGE_mute_channel=_hUGE_mute_channel_b7 \
+		-r hUGE_set_position=hUGE_set_position_b7 \
+		-r _hUGE_set_position=_hUGE_set_position_b7 \
+		-r hUGE_current_wave=hUGE_current_wave_b7 \
+		-r _hUGE_current_wave=_hUGE_current_wave_b7 \
+		-r hUGE_mute_mask=hUGE_mute_mask_b7 \
+		-r _hUGE_mute_mask=_hUGE_mute_mask_b7 \
+		-r hUGE_NO_WAVE=hUGE_NO_WAVE_B7 \
+		-o $@ $(BUILD_DIR)/lib/hUGEDriver_b7.obj
+
+$(HUGEDRIVER_B7_OBJ_DEBUG): lib/hUGEDriver/src/hUGEDriver.asm tools/rgb2sdas.py | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(RGBASM_HUGE) -I lib/hUGEDriver/ -DGBDK -o $(BUILD_DIR)/debug/lib/hUGEDriver_b7.obj $<
+	$(RGB2SDAS) -b 7 \
+		-r hUGE_init=hUGE_init_b7 \
+		-r _hUGE_init=_hUGE_init_b7 \
+		-r hUGE_dosound=hUGE_dosound_b7 \
+		-r _hUGE_dosound=_hUGE_dosound_b7 \
+		-r hUGE_mute_channel=hUGE_mute_channel_b7 \
+		-r _hUGE_mute_channel=_hUGE_mute_channel_b7 \
+		-r hUGE_set_position=hUGE_set_position_b7 \
+		-r _hUGE_set_position=_hUGE_set_position_b7 \
+		-r hUGE_current_wave=hUGE_current_wave_b7 \
+		-r _hUGE_current_wave=_hUGE_current_wave_b7 \
+		-r hUGE_mute_mask=hUGE_mute_mask_b7 \
+		-r _hUGE_mute_mask=_hUGE_mute_mask_b7 \
+		-r hUGE_NO_WAVE=hUGE_NO_WAVE_B7 \
+		-o $@ $(BUILD_DIR)/debug/lib/hUGEDriver_b7.obj
+
+# Grouped targets (&:): the lite libs come from ONE make_lite_libs.py run.
+# A plain multi-target rule runs its recipe once PER TARGET, which under
+# `make debug release -j` (the editor's Compile ROM button) races the two
+# runs on the script's temp file.  &: runs the recipe exactly once.
+$(GB_LITE) $(SM83_LITE) &: $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 	python3 tools/make_lite_libs.py $(BUILD_DIR)
 
 # The VBlank ISR is copied to WRAM 0xC900 by crt0.s.  sdldgb auto-places
@@ -437,12 +675,12 @@ $(GB_LITE) $(SM83_LITE): $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx tiles levels screens music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels screens dialogues shops entities music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels screens music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops entities music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
@@ -505,6 +743,15 @@ parity: debug
 
 screenshots: $(TARGET)
 	@python3 tools/capture_walkthrough.py
+
+# Semantic real-content gate (docs/verify-walkthrough.md): drives the
+# RELEASE ROM (real levels/ content) headlessly and asserts canonical
+# gameplay state read from WRAM.  This is the counterweight to the
+# two-tier fixture suite (AGENTS.md 42.1): engine regressions that only
+# fire with working content are caught here.  Required on push (CI).
+# The saved PNGs stay a non-gating visual aid (AGENTS.md 56.4).
+verify-walkthrough: release
+	@python3 tools/capture_walkthrough.py --clean
 
 # Verify the player sprite's real-OAM transition-hide across screen changes
 # and scene (map) changes via the mGBA debugger (see tools/verify_oam.py).

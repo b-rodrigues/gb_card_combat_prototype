@@ -329,6 +329,7 @@ def write_manifest(tileset_id: str, manifest: Dict[str, Any]) -> Path:
 # Per-tileset curated overrides (e.g. animated fire frames)
 TILE_PALETTE_OVERRIDES = {
     "desolate_landscape": {
+        32: 7,  # Plain floor (slate rock / grey)
         37: 1,  # Campfire frame 1 (fire)
         38: 1,  # Campfire frame 2 (fire)
     },
@@ -367,11 +368,22 @@ def process_tileset(tileset_id: str) -> Dict[str, Any]:
     print(f"  Anchor color: {anchor_hex} -> RGB{anchor_rgb}")
 
     overrides = TILE_PALETTE_OVERRIDES.get(tileset_id, {})
+    sheet_ids = get_sheet_order_from_vram_block(tileset_json)
+    tiles_by_id = {t.get("id"): t for t in tileset_json.get("tiles", [])}
 
-    # Match each tile to best fixed palette
+    # Match each tile to best fixed palette.  An explicit per-tile
+    # "palette" in the tileset JSON (set by the editor's Palette view)
+    # wins; otherwise the index override; otherwise auto-match.
     tile_palettes = []
     for i, tile_colors in enumerate(tile_colors_list):
-        if i in overrides:
+        tid = sheet_ids[i] if i < len(sheet_ids) else None
+        explicit = tiles_by_id.get(tid, {}).get("palette") if tid else None
+        if explicit is not None:
+            pal_idx = int(explicit)
+            if not (0 <= pal_idx <= 7):
+                raise ValueError(
+                    f"{tileset_id}: tile {tid} palette {pal_idx} out of 0-7")
+        elif i in overrides:
             pal_idx = overrides[i]
         else:
             pal_idx = match_tile_to_palette(tile_colors, palettes, anchor_rgb, tileset_id)

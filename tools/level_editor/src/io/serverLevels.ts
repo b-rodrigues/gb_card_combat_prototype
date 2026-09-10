@@ -5,6 +5,9 @@ export interface ServerLevelItem {
   id: string;
   name: string;
   category: 'levels' | 'screens';
+  /** Assigned scene id, or null when the level has never been saved
+   * through the editor (unregistered — saving assigns one). */
+  scene_id?: number | null;
 }
 
 export interface ServerTilesetItem {

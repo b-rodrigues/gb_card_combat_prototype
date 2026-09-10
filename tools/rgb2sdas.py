@@ -170,7 +170,7 @@ def main(argv=None):
 
     parser.add_option("-b", '--bank',       dest='default_bank',                       default="0",      help='BANK number (default: 0)')
     parser.add_option("-c", '--codeseg',    dest='CODESEG',                            default="_CODE",  help='CODE segment name (default: "_CODE")')
-    parser.add_option("-r", '--rename',     dest='rename',                                               help='rename symbol: old=new')
+    parser.add_option("-r", '--rename',     dest='rename', action="append", default=[],  help='rename symbol: old=new (repeatable)')
     parser.add_option("-e", '--export-all', dest='export_all',   action="store_true",  default=False,    help='export all symbols')
     parser.add_option("-m", '--target',     dest='target',                             default="sm83",   help='target platform (default: "sm83")')
 
@@ -187,10 +187,11 @@ def main(argv=None):
     else:
         outfilename = Path(options.outfilename)
 
-    if (options.rename != None):
-        old_sym, new_sym = str(options.rename).split('=')
-    else:
-        old_sym = new_sym = ''
+    renames = []
+    if options.rename:
+        for item in options.rename:
+            old, new = str(item).split('=')
+            renames.append((old, new))
 
     with open(str(infilename), mode="rb") as f:
         obj = RGBObject(f.read())
@@ -223,8 +224,9 @@ def main(argv=None):
                 elif ((symbol['SymType'] & 0x7f) == SYM_IMPORT):
                     pass
                 elif ((symbol['SymType'] & 0x7f) == SYM_EXPORT):
-                    if ((len(old_sym) != 0) and (symbol['Name'] == old_sym)):
-                        symbol['Name'] = new_sym
+                    for (old_sym, new_sym) in renames:
+                        if symbol['Name'] == old_sym:
+                            symbol['Name'] = new_sym
                     symbol['No'] = idx
                     idx += 1
                 else:

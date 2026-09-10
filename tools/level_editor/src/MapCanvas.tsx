@@ -2,6 +2,9 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { EditorLevel, LevelExit, LevelRegion } from './model/Level';
 import { LevelObject, OBJECT_TEMPLATES } from './model/Objects';
 import { BUILTIN_TILESETS, TileDefinition, TilesetDefinition } from './model/Tileset';
+import { SHEET_TILE_NAMES, COMBAT_TILE_URL, fetchCombatArtList, fetchCombatArtSet, fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
+import { CardSkin, CARD_COLOR_HEX, fetchCardSkin } from './io/cardSkin';
+import { BattleHud, fetchBattleHud } from './io/battleHud';
 import { ToolType } from './Toolbar';
 import { EditLayer } from './LayerPanel';
 
@@ -95,6 +98,75 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   // injects disk tilesets after mount); already-loaded images are kept so the
   // canvas never flashes back to fallback colors.
   const [tileImages, setTileImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  /* Combat-art meta-tiles (screens/combat_art/*.json) + enemy->set lookup
+   * for the battle preview.  Loaded once; empty maps = offline fallback
+   * (the preview keeps its drawn ellipse placeholders). */
+  const [combatSets, setCombatSets] = useState<Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>>(new Map());
+  const [enemyArtByName, setEnemyArtByName] = useState<Map<string, string>>(new Map());
+  const [combatImgs, setCombatImgs] = useState<Map<string, HTMLImageElement>>(new Map());
+  /* Shared overworld enemy sprites (UPPER name -> cells): type-owned art
+   * wins over per-instance sprite names, mirroring the ROM. */
+  const [enemyOwByName, setEnemyOwByName] = useState<Map<string, string[]>>(new Map());
+  const [enemyOwDims, setEnemyOwDims] = useState<Map<string, { w: number; h: number }>>(new Map());
+  const [owImgs, setOwImgs] = useState<Map<string, HTMLImageElement>>(new Map());
+  useEffect(() => {
+    fetchCombatArtList().then(async (items) => {
+      const m = new Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>();
+      for (const it of items) {
+        try {
+          const s = await fetchCombatArtSet(it.id);
+          m.set(it.id, { w: s.width, h: s.height, f0: s.frame0, f1: s.frame1 || s.frame0 });
+        } catch { /* keep other sets */ }
+      }
+      setCombatSets(m);
+    }).catch(() => undefined);
+    fetchEnemyTypeList().then(async (types) => {
+      const e = new Map<string, string>();
+      const o = new Map<string, string[]>();
+      const owDims = new Map<string, { w: number; h: number }>();
+      const needed = new Set<string>();
+      for (const t of types) {
+        if (t.art) {
+          e.set(t.label.toUpperCase(), t.art);
+          e.set(t.id.toUpperCase(), t.art);
+        }
+        try {
+          const full = await fetchEnemyType(t.id);
+          const cells = (full.overworld && full.overworld.cells) || [];
+          if (cells.length > 0) {
+            o.set(t.id.toUpperCase(), cells);
+            o.set(t.label.toUpperCase(), cells);
+            owDims.set(t.id.toUpperCase(), { w: full.overworld.width || 1, h: full.overworld.height || 1 });
+            owDims.set(t.label.toUpperCase(), { w: full.overworld.width || 1, h: full.overworld.height || 1 });
+            cells.forEach((c: string) => needed.add(c));
+          }
+        } catch { /* keep others */ }
+      }
+      setEnemyArtByName(e);
+      setEnemyOwByName(o);
+      setEnemyOwDims(owDims);
+      const imgs = new Map<string, HTMLImageElement>();
+      let done = 0;
+      const names = [...needed];
+      if (names.length === 0) return;
+      names.forEach((name) => {
+        const img = new Image();
+        img.src = `/tiles/enemies/${name}.png`;
+        const fin = () => { done++; imgs.set(name, img); if (done === names.length) setOwImgs(new Map(imgs)); };
+        img.onload = fin;
+        img.onerror = fin;
+      });
+    }).catch(() => undefined);
+    const imgs = new Map<string, HTMLImageElement>();
+    let done = 0;
+    SHEET_TILE_NAMES.forEach((name) => {
+      const img = new Image();
+      img.src = COMBAT_TILE_URL(name);
+      const fin = () => { done++; imgs.set(name, img); if (done === SHEET_TILE_NAMES.length) setCombatImgs(new Map(imgs)); };
+      img.onload = fin;
+      img.onerror = fin;
+    });
+  }, []);
   const tilesetIdsKey = Object.keys(BUILTIN_TILESETS).sort().join(',');
   useEffect(() => {
     setTileImages((prev) => {
@@ -132,6 +204,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       return new Map(imgMap);
     });
   }, [tilesetIdsKey]);
+
+  // Live battle-card + HUD skins (screens/cards_skin.json and
+  // screens/battle_hud.json via the dev API).  The battle-screen
+  // preview renders hand cards and HUD icons from these -- the same
+  // data battle_compile.py emits into the ROM -- instead of hardcoding
+  // icon keys (which drifted: fire/ice riders that the ROM no longer
+  // draws, a phantom deck_cards tile).
+  const [cardSkin, setCardSkin] = useState<CardSkin | null>(null);
+  const [hudSkin, setHudSkin] = useState<BattleHud | null>(null);
+  useEffect(() => {
+    fetchCardSkin().then(setCardSkin).catch(() => undefined);
+    fetchBattleHud().then(setHudSkin).catch(() => undefined);
+  }, []);
 
   // Convert mouse pixel coordinates to tile coordinates
   const getTileCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
@@ -267,26 +352,33 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       return;
     }
 
-    // ── BATTLE SCREEN AUTHENTIC RENDERER (matching assets/battle_screen_mockup.jpg) ──
+    // ── BATTLE SCREEN AUTHENTIC RENDERER ──
+    // Geometry is DATA-DRIVEN from the screen's hud_layout -- the same
+    // rows the ROM reads (AGENTS.md 52.11.2: banner 0, HP 2, art 3-4,
+    // caret 5/6, hero 7, deck/AP 8, msgs 9, combo 10, cards 11-14,
+    // markers 15, desc 16, timer 17).  Enemy columns come from the
+    // screen's enemy objects (boss screens: one centered enemy; the
+    // legacy 9x9 boss meta-tile preview is gone -- bosses render their
+    // combat-art set or the shared placeholder, exactly like the ROM).
     if (level.isScreen && (level.mapId === 'SCREEN_BATTLE' || level.id.includes('battle'))) {
-      const layout = level.battleHudLayout || {};
-      const bannerRow = layout.turn_banner_row ?? 0;
-      const enemyHpRow = layout.enemy_hp_row ?? 1;
-      const enemySpriteRow = layout.enemy_sprite_row ?? 2;
-      const enemyCursorRow = layout.enemy_cursor_row ?? 4;
-      const heroLabelRow = layout.hero_label_row ?? 6;
-      const heroLabelCol = layout.hero_label_col ?? 1;
-      const heroHpRow = layout.hero_hp_row ?? 6;
-      const heroHpCol = layout.hero_hp_col ?? 13;
-      const deckRow = layout.deck_row ?? 7;
-      const deckCol = layout.deck_col ?? 1;
-      const apRow = layout.ap_row ?? 7;
-      const apCol = layout.ap_col ?? 13;
-      const comboRow = layout.combo_row ?? 9;
-      const cardsRow = layout.cards_row ?? 10;
-      const cardCursorRow = layout.card_cursor_row ?? 14;
-      const cardDescRow = layout.card_desc_row ?? 15;
-      const timerRow = layout.timer_row ?? 16;
+      const L = level.battleHudLayout;
+      const bannerRow = L?.turn_banner_row ?? 0;
+      const enemyHpRow = L?.enemy_hp_row ?? 2;
+      const enemySpriteRow = L?.enemy_sprite_row ?? 3;
+      const enemyCursorRow = L?.enemy_cursor_row ?? 5;
+      const heroLabelRow = L?.hero_label_row ?? 7;
+      const heroLabelCol = L?.hero_label_col ?? 0;
+      const heroHpRow = L?.hero_hp_row ?? 7;
+      const heroHpCol = L?.hero_hp_col ?? 13;
+      const deckRow = L?.deck_row ?? 8;
+      const deckCol = L?.deck_col ?? 1;
+      const apRow = L?.ap_row ?? 8;
+      const apCol = L?.ap_col ?? 13;
+      const comboRow = L?.combo_row ?? 10;
+      const cardsRow = L?.cards_row ?? 14;
+      const cardCursorRow = L?.card_cursor_row ?? 15;
+      const cardDescRow = L?.card_desc_row ?? 16;
+      const timerRow = L?.timer_row ?? 17;
 
       // 1. Crisp white background
       ctx.fillStyle = '#ffffff';
@@ -312,105 +404,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.font = `bold ${fontScale}px monospace`;
       ctx.fillStyle = '#593c28';
 
-      // 3. Row 0: Top Banner "PLAYER TURN"
+      // 3. Row 0: Dynamic target banner (ROM: "TARGET <name>" on select)
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(
-        'PLAYER TURN',
+        'TARGET SLIME',
         canvasWidth / 2,
         bannerRow * tileSize + tileSize * 0.5
       );
 
-      // 4. Enemy Roster OR 9x9 Boss Meta-Tile
-      const isBossBattle = !!(
-        level.bossMetaTile?.enabled ||
-        level.id === 'boss' ||
-        level.id.includes('boss') ||
-        level.originalScreenData?.allowed_categories?.includes('boss')
-      );
-
-      if (isBossBattle) {
-        const boss = level.bossMetaTile || {};
-        const bw = (boss.width || 9) * tileSize;
-        const bh = (boss.height || 9) * tileSize;
-        const bx = (boss.x ?? 5) * tileSize;
-        const by = (boss.y ?? 1) * tileSize;
-        const wobble = animTick % 2 === 0 ? 1 : 0;
-
-        // Boss Header (HP & Name)
-        ctx.fillStyle = '#8e44ad';
-        ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.7))}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          `👑 ${boss.name || 'LORD GIAUSAR'} [HP: ${boss.hp || 100}/${boss.max_hp || 100}]`,
-          canvasWidth / 2,
-          Math.max(12, by - tileSize * 0.2 + wobble)
-        );
-
-        // Ominous Boss Aura / Shadow
-        ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
-        ctx.fillRect(bx - 4, by - 2 + wobble, bw + 8, bh + 4);
-
-        // 9x9 Boss Meta-Tile Grid Base
-        ctx.fillStyle = '#1e1b4b';
-        ctx.fillRect(bx, by + wobble, bw, bh);
-
-        // Render each tile in the 9x9 meta-tile matrix
-        const tiles = boss.tiles;
-        const tileDim = tileSize;
-        for (let r = 0; r < (boss.height || 9); r++) {
-          for (let c = 0; c < (boss.width || 9); c++) {
-            const cellX = bx + c * tileDim;
-            const cellY = by + r * tileDim + wobble;
-
-            let cellTileKey: string | null = null;
-            if (tiles && tiles[r] && tiles[r][c]) {
-              cellTileKey = tiles[r][c];
-            }
-
-            if (cellTileKey) {
-              const spriteId = cellTileKey;
-              const img = tileImages.get(spriteId);
-              if (img && img.complete && img.naturalWidth > 0) {
-                ctx.drawImage(img, cellX, cellY, tileDim, tileDim);
-              } else {
-                ctx.fillStyle = (r + c) % 2 === 0 ? '#450a0a' : '#7f1d1d';
-                ctx.fillRect(cellX, cellY, tileDim, tileDim);
-                ctx.font = `bold ${Math.max(7, Math.floor(tileDim * 0.45))}px monospace`;
-                ctx.fillStyle = '#fca5a5';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(cellTileKey.slice(0, 2), cellX + tileDim / 2, cellY + tileDim / 2);
-              }
-            } else {
-              ctx.fillStyle = (r + c) % 2 === 0 ? '#312e81' : '#1e1b4b';
-              ctx.fillRect(cellX, cellY, tileDim, tileDim);
-            }
-
-            // Inner subtle cell border
-            ctx.strokeStyle = 'rgba(239, 68, 68, 0.2)';
-            ctx.lineWidth = 0.5;
-            ctx.strokeRect(cellX, cellY, tileDim, tileDim);
-          }
-        }
-
-        // Meta-tile outer frame
-        ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(bx, by + wobble, bw, bh);
-
-        // Target arrow under boss
-        ctx.fillStyle = '#dc2626';
-        ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⬆', canvasWidth / 2, by + bh + tileSize * 0.45);
-      } else {
-        const enemyCols = [
-          layout.enemy_col_start ?? 1,
-          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7),
-          (layout.enemy_col_start ?? 1) + (layout.enemy_col_step ?? 7) * 2,
-        ];
+      // 4. Enemy roster at the screen's configured positions (boss
+      // screens: single centered enemy).
+      {
+        const enemyObjs = (level.objects || []).filter((o) => o.type === 'enemy');
+        const enemyCols = enemyObjs.length > 0
+          ? enemyObjs.map((o) => o.position.x)
+          : [0, 7, 14];
         const enemyHps = ['10/10', '10/10', '02/10'];
 
         enemyCols.forEach((colX, idx) => {
@@ -421,24 +430,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           ctx.textAlign = 'center';
           ctx.fillText(enemyHps[idx], cx, (enemyHpRow + 0.5) * tileSize);
 
-          // Slime Sprite (Rows 2–3, 3x2 meta-tile)
+          // Combat-art meta-tile (screens/combat_art/*.json): resolve this
+          // slot's set through the enemy object's battle name, exactly how
+          // the ROM resolves art per enemy type.  Unmatched/offline slots
+          // keep the drawn placeholder below.
           const wobble = animTick % 2 === idx % 2 ? 1 : 0;
-          const slimeTop0 = tileImages.get('combat.slime_top_left');
-          const slimeTop1 = tileImages.get('combat.slime_top_mid');
-          const slimeTop2 = tileImages.get('combat.slime_top_right');
-          const slimeBot0 = wobble ? tileImages.get('combat.slime_anim_left') : tileImages.get('combat.slime_bottom_left');
-          const slimeBot1 = wobble ? tileImages.get('combat.slime_anim_mid') : tileImages.get('combat.slime_bottom_mid');
-          const slimeBot2 = wobble ? tileImages.get('combat.slime_anim_right') : tileImages.get('combat.slime_bottom_right');
+          const slotObjs = (level.objects || []).filter((o) => o.type === 'enemy');
+          const slotObj = slotObjs[idx];
+          const slotKey = ((slotObj && (slotObj.battle_name || (slotObj.properties && slotObj.properties.display_name))) || '').toUpperCase();
+          const slotSetId = enemyArtByName.get(slotKey);
+          const slotSet = slotSetId ? combatSets.get(slotSetId) : undefined;
+          const slotCells = slotSet ? (wobble ? slotSet.f1 : slotSet.f0) : [];
+          const canDrawArt = !!slotSet && slotCells.length === slotSet.w * slotSet.h &&
+            slotCells.every((c) => c === null || combatImgs.get(c));
 
-          if (slimeTop0 && slimeBot0) {
+          if (canDrawArt && slotSet) {
             const startX = colX * tileSize;
             const startY = enemySpriteRow * tileSize;
-            ctx.drawImage(slimeTop0, startX, startY, tileSize, tileSize);
-            if (slimeTop1) ctx.drawImage(slimeTop1, startX + tileSize, startY, tileSize, tileSize);
-            if (slimeTop2) ctx.drawImage(slimeTop2, startX + tileSize * 2, startY, tileSize, tileSize);
-            ctx.drawImage(slimeBot0, startX, startY + tileSize, tileSize, tileSize);
-            if (slimeBot1) ctx.drawImage(slimeBot1, startX + tileSize, startY + tileSize, tileSize, tileSize);
-            if (slimeBot2) ctx.drawImage(slimeBot2, startX + tileSize * 2, startY + tileSize, tileSize, tileSize);
+            for (let ay = 0; ay < slotSet.h; ay++) {
+              for (let ax = 0; ax < slotSet.w; ax++) {
+                const cell = slotCells[ay * slotSet.w + ax];
+                if (cell === null) continue;
+                const img = combatImgs.get(cell);
+                if (img) ctx.drawImage(img, startX + ax * tileSize, startY + ay * tileSize, tileSize, tileSize);
+              }
+            }
           } else {
             const sx = (colX + 0.3) * tileSize;
             const sy = (enemySpriteRow + 0.1) * tileSize;
@@ -462,15 +478,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           }
         });
 
-        // Target arrow under enemy 1 (middle)
-        const arrowImg = tileImages.get('combat.arrow_up');
+        // Target arrow under enemy 0 (the default target), centered on
+        // the art's middle column (art_x = pos+1, caret = art_x+1).
+        const arrowImg = tileImages.get('combat.combat_arrow_pointing_up');
         if (arrowImg) {
-          ctx.drawImage(arrowImg, (enemyCols[1] + 1) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
+          ctx.drawImage(arrowImg, (enemyCols[0] + 2) * tileSize, enemyCursorRow * tileSize, tileSize, tileSize);
         } else {
           ctx.fillStyle = '#593c28';
           ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.9))}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText('⬆', (enemyCols[1] + 1.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
+          ctx.fillText('⬆', (enemyCols[0] + 2.5) * tileSize, (enemyCursorRow + 0.5) * tileSize);
         }
       }
 
@@ -480,10 +497,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.fillStyle = '#593c28';
 
       // Row 6: Left "HERO" + Icon | Right "[♥] : 10/10"
+      // HUD icon tiles come from the live battle_hud.json skin (the
+      // same names battle_compile.py resolves into g_hud_skin), not
+      // hardcoded keys.
       const heroSprite = tileImages.get('combat.hero');
-      const heartImg = tileImages.get('combat.heart_hp');
-      const batteryImg = tileImages.get('combat.battery_ap');
-      const deckImg = tileImages.get('combat.deck_cards');
+      const heartImg = tileImages.get('combat.' + (hudSkin?.hp.icon || 'combat_hp_icon'));
+      const batteryImg = tileImages.get('combat.' + (hudSkin?.ap.icon || 'combat_ap_icon'));
+      const deckImg = tileImages.get('combat.' + (hudSkin?.deck.icon || 'combat_deck_icon'));
 
       ctx.fillText('HERO', heroLabelCol * tileSize, (heroLabelRow + 0.5) * tileSize);
       if (heroSprite) {
@@ -522,20 +542,51 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // 6. Row 9: Combo Header "COMBO"
       ctx.fillText('COMBO', 1 * tileSize, (comboRow + 0.5) * tileSize);
 
-      // 7. Rows 10–13: 5 Framed Multi-Tile Cards
-      const cardCols = [1, 5, 8, 12, 16];
-      const cardDefs = [
-        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_3', val: 3, riderKey: null },
-        { iconKey: 'combat.icon_bow', fallback: '🏹', valKey: 'combat.digit_2', val: 2, riderKey: 'combat.status_poison' },
-        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
-        { iconKey: 'combat.icon_shield', fallback: '🛡️', valKey: 'combat.digit_2', val: 2, riderKey: null },
-        { iconKey: 'combat.icon_sword', fallback: '🗡️', valKey: 'combat.digit_4', val: 4, riderKey: 'combat.status_fire' },
+      // 7. Rows 10–13: 5 Framed Hand Cards -- rendered from the LIVE skin
+      // (screens/cards_skin.json), the same data battle_compile.py emits
+      // into the ROM.  Weapon icon per card type; box tint = type color,
+      // element color when the demo card carries a status (the ROM shows
+      // element status purely as the box tint -- battle_card_box_color();
+      // the old floating fire/ice rider icons were removed).
+      const skinFallback: CardSkin = {
+        id: 'card_skin', label: '', box: { w: 3, h: 4 },
+        types: {
+          sword: { icon: 'combat_sword_icon', color: 'iron' },
+          shield: { icon: 'combat_shield_icon', color: 'wood' },
+          bow: { icon: 'combat_bow_icon', color: 'gold' },
+          heal: { icon: 'combat_ring_icon', color: 'field' },
+          dagger: { icon: 'combat_dagger_icon', color: 'poison' },
+        },
+        elements: {
+          fire: { icon: 'combat_fire_status', color: 'fire' },
+          ice: { icon: 'combat_ice_status', color: 'iron' },
+          poison: { icon: 'combat_poison_status', color: 'poison' },
+        },
+      };
+      const skin = cardSkin || skinFallback;
+      const demoHand: Array<{ type: keyof CardSkin['types']; value: number; elem: keyof CardSkin['elements'] | null }> = [
+        { type: 'sword', value: 3, elem: null },
+        { type: 'bow', value: 2, elem: 'poison' },
+        { type: 'shield', value: 2, elem: null },
+        { type: 'heal', value: 2, elem: null },
+        { type: 'dagger', value: 4, elem: null },
       ];
+      const typeFallbacks: Record<string, string> = {
+        sword: '🗡️', shield: '🛡️', bow: '🏹', heal: '💚', dagger: '🔪',
+      };
+      // Hand stride is 4 in the ROM (box 3 wide + 1 gap).
+      const cardCols = [1, 5, 9, 13, 17];
 
       cardCols.forEach((cx, idx) => {
-        const cDef = cardDefs[idx];
+        const card = demoHand[idx];
+        const typeSkin = skin.types[card.type];
+        const tintHex = CARD_COLOR_HEX[
+          (card.elem ? skin.elements[card.elem].color : typeSkin.color)
+        ] || '#deb580';
         const cardX = cx * tileSize;
-        const cardY = cardsRow * tileSize;
+        /* cards_row is the BOTTOM row in the ROM (box spans
+         * cards_row-3..cards_row); draw upward from it. */
+        const cardY = (cardsRow - 3) * tileSize;
         const cardW = 2.8 * tileSize;
         const cardH = 3.8 * tileSize;
 
@@ -547,46 +598,39 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.fillStyle = '#deb580';
         ctx.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4);
 
+        // Box tint: element status overrides the type's material color,
+        // exactly like battle_card_box_color() in the ROM.
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = tintHex;
+        ctx.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4);
+        ctx.globalAlpha = 1.0;
+
         // Inset border line
         ctx.strokeStyle = '#cd9e64';
         ctx.lineWidth = 1;
         ctx.strokeRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8);
 
-        // Element rider in top right corner (fire/poison status)
-        if (cDef.riderKey) {
-          const riderImg = tileImages.get(cDef.riderKey);
-          if (riderImg) {
-            ctx.drawImage(riderImg, cardX + cardW - tileSize * 0.9, cardY + 3, tileSize * 0.8, tileSize * 0.8);
-          } else {
-            ctx.font = `${Math.max(8, Math.floor(tileSize * 0.55))}px sans-serif`;
-            ctx.textAlign = 'right';
-            ctx.fillText(cDef.riderKey.includes('fire') ? '🔥' : '🟣', cardX + cardW - 5, cardY + tileSize * 0.7);
-          }
-        }
-
-        // Weapon icon in center
-        const weaponImg = tileImages.get(cDef.iconKey);
+        // Weapon icon in center (skin-driven combat tileset tile)
+        const weaponImg = tileImages.get('combat.' + typeSkin.icon);
         if (weaponImg) {
           ctx.drawImage(weaponImg, cardX + (cardW - tileSize * 1.2) / 2, cardY + tileSize * 0.5, tileSize * 1.2, tileSize * 1.2);
         } else {
+          ctx.fillStyle = '#593c28';
           ctx.font = `${Math.max(12, Math.floor(tileSize * 0.85))}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText(cDef.fallback, cardX + cardW / 2, cardY + cardH * 0.42);
+          ctx.fillText(typeFallbacks[card.type] || '❔', cardX + cardW / 2, cardY + cardH * 0.42);
         }
 
-        // Card number value underneath weapon
-        const digitImg = tileImages.get(cDef.valKey);
-        if (digitImg) {
-          ctx.drawImage(digitImg, cardX + (cardW - tileSize * 0.9) / 2, cardY + cardH - tileSize * 1.1, tileSize * 0.9, tileSize * 0.9);
-        } else {
-          ctx.fillStyle = '#593c28';
-          ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
-          ctx.fillText(String(cDef.val), cardX + cardW / 2, cardY + cardH * 0.78);
-        }
+        // Power digit underneath (the ROM renders it as a font glyph --
+        // the semantic buffer asserts '0'+value on that row).
+        ctx.fillStyle = '#593c28';
+        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.8))}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(String(card.value), cardX + cardW / 2, cardY + cardH * 0.78);
       });
 
       // 8. Row 14: Card Cursor
-      const cardArrow = tileImages.get('combat.arrow_up');
+      const cardArrow = tileImages.get('combat.combat_arrow_pointing_up');
       if (cardArrow) {
         ctx.drawImage(cardArrow, (cardCols[0] + 0.9) * tileSize, cardCursorRow * tileSize, tileSize, tileSize);
       } else {
@@ -602,12 +646,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       ctx.textAlign = 'left';
       ctx.fillText('Sword: physical', 1 * tileSize, (cardDescRow + 0.5) * tileSize);
 
-      // 10. Rows 16–17: Turn Timer Bar
-      const timerWidthCols = layout.timer_width ?? 11;
-      const barX = (layout.timer_col ?? 0) * tileSize;
+      // 10. Timer Bar (single row, at the layout's timer_row)
+      const timerWidthCols = 20;
+      const barX = 0 * tileSize;
       const barY = timerRow * tileSize;
       const barW = timerWidthCols * tileSize;
-      const barH = 1.9 * tileSize;
+      const barH = tileSize;
 
       ctx.fillStyle = '#d59f63';
       ctx.fillRect(barX, barY, barW, barH);
@@ -860,47 +904,26 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       });
     }
 
-    // 7. Render Objects / NPCs / Enemies (supporting 9x9 Boss Meta-Tiles)
+    // 7. Render Objects / NPCs / Enemies
     if (showObjects && level.objects) {
       level.objects.forEach((obj, idx) => {
         const isSelected = activeLayer === 'objects' && selectedEntityIndex === idx;
         const px = obj.position.x * tileSize;
         const py = obj.position.y * tileSize;
-        const wTiles = obj.sprite_width || (obj.is_boss ? 9 : 1);
-        const hTiles = obj.sprite_height || (obj.is_boss ? 9 : 1);
+        const wTiles = obj.sprite_width || 1;
+        const hTiles = obj.sprite_height || 1;
         const objW = wTiles * tileSize;
         const objH = hTiles * tileSize;
 
         const tmpl = OBJECT_TEMPLATES.find((t) => t.type === obj.type);
-        const color = obj.is_boss ? '#8e44ad' : tmpl ? tmpl.color : '#9b59b6';
+        const color = tmpl ? tmpl.color : '#9b59b6';
 
-        if (wTiles > 1 || hTiles > 1 || obj.is_boss) {
-          // ── RENDER 9x9 / LARGE BOSS META-TILE ──
+        if (wTiles > 1 || hTiles > 1) {
+          // ── Multi-tile object preview (sprite_width/height, 1-4) ──
           ctx.fillStyle = 'rgba(142, 68, 173, 0.25)';
           ctx.fillRect(px, py, objW, objH);
 
-          if (obj.meta_tiles && obj.meta_tiles.length > 0) {
-            for (let r = 0; r < Math.min(hTiles, obj.meta_tiles.length); r++) {
-              for (let c = 0; c < Math.min(wTiles, (obj.meta_tiles[r] || []).length); c++) {
-                const cellTileKey = obj.meta_tiles[r][c];
-                const cellX = px + c * tileSize;
-                const cellY = py + r * tileSize;
-                if (cellTileKey) {
-                  const spriteId = cellTileKey;
-                  const img = tileImages.get(spriteId);
-                  if (img && img.complete && img.naturalWidth > 0) {
-                    ctx.drawImage(img, cellX, cellY, tileSize, tileSize);
-                  } else {
-                    ctx.fillStyle = (r + c) % 2 === 0 ? '#4a1d96' : '#6b21a8';
-                    ctx.fillRect(cellX, cellY, tileSize, tileSize);
-                  }
-                }
-                ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(cellX, cellY, tileSize, tileSize);
-              }
-            }
-          } else {
+          {
             let spriteId: string | null = null;
             if (obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
@@ -941,11 +964,46 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
           // Sprite image (animated or static) or fallback icon
           if (tileSize >= 16) {
+            // Type-owned overworld art wins (Enemies view): shared sprite
+            // everywhere this enemy appears, like the ROM.
+            let owDrawn = false;
+            if (obj.type === 'enemy') {
+              const props = (obj as any).properties || {};
+              const explicit = props.enemy_type ? String(props.enemy_type).toUpperCase() : '';
+              const ent = String(props.entity_id || '');
+              const conv = ent.startsWith('ENTITY_ID_') ? ent.slice('ENTITY_ID_'.length).toUpperCase() : '';
+              const key = (explicit && enemyOwByName.get(explicit)) ? explicit : (conv && enemyOwByName.get(conv)) ? conv : '';
+              const cells = key ? enemyOwByName.get(key) : null;
+              const dims = key ? enemyOwDims.get(key) : undefined;
+              if (cells && cells.length > 0) {
+                const gw = dims?.w || 1;
+                const gh = dims?.h || 1;
+                const per = gw * gh;
+                // Multi-tile sprites occupy gw x gh map tiles (like the
+                // ROM's w*h OAM grid); single-tile sprites animate frames.
+                const frames = Math.max(1, Math.floor(cells.length / Math.max(1, per)));
+                const frameIdx = frames > 1 ? animTick % frames : 0;
+                const base = frameIdx * per;
+                const cw = (gw > 1 || gh > 1) ? tileSize : objW / Math.max(1, gw);
+                const chh = (gw > 1 || gh > 1) ? tileSize : objH / Math.max(1, gh);
+                for (let gy = 0; gy < gh; gy++) {
+                  for (let gx = 0; gx < gw; gx++) {
+                    const cell = cells[base + gy * gw + gx];
+                    const img = cell ? owImgs.get(cell) : undefined;
+                    if (img && img.complete && img.naturalWidth > 0) {
+                      ctx.imageSmoothingEnabled = false;
+                      ctx.drawImage(img, px + gx * cw, py + gy * chh, cw, chh);
+                    }
+                  }
+                }
+                owDrawn = true;
+              }
+            }
             let spriteId: string | null = null;
-            if (obj.animation_frames && obj.animation_frames.length > 0) {
+            if (!owDrawn && obj.animation_frames && obj.animation_frames.length > 0) {
               const frameKey = obj.animation_frames[animTick % obj.animation_frames.length];
               spriteId = frameKey;
-            } else if (obj.overworld_sprite) {
+            } else if (!owDrawn && obj.overworld_sprite) {
               spriteId = obj.overworld_sprite;
             }
 
@@ -1033,6 +1091,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     animTick,
     clonePattern,
     isCapturingClone,
+    cardSkin,
+    hudSkin,
   ]);
 
   useEffect(() => {
@@ -1055,10 +1115,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
     // Select / Move Mode
     if (activeTool === 'select' || activeLayer === 'objects' || activeLayer === 'exits') {
-      // Check if clicked an object (supporting 9x9 and multi-tile boss bounds)
+      // Check if clicked an object (multi-tile bounds for 1-4 sized objects)
       const objIndex = level.objects.findIndex((o) => {
-        const ow = o.sprite_width || (o.is_boss ? 9 : 1);
-        const oh = o.sprite_height || (o.is_boss ? 9 : 1);
+        const ow = o.sprite_width || 1;
+        const oh = o.sprite_height || 1;
         return (
           coords.x >= o.position.x &&
           coords.x < o.position.x + ow &&

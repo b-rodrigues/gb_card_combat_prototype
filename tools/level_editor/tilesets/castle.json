@@ -74,29 +74,19 @@
       "category": "terrain"
     },
     {
-      "id": "castle_top_left_boss",
-      "label": "top left boss",
+      "id": "castle_stairs",
+      "label": "stairs",
       "gb_constant": "TILE_CASTLE_07",
-      "walkable": false,
-      "color": "#585454",
-      "ascii": "#",
-      "image_url": "/tiles/castle/castle_top_left_boss.png",
-      "category": "terrain"
-    },
-    {
-      "id": "castle_top_right_boss",
-      "label": "top right boss",
-      "gb_constant": "TILE_CASTLE_08",
-      "walkable": false,
-      "color": "#666262",
-      "ascii": "#",
-      "image_url": "/tiles/castle/castle_top_right_boss.png",
+      "walkable": true,
+      "color": "#858585",
+      "ascii": ".",
+      "image_url": "/tiles/castle/castle_stairs.png",
       "category": "terrain"
     },
     {
       "id": "castle_bottom_left_corren_wall",
       "label": "bottom left corren wall",
-      "gb_constant": "TILE_CASTLE_09",
+      "gb_constant": "TILE_CASTLE_08",
       "walkable": false,
       "color": "#5a5a5a",
       "ascii": "#",
@@ -106,7 +96,7 @@
     {
       "id": "castle_bottom_wall",
       "label": "bottom wall",
-      "gb_constant": "TILE_CASTLE_10",
+      "gb_constant": "TILE_CASTLE_09",
       "walkable": false,
       "color": "#666666",
       "ascii": "#",
@@ -116,7 +106,7 @@
     {
       "id": "castle_bottom_right_corner_wall",
       "label": "bottom right corner wall",
-      "gb_constant": "TILE_CASTLE_11",
+      "gb_constant": "TILE_CASTLE_10",
       "walkable": false,
       "color": "#5a5a5a",
       "ascii": "#",
@@ -126,7 +116,7 @@
     {
       "id": "castle_chair_facing_left",
       "label": "chair facing left",
-      "gb_constant": "TILE_CASTLE_12",
+      "gb_constant": "TILE_CASTLE_11",
       "walkable": false,
       "color": "#bcb6ab",
       "ascii": "#",
@@ -136,7 +126,7 @@
     {
       "id": "castle_table",
       "label": "table",
-      "gb_constant": "TILE_CASTLE_13",
+      "gb_constant": "TILE_CASTLE_12",
       "walkable": false,
       "color": "#9e8e71",
       "ascii": "#",
@@ -146,7 +136,7 @@
     {
       "id": "castle_chair_facing_riht",
       "label": "chair facing riht",
-      "gb_constant": "TILE_CASTLE_14",
+      "gb_constant": "TILE_CASTLE_13",
       "walkable": false,
       "color": "#bcb6ab",
       "ascii": "#",
@@ -156,122 +146,21 @@
     {
       "id": "castle_chest",
       "label": "chest",
-      "gb_constant": "TILE_CASTLE_15",
+      "gb_constant": "TILE_CASTLE_14",
       "walkable": false,
       "color": "#a29271",
       "ascii": "#",
-      "glyph": "O",
       "image_url": "/tiles/castle/castle_chest.png",
-      "category": "terrain"
-    },
-    {
-      "id": "castle_bottom_left_boss",
-      "label": "bottom left boss",
-      "gb_constant": "TILE_CASTLE_16",
-      "walkable": false,
-      "color": "#474747",
-      "ascii": "#",
-      "image_url": "/tiles/castle/castle_bottom_left_boss.png",
-      "category": "terrain"
-    },
-    {
-      "id": "castle_bottom_right_boss",
-      "label": "bottom right boss",
-      "gb_constant": "TILE_CASTLE_17",
-      "walkable": false,
-      "color": "#403e3a",
-      "ascii": "#",
-      "image_url": "/tiles/castle/castle_bottom_right_boss.png",
       "category": "terrain"
     },
     {
       "id": "castle_plain_floor",
       "label": "plain floor",
-      "gb_constant": "TILE_CASTLE_18",
+      "gb_constant": "TILE_CASTLE_15",
       "walkable": true,
       "color": "#d7d7d7",
       "ascii": ".",
       "image_url": "/tiles/castle/castle_plain_floor.png",
-      "category": "terrain"
-    },
-    {
-      "id": "castle_hero_frame_1_with_green_forest_background",
-      "label": "hero_frame_1 with green forest background",
-      "gb_constant": "TILE_CASTLE_19",
-      "walkable": true,
-      "color": "#727272",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_hero_frame_1_with_green_forest_background.png",
-      "category": "npc"
-    },
-    {
-      "id": "castle_hero_frame_2_with_green_forest_background",
-      "label": "hero_frame_2 with green forest background",
-      "gb_constant": "TILE_CASTLE_20",
-      "walkable": true,
-      "color": "#727272",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_hero_frame_2_with_green_forest_background.png",
-      "category": "npc"
-    },
-    {
-      "id": "castle_enemy_kobold_frame_1",
-      "label": "enemy kobold frame 1",
-      "gb_constant": "TILE_CASTLE_21",
-      "walkable": true,
-      "color": "#a79595",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_enemy_kobold_frame_1.png",
-      "category": "enemy"
-    },
-    {
-      "id": "castle_enemy_kobold_frame_2",
-      "label": "enemy kobold frame 2",
-      "gb_constant": "TILE_CASTLE_22",
-      "walkable": true,
-      "color": "#a79595",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_enemy_kobold_frame_2.png",
-      "category": "enemy"
-    },
-    {
-      "id": "castle_enemy_bat_frame_1",
-      "label": "enemy bat frame 1",
-      "gb_constant": "TILE_CASTLE_23",
-      "walkable": true,
-      "color": "#b8b8b8",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_enemy_bat_frame_1.png",
-      "category": "enemy"
-    },
-    {
-      "id": "castle_enemy_bat_frame_2",
-      "label": "enemy bat frame 2",
-      "gb_constant": "TILE_CASTLE_24",
-      "walkable": true,
-      "color": "#b8b8b8",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_enemy_bat_frame_2.png",
-      "category": "enemy"
-    },
-    {
-      "id": "castle_merchant_desolate_landscape",
-      "label": "merchant-desolate-landscape",
-      "gb_constant": "TILE_CASTLE_25",
-      "walkable": true,
-      "color": "#8a8174",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_merchant_desolate_landscape.png",
-      "category": "npc"
-    },
-    {
-      "id": "castle_exit_castle",
-      "label": "exit castle",
-      "gb_constant": "TILE_CASTLE_26",
-      "walkable": true,
-      "color": "#858585",
-      "ascii": ".",
-      "image_url": "/tiles/castle/castle_exit_castle.png",
       "category": "terrain"
     }
   ],
@@ -325,122 +214,56 @@
         "x": 7,
         "y": 0,
         "index": 7,
-        "tile": "castle_top_left_boss"
-      },
-      {
-        "x": 8,
-        "y": 0,
-        "index": 8,
-        "tile": "castle_top_right_boss"
+        "tile": "castle_stairs",
+        "exit": true
       },
       {
         "x": 0,
         "y": 1,
-        "index": 9,
+        "index": 8,
         "tile": "castle_bottom_left_corren_wall"
       },
       {
         "x": 1,
         "y": 1,
-        "index": 10,
+        "index": 9,
         "tile": "castle_bottom_wall"
       },
       {
         "x": 2,
         "y": 1,
-        "index": 11,
+        "index": 10,
         "tile": "castle_bottom_right_corner_wall"
       },
       {
         "x": 3,
         "y": 1,
-        "index": 12,
+        "index": 11,
         "tile": "castle_chair_facing_left"
       },
       {
         "x": 4,
         "y": 1,
-        "index": 13,
+        "index": 12,
         "tile": "castle_table"
       },
       {
         "x": 5,
         "y": 1,
-        "index": 14,
+        "index": 13,
         "tile": "castle_chair_facing_riht"
       },
       {
         "x": 6,
         "y": 1,
-        "index": 15,
+        "index": 14,
         "tile": "castle_chest"
       },
       {
         "x": 7,
         "y": 1,
-        "index": 16,
-        "tile": "castle_bottom_left_boss"
-      },
-      {
-        "x": 8,
-        "y": 1,
-        "index": 17,
-        "tile": "castle_bottom_right_boss"
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "index": 18,
+        "index": 15,
         "tile": "castle_plain_floor"
-      },
-      {
-        "x": 1,
-        "y": 2,
-        "index": 19,
-        "tile": "castle_hero_frame_1_with_green_forest_background"
-      },
-      {
-        "x": 2,
-        "y": 2,
-        "index": 20,
-        "tile": "castle_hero_frame_2_with_green_forest_background"
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "index": 21,
-        "tile": "castle_enemy_kobold_frame_1"
-      },
-      {
-        "x": 4,
-        "y": 2,
-        "index": 22,
-        "tile": "castle_enemy_kobold_frame_2"
-      },
-      {
-        "x": 5,
-        "y": 2,
-        "index": 23,
-        "tile": "castle_enemy_bat_frame_1"
-      },
-      {
-        "x": 6,
-        "y": 2,
-        "index": 24,
-        "tile": "castle_enemy_bat_frame_2"
-      },
-      {
-        "x": 7,
-        "y": 2,
-        "index": 25,
-        "tile": "castle_merchant_desolate_landscape"
-      },
-      {
-        "x": 8,
-        "y": 2,
-        "index": 26,
-        "tile": "castle_exit_castle",
-        "exit": true
       }
     ]
   }

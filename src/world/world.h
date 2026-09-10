@@ -60,14 +60,12 @@ typedef enum {
     MOVE_RESULT_ENCOUNTER   = 4
 } WorldMoveResult;
 
-typedef enum {
-    MAP_FIELD         = 0,
-    MAP_TOWN          = 1,
-    MAP_FOREST        = 2,
-    MAP_MOUNTAIN_PASS = 3,
-    MAP_CASTLE        = 4,
-    MAP_SOUTH_FIELD   = 5
-} MapId;
+/* MapId is a plain uint8_t; its VALUES come from the generated
+ * src/world/scene_ids_generated.h (single source of truth:
+ * levels/registry.json, emitted by tools/level_compiler/compile.py).
+ * Humans add levels in the editor — never hand-edit ids here. */
+typedef uint8_t MapId;
+#include "scene_ids_generated.h"
 
 /* A single generic exit tile type; the scene definition owns the
  * destination/spawn/visual of each exit. */
@@ -149,17 +147,6 @@ typedef enum {
     TILE_CASTLE_13 = 69,
     TILE_CASTLE_14 = 70,
     TILE_CASTLE_15 = 71,
-    TILE_CASTLE_16 = 72,
-    TILE_CASTLE_17 = 73,
-    TILE_CASTLE_18 = 74,
-    TILE_CASTLE_19 = 75,
-    TILE_CASTLE_20 = 76,
-    TILE_CASTLE_21 = 77,
-    TILE_CASTLE_22 = 78,
-    TILE_CASTLE_23 = 79,
-    TILE_CASTLE_24 = 80,
-    TILE_CASTLE_25 = 81,
-    TILE_CASTLE_26 = 82,
 
     /* Village Landscape tiles: 48 tiles in sheet scan order (0..47),
      * mapping 1:1 to the 48-tile village VRAM block (RPG_TILE_BASE_WORLD).
@@ -323,8 +310,11 @@ typedef enum {
     SPRITE_KIND_BAT = 2,    /* 2-frame per-map bat OBJ sprite */
     SPRITE_KIND_BOSS = 3,   /* 2x2 castle boss drawn as background tiles */
     SPRITE_KIND_CHEST = 4,  /* 1-frame pickup chest OBJ sprite (statics) */
-    SPRITE_KIND_TILE = 5    /* background-art actor: cell shows its tileset
+    SPRITE_KIND_TILE = 5,   /* background-art actor: cell shows its tileset
                                map tile (NPC art), no OAM sprite */
+    SPRITE_KIND_ENEMY = 6   /* per-enemy-type shared OAM sprite (append-only):
+                               art comes from the enemy-type row named by
+                               ow_type (0xFF = fall back to ASCII glyph) */
 } ActorSpriteKind;
 
 /* Mutable runtime state for a spawned World Actor.  Static actor
@@ -346,6 +336,8 @@ typedef struct {
     const char *display_name;    /* copied from the definition */
     uint8_t visual;              /* ASCII char: 'S', 'B', etc. */
     ActorSpriteKind sprite_kind; /* how this actor is drawn (from def) */
+    uint8_t ow_type;             /* enemy-type OAM index for SPRITE_KIND_ENEMY
+                                    (into g_enemy_types; 0xFF = ASCII fallback) */
     uint8_t spawn_x;             /* patrol anchor origin */
     uint8_t spawn_y;
     uint8_t ai_type;             /* ActorAiType */
@@ -356,6 +348,7 @@ typedef struct {
     uint8_t move_target_y;
     uint8_t move_progress;       /* 0..7 sub-tile pixels */
     uint8_t battle_type;         /* BattleId */
+    uint8_t solo;                /* copied from the definition: engage alone */
 } WorldActorRuntime;
 
 typedef struct {

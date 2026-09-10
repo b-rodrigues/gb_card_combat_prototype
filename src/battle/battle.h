@@ -101,19 +101,35 @@ typedef struct {
 extern uint8_t g_battle_enemy_art[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_frames[MAX_BATTLE_ENEMIES];
 extern uint8_t g_battle_enemy_art_pal[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_w[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_h[MAX_BATTLE_ENEMIES];
+extern uint8_t g_battle_enemy_art_base[MAX_BATTLE_ENEMIES];
+
+/* ANIM-phase victim snapshot (battle.c): the enemy name "ATTACK <name>"
+ * shows while the attack resolves.  Empty string = no attack this ANIM
+ * (freeze/empty-combo skip) -> banner falls back to "PLAYER ATTACK!". */
+extern char g_battle_anim_target_name[12];
 
 /* Banked battle-art loader (src/battle/battle_art_banked.c, ROM bank 4):
- * g_bk_ptr_a = Battle*.  Resolves each enemy's art from the enemy-type
- * tables, loads 12 tiles per slot into VRAM, caches art in the WRAM
- * globals above.  Dispatched once per battle entry from
- * ui_draw_battle_full() (LCD-off window). */
+ * g_bk_ptr_a = Battle*.  Resolves the battle's enemy-type row through
+ * the game layer, loads each slot's WxH art tiles into VRAM from
+ * cumulative bases, and caches art + geometry in the WRAM globals
+ * above.  Dispatched once per battle entry from ui_draw_battle_full()
+ * (LCD-off window). */
 void battle_art_load_banked(void);
 
 void battle_start(Battle *b, const char *enemy_name, uint8_t player_hp,
                   uint8_t player_max_hp,
                   uint8_t enemy_hp, uint8_t enemy_max_hp,
-                  const DeckState *ds, uint8_t battle_id);
+                  const DeckState *ds, uint8_t battle_id, uint8_t solo);
 void battle_add_enemy(Battle *b, const char *name, uint8_t hp, uint8_t max_hp);
+
+/* Solo-encounter flag for the active battle (WRAM, staged by battle_start):
+ * bosses (BATTLE_NONE) and solo-flagged minibosses stand alone and render
+ * on the single-enemy centered battle screen ("boss"); everything else
+ * uses the standard 3-slot screen ("default").  Read directly by
+ * battle_hud_load_banked() in the same bank-4 dispatch. */
+extern uint8_t g_battle_solo;
 void battle_cursor_move(Battle *b, int8_t dir);
 void battle_target_move(Battle *b, int8_t dir);
 void battle_target_auto_advance(Battle *b);

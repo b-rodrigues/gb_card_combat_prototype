@@ -33,6 +33,7 @@ extern uint8_t g_is_cgb;
 
 extern const CardDefinition g_cards[];
 extern const ShopDefinition g_shops[];
+extern const uint8_t g_shop_count;
 
 /* Shop message states (mirror shop_screen.c). */
 #define SC_SHOP_MSG_NONE 0
@@ -47,6 +48,7 @@ extern const ShopDefinition g_shops[];
 static uint8_t s_sc_txt_i;
 static uint8_t s_sc_col_i;
 static uint8_t s_sc_shop_i;
+static uint8_t s_sc_shop_scroll;
 static uint8_t s_sc_def_i;
 static uint8_t s_sc_shop_pos;
 static uint8_t s_sc_save_pos;
@@ -163,7 +165,7 @@ static void sc_color_span(uint8_t x, uint8_t y, uint8_t len, uint8_t palette)
 
 static const ShopDefinition *sc_shop_active(const Game *g)
 {
-    for (s_sc_shop_i = 0; s_sc_shop_i < 2; s_sc_shop_i++) {
+    for (s_sc_shop_i = 0; s_sc_shop_i < g_shop_count; s_sc_shop_i++) {
         if (g_shops[s_sc_shop_i].id == g->shop_id) return &g_shops[s_sc_shop_i];
     }
     return NULL;
@@ -208,7 +210,7 @@ static uint8_t bm_mode(const Game *g)
 
 static uint8_t bm_cursor_row(uint8_t mode, uint8_t index, uint8_t scroll)
 {
-    if (mode == 2) return (uint8_t)(5u + index);
+    if (mode == 2) return (uint8_t)(5u + (uint8_t)(index - scroll));
     if (mode == 1) return (uint8_t)(5 + (index << 1));
     if (index == 0) return 5;
     s_sc_pos = (uint8_t)(index - ITEM_FIRST_CARD);
@@ -237,6 +239,20 @@ void item_menu_cursor_banked(void)
             else if (s_sc_pos > (uint8_t)(s_sc_need_scroll + ITEM_VISIBLE_CARD - 1))
                 s_sc_need_scroll = (uint8_t)(s_sc_pos - (ITEM_VISIBLE_CARD - 1));
         }
+        if (s_sc_need_scroll != s_sc_game->item_menu_scroll) {
+            s_sc_game->item_menu_scroll = s_sc_need_scroll;
+            s_sc_game->render_cache.valid = false;
+            return;
+        }
+    } else if (s_sc_mode == 2) {
+        /* Shop list: index is a direct stock position (0-based).  Keep the
+         * cursor inside the SHOP_VISIBLE window; a window shift needs a
+         * full redraw (the banked body cannot repaint scrolled rows). */
+        s_sc_need_scroll = s_sc_game->item_menu_scroll;
+        if (s_sc_new_index < s_sc_need_scroll)
+            s_sc_need_scroll = s_sc_new_index;
+        else if (s_sc_new_index > (uint8_t)(s_sc_need_scroll + SHOP_VISIBLE - 1))
+            s_sc_need_scroll = (uint8_t)(s_sc_new_index - (SHOP_VISIBLE - 1));
         if (s_sc_need_scroll != s_sc_game->item_menu_scroll) {
             s_sc_game->item_menu_scroll = s_sc_need_scroll;
             s_sc_game->render_cache.valid = false;
@@ -275,9 +291,13 @@ void shop_content_render(void)
         return;
     }
 
-    for (s_sc_shop_pos = 0; s_sc_shop_pos < s_sc_shop_def->count; s_sc_shop_pos++) {
+    s_sc_shop_scroll = s_sc_game->item_menu_scroll;
+    for (s_sc_shop_pos = s_sc_shop_scroll;
+         s_sc_shop_pos < s_sc_shop_def->count &&
+         s_sc_shop_pos < (uint8_t)(s_sc_shop_scroll + SHOP_VISIBLE);
+         s_sc_shop_pos++) {
         s_sc_card_def = sc_card_get_def(s_sc_shop_def->items[s_sc_shop_pos]);
-        s_sc_y = (uint8_t)(5 + s_sc_shop_pos);
+        s_sc_y = (uint8_t)(5 + (uint8_t)(s_sc_shop_pos - s_sc_shop_scroll));
         sc_put_char(0, s_sc_y, (s_sc_game->item_menu_index == s_sc_shop_pos) ? '>' : ' ');
         if (s_sc_card_def) {
             if (s_sc_card_def->status_id == 1 /* STATUS_BURN */) s_sc_tile_elem = UI_TILE_CARD_ELEM_FIRE;
@@ -320,9 +340,9 @@ void shop_content_render(void)
         sc_color_span(16, s_sc_y, 1, UI_COLOR_GOLD);
     }
 
-    sc_draw_text(0, (uint8_t)(6 + s_sc_shop_def->count), "[A] Buy  [B] Leave", 18);
+    sc_draw_text(0, 16, "[A] Buy  [B] Leave", 18);
     if (s_sc_game->shop_message != SC_SHOP_MSG_NONE) {
-        sc_draw_text(0, (uint8_t)(8 + s_sc_shop_def->count),
+        sc_draw_text(0, 17,
                      (s_sc_game->shop_message == SC_SHOP_MSG_BOUGHT) ? "Bought!" :
                      (s_sc_game->shop_message == SC_SHOP_MSG_MAX_COPIES) ? "Too many!" : "Not enough!",
                      12);

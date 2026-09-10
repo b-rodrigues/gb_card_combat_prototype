@@ -1334,9 +1334,13 @@ Audio transitions must emit telemetry.
 Soundtrack tracks authored in **hUGETracker** (`.uge`, e.g. `assets/music/Battle BGM.uge`) are compiled to C via `uge2source` into `generated/music/` and driven by **hUGEDriver**:
 
 * **ROM Bank 6 Isolation**:
-  * The driver assembly (`lib/hUGEDriver/src/hUGEDriver.asm` via `tools/rgb2sdas.py -b 6`) and all converted track data (`#pragma bank 6`, seven songs) live in **ROM Bank 6**.  The driver reads song bytes through the mapped ROM window, so songs cannot live anywhere else.
+  * The driver assembly (`lib/hUGEDriver/src/hUGEDriver.asm` via `tools/rgb2sdas.py -b 6`) and all converted track data (`#pragma bank 6`, six songs) live in **ROM Bank 6**.  The driver reads song bytes through the mapped ROM window, so songs cannot live anywhere else.
   * This keeps the fixed Bank 0/1 memory budget (`_CODE`/`_HOME`) clean and prevents ROM0 overflow.
   * Bank 6 is full (16224/16384 B): the transcribed-SFX step tables plus stepper (`generated/sfx/sfx_tables.c`, `src/audio/sfx_step.c`, `#pragma bank 7`) live in **ROM Bank 7** alongside the icon table.  The timer ISR selects bank 7 around `sfx_step_tick()` and bank 6 around `hUGE_dosound()`; muting targets bank 6 (driver code + state).  Do NOT add another song to bank 6 -- `make memmap` fails on any `_CODE_N` over 16 KB.
+* **Bank-7 overflow songs (dual-bank playback)**:
+  * A seventh song (`Mimic.uge` -> `generated/music/mimic.c`, symbol `song_mimic`, `#pragma bank 7`) lives in **ROM Bank 7** next to a **second copy of the hUGE driver** (`build/*/lib/hUGEDriver_b7.o`: same code, all exports renamed `_b7` via repeatable `rgb2sdas.py -r`).  Driver + song must share a bank because the driver reads song bytes through the mapped window.
+  * `huge_music_play_banked(song, bank)` records the song's bank in `s_huge_music_bank`; `huge_music_update()` / `huge_music_mute_channel()` select that bank around the `_b7` (bank 7) or plain (bank 6) driver call, then restore home bank 1.  `huge_music_play()` is the bank-6 shorthand.  New songs go to bank 7 through this path -- never bank 6.
+  * The assembler exports underscore twins (`hUGE_init` + `_hUGE_init`, ...): a second-bank conversion must rename BOTH (missing twins surface as `Multiple definition of _hUGE_*` at link).  Recipe-only Makefile edits do not retrigger the rule (prerequisites unchanged) -- delete the `hUGEDriver_b7.o`/`.obj` pair first.
 * **Tick Division (64 Hz from 256 Hz Timer)**:
   * The hardware timer ISR (`src/crt0.s`) calls `audio_update()` at **256 Hz**.
   * `huge_music_update()` divides this rate by 4 (`++divider >= 4`), stepping `hUGE_dosound()` at a steady **64 Hz** tracker clock.
@@ -1346,6 +1350,19 @@ Soundtrack tracks authored in **hUGETracker** (`.uge`, e.g. `assets/music/Battle
 * **SFX Coexistence (Channel Muting)**:
   * Sound effects (CH2 tone pulses, CH4 noise bursts) call `huge_music_mute_channel(HT_CH2 / HT_CH4, HT_CH_MUTE)` on playback start.
   * When the SFX completes, `audio_update()` restores the channel with `HT_CH_PLAY` so the tracker music continues seamlessly without channel clicks.
+* **NEVER `__critical`/`ei()` inside the timer ISR**: SDCC's `__critical`
+  emits `di`/`ei` -- an `ei()` executed while already inside the 256 Hz
+  timer ISR re-enables nested timer interrupts, stacking ISR frames until
+  the WRAM below the stack is smashed.  Observed symptom (Sep 2026):
+  ghost joypad input -- `pad_state`/`prev_pad_state` accumulate pressed
+  bits and releases never register, freezing the intro screen in every
+  real-timing emulator (mGBA, Gambatte) while PyBoy's frame pacing masked
+  it.  `audio_update()`'s ISR-side unmute therefore calls
+  `huge_music_mute_channel_isr()` (bank switch + driver call + restore,
+  no di/ei); the user-context calls in `audio_play_sfx()` keep the
+  `__critical` wrapper.  Rule: any driver call reachable from
+  `audio_update()` must use the `_isr` (no-lock) variant, never the
+  critical one.
 
 ---
 
@@ -1617,6 +1634,21 @@ across transitions (battle, scene change, dialogue).  It catches VBlank-timed
 sprite bugs that the SameBoy harness cannot observe (AGENTS.md §52.15).  This
 step is **required**, not optional — CI runs it on every push.
 
+Then run:
+
+```bash
+make verify-walkthrough
+```
+
+`verify-walkthrough` (docs/verify-walkthrough.md) drives the RELEASE ROM —
+the real `levels/` content the fixtures never touch — headlessly under
+PyBoy and asserts canonical gameplay state read from WRAM via the ROM's
+`.sym` (scene ids, flags, gold, party HP, battle hand, music, save/load
+roundtrip).  It is the real-content counterweight to the two-tier fixture
+suite (§42.1) and is **required on push** (CI).  Host-side only: no ROM
+changes → it does not replace `make test-harness` for ROM work, it
+complements it.
+
 If rendering or UI changed, also run:
 
 ```bash
@@ -1675,6 +1707,104 @@ Automated test
 Do not wait until the end of a feature to think about testability.
 
 The scenario is part of the feature.
+
+## 42.1 Two-tier content: fixtures vs working content
+
+The scenario suite must never break because someone placed content on a
+map.  Two tiers enforce that:
+
+* **Tier 1 — test fixtures** (`tools/scenarios/fixtures/levels/test_*.json`):
+  frozen copies of the levels as the scenarios know them (headline
+  hostile last, no user-placed extras).  The **debug (harness) ROM links
+  ONLY these** (`scenes_content_test.c` / `actors_content_test.c`, bank 4,
+  `--bank 4`), selected at compile time by `-DTEST_LEVELS` + the
+  `TEST_*` scene ids (fixed block at 240+, never moves).  Scenarios stage
+  `scene: TEST_FIELD` etc.
+* **Tier 2 — working content** (`levels/`): everything the editor, the
+  LLM, and collaborators edit freely.  Feeds the **release ROM only**.
+  Adding a level, enemy, or actor here cannot break a scenario.
+
+## 42.2 Adding a level (human workflow — no agent required)
+
+Scene ids are data, not code.  `levels/registry.json` is the single
+source of truth (real scenes 0..N dense, TEST block fixed at 240+,
+retired ids tombstoned and never reused); `src/world/scene_ids_generated.h`
+is emitted from it by `compile.py --all` and carries every `MAP_*` /
+`SCENE_*` value the engine needs (`world.h` / `screen.h` hold only the
+`uint8_t` typedefs).
+
+Human flow: create the level in the editor → **save it** (the dev server
+assigns the next scene id on first save — no clicks, no C edits) → link
+exits via the Target Scene combobox → compile.  Rules for agents:
+
+* Never hand-edit ids in headers, `compile.py`, `validate.py`,
+  `emulator.py`, or the walkthrough — they all derive from the registry.
+  The only hand-written scene list left is `TEST_SCENE_ORDER` (the fixed
+  fixture names).
+* `validate.py` fails loudly on any registry/file disagreement (missing
+  entry → "save the level in the editor"; missing file → "restore from
+  git or retire the id"); `compile.py` refuses unknown sids the same way.
+* Retired ids stay holes in `g_scenes[]` (inert empty rows keep direct
+  indexing valid); never compact or reuse them.
+* A new level is unreachable until some exit targets it — the content
+  sweep fails loudly on unreachable levels by design, not by accident.
+* **Registry is future-proofed**: `levels/registry.json` carries a
+  `version` (currently 1); ids are append-only and never reused (deleted
+  ids tombstone into `_retired`); every write is atomic (tmp + rename);
+  `make registry-check` locks the contract.  The editor's rename keeps the
+  **numeric scene id** and rewires referencing exits; delete retires the
+  id and clears exits that targeted it.  Scenes whose `MAP_*`/`SCENE_*`
+  symbols appear in hand-written C (e.g. `field`) cannot be renamed or
+  deleted from the editor.
+
+## 42.3 Human-authored text: dialogue & tutorial (data-driven)
+
+NPC dialogue and the title-menu tutorial slides are editor content, not
+C:
+
+* Dialogues: `screens/dialogue/<id>.json` (`id`, `speaker`, `lines[]`,
+  optional `completion_flag`).  Ids assign by sorted filename
+  (`dialogue_ids.py` → `DIALOGUE_ID_*` + `GAME_DIALOGUE_COUNT` in the
+  generated `dialogue_ids_generated.h`); nothing persists a numeric
+  dialogue id, so adding/renaming is safe.  `dialogue_compile.py` emits
+  `dialogue_content.c` (bank 2, same shape as before).
+* Tutorial: `screens/tutorial.json` → `tutorial_compile.py` emits
+  `tutorial_text_generated.h` (arrays, included once) +
+  `tutorial_count_generated.h` (count, included by `screen.h`).
+* The **editor** edits text only (Dialogue view: speaker + lines;
+  title tab: slides).  Flag/event/scenario wiring stays LLM-authored:
+  `completion_flag`, `EVENT_ACTION_*`, and `story` definitions are never
+  shown in the editor.  Completion flags are a subset of `GameState.flags`
+  (`src/game/game_ids.h` `STORY_FLAG_ID_*`); the compiler validates the
+  reference.
+* Gates: `make dialogues-check` (fresh-vs-committed + `validate.py
+  --dialogue-refs`: actor/event references resolve, dangling ids fail
+  loudly, unused dialogues warn).  `make screens-check` covers the
+  tutorial.  Text limits (speaker 11, line 20 staging / 18 render; slide
+  4 rows × 20) fail the compile loudly.
+* Speakers are currently wired individually per NPC (shopkeeper/merchant/
+  wizard carry empty `dialogue`; their greetings fire through events).
+  Assigning a dialogue to an NPC is the editor's Dialogue-ID dropdown.
+
+Rules:
+
+* Never point a scenario at a real scene; never let the editor list or
+  edit the fixtures dir.
+* A new mechanic gets a new fixture + scenario deliberately; routine
+  content never touches the fixtures.
+* The event table is shared (TEST maps alias to real maps at match
+  time in `core/event.c`); `game_new_game`/`world_init` derive the
+  spawn map from canonical state, never a hardcoded real scene.
+* `-DTEST_LEVELS` reaches ONLY the files that consume it, via explicit
+  Makefile rules (scene/actors/scene_load/actor_load/content): the flag
+  shifts codegen, and SDCC miscompiles are layout-sensitive (§52.19) —
+  the full-flag variant broke the patrol sentinels.  If a new file
+  needs the flag, add an explicit rule AND verify the three sentinels
+  (`patrol_slime_cross`, `patrol_enemy_bumps_player`,
+  `battle_multi_enemy_cycle_kill`) still pass.
+* `make levels-test` / `levels-test-check` validate and compile the
+  fixtures; `make debug` chains `levels-test` automatically.  memmap
+  guards the bank-4 fixture budget.
 
 ---
 
@@ -2137,15 +2267,76 @@ cleared a `_HOME` overflow that presented as a harness-wide guest spin
 
 ### 52.11.2 Battle HUD layout (rows)
 
-The battle screen uses the fixed background rows: `0` centered banner,
-`2-4` enemies (name/HP/caret), `6` hero, `7` deck counter (`DECK:` +
+The battle screen uses the fixed background rows: `0` centered banner
+(DYNAMIC enemy-identity messages: `TARGET <name>` on the select phase --
+follows UP/DOWN cycling via BATTLE_DIRTY_BANNER from the banked nav body,
+`ATTACK <name>` on the ANIM phase from the victim snapshot
+`g_battle_anim_target_name` (battle.c) because resolution may kill the
+target and auto-advance target_idx before the banner draws,
+`<name> ATTACKS!` on the telegraph, `<name>: DEFEND!` on the defend
+phase; result/other phases keep the fixed literals VICTORY!/DEFEATED!/
+FLED!/BLOCKED ATTACK!/RESHUFFLE!; fallbacks PLAYER TURN/PLAYER ATTACK!/
+ENEMY ATTACK!/DEFENSE TURN keep every phase readable if a name slot is
+invalid; composed in the bank-3 file-static `s_banner_text[24]`, names
+cap at 11 chars so all banners fit 20 cols), `2` enemy HP (the former
+name row; HP moved here when the name row was removed), `3-4` enemies
+(art/caret), `7` hero, `8` deck counter (`DECK:` +
 draw-pile count at columns 13-19, `battle_draw_deck_line`, drawn with the
-hero row on BATTLE_DIRTY_HERO), `13` `COMBO:` + hand type
-(`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c), `14` hand
-cards, `15` markers (`1-5` selection-order digits, `^` cursor), `16`
-card description (`card_get_description`), `17` timer bar (window row,
-`0x9A20`).  Rows `8-12` stay blank as whitespace between the hero block
-and the bottom card stack.
+hero row on BATTLE_DIRTY_HERO) + AP, `9` transient gameplay messages
+(`NO ENERGY!`/`OUT OF USES!`/`ONE RING!`, BATTLE_DIRTY_MSG), `10` `COMBO:`
++ hand type (`PAIR`/`FLUSH`/`STRAIGHT` from `ui_combo_hand_name`, ui.c;
+drawn with a full 20-col row clear -- the combo draw owns the row the
+old blank band above the hand occupied), `11-14`
+boxed hand cards (`cards_row`=14 is the BOTTOM
+row; each card is a 3-wide x `box_h`-tall frame from the compiled
+`card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on
+the first interior row, power digit on the second (the arrow-counter
+type — the bow — instead draws its power icon there and the
+remaining-uses glyph on the bottom border floor, keeping its frame
+corners; the semantic screen
+buffer keeps the type code + digit on row 13 for assertions), `15`
+markers (`1-5` selection-order digits; the cursor and the enemy-target
+caret render the up-arrow select icon tile `UI_TILE_SELECT_ARROW` 96
+(combat tileset "arrow pointing up", card_frames sheet tile 14) -- the
+enemy caret on the art's MIDDLE column (art_x+1; art is 3 wide, so the
+arrow sits centered under the enemy, matching the editor preview)
+while
+the semantic buffer keeps `^` for text assertions), `16` card
+description (`card_get_description`), `17` timer bar (window row,
+`0x9A20`).  Card visuals are data-driven: `screens/cards_skin.json` via
+`battle_compile.py` emits `g_card_skin` (bank 4), staged into the
+`g_card_skin_wram` mirror by `battle_hud_load_banked()`.  There are
+exactly TWO battle screens (`screens/battle/`): `default` (3 enemies)
+and `boss` (1 enemy centered at x=8, art up to 3x3 on rows 3-5, caret
+narrowed to 3 cols on row 6) -- selected by `battle_hud_load_banked()`
+from `BATTLE_NONE` OR the `g_battle_solo` flag (solo minibosses, staged
+by `battle_start(..., solo)`).  The HUD skin (`screens/battle_hud.json`
+-> `g_hud_skin` -> `g_hud_skin_wram` mirror) owns the hero-HP / AP /
+deck icon tiles + palettes and the turn-timer bar (segment tiles
+VRAM 117/127, color, row, width; drawn by the bank-3
+`ui_draw_battle_timer_banked` behind the fixed-bank wrapper -- the
+fixed `_HOME` bank is hard against 0x8000, AGENTS.md 52.18).  The
+hp/ap/deck icon tile DATA comes from the combat tileset
+(`combat_hp_icon`/`combat_ap_icon`/`combat_deck_icon` via the card-frames
+sheet, loaded by the bank-3 `ui_card_tiles_load_banked` at boot),
+overwriting the atlas data at VRAM 113/114/116 (ids unchanged;
+UI_TILE_DECK 116 keeps the combat deck art on the battle HUD deck
+counter; the QUEST tab markers are font glyphs
+'!' active / '*' complete, never a tile -- the 8x8 deck art read
+poorly there).  Dialogue boxes stamp the **paper palette** (CRAM slot 4,
+re-programmed to a pure white/black document ramp by `ui_draw_dialogue`)
+over their whole footprint, so the box is white with black font ink in
+every tileset -- palette 0 cannot be used because it anchors the world
+tiles' background tone (tan in the village).  Slot 4 is free in every
+world tileset (quick screen poison tints are its only other consumer and
+cannot be open during a dialogue); every screen transition re-programs
+CRAM, restoring the set's own slot-4 ramp.  Enemy art is
+CENTERED on the 6-column name slot: `battle_enemy_art_x()` offsets the
+stamp (and the 3-col caret) by (6-w)/2.  Hero/deck
+row positions are layout-driven: label at (hero_label_row,
+hero_label_col), HP block at hero_hp_col (icon 2 cols left of "HP:"),
+DECK at deck_col (icon 1 left), AP at ap_col (icon 2 left).  VRAM BG
+tiles 117-127 are FULLY allocated (bar segments + card frames).
 
 ## 52.12 Scenario state ordering
 
@@ -2267,6 +2458,9 @@ Rules:
   not inlined at the call site.
 * `%`/`/` in new fixed-bank code pulls in the SDCC div/mod library; use
   masks for power-of-two bounds.
+* 8-bit `*` anywhere (including banked bodies) pulls the SDCC mult
+  routines (`__mulsuchar` et al.) into fixed `_CODE` (~69 B); use shifts,
+  repeated addition, or a running counter for small tile-math instead.
 
 ## 52.19 SDCC miscompile instances are LAYOUT-SENSITIVE (Aug 2026)
 
@@ -2326,6 +2520,45 @@ close-name hints).  `make test-scenario` flattens everything to rc=2 —
 never use make's exit code to decide whether a scenario name exists;
 that ambiguity once produced a triage listing nonexistent scenarios as
 "failing".
+
+## 52.22 Signed BG tile addressing: raw tile-data writers must use 0x9000+
+
+`ui_init()` clears LCDC bit 4 (`LCDC_REG &= ~0x90`) and nothing ever sets
+it back, so the BG runs in **signed tile addressing** for the whole game:
+
+* BG tile ids 0-127 are fetched by the PPU from `0x9000 + id*16`.
+* BG tile ids 128-255 are fetched from `0x8800 + (id-128)*16`.
+* OAM sprites ALWAYS fetch from `0x8000 + id*16` (bit 4 never affects
+  sprites).
+
+Consequence: any tile-data write to an id < 128 must target
+`0x9000 + id*16`.  Writers that do this correctly:
+
+* GBDK `set_bkg_data` (font 0-95, atlas icons 104-116) -- bank/mode aware.
+* World tileset / enemy-art / NPC overlays (ids >= 128 at raw
+  `0x8000 + id*16` = the same physical block both addressing modes use
+  for ids >= 128).
+
+The bug class: `ui_card_tiles_load_banked` (card frames 118-126, bar
+117/127, HUD icons 113/114/116) originally wrote raw `0x8000 + id*16`.
+The data landed in the sprite-only block the BG never fetches, so the
+combat icons never appeared (the atlas heart/bolt/deck at the signed
+locations kept rendering) and the card "frames" were unwritten flat
+tiles.  **No harness assert can catch this**: scenarios assert tilemap
+ids, never tile data; the mirror tracks ids only.  Regression tools:
+
+* mGBA write watchpoint on the FETCHED address (e.g. `watch/w 0x9710`
+  for tile 113): expect the atlas write first, then the loader's
+  overwrite.  Watchpoints on 0x8000-block addresses silently validate
+  the wrong block.
+* Visual: `make screenshots` -- the hp/ap/deck cells must show the
+  2-shade combat glyphs and the hand cards must show bordered frames.
+
+PyBoy caveat: `pb.memory[0x8000..0x97FF]` exposes whichever VRAM block
+its internal VBK state selects at read time, while the renderer fetches
+per the LCDC.4 mode -- a memory dump and the rendered frame can
+legitimately disagree without either being wrong.  Never treat a PyBoy
+VRAM read as proof of BG visibility.
 
 ---
 
@@ -2707,7 +2940,16 @@ the commit/PR without booting anything.
 
 * Headless PyBoy (`window="null"`) boots the **real release ROM** — no debug
   ROM, no harness mode, no scenario loader.  What is captured is exactly what
-  a player would see.
+  a player would see.  `make verify-walkthrough` runs the same script with
+  semantic assertions (docs/verify-walkthrough.md); the package lives in
+  `tools/walkthrough/` (`state_reader.py` WRAM reader, `route.py` BFS
+  planner, `session.py` driver, `walks.py` walk definitions).
+* Semantic state comes from **WRAM symbol reads** (StateReader): `g_game`
+  from the ROM's `.sym`, struct offsets mirrored from the headers and
+  validated by boot anchors every session.  The BFS route planner reuses
+  the level compiler's `derive_collision` + `load_tilesets` and reads
+  patrol boxes/actors/exits from `levels/*.json`, so editor content
+  changes update the walk automatically.
 * The player entity is located in WRAM via its deterministic boot pattern
   (same technique as `tools/vram_dialogue_check.py`); the walk is
   **position-based**, not press-count based: each step is a single short
@@ -2737,14 +2979,17 @@ the commit/PR without booting anything.
 * Frames are saved with PyBoy's `screen.image` (headless framebuffer render);
   each save prints the first non-blank `bg_text` row so a mislabeled frame
   is obvious in the build log without decoding PNGs.
-* Four fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
+* Five fresh sessions are used: Walk A (overworld → Town → dialogue → shop →
   quick screen), Walk B (slime battle on the Field), Walk C (Forest gate),
-  and Walk D (title-menu + tutorial slides), so persistent state never bleeds
+  Walk D (title-menu + tutorial slides), and Walk E (castle mimic battle:
+  FIELD → south → SOUTH_FIELD → south → MOUNTAIN_PASS → north → CASTLE,
+  east along row 10 into the mimic; all corridor columns avoid patrol
+  boxes), so persistent state never bleeds
   between milestones.  Walk D stops at the boot title screen (START → menu,
   DOWN to the TUTORIAL entry, A, then RIGHT through the seven slides); it never
   enters the game.
 * Determinism is verified: the walk's position/caret/text checks make the
-  23 frames byte-identical across repeated runs.
+  24 frames byte-identical across repeated runs.
 
 ## 56.3 Milestones
 
@@ -2760,11 +3005,12 @@ the commit/PR without booting anything.
 08-quests-tab        QUEST tab
 09-battle            slime encounter (battle screen)
 10-battle-attack     after a player attack (damage dealt)
-11-battle-run        after fleeing (result line)
+11-battle-victory    VICTORY result over the slime trio (loot gold asserted)
 11-battle-aftermath  overworld after leaving the fight (VRAM restore)
 12-wizard-save       save menu at the wizard
 13-wizard-saved      after saving to Slot 1
 14-forest-arrived    FOREST gate arrival after Walk B
+23-mimic-battle      castle mimic encounter (solo boss screen, Walk E)
 15-title-menu        title menu with the TUTORIAL entry (index 3)
 16-tutorial-slide0   TUTORIAL BASICS
 17-tutorial-slide1   CARD TYPES
@@ -2775,21 +3021,54 @@ the commit/PR without booting anything.
 22-tutorial-slide6   SHIELD CARD
 ```
 
-Frame `12-wizard-save` is the one non-byte-stable capture: the shot can land
-inside the transient save-confirmation TTL and show the message mid-display.
-If a regen diffs only that frame, re-run before hunting a rendering bug.
+Frame `12-wizard-save` is gated on a stable menu/message state before the
+capture (the transient save-confirmation TTL used to poison it); if a
+regen diffs it, re-run before hunting a rendering bug.
 
 ## 56.4 Rules
 
-* **Screenshots are a visual-review aid only.**  They are not assertions and
-  must never gate CI.  Semantic state, telemetry, and the scenario harness
-  (`make test-harness`) remain authoritative (§7, §40).  Prefer a scenario
-  assertion over a screenshot for any behavior that has a semantic
-  representation.
+* **The screenshot PNGs are a visual-review aid only** — they never gate
+  CI.  The SEMANTIC CHECKS inside the same run (`make verify-walkthrough`,
+  docs/verify-walkthrough.md) DO gate: the walkthrough drives the release
+  ROM and asserts canonical gameplay state (scene ids, story flags, gold,
+  party HP, battle hand, music, save/load roundtrip) read from WRAM via
+  the ROM's `.sym`.  A run failing its checks returns non-zero even
+  though every PNG saved fine.
 * The milestone list should grow when a feature visibly changes the screen
-  (a new screen, a new tab, a reworked battle view).  Keep each milestone
-  reachable by position-based walking; do not add a milestone that requires
-  a non-deterministic sequence (e.g. surviving random damage rolls).
+  (a new screen, a new tab, a reworked battle view).  Routes are planned by
+  BFS from `levels/*.json` (`tools/walkthrough/route.py` — reuses the level
+  compiler's collision derivation), so content edits in the editor update
+  the walk automatically; do not hardcode waypoints in walk bodies.
+* **Content sweep** (`walk_sweep`): every level in `levels/` is visited on
+  every run — a fresh session per level, BFS route from the field spawn,
+  scene-id + music asserts from the level JSON, `sweep-<name>.png` per
+  level.  A NEW level added by the editor is swept automatically on the
+  next run (the planner assigns its scene id in the compiler's order);
+  an UNREACHABLE level fails loudly (no exit targets it — content bug).
+  Engine-only coverage of NPC dialogues / new enemies stays on the
+  fixture suite (§42.1); the sweep proves every level boots, is enterable,
+  and plays its music.
+* **Milestone hygiene.** The committed set is explicit: `CLASSIC_MILESTONES`
+  in `tools/capture_walkthrough.py` plus `sweep-<name>` per planner scene.
+  A plain run only overwrites those; `--clean` (what CI's
+  `make verify-walkthrough` uses) additionally deletes any top-level
+  `screenshots/*.png` outside the set, so renamed/retired milestones can't
+  linger and confuse reviewers.
+* **Review shots** (`screenshots/review/`, committed) hold ad-hoc captures
+  a walk can't stage deterministically (e.g. a shop-only bow dealt into a
+  battle hand — `tools/capture_bow_shot.py`, which stages hand state
+  through PyBoy memory exactly like the debug harness's `set_hand_card`).
+  `review/manifest.json` is the source of truth: file, description, and
+  the commit it was taken from.  `--clean` deletes review PNGs missing
+  from the manifest; an unreadable manifest leaves review/ untouched with
+  a warning — never nuke blindly.  Regenerating a shot after a visual
+  change overwrites it in place (same filename, fresh `taken_from`); a
+  renamed shot plus a manifest update lets `--clean` retire the orphan.
+* Expected values are read from `levels/*.json` and the ROM's own const
+  tables (card prices, shop stock, gold rewards) — never hardcoded.  When
+  a gameplay constant must be mirrored (struct offsets, enum values), it
+  cites its header and is validated by the boot anchors, which fail
+  loudly on layout drift.
 * Colors come from PyBoy's renderer and may differ slightly from SameBoy;
   layout and placement are what the frames are for.  The dialogue-box frame
   (`03-*`) is the ground-truth check for camera-scroll overlay alignment,

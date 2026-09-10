@@ -1,4 +1,4 @@
-#pragma bank 3
+#pragma bank 5
 
 #include "world.h"
 #include "actor.h"
@@ -24,6 +24,7 @@ void world_patrol_slot_banked(void)
     uint8_t entry, target_x, target_y;
     uint8_t blocked, i;
     uint8_t tile;
+    uint8_t new_step = 0, v_lo = 0, v_hi = 0;
 
     g_patrol_outcome = 0;
 
@@ -81,12 +82,67 @@ void world_patrol_slot_banked(void)
         return;
     }
 
-    entry = (ai_type_v == AI_PATROL_CIRCLE) ?
-        s_patrol_circle[ai_step_v & 3] :
-        s_patrol_line[ai_step_v & 7];
-    facing_v  = (uint8_t)(entry >> 4);
-    target_x = (uint8_t)(spawn_x_v + (entry & 3) - 1);
-    target_y = (uint8_t)(spawn_y_v + ((entry >> 2) & 3) - 1);
+    if (ai_type_v == AI_CHASE) {
+        /* Chase: one greedy step toward the player each AI tick (whole
+         * scene is the zone).  Falls through to the shared walkability,
+         * encounter, and commit blocks below; ai_step is unused. */
+        uint8_t px;
+        uint8_t py;
+        uint8_t dx;
+        uint8_t dy;
+        px = g_patrol_world->player.position.x;
+        py = g_patrol_world->player.position.y;
+        dx = (px >= x_v) ? (uint8_t)(px - x_v) : (uint8_t)(x_v - px);
+        dy = (py >= y_v) ? (uint8_t)(py - y_v) : (uint8_t)(y_v - py);
+        if (dx == 0 && dy == 0) {
+            bp[ACTOR_OFFSET(ai_timer)] = PATROL_STEP_INTERVAL;
+            return;
+        }
+        if (dx > dy) {
+            target_y = y_v;
+            if (px >= x_v) {
+                target_x = (uint8_t)(x_v + 1);
+                facing_v = DIRECTION_RIGHT;
+            } else {
+                target_x = (uint8_t)(x_v - 1);
+                facing_v = DIRECTION_LEFT;
+            }
+        } else {
+            target_x = x_v;
+            if (py >= y_v) {
+                target_y = (uint8_t)(y_v + 1);
+                facing_v = DIRECTION_DOWN;
+            } else {
+                target_y = (uint8_t)(y_v - 1);
+                facing_v = DIRECTION_UP;
+            }
+        }
+    } else if (ai_type_v == AI_PATROL_VERT) {
+        /* Vertical patrol: bounce up/down AI_PATROL_VERT_TILES tiles
+         * from spawn.  ai_step bit 0 = direction (0 = up, 1 = down);
+         * the bit persists across steps and flips at a bound or a
+         * blocked path. */
+        uint8_t dir = ai_step_v & 1;
+        v_lo = (spawn_y_v >= AI_PATROL_VERT_TILES) ?
+            (uint8_t)(spawn_y_v - AI_PATROL_VERT_TILES) : 0;
+        v_hi = (uint8_t)(spawn_y_v + AI_PATROL_VERT_TILES);
+        if ((dir == 0 && y_v <= v_lo) || (dir != 0 && y_v >= v_hi)) {
+            dir ^= 1;
+        }
+        new_step = (uint8_t)((ai_step_v & 0xFE) | dir);
+        facing_v = (dir == 0) ? DIRECTION_UP : DIRECTION_DOWN;
+        target_x = x_v;
+        /* An up-step implies y > v_lo >= 0 (no underflow); a down-step
+         * implies y < v_hi <= spawn+3 (no overflow). */
+        target_y = (dir == 0) ? (uint8_t)(y_v - 1) : (uint8_t)(y_v + 1);
+    } else {
+        entry = (ai_type_v == AI_PATROL_CIRCLE) ?
+            s_patrol_circle[ai_step_v & 3] :
+            s_patrol_line[ai_step_v & 7];
+        facing_v  = (uint8_t)(entry >> 4);
+        target_x = (uint8_t)(spawn_x_v + (entry & 3) - 1);
+        target_y = (uint8_t)(spawn_y_v + ((entry >> 2) & 3) - 1);
+    }
 
     if (target_x == x_v && target_y == y_v) {
         bp[ACTOR_OFFSET(facing)]   = facing_v;
@@ -141,7 +197,11 @@ void world_patrol_slot_banked(void)
     }
 
     if (blocked) {
-        bp[ACTOR_OFFSET(ai_step)]  = (uint8_t)(ai_step_v + 1);
+        /* Blocked paths flip the vertical patrol instead of advancing
+         * the pattern step (which would corrupt its direction bit). */
+        bp[ACTOR_OFFSET(ai_step)] =
+            (ai_type_v == AI_PATROL_VERT) ? (uint8_t)(ai_step_v ^ 1) :
+            (uint8_t)(ai_step_v + 1);
         bp[ACTOR_OFFSET(ai_timer)] = PATROL_STEP_INTERVAL;
         return;
     }
@@ -157,7 +217,8 @@ void world_patrol_slot_banked(void)
         return;
     }
 
-    bp[ACTOR_OFFSET(ai_step)]       = (uint8_t)(ai_step_v + 1);
+    bp[ACTOR_OFFSET(ai_step)]       =
+        (ai_type_v == AI_PATROL_VERT) ? new_step : (uint8_t)(ai_step_v + 1);
     bp[ACTOR_OFFSET(move_state)]    = MOVE_STATE_MOVING;
     bp[ACTOR_OFFSET(move_target_x)] = target_x;
     bp[ACTOR_OFFSET(move_target_y)] = target_y;
