@@ -74,40 +74,175 @@ function levelEditorApiPlugin(): Plugin {
           typeof id === 'string' && /^[A-Za-z0-9_]+$/.test(id);
 
         // Scene id registry (levels/registry.json): single source of
-        // truth for real-scene ids.  ensureRegistryEntry assigns the next
-        // dense id on first save of an unknown level; ids are append-only
-        // and never reused (deleted levels tombstone, protecting saves).
-        // TEST names/ids are refused — the TEST block is fixed.
+        // truth for real-scene ids.  Ids are append-only and never reused
+        // (deleted levels tombstone into _retired, protecting saves);
+        // every write is atomic (tmp + rename); the schema is versioned.
+        // TEST names are refused (the fixed 240+ block).
         const REGISTRY_REL = path.join('levels', 'registry.json');
-        const readRegistry = () => JSON.parse(
-          fs.readFileSync(path.join(repoRoot, REGISTRY_REL), 'utf-8'));
-        const ensureRegistryEntry = (sid: string): number => {
-          if (!/^[a-z][a-z0-9_]*$/.test(sid)) {
+        const REGISTRY_VERSION = 1;
+        const registryAbs = () => path.join(repoRoot, REGISTRY_REL);
+        const levelAbs = (id: string) => path.join(repoRoot, 'levels', `${id}.json`);
+
+        /** Atomic JSON write: write a sibling .tmp then rename over the
+         *  target, so a crash can never leave a half-written file (the
+         *  registry must never be corrupted). */
+        const writeJsonAtomic = (abs: string, obj: unknown) => {
+          fs.mkdirSync(path.dirname(abs), { recursive: true });
+          const tmp = `${abs}.tmp`;
+          fs.writeFileSync(tmp, JSON.stringify(obj, null, 2) + '\n', 'utf-8');
+          fs.renameSync(tmp, abs);
+        };
+
+        const readRegistry = () => {
+          const reg = JSON.parse(fs.readFileSync(registryAbs(), 'utf-8'));
+          const v = typeof reg.version === 'number' ? reg.version : 0;
+          if (v > REGISTRY_VERSION) {
+            throw new Error(
+              `registry version ${v} is not supported (this editor understands ${REGISTRY_VERSION}); update the editor or restore an older registry`);
+          }
+          reg.version = v || REGISTRY_VERSION;   // upgraded on next write
+          reg.scenes = reg.scenes || {};
+          reg._retired = reg._retired || {};
+          reg._test_base = reg._test_base ?? 240;
+          return reg;
+        };
+        const writeRegistry = (reg: any) => writeJsonAtomic(registryAbs(), reg);
+
+        const validateSceneId = (sid: unknown): string => {
+          if (typeof sid !== 'string' || !/^[a-z][a-z0-9_]*$/.test(sid)) {
             throw new Error(
               `invalid scene id '${sid}': lowercase letters, digits and underscores, starting with a letter`);
           }
-          if (sid.startsWith('test_')) {
+          if ((sid as string).startsWith('test_')) {
             throw new Error(
               `scene id '${sid}' is reserved for harness fixtures (TEST block)`);
           }
-          const reg = readRegistry();
-          const scenes = reg.scenes || {};
-          if (typeof scenes[sid] === 'number') return scenes[sid];
-          const used: number[] = Object.values(scenes).filter(
+          return sid as string;
+        };
+
+        const nextSceneId = (reg: any): number => {
+          const used: number[] = Object.values(reg.scenes).filter(
             (v): v is number => typeof v === 'number');
-          const retired: number[] = Object.values(reg._retired || {}).filter(
+          const retired: number[] = Object.values(reg._retired).filter(
             (v): v is number => typeof v === 'number');
-          const testBase: number = reg._test_base ?? 240;
           const next = [...used, ...retired, -1].reduce((a, b) => Math.max(a, b), -1) + 1;
-          if (next >= testBase) {
+          if (next >= reg._test_base) {
             throw new Error(
-              `scene id space exhausted (next ${next} hits TEST block at ${testBase})`);
+              `scene id space exhausted (next ${next} hits the TEST block at ${reg._test_base})`);
           }
-          scenes[sid] = next;
-          reg.scenes = scenes;
-          fs.writeFileSync(path.join(repoRoot, REGISTRY_REL),
-            JSON.stringify(reg, null, 2) + '\n', 'utf-8');
           return next;
+        };
+
+        /** Engine-wired guard: a scene whose MAP_/SCENE_ symbol appears in
+         *  hand-written C cannot be renamed or deleted from the editor (the
+         *  C references would break the build).  The generated id header is
+         *  excluded — it defines every scene and would always match. */
+        const cWiredScene = (sid: string): string[] => {
+          const upper = sid.toUpperCase();
+          const re = new RegExp(`\\b(?:MAP|SCENE)_${upper}\\b`);
+          const hits: string[] = [];
+          const walk = (dir: string) => {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, entry.name);
+              if (entry.isDirectory()) { walk(p); continue; }
+              if (!/\.(c|h)$/.test(entry.name)) continue;
+              if (entry.name === 'scene_ids_generated.h') continue;
+              if (re.test(fs.readFileSync(p, 'utf-8'))) {
+                hits.push(path.relative(repoRoot, p));
+              }
+            }
+          };
+          try { walk(path.join(repoRoot, 'src')); } catch { /* no src */ }
+          return hits;
+        };
+
+        /** Rewrite target_scene old->new (rename) or remove it (delete)
+         *  across every real level file.  Returns the number of exits
+         *  changed. */
+        const retargetExits = (oldId: string, newId: string | null): number => {
+          let changed = 0;
+          for (const f of fs.readdirSync(path.join(repoRoot, 'levels'))) {
+            if (!f.endsWith('.json') || f === 'registry.json') continue;
+            const abs = path.join(repoRoot, 'levels', f);
+            let data: any;
+            try { data = JSON.parse(fs.readFileSync(abs, 'utf-8')); } catch { continue; }
+            if (data.id === oldId) continue;   // the level being renamed/deleted
+            if (!Array.isArray(data.exits)) continue;
+            let touched = false;
+            for (const e of data.exits) {
+              if (e && e.target_scene === oldId) {
+                touched = true;
+                if (newId === null) { e.__remove = true; } else { e.target_scene = newId; }
+              }
+            }
+            if (touched) {
+              if (newId === null) data.exits = data.exits.filter((e: any) => !e.__remove);
+              writeJsonAtomic(abs, data);
+              changed++;
+            }
+          }
+          return changed;
+        };
+
+        const saveRealLevel = (idRaw: unknown, previousIdRaw: unknown, data: any): number => {
+          const id = validateSceneId(idRaw);
+          const reg = readRegistry();
+          const previousId = previousIdRaw ? validateSceneId(previousIdRaw) : null;
+
+          if (previousId && previousId !== id) {
+            // RENAME: preserve the numeric scene id (saves + references stay
+            // valid), rename the file, and rewire exit targets everywhere.
+            if (typeof reg.scenes[previousId] !== 'number') {
+              throw new Error(`cannot rename '${previousId}': it has no scene id (save it first)`);
+            }
+            if (typeof reg.scenes[id] === 'number') {
+              throw new Error(`cannot rename to '${id}': that scene id is already in use`);
+            }
+            const wired = cWiredScene(previousId);
+            if (wired.length) {
+              throw new Error(
+                `scene '${previousId}' is referenced in C (${wired.join(', ')}); it cannot be renamed from the editor`);
+            }
+            reg.scenes[id] = reg.scenes[previousId];
+            delete reg.scenes[previousId];
+            writeJsonAtomic(levelAbs(id), data);
+            try { fs.unlinkSync(levelAbs(previousId)); } catch { /* absent */ }
+            retargetExits(previousId, id);
+            writeRegistry(reg);
+            return reg.scenes[id];
+          }
+
+          if (typeof reg.scenes[id] !== 'number') {
+            reg.scenes[id] = nextSceneId(reg);
+          }
+          writeJsonAtomic(levelAbs(id), data);
+          writeRegistry(reg);
+          return reg.scenes[id];
+        };
+
+        const deleteRealLevel = (idRaw: unknown): { id: string; scene_id: number; cleared: number } => {
+          const id = validateSceneId(idRaw);
+          const reg = readRegistry();
+          if (typeof reg.scenes[id] !== 'number') {
+            throw new Error(`'${id}' is not a registered level`);
+          }
+          const wired = cWiredScene(id);
+          if (wired.length) {
+            throw new Error(
+              `scene '${id}' is referenced in C (${wired.join(', ')}); it cannot be deleted from the editor`);
+          }
+          // 1. retire the id (never reused) and persist first, so a crash
+          //    can never leave the id free for reassignment.
+          const sceneId = reg.scenes[id];
+          reg._retired[id] = sceneId;
+          delete reg.scenes[id];
+          writeRegistry(reg);
+          // 2. clear exits that targeted it (deleting a referenced level is
+          //    allowed; the dangling links go away).
+          const cleared = retargetExits(id, null);
+          // 3. remove the file last.
+          try { fs.unlinkSync(levelAbs(id)); } catch { /* absent */ }
+          return { id, scene_id: sceneId, cleared };
         };
 
         // Live disk reads (no editor rebuild needed after editing JSON by
@@ -532,7 +667,7 @@ function levelEditorApiPlugin(): Plugin {
           req.on('data', chunk => { body += chunk; });
           req.on('end', () => {
             try {
-              const { id, category, data } = JSON.parse(body);
+              const { id, category, data, previousId } = JSON.parse(body);
               if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
               if (category === 'screens') {
                 // Screens route through SCREEN_ID_TO_PATH only ('title');
@@ -545,23 +680,32 @@ function levelEditorApiPlugin(): Plugin {
                 res.end(JSON.stringify({ success: true, path: targetPath }));
                 return;
               }
-              const targetPath = path.join(repoRoot, 'levels', `${id}.json`);
-              fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), 'utf-8');
-              // Scene registry: first save of an unknown level id assigns
-              // the next dense scene id (append-only, never reused).
-              // Humans add levels by saving in the editor — no agent, no
-              // header edits.  Atomic with the save: both land or neither.
-              let sceneId: number | null = null;
-              try {
-                sceneId = ensureRegistryEntry(id);
-              } catch (regErr: any) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, error: String(regErr.message || regErr) }));
-                return;
-              }
+              // Real levels: registry-backed, atomic, rename-aware.  This
+              // assigns the next dense scene id on first save, preserves the
+              // numeric id on rename (rewiring exits), and never reuses ids.
+              const sceneId = saveRealLevel(id, previousId ?? null, data);
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, path: targetPath, scene_id: sceneId }));
+              res.end(JSON.stringify({ success: true, path: levelAbs(id), scene_id: sceneId }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Delete a real level: retire its id (never reused), clear every
+        // exit that targeted it, unlink the file.  Engine-wired scenes are
+        // refused (their MAP_/SCENE_ symbols live in hand-written C).
+        if (req.method === 'POST' && req.url === '/api/delete-level') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id } = JSON.parse(body);
+              const result = deleteRealLevel(id);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, ...result }));
             } catch (err: any) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: err.message }));

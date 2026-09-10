@@ -69,7 +69,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(M
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check registry-check editor clean
 
 all: $(TARGET)
 
@@ -271,6 +271,12 @@ dialogues:
 dialogues-check:
 	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ --check
 	@python3 tools/level_compiler/validate.py --dialogue-refs
+
+# Registry invariants (levels/registry.json contract): versioning,
+# append-only ids, never-reuse of retired ids, registry/file agreement.
+# Locks the contract the editor's save/rename/delete operations satisfy.
+registry-check:
+	@python3 tools/test_registry.py
 
 src/screens/tutorial_text_generated.h src/screens/tutorial_count_generated.h &: screens/tutorial.json
 	@python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/

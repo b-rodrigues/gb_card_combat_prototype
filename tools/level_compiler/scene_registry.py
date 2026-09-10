@@ -18,6 +18,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 REGISTRY_FILENAME = "registry.json"
+# Current on-disk schema version.  Bump when the registry shape changes;
+# load_registry accepts older versions only via an explicit migration path.
+REGISTRY_VERSION = 1
 
 # Fixed harness-test fixture names.  Values come from the registry's
 # _test_base (a fixed block that never moves); only the NAMES live here.
@@ -48,6 +51,13 @@ def load_registry():
         raise SystemExit(
             f"ERROR: cannot read {path}: {exc}. Restore it from git "
             f"(it holds every scene id assignment).")
+    version = data.get("version", 0)
+    if not isinstance(version, int) or version > REGISTRY_VERSION:
+        raise SystemExit(
+            f"ERROR: {path}: registry version {version!r} is not supported "
+            f"by this build (understands up to {REGISTRY_VERSION}). Update "
+            f"the toolchain or restore an older registry from git.")
+    # version 0 (pre-version) is accepted and upgraded on the next write.
     scenes = data.get("scenes")
     if not isinstance(scenes, dict) or not scenes:
         raise SystemExit(f"ERROR: {path} has no 'scenes' mapping.")
@@ -85,8 +95,9 @@ def load_registry():
             raise SystemExit(
                 f"ERROR: {path}: real id {num} collides with the TEST block "
                 f"(base {test_base}). Move the TEST block first.")
-    return {"scenes": dict(scenes), "retired": dict(retired),
-            "test_base": test_base}
+    return {"version": version if version else REGISTRY_VERSION,
+            "scenes": dict(scenes),
+            "retired": dict(retired), "test_base": test_base}
 
 
 def test_scene_ids(registry=None):

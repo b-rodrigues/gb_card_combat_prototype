@@ -7,7 +7,7 @@ import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
-import { downloadLevelJson, saveLevelToServer, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
+import { downloadLevelJson, saveLevelToServer, deleteLevel, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { fetchEnemyTypeList } from './io/combatArt';
 import { FilterCombo } from './FilterCombo';
@@ -184,8 +184,13 @@ export const App: React.FC = () => {
 
   const handleSaveToServer = async () => {
     setNotification({ message: 'Saving level to disk...', type: 'info' });
-    const res = await saveLevelToServer(level);
+    // currentLevelId is the id the level was loaded under; if the user
+    // edited the Scene ID it differs, which signals a rename (the server
+    // preserves the numeric scene id and rewires exits).
+    const previousId = currentLevelId && currentLevelId !== level.id ? currentLevelId : null;
+    const res = await saveLevelToServer(level, previousId);
     if (res.success) {
+      if (previousId) setCurrentLevelId(level.id);
       setNotification({ message: `Successfully saved ${level.id} to ${res.path}!`, type: 'success' });
       // Refresh the catalogue so newly created ids appear without a rebuild.
       try {
@@ -212,15 +217,59 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleDeleteLevel = async () => {
+    if (level.isScreen) return;
+    if (!confirm(
+      `Delete level '${level.id}'?\n\n` +
+      `Its scene id is retired (never reused) and any exit in other levels ` +
+      `that targets it is cleared. This cannot be undone.`
+    )) return;
+    const res = await deleteLevel(level.id);
+    if (!res.success) {
+      setNotification({ message: `Delete failed: ${res.error}`, type: 'error' });
+      return;
+    }
+    setNotification({
+      message: `Deleted '${level.id}' (scene id retired${res.cleared ? `, ${res.cleared} exit(s) cleared` : ''}).`,
+      type: 'success',
+    });
+    try {
+      const items = await fetchLevelList();
+      const remaining = items.filter(
+        (it) => it.category === 'levels' && it.id !== level.id);
+      const next = remaining[0];
+      if (next) {
+        const data = await fetchLevelData('levels', next.id);
+        pushState(levelDataToEditor(data));
+        setCurrentLevelId(next.id);
+      } else {
+        handleCreateNewLevel();
+      }
+      const fresh: ExistingLevelItem[] = [];
+      for (const it of items) {
+        if (it.id === level.id && it.category === 'levels') continue;
+        try {
+          fresh.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                       scene_id: it.scene_id ?? null });
+        } catch { /* skip unreadable */ }
+      }
+      setLevelItems(fresh);
+    } catch {
+      // Catalogue refresh is best-effort; the delete itself succeeded.
+    }
+  };
+
   const handleCompileRom = async () => {
     setIsCompiling(true);
     setNotification({ message: 'Saving level & compiling Game Boy ROMs (make debug + release, parallel)...', type: 'info' });
-    const saved = await saveLevelToServer(level);
+    const previousId = currentLevelId && currentLevelId !== level.id ? currentLevelId : null;
+    const saved = await saveLevelToServer(level, previousId);
     if (!saved.success) {
       setIsCompiling(false);
       setNotification({ message: `Save failed, ROMs not compiled: ${saved.error}`, type: 'error' });
       return;
     }
+    if (previousId) setCurrentLevelId(level.id);
     const res = await compileRom();
     setIsCompiling(false);
     if (res.success) {
@@ -1080,6 +1129,8 @@ export const App: React.FC = () => {
               sceneOptions={levelItems
                 .filter((l) => l.category === 'levels')
                 .map(({ id, name, scene_id }) => ({ id, name, scene_id: scene_id ?? null }))}
+              sceneId={(levelItems.find((l) => l.id === currentLevelId)?.scene_id) ?? null}
+              onDeleteLevel={handleDeleteLevel}
             />
           </aside>
           </>

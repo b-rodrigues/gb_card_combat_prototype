@@ -176,6 +176,26 @@ def validate_registry_consistency(levels_dir=None):
     return errors
 
 
+def registry_warnings(levels_dir=None):
+    """Non-fatal registry hygiene warnings: a retired id whose level file
+    still exists (an interrupted delete — the file is dead weight and the
+    id must never be reused)."""
+    from pathlib import Path as _Path
+    warnings = []
+    try:
+        registry = load_registry()
+    except SystemExit:
+        return warnings
+    levels_dir = _Path(levels_dir) if levels_dir else (
+        _Path(__file__).resolve().parent.parent.parent / "levels")
+    for sid in sorted(registry["retired"]):
+        if (levels_dir / f"{sid}.json").exists():
+            warnings.append(
+                f"Retired scene '{sid}' still has levels/{sid}.json; delete "
+                f"the stale file (the id is retired and never reused).")
+    return warnings
+
+
 def load_tilesets(tilesets_dir=None):
     """Load all available tilesets from standard directories."""
     tilesets = {}
@@ -577,6 +597,8 @@ def main():
     # live registry entry needs its file.  This is the loud failure for
     # unregistered levels (fix: save the level in the editor).
     if any(not sid.startswith("test_") for sid in all_level_ids):
+        for warn in registry_warnings():
+            print(f"WARNING: {warn}")
         for err in validate_registry_consistency():
             print(f"ERROR: {err}")
             overall_success = False

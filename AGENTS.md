@@ -1748,6 +1748,14 @@ exits via the Target Scene combobox → compile.  Rules for agents:
   indexing valid); never compact or reuse them.
 * A new level is unreachable until some exit targets it — the content
   sweep fails loudly on unreachable levels by design, not by accident.
+* **Registry is future-proofed**: `levels/registry.json` carries a
+  `version` (currently 1); ids are append-only and never reused (deleted
+  ids tombstone into `_retired`); every write is atomic (tmp + rename);
+  `make registry-check` locks the contract.  The editor's rename keeps the
+  **numeric scene id** and rewires referencing exits; delete retires the
+  id and clears exits that targeted it.  Scenes whose `MAP_*`/`SCENE_*`
+  symbols appear in hand-written C (e.g. `field`) cannot be renamed or
+  deleted from the editor.
 
 ## 42.3 Human-authored text: dialogue & tutorial (data-driven)
 

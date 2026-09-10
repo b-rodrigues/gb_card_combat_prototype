@@ -42,6 +42,10 @@ interface InspectorProps {
   // is always picked from real data, never typed blind. scene_id null
   // means unregistered (save the level to assign one).
   sceneOptions: Array<{ id: string; name: string; scene_id: number | null }>;
+  /** Numeric scene id assigned to the open level (null = unregistered). */
+  sceneId?: number | null;
+  /** Delete the open level (retires its id, clears referring exits). */
+  onDeleteLevel?: () => void;
 }
 
 // BGM preview files rendered by tools/render_music_preview.py
@@ -146,6 +150,8 @@ export const Inspector: React.FC<InspectorProps> = ({
   onUpdateRegion,
   onDeleteRegion,
   sceneOptions,
+  sceneId,
+  onDeleteLevel,
 }) => {
   const isTitleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title'));
   const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'title'>('context');
@@ -277,8 +283,16 @@ export const Inspector: React.FC<InspectorProps> = ({
               <input
                 type="text"
                 value={level.id}
+                disabled={level.isScreen}
                 onChange={(e) => onUpdateLevelMeta({ id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
               />
+              {!level.isScreen && (
+                <span style={{ fontSize: 11, color: '#888' }}>
+                  {sceneId !== null && sceneId !== undefined
+                    ? `scene id ${sceneId} — renaming on save keeps the id and rewires exits`
+                    : 'not registered yet — saving assigns the next scene id'}
+                </span>
+              )}
             </div>
             <div className="form-group">
               <label>Scene Name</label>
@@ -335,6 +349,19 @@ export const Inspector: React.FC<InspectorProps> = ({
                 onChange={(e) => onUpdateLevelMeta({ mapId: e.target.value })}
               />
             </div>
+            {!level.isScreen && sceneId !== null && sceneId !== undefined && onDeleteLevel && (
+              <div className="form-group">
+                <label style={{ color: '#a66' }}>Danger Zone</label>
+                <button
+                  className="btn btn-sm"
+                  style={{ background: '#7a2020', color: '#fff' }}
+                  onClick={onDeleteLevel}
+                  title="Retires the scene id (never reused) and clears exits that target it"
+                >
+                  🗑 Delete Level
+                </button>
+              </div>
+            )}
           </div>
         )}
 
