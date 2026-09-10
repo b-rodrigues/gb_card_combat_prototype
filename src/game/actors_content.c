@@ -208,7 +208,7 @@ static const WorldActorDefinition g_south_field_actors[] = {
 
 static const WorldActorDefinition g_forestbis_actors[] = {
     {
-        14, ENTITY_ID_BAT, 10, 9, DIRECTION_DOWN,
+        15, ENTITY_ID_BAT, 10, 9, DIRECTION_DOWN,
         ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
         'B', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 8, 8, 8, CURRENCY_ID_GOLD,
         0, 0,

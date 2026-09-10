@@ -245,8 +245,16 @@ function levelEditorApiPlugin(): Plugin {
           // 2. clear exits that targeted it (deleting a referenced level is
           //    allowed; the dangling links go away).
           const cleared = retargetExits(id, null);
-          // 3. remove the file last.
-          try { fs.unlinkSync(levelAbs(id)); } catch { /* absent */ }
+          // 3. remove the file last.  Verify it is really gone: a silent
+          //    unlink failure would leave a retired id with a lingering
+          //    file, which then hard-fails the next compile and keeps dead
+          //    actor ids reserved.
+          try { fs.unlinkSync(levelAbs(id)); } catch { /* already absent */ }
+          if (fs.existsSync(levelAbs(id))) {
+            throw new Error(
+              `retired '${id}' but could not delete levels/${id}.json; ` +
+              `remove it manually before recompiling`);
+          }
           return { id, scene_id: sceneId, cleared };
         };
 
@@ -304,9 +312,16 @@ function levelEditorApiPlugin(): Plugin {
             const exclude = u.searchParams.get('exclude') || '';
             const used: Array<{ id: number; level: string }> = [];
             const dir = path.join(repoRoot, 'levels');
+            // Retired ids are tombstoned and their (stale) files must not
+            // reserve actor ids — otherwise a leftover file silently blocks
+            // reuse and collides with the level the author just added.
+            let retired: Record<string, unknown> = {};
+            try { retired = readRegistry()._retired || {}; } catch { /* registry unreadable */ }
             for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
               const levelId = f.replace(/\.json$/, '');
+              if (levelId === 'registry') continue;
               if (exclude && levelId === exclude) continue;
+              if (levelId in retired) continue;
               const data = readJsonFile(path.join('levels', f));
               for (const o of (data.objects || []) as Array<{ properties?: Record<string, unknown> }>) {
                 const aid = ((o.properties || {}) as Record<string, unknown>).actor_id;
@@ -1082,6 +1097,31 @@ function levelEditorApiPlugin(): Plugin {
               res.end(JSON.stringify({ success: false, error: err.message }));
             }
           });
+          return;
+        }
+
+        // Clean retired orphans: remove every levels/<id>.json whose id is
+        // tombstoned in the registry (a delete whose unlink did not stick,
+        // e.g. an interrupted editor delete or a restored tracked file).
+        // Such a file hard-fails the next compile and keeps its actor ids
+        // reserved, so this is a one-click repair.
+        if (req.method === 'POST' && req.url === '/api/clean-retired-orphans') {
+          try {
+            const retired = readRegistry()._retired || {};
+            const removed: string[] = [];
+            for (const sid of Object.keys(retired)) {
+              if (!isSafeId(sid)) continue;   // defensive
+              const p = levelAbs(sid);
+              if (fs.existsSync(p)) {
+                fs.unlinkSync(p);
+                removed.push(sid);
+              }
+            }
+            sendJson({ success: true, removed });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
           return;
         }
 

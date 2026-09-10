@@ -117,11 +117,13 @@ def main():
         check("unregistered file flagged",
               any("orphan" in e for e in validate_registry_consistency(Path(tmp) / 'levels')))
 
-        # Retired id with a lingering file -> warning.
+        # Retired id with a lingering file -> hard error (the stale file
+        # would block Compile ROM and keep its actor ids reserved).
         write(tmp, {"field": 0}, retired={"gone": 9}, version=1,
               level_ids=("field", "gone"))
-        check("retired lingering file warns",
-              any("gone" in w for w in registry_warnings(Path(tmp) / 'levels')))
+        check("retired lingering file errors",
+              any("gone" in e and "retired" in e.lower()
+                  for e in validate_registry_consistency(Path(tmp) / 'levels')))
 
         # next-id assignment never reuses a retired id.
         write(tmp, {"field": 0}, retired={"gone": 1}, version=1)

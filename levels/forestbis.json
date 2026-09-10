@@ -452,7 +452,7 @@
         "max_hp": 8,
         "gold_reward": 8,
         "reward_currency": "CURRENCY_ID_GOLD",
-        "actor_id": 14
+        "actor_id": 15
       }
     }
   ],

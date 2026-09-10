@@ -7,7 +7,7 @@ import { EditLayer } from './LayerPanel';
 import { TilesetPalette } from './TilesetPalette';
 import { Inspector } from './Inspector';
 import { MapCanvas } from './MapCanvas';
-import { downloadLevelJson, saveLevelToServer, deleteLevel, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
+import { downloadLevelJson, saveLevelToServer, deleteLevel, cleanRetiredOrphans, compileRom, runGame, fetchUsedActorIds } from './io/saveLevel';
 import { fetchLevelList, fetchLevelData, refreshTilesetsFromServer } from './io/serverLevels';
 import { fetchEnemyTypeList } from './io/combatArt';
 import { fetchEntityTypeList } from './io/entityTypes';
@@ -273,6 +273,37 @@ export const App: React.FC = () => {
       setLevelItems(fresh);
     } catch {
       // Catalogue refresh is best-effort; the delete itself succeeded.
+    }
+  };
+
+  // One-click repair for a delete whose unlink did not stick: removes every
+  // levels/<id>.json whose id is retired.  Such a file hard-fails Compile
+  // ROM and keeps its actor ids reserved (see the Inspector banner).
+  const handleCleanRetiredOrphans = async () => {
+    const res = await cleanRetiredOrphans();
+    if (!res.success) {
+      setNotification({ message: `Clean retired orphans failed: ${res.error}`, type: 'error' });
+      return;
+    }
+    const removed = res.removed || [];
+    setNotification({
+      message: removed.length
+        ? `Removed retired orphan file(s): ${removed.join(', ')}. Recompile.`
+        : 'No retired orphan files found.',
+      type: removed.length ? 'success' : 'info',
+    });
+    try {
+      const items = await fetchLevelList();
+      const fresh: ExistingLevelItem[] = [];
+      for (const it of items) {
+        try {
+          fresh.push({ id: it.id, name: it.name, data: await fetchLevelData(it.category, it.id), category: it.category,
+                       scene_id: it.scene_id ?? null });
+        } catch { /* skip unreadable */ }
+      }
+      setLevelItems(fresh);
+    } catch {
+      // best-effort refresh
     }
   };
 
@@ -1201,6 +1232,7 @@ export const App: React.FC = () => {
                 .map(({ id, name, scene_id }) => ({ id, name, scene_id: scene_id ?? null }))}
               sceneId={(levelItems.find((l) => l.id === currentLevelId)?.scene_id) ?? null}
               onDeleteLevel={handleDeleteLevel}
+              onCleanRetiredOrphans={handleCleanRetiredOrphans}
             />
           </aside>
           </>

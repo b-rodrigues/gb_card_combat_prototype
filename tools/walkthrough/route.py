@@ -88,11 +88,13 @@ class Scene:
     def walkable(self, x, y, avoid=None):
         if not (0 <= x < self.width and 0 <= y < self.height):
             return False
+        # `avoid` first: callers that must not step onto a portal (walking
+        # past one exit to reach another) add other exit cells to avoid.
+        if avoid and (x, y) in avoid:
+            return False
         if (x, y) in self.exit_cells:
             return True
         if not self.grid[y][x]:
-            return False
-        if avoid and (x, y) in avoid:
             return False
         return True
 
@@ -173,24 +175,29 @@ class Planner:
                 q.append(nxt)
         return None
 
-    def path(self, scene_name, start, goal):
+    def path(self, scene_name, start, goal, avoid_exits=False):
         """Path within one scene.  `avoid` = patrol cells + blocking
         actors, EXCEPT cells that are the start/goal themselves (the
         start may sit inside a patrol box right after boot, and the
-        goal may be a bump-adjacent cell next to a blocking actor)."""
+        goal may be a bump-adjacent cell next to a blocking actor).
+        `avoid_exits` also routes AROUND every exit gate except the goal
+        and start, so a walk to one gate never warps through another."""
         scene = self.scenes[scene_name]
         avoid = scene.patrol_blocked() | scene.blocked_actors
+        if avoid_exits:
+            avoid |= (scene.exit_cells - {(start[0], start[1]), (goal[0], goal[1])})
         avoid.discard(start)
         avoid.discard(goal)
         return self._bfs(scene, start, goal, avoid)
 
     def path_to_exit(self, scene_name, start, target_scene_name):
         """Path to the exit tile whose target_scene is target_scene_name.
-        Returns (path_to_exit_cell, exit)."""
+        Returns (path_to_exit_cell, exit).  Other exit gates are avoided
+        so the walk cannot accidentally cross a different portal."""
         scene = self.scenes[scene_name]
         for e in scene.exits:
             goal = (e["x"], e["y"])
-            path = self.path(scene_name, start, goal)
+            path = self.path(scene_name, start, goal, avoid_exits=True)
             if path is not None and e.get("target_scene") == target_scene_name:
                 return path, e
         return None, None
@@ -249,7 +256,7 @@ class Planner:
             cur = (e["target_x"], e["target_y"])
             scene_name = to_scene if e.get("target_scene") == to_scene \
                 else e["target_scene"]
-        path = self.path(scene_name, cur, goal)
+        path = self.path(scene_name, cur, goal, avoid_exits=True)
         if path is None:
             raise ValueError("route: no path %s:%s -> %s"
                              % (scene_name, cur, goal))

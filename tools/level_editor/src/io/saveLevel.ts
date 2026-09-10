@@ -52,6 +52,20 @@ export async function deleteLevel(id: string): Promise<{ success: boolean; clear
   }
 }
 
+/** Remove every levels/<id>.json whose id is retired (tombstoned).  A
+ *  leftover retired file hard-fails the next compile and keeps dead actor
+ *  ids reserved.  Returns the removed level ids. */
+export async function cleanRetiredOrphans(): Promise<{ success: boolean; removed?: string[]; error?: string }> {
+  try {
+    const res = await fetch('/api/clean-retired-orphans', { method: 'POST' });
+    const body = await res.json();
+    if (!res.ok || !body.success) throw new Error(body.error || `status ${res.status}`);
+    return body;
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 export async function fetchUsedActorIds(exclude?: string): Promise<Array<{ id: number; level: string }>> {
   const q = exclude ? `?exclude=${encodeURIComponent(exclude)}` : '';
   const res = await fetch(`/api/actor-ids${q}`);

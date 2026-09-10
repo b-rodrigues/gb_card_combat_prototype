@@ -49,6 +49,8 @@ interface InspectorProps {
   sceneId?: number | null;
   /** Delete the open level (retires its id, clears referring exits). */
   onDeleteLevel?: () => void;
+  /** Remove every level file whose scene id is retired (tombstoned). */
+  onCleanRetiredOrphans?: () => void;
 }
 
 // BGM preview files rendered by tools/render_music_preview.py
@@ -155,6 +157,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   sceneOptions,
   sceneId,
   onDeleteLevel,
+  onCleanRetiredOrphans,
 }) => {
   const isTitleScreen = !!(level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title'));
   const [tab, setTab] = useState<'context' | 'layers' | 'map' | 'title'>('context');
@@ -373,6 +376,17 @@ export const Inspector: React.FC<InspectorProps> = ({
                   title="Retires the scene id (never reused) and clears exits that target it"
                 >
                   🗑 Delete Level
+                </button>
+              </div>
+            )}
+            {!level.isScreen && onCleanRetiredOrphans && (
+              <div className="form-group">
+                <button
+                  className="btn btn-sm"
+                  onClick={onCleanRetiredOrphans}
+                  title="Delete every levels/<id>.json whose scene id is retired — a leftover file blocks Compile ROM and keeps its actor ids reserved"
+                >
+                  🧹 Clean retired orphans
                 </button>
               </div>
             )}

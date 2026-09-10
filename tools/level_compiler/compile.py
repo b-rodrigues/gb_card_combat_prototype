@@ -64,6 +64,13 @@ def scene_table_order(levels_by_id, registry=None):
     unknown = [s for s in sids
                if s not in registry["scenes"] and not s.startswith("test_")]
     if unknown:
+        retired = [s for s in unknown if s in registry.get("retired", {})]
+        if retired:
+            raise SystemExit(
+                f"ERROR: level file(s) {retired} belong to RETIRED scene "
+                f"ids (tombstoned, never reused). Delete the stale "
+                f"level file(s) — the editor's Map Info 'Clean retired "
+                f"orphans' removes them — then recompile.")
         raise SystemExit(
             f"ERROR: scene id(s) {unknown} have no registry entry. Open "
             f"each level in the editor and save it (the editor assigns "

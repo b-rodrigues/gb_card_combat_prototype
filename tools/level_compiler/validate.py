@@ -206,11 +206,19 @@ def validate_registry_consistency(levels_dir=None):
                 disk_ids.add(stem)
     except OSError as exc:
         return [f"Cannot list {levels_dir}: {exc}"]
+    retired = registry.get("retired", {})
     for sid in sorted(disk_ids - set(registry["scenes"])):
-        errors.append(
-            f"Level '{sid}' has no registry entry (no scene id assigned). "
-            f"Open it in the editor and save it — the editor assigns the "
-            f"next scene id on first save — then recompile.")
+        if sid in retired:
+            errors.append(
+                f"Level '{sid}' has a RETIRED scene id (tombstoned, never "
+                f"reused), but levels/{sid}.json still exists. Delete the "
+                f"stale file — the editor's Map Info 'Clean retired orphans' "
+                f"button removes every such file — then recompile.")
+        else:
+            errors.append(
+                f"Level '{sid}' has no registry entry (no scene id assigned). "
+                f"Open it in the editor and save it — the editor assigns the "
+                f"next scene id on first save — then recompile.")
     for sid in sorted(set(registry["scenes"]) - disk_ids):
         errors.append(
             f"Registry lists '{sid}' but levels/{sid}.json is missing. "
@@ -219,23 +227,10 @@ def validate_registry_consistency(levels_dir=None):
 
 
 def registry_warnings(levels_dir=None):
-    """Non-fatal registry hygiene warnings: a retired id whose level file
-    still exists (an interrupted delete — the file is dead weight and the
-    id must never be reused)."""
-    from pathlib import Path as _Path
-    warnings = []
-    try:
-        registry = load_registry()
-    except SystemExit:
-        return warnings
-    levels_dir = _Path(levels_dir) if levels_dir else (
-        _Path(__file__).resolve().parent.parent.parent / "levels")
-    for sid in sorted(registry["retired"]):
-        if (levels_dir / f"{sid}.json").exists():
-            warnings.append(
-                f"Retired scene '{sid}' still has levels/{sid}.json; delete "
-                f"the stale file (the id is retired and never reused).")
-    return warnings
+    """Non-fatal registry hygiene warnings (reserved for future checks; a
+    retired id whose file still exists is now a hard error in
+    validate_registry_consistency)."""
+    return []
 
 
 def load_tilesets(tilesets_dir=None):
