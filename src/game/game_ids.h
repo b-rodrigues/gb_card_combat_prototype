@@ -55,20 +55,12 @@
 #define EVENT_ID_MERCHANT_DELIVER (EVENT_ID_FIRST_GAME + 10)
 #define EVENT_ID_AMULET_PICKUP   (EVENT_ID_FIRST_GAME + 11)
 
-/* ── Dialogues (engine range: NONE=0; game range >= 0x80) ── */
-#define DIALOGUE_ID_MAYOR_GREETING    (DIALOGUE_ID_FIRST_GAME + 0)
-#define DIALOGUE_ID_GUARD_GREETING    (DIALOGUE_ID_FIRST_GAME + 1)
-#define DIALOGUE_ID_SHOPKEEPER_GREETING (DIALOGUE_ID_FIRST_GAME + 2)
-#define DIALOGUE_ID_MAYOR_INTRO       (DIALOGUE_ID_FIRST_GAME + 3)
-#define DIALOGUE_ID_GUARD_AFTER_MAYOR (DIALOGUE_ID_FIRST_GAME + 4)
-#define DIALOGUE_ID_QUEST_ACTIVE      (DIALOGUE_ID_FIRST_GAME + 5)
-#define DIALOGUE_ID_QUEST_COMPLETE    (DIALOGUE_ID_FIRST_GAME + 6)
-#define DIALOGUE_ID_QUEST_DONE        (DIALOGUE_ID_FIRST_GAME + 7)
-#define DIALOGUE_ID_MERCHANT_INTRO    (DIALOGUE_ID_FIRST_GAME + 8)
-#define DIALOGUE_ID_MERCHANT_THANKS   (DIALOGUE_ID_FIRST_GAME + 9)
-#define DIALOGUE_ID_AMULET_FOUND      (DIALOGUE_ID_FIRST_GAME + 10)
-#define DIALOGUE_ID_AMULET_NOTHING    (DIALOGUE_ID_FIRST_GAME + 11)
-#define DIALOGUE_ID_SIGNPOST          (DIALOGUE_ID_FIRST_GAME + 12)
+/* ── Dialogues (engine range: NONE=0; game range >= 0x80) ──
+ * Values come from the generated dialogue_ids_generated.h (single source
+ * of truth: the screens/dialogue JSON files, emitted by
+ * tools/screen_compiler/dialogue_compile.py).  Humans author dialogue
+ * text in the editor — never hand-allocate ids here. */
+#include "dialogue_ids_generated.h"
 
 /* Story flags.  Each maps to bit (id-1) of GameState.flags.bytes[].
  * STORY_FLAG_ID_COUNT is the exclusive upper bound passed to story_init(). */
@@ -105,7 +97,8 @@ typedef enum {
  * compile-time-asserted against the tables in the content files. */
 #define GAME_CONTENT_BANK 2
 #define GAME_EVENT_COUNT 12
-#define GAME_DIALOGUE_COUNT 13
+/* GAME_DIALOGUE_COUNT lives in the generated dialogue_ids_generated.h
+ * (emitted by dialogue_compile.py from the screens/dialogue files). */
 
 /* Frozen harness-test content (TEST_LEVELS, debug build only): the test
  * scenes/actors compile into ROM bank 4 (battle-art bank, which has the

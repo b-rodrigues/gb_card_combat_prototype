@@ -4,8 +4,12 @@ mgba CLI debugger transport for Game Boy RPG development harness.
 Uses mgba's command-line debugger (-d) via PTY with raw TTY mode.
 Authoritative bridge for Game Boy snapshot, telemetry, and screen inspection.
 """
-import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal, json
+import subprocess, pty, os, select, time, tty, termios, fcntl, re, signal, json, sys
 from pathlib import Path
+
+_TOOLS_DIR = Path(__file__).resolve().parent
+if str(_TOOLS_DIR / "screen_compiler") not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DIR / "screen_compiler"))
 
 _REPOROOT = Path(__file__).resolve().parent.parent
 
@@ -54,19 +58,29 @@ ENTITY_ID_MAP = {0: "NONE", 1: "PLAYER",
                  GAME_ID_BASE + 6: "MERCHANT", GAME_ID_BASE + 7: "AMULET",
                  GAME_ID_BASE + 8: "WIZARD", GAME_ID_BASE + 9: "SIGNPOST"}
 INTERACTION_ID_MAP = {0: "NONE", 1: "DIALOGUE", 2: "COMBAT", 3: "SHOP", 4: "SAVE"}
-DIALOGUE_ID_MAP = {0: "NONE",
-                   GAME_ID_BASE + 0: "MAYOR_GREETING",
-                   GAME_ID_BASE + 1: "GUARD_GREETING",
-                   GAME_ID_BASE + 2: "SHOPKEEPER_GREETING",
-                   GAME_ID_BASE + 3: "MAYOR_INTRO",
-                   GAME_ID_BASE + 4: "GUARD_AFTER_MAYOR",
-                   GAME_ID_BASE + 5: "QUEST_ACTIVE",
-                   GAME_ID_BASE + 6: "QUEST_COMPLETE",
-                   GAME_ID_BASE + 7: "QUEST_DONE",
-                   GAME_ID_BASE + 8: "MERCHANT_INTRO",
-                   GAME_ID_BASE + 9: "MERCHANT_THANKS",
-                   GAME_ID_BASE + 10: "AMULET_FOUND",
-                   GAME_ID_BASE + 11: "AMULET_NOTHING"}
+
+
+def _dialogue_id_map():
+    """DIALOGUE_ID_MAP derived from screens/dialogue/*.json (same
+    sorted-filename assignment as dialogue_compile.py).  Falls back to
+    {} (plus NONE) if the content is unreadable — callers render
+    UNKNOWN_<n> for unmapped ids."""
+    from dialogue_ids import dialogue_files, load_dialogue_json
+    out = {0: "NONE"}
+    try:
+        files = dialogue_files()
+    except OSError:
+        return out
+    for i, path in enumerate(files):
+        try:
+            data = load_dialogue_json(path)
+        except (OSError, ValueError):
+            continue
+        out[0x80 + i] = data["_id"].upper()
+    return out
+
+
+DIALOGUE_ID_MAP = _dialogue_id_map()
 BATTLE_ID_MAP = {0: "NONE", 1: "SLIME", 2: "BAT"}
 EVENT_TYPE_MAP = {
     0: "PLAYER_MOVED", 1: "COLLISION", 2: "ENCOUNTER_STARTED",

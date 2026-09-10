@@ -1749,6 +1749,35 @@ exits via the Target Scene combobox → compile.  Rules for agents:
 * A new level is unreachable until some exit targets it — the content
   sweep fails loudly on unreachable levels by design, not by accident.
 
+## 42.3 Human-authored text: dialogue & tutorial (data-driven)
+
+NPC dialogue and the title-menu tutorial slides are editor content, not
+C:
+
+* Dialogues: `screens/dialogue/<id>.json` (`id`, `speaker`, `lines[]`,
+  optional `completion_flag`).  Ids assign by sorted filename
+  (`dialogue_ids.py` → `DIALOGUE_ID_*` + `GAME_DIALOGUE_COUNT` in the
+  generated `dialogue_ids_generated.h`); nothing persists a numeric
+  dialogue id, so adding/renaming is safe.  `dialogue_compile.py` emits
+  `dialogue_content.c` (bank 2, same shape as before).
+* Tutorial: `screens/tutorial.json` → `tutorial_compile.py` emits
+  `tutorial_text_generated.h` (arrays, included once) +
+  `tutorial_count_generated.h` (count, included by `screen.h`).
+* The **editor** edits text only (Dialogue view: speaker + lines;
+  title tab: slides).  Flag/event/scenario wiring stays LLM-authored:
+  `completion_flag`, `EVENT_ACTION_*`, and `story` definitions are never
+  shown in the editor.  Completion flags are a subset of `GameState.flags`
+  (`src/game/game_ids.h` `STORY_FLAG_ID_*`); the compiler validates the
+  reference.
+* Gates: `make dialogues-check` (fresh-vs-committed + `validate.py
+  --dialogue-refs`: actor/event references resolve, dangling ids fail
+  loudly, unused dialogues warn).  `make screens-check` covers the
+  tutorial.  Text limits (speaker 11, line 20 staging / 18 render; slide
+  4 rows × 20) fail the compile loudly.
+* Speakers are currently wired individually per NPC (shopkeeper/merchant/
+  wizard carry empty `dialogue`; their greetings fire through events).
+  Assigning a dialogue to an NPC is the editor's Dialogue-ID dropdown.
+
 Rules:
 
 * Never point a scenario at a real scene; never let the editor list or

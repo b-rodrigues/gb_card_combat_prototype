@@ -5,6 +5,8 @@ import { EditLayer, LayerPanel } from './LayerPanel';
 import { BUILTIN_TILESETS, TileDefinition } from './model/Tileset';
 import { BATTLE_IDS } from './model/Objects';
 import { fetchEnemyTypeList, fetchEnemyType } from './io/combatArt';
+import { fetchDialogueList } from './io/dialogue';
+import { TutorialEditor } from './TutorialEditor';
 import { fetchUsedActorIds } from './io/saveLevel';
 import { FilterCombo } from './FilterCombo';
 
@@ -179,10 +181,14 @@ export const Inspector: React.FC<InspectorProps> = ({
   // types ignore per-instance sprite names (type-owned art wins in ROM).
   const [owEnemyIds, setOwEnemyIds] = useState<Set<string>>(new Set());
   const [enemyTypeList, setEnemyTypeList] = useState<Array<{ id: string; label: string }>>([]);
+  const [dialogueList, setDialogueList] = useState<Array<{ id: string; label: string }>>([]);
   useEffect(() => {
     fetchEnemyTypeList().then((items) => {
       setOwEnemyIds(new Set(items.filter((e) => e.ow).map((e) => e.id)));
       setEnemyTypeList(items.map((e) => ({ id: e.id, label: e.label || e.id })));
+    }).catch(() => undefined);
+    fetchDialogueList().then((items) => {
+      setDialogueList(items.map((d) => ({ id: 'DIALOGUE_ID_' + d.id.toUpperCase(), label: d.label || d.id })));
     }).catch(() => undefined);
   }, []);
   const selectedEnemyType = (() => {
@@ -339,6 +345,8 @@ export const Inspector: React.FC<InspectorProps> = ({
             <p className="hint-text">
               Completely data-driven Title Screen: customize the Big Title Graphic, Game Title, Centered &ldquo;PRESS START&rdquo;, and Bottom-Row Credits.
             </p>
+
+            <TutorialEditor />
 
             {/* Game Title & Subtitle */}
             <div className="form-group">
@@ -1684,15 +1692,23 @@ export const Inspector: React.FC<InspectorProps> = ({
                 {selectedObject.type === 'npc' && (
                   <div className="form-group">
                     <label>Dialogue ID</label>
-                    <input
-                      type="text"
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no dialogue)' },
+                        ...dialogueList.map((d) => ({
+                          value: d.id,
+                          label: `${d.label} (${d.id})`,
+                        })),
+                      ]}
                       value={selectedObject.properties?.dialogue || ''}
-                      onChange={(e) =>
+                      onPick={(v) =>
                         onUpdateObject(selectedEntityIndex, {
                           ...selectedObject,
-                          properties: { ...selectedObject.properties, dialogue: e.target.value },
+                          properties: { ...selectedObject.properties, dialogue: v },
                         })
                       }
+                      staleLabel={(v) => `${v} (unknown — pick below)`}
+                      placeholder="Filter dialogues..."
                     />
                   </div>
                 )}
@@ -2158,15 +2174,23 @@ export const Inspector: React.FC<InspectorProps> = ({
                 {selectedObject.type === 'npc' && (
                   <div className="form-group">
                     <label>Dialogue ID</label>
-                    <input
-                      type="text"
+                    <FilterCombo
+                      items={[
+                        { value: '', label: '(no dialogue)' },
+                        ...dialogueList.map((d) => ({
+                          value: d.id,
+                          label: `${d.label} (${d.id})`,
+                        })),
+                      ]}
                       value={selectedObject.properties?.dialogue || ''}
-                      onChange={(e) =>
+                      onPick={(v) =>
                         onUpdateObject(selectedEntityIndex, {
                           ...selectedObject,
-                          properties: { ...selectedObject.properties, dialogue: e.target.value },
+                          properties: { ...selectedObject.properties, dialogue: v },
                         })
                       }
+                      staleLabel={(v) => `${v} (unknown — pick below)`}
+                      placeholder="Filter dialogues..."
                     />
                   </div>
                 )}

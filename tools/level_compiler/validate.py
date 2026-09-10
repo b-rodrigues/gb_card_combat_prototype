@@ -36,6 +36,100 @@ def known_scene_names(registry=None):
     return set(registry["scenes"]) | set(TEST_SCENE_ORDER)
 
 
+def dialogue_id_names():
+    """DIALOGUE_ID_* names from screens/dialogue/*.json (same assignment
+    dialogue_compile.py uses).  Imported lazily: screen_compiler is a
+    sibling package, and validate.py must stay importable without it."""
+    tools_dir = Path(__file__).resolve().parent.parent
+    if str(tools_dir / "screen_compiler") not in sys.path:
+        sys.path.insert(0, str(tools_dir / "screen_compiler"))
+    from dialogue_ids import dialogue_files, load_dialogue_json
+    names = {}
+    for path in dialogue_files():
+        try:
+            data = load_dialogue_json(path)
+        except (OSError, ValueError) as exc:
+            raise SystemExit(f"ERROR: cannot read {path}: {exc}")
+        name = "DIALOGUE_ID_" + data["_id"].upper()
+        if name in names:
+            raise SystemExit(
+                f"ERROR: duplicate dialogue id '{data['_id']}' "
+                f"({path} and {names[name]}).")
+        names[name] = path.name
+    return names
+
+
+def validate_dialogue_refs(levels_dir=None):
+    """Cross-references between dialogue content and its users.
+
+    Errors (loud, with the fix): actor `dialogue` props and
+    EVENT_ACTION_DIALOGUE args in src/game/events.c that name no dialogue
+    JSON.  Warnings: dialogues no actor or event references (write-before-
+    wire is normal authoring; the warning keeps dead content visible).
+    Flags/events/scenarios stay LLM-driven — this checks references only.
+    """
+    import re
+    errors, warnings = [], []
+    known = dialogue_id_names()
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    levels_dir = Path(levels_dir) if levels_dir else (repo_root / "levels")
+
+    referenced = set()
+    for path in sorted(levels_dir.glob("*.json")):
+        if not is_level_file(path):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            errors.append(f"Cannot read {path}: {exc}")
+            continue
+        for obj in data.get("objects", []):
+            props = (obj.get("properties", {}) or {})
+            dlg = props.get("dialogue", "")
+            if not dlg:
+                continue
+            if not props.get("entity_id"):
+                # Decoration object: the compiler emits no actor row, so
+                # this text can never fire.  Warn, don't error (e.g. the
+                # south campfire's flavor line predates entity wiring).
+                warnings.append(
+                    f"{path.name}/{obj.get('id')}: dialogue text on an "
+                    f"entity-less object is unreachable (no actor row).")
+                continue
+            referenced.add(dlg)
+            if dlg not in known:
+                if not dlg.startswith("DIALOGUE_ID_"):
+                    errors.append(
+                        f"{path.name}/{obj.get('id')}: dialogue prop is raw "
+                        f"text, not a dialogue id — the compiler emits it "
+                        f"verbatim into C. Use a DIALOGUE_ID_* id (pick one "
+                        f"in the editor's dialogue dropdown).")
+                else:
+                    errors.append(
+                        f"{path.name}/{obj.get('id')}: unknown dialogue "
+                        f"'{dlg}' — pick one in the editor's dialogue "
+                        f"dropdown or add screens/dialogue/<id>.json.")
+
+    events_c = repo_root / "src" / "game" / "events_content.c"
+    try:
+        events_text = events_c.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Cannot read {events_c}: {exc}")
+        events_text = ""
+    for m in re.finditer(r"\b(DIALOGUE_ID_[A-Z0-9_]+)\b", events_text):
+        name = m.group(1)
+        referenced.add(name)
+        if name not in known:
+            errors.append(
+                f"src/game/events.c references unknown dialogue '{name}' "
+                f"— add screens/dialogue/<id>.json (LLM-driven).")
+
+    for name in sorted(set(known) - referenced):
+        warnings.append(
+            f"Dialogue '{name}' is referenced by no actor or event.")
+    return errors, warnings
+
+
 def validate_registry_consistency(levels_dir=None):
     """The registry and the levels/ directory must agree: every level file
     (minus registry.json) needs a registry entry, and every live entry
@@ -432,8 +526,19 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
 
 
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] == "--dialogue-refs":
+        errors, warnings = validate_dialogue_refs()
+        for w in warnings:
+            print(f"WARNING: {w}")
+        for e in errors:
+            print(f"ERROR: {e}")
+        if errors:
+            sys.exit(1)
+        print(f"dialogue refs OK ({len(warnings)} warning(s))")
+        return
     if len(sys.argv) < 2:
         print("Usage: validate.py <level1.json> [level2.json ...]")
+        print("       validate.py --dialogue-refs")
         sys.exit(1)
 
     tilesets = load_tilesets()

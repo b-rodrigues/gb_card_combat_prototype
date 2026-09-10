@@ -18,6 +18,7 @@ import { CombatArtStudio } from './CombatArtStudio';
 import { EnemyManager } from './EnemyManager';
 import { HeroManager } from './HeroManager';
 import { BattleManager } from './BattleManager';
+import { DialogueManager } from './DialogueManager';
 import { SfxTesterModal } from './SfxTester';
 
 // Built-in levels from repository
@@ -101,6 +102,9 @@ export const App: React.FC = () => {
   // area to the EnemyManager; the level underneath is left untouched.
   const [enemyView, setEnemyView] = useState<string | null>(null);
   const [heroView, setHeroView] = useState<boolean>(false);
+  // Dialogue view (screens/dialogue/*.json): text-only editor; the level
+  // underneath is left untouched.
+  const [dialogueView, setDialogueView] = useState<string | null>(null);
   // Battle view (screens/battle_hud.json + battle/<id>.json layout +
   // cards_skin.json) — the whole battle-time view, editable from here.
   const [cardView, setCardView] = useState<boolean>(false);
@@ -325,6 +329,7 @@ export const App: React.FC = () => {
       setHeroView(true);
       setEnemyView(null);
       setCardView(false);
+      setDialogueView(null);
       setSelectedEntityIndex(null);
       return;
     }
@@ -332,6 +337,15 @@ export const App: React.FC = () => {
       setCardView(true);
       setEnemyView(null);
       setHeroView(false);
+      setSelectedEntityIndex(null);
+      return;
+    }
+    if (selectedId === 'dialogues' || selectedId.startsWith('dialogue:')) {
+      setDialogueView(selectedId.startsWith('dialogue:')
+        ? selectedId.slice('dialogue:'.length) : '');
+      setEnemyView(null);
+      setHeroView(false);
+      setCardView(false);
       setSelectedEntityIndex(null);
       return;
     }
@@ -343,6 +357,7 @@ export const App: React.FC = () => {
     setEnemyView(null);
     setHeroView(false);
     setCardView(false);
+    setDialogueView(null);
 
     const found = levelItems.find((l) => l.id === selectedId);
     if (found) {
@@ -857,6 +872,7 @@ export const App: React.FC = () => {
               })),
               { value: 'hero', label: 'Hero (art + stats + starter deck)', group: 'Hero' },
               { value: 'cards', label: 'Battle (HUD + layout + cards)', group: 'Battle' },
+              { value: 'dialogues', label: 'Dialogues (speaker + lines)', group: 'Dialogue' },
               ...(!levelItems.some((l) => l.id === currentLevelId)
                 ? [{
                     value: currentLevelId,
@@ -866,7 +882,7 @@ export const App: React.FC = () => {
                 : []),
               { value: '__new__', label: '➕ + New Level...', group: 'Actions' },
             ]}
-            value={heroView ? 'hero' : cardView ? 'cards' : enemyView ? `enemy:${enemyView}` : currentLevelId}
+            value={heroView ? 'hero' : cardView ? 'cards' : dialogueView !== null ? 'dialogues' : enemyView ? `enemy:${enemyView}` : currentLevelId}
             onPick={(v) => handleSelectLevel(v)}
             staleLabel={(v) => `${v} (unknown — pick below)`}
             placeholder="Filter levels..."
@@ -966,6 +982,8 @@ export const App: React.FC = () => {
             />
           ) : cardView ? (
             <BattleManager key="cards" />
+          ) : dialogueView !== null ? (
+            <DialogueManager key="dialogues" initialId={dialogueView || undefined} />
           ) : (
           <>
           {/* Left Sidebar */}

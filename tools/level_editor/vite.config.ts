@@ -291,6 +291,87 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Dialogue content (screens/dialogue/*.json): list, single read,
+        // and save for the dialogue text editor.  Ids assign by sorted
+        // filename at compile time; the UI edits speaker + lines only.
+        if (req.method === 'GET' && req.url === '/api/dialogues') {
+          try {
+            const items = listJsonDir('screens/dialogue', (d, f) => {
+              const id = d.id || f.replace(/\.json$/, '');
+              const lines: string[] = Array.isArray(d.lines) ? d.lines : [];
+              return { id, label: lines[0] || id };
+            });
+            sendJson({ success: true, items });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && (req.url || '').startsWith('/api/dialogue')) {
+          try {
+            const u = new URL(req.url || '', 'http://localhost');
+            const id = u.searchParams.get('id') || '';
+            if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+            sendJson({ success: true, id, data: readJsonFile(path.join('screens', 'dialogue', `${id}.json`)) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-dialogue') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { id, data } = JSON.parse(body);
+              if (!isSafeId(id)) throw new Error(`invalid id '${id}'`);
+              const targetPath = path.join(repoRoot, 'screens', 'dialogue', `${id}.json`);
+              fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Tutorial slides (screens/tutorial.json): single read + save for
+        // the slide text editor.  Slide order is navigation order.
+        if (req.method === 'GET' && req.url === '/api/tutorial') {
+          try {
+            sendJson({ success: true, data: readJsonFile(path.join('screens', 'tutorial.json')) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-tutorial') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { data } = JSON.parse(body);
+              const targetPath = path.join(repoRoot, 'screens', 'tutorial.json');
+              fs.writeFileSync(targetPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         // Hero definition (screens/hero.json): single read + save for the
         // hero manager (art, stats, starter deck).  The client sends and
         // receives the hero object directly (not wrapped).
@@ -570,7 +651,7 @@ function levelEditorApiPlugin(): Plugin {
           // (build/*.o vs build/debug/*.o), and the two link steps write
           // disjoint outputs.  Two SEPARATE make processes would race on
           // the shared lite libs -- never split this into parallel execs.
-          runInToolchain('make clean && python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
+          runInToolchain('make clean && python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ && python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message);
               if (stderr) console.error('Compile stderr:\n' + stderr);

@@ -69,7 +69,7 @@ OBJS_DEBUG = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(DEBUG_SRCS)) $(M
 # Emulator detection
 EMULATOR ?= $(shell command -v pyboy 2>/dev/null || command -v sameboy 2>/dev/null || command -v mgba-sdl 2>/dev/null || command -v mgba-qt 2>/dev/null || command -v mgba 2>/dev/null || echo "")
 
-.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check editor clean
+.PHONY: all release debug run run-debug test test-harness test-scenario state roundtrip screenshot screenshots verify-walkthrough parity lint memmap verify-oam verify-vram verify-scroll verify-music verify-endurance vram-check vram-text vram-dialogue gfx atlas atlas-check manifest tiles tiles-check levels-test levels-test-check doctor music music-preview sfx sfx-preview level levels levels-check screens screens-check dialogues dialogues-check editor clean
 
 all: $(TARGET)
 
@@ -252,11 +252,31 @@ src/game/scenes_content_test.c src/game/actors_content_test.c &: $(wildcard $(LE
 screens:
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
 	@python3 tools/screen_compiler/battle_compile.py --all -o src/game/
-	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types,card_skin}.c"
+	@python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/
+	@echo "All screens compiled to src/game/{title_data,battle_screens,battle_types,card_skin}.c + src/screens/tutorial_*_generated.h"
 
 screens-check:
 	@python3 tools/screen_compiler/title_compile.py --check
 	@python3 tools/screen_compiler/battle_compile.py --all --check
+	@python3 tools/screen_compiler/tutorial_compile.py --all --check
+
+# Dialogue content: screens/dialogue/*.json is the source of truth for the
+# NPC dialogue table (ids assign by sorted filename) and
+# screens/tutorial.json for the title-menu slides.  Text is authored in
+# the editor; flags/events/scenarios stay LLM-authored.
+dialogues:
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/
+	@echo "All dialogue compiled to src/game/{dialogue_content.c,dialogue_ids_generated.h}"
+
+dialogues-check:
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ --check
+	@python3 tools/level_compiler/validate.py --dialogue-refs
+
+src/screens/tutorial_text_generated.h src/screens/tutorial_count_generated.h &: screens/tutorial.json
+	@python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/
+
+src/game/dialogue_content.c src/game/dialogue_ids_generated.h &: $(wildcard screens/dialogue/*.json)
+	@python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/
 
 src/game/title_data.c: screens/title.json
 	@python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json
@@ -603,12 +623,12 @@ $(GB_LITE) $(SM83_LITE) &: $(OBJS) $(OBJS_DEBUG) | $(BUILD_DIR)
 # at 0xC89A-C89B and get corrupted by the fixed-layout WRAM (blank screen).
 LDFLAGS = -Wl-b_DATA=0xC940
 
-$(TARGET): gfx tiles levels screens music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET): gfx tiles levels screens dialogues music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
 
-$(TARGET_DEBUG): gfx tiles levels levels-test screens music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
+$(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
 	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
 	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@

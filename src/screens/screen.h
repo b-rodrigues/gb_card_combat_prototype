@@ -75,8 +75,11 @@ void tutorial_screen_update(Game *g);
 void tutorial_screen_render(Game *g);
 
 /* Shared by tutorial_screen.c (RIGHT/LEFT wrap) and tutorial_content.c
- * (slide table end).  Keep in one place so the two cannot drift. */
-#define TUTORIAL_SLIDE_COUNT 7
+ * (slide table end).  Generated from screens/tutorial.json — single
+ * source, the two cannot drift.  Count-only header: the slide arrays
+ * live in tutorial_text_generated.h, included once by
+ * tutorial_content.c (static data must not duplicate per TU). */
+#include "tutorial_count_generated.h"
 
 /* Shared slide-show renderer (intro + tutorial screens). */
 void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide);
