@@ -676,7 +676,7 @@ screenshots: $(TARGET)
 # fire with working content are caught here.  Required on push (CI).
 # The saved PNGs stay a non-gating visual aid (AGENTS.md 56.4).
 verify-walkthrough: release
-	@python3 tools/capture_walkthrough.py
+	@python3 tools/capture_walkthrough.py --clean
 
 # Verify the player sprite's real-OAM transition-hide across screen changes
 # and scene (map) changes via the mGBA debugger (see tools/verify_oam.py).

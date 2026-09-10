@@ -161,3 +161,23 @@ tools/walkthrough/
 * Routing: full BFS pathfinding.
 * Walk B exit becomes victory (flee path dropped; same exit-path
   coverage, plus loot/gold assertion value).
+
+## 6. Screenshot lifecycle (milestones + review shots)
+
+* The committed top-level set is explicit: `CLASSIC_MILESTONES` in
+  `tools/capture_walkthrough.py` plus `sweep-<name>` per planner scene.
+  A plain `make screenshots` run only overwrites those.
+* `--clean` (used by `make verify-walkthrough`, i.e. CI) additionally
+  removes any top-level `screenshots/*.png` outside the set, so
+  renamed/retired milestones cannot linger and confuse reviewers.
+* `screenshots/review/` holds committed ad-hoc captures a walk cannot
+  stage deterministically.  `review/manifest.json` is the source of
+  truth (`file`, `description`, `taken_from` commit); `--clean` deletes
+  any review PNG missing from it.  If the manifest is missing or
+  unreadable, review/ is left untouched with a warning — never nuke
+  blindly.  `tools/capture_bow_shot.py` (bow hand card, staged through
+  PyBoy memory like the harness's `set_hand_card`) is the first entry:
+  `bow-card-uses2.png` / `bow-card-depleted.png`.
+* Regenerating a shot after a visual change overwrites it in place
+  (same filename, fresh `taken_from`); a renamed shot plus a manifest
+  update lets `--clean` retire the orphan.

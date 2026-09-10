@@ -11,6 +11,8 @@ Exit code 0 = every check passed; 1 = failures (with expected/actual
 detail per check, AGENTS.md §46 style).
 """
 
+import argparse
+import json
 import os
 import sys
 import time
@@ -24,19 +26,70 @@ from walkthrough import walks as W                    # noqa: E402
 from walkthrough.session import ROM, OUT              # noqa: E402
 from walkthrough.walks import WALK_SECONDS            # noqa: E402
 
+# Authoritative top-level milestone set (committed PNGs).  sweep-* names
+# are computed from the planner's scenes at runtime; every other label
+# must match a Session.shoot() call in tools/walkthrough/walks.py.
+CLASSIC_MILESTONES = [
+    "00-boot-field", "01-field-scrolled", "02-town-arrived",
+    "03-guard-dialogue", "04-dialogue-next", "05-shop",
+    "06-cards-menu", "07-filter-picker", "08-quests-tab",
+    "09-battle", "10-battle-attack", "11-battle-aftermath",
+    "11-battle-victory", "12-wizard-save", "13-wizard-saved",
+    "14-forest-arrived", "15-title-menu", "16-tutorial-slide0",
+    "17-tutorial-slide1", "18-tutorial-slide2", "19-tutorial-slide3",
+    "20-tutorial-slide4", "21-tutorial-slide5", "22-tutorial-slide6",
+    "23-mimic-battle",
+]
 
-def run():
+REVIEW_DIR = os.path.join(OUT, "review")
+REVIEW_MANIFEST = os.path.join(REVIEW_DIR, "manifest.json")
+
+
+def prune():
+    """--clean: delete top-level PNGs that are no longer milestones
+    (renamed/retired shots must not linger and confuse reviewers) and
+    review/ PNGs missing from the manifest.  review/ without a readable
+    manifest is left alone with a warning — never nuke blindly."""
+    planner = Planner()
+    expected = set(CLASSIC_MILESTONES)
+    expected |= {"sweep-%s" % name for name in planner.scenes}
+    removed = []
+    for f in sorted(os.listdir(OUT)):
+        if f.endswith(".png") and f[:-4] not in expected:
+            os.remove(os.path.join(OUT, f))
+            removed.append(f)
+    if removed:
+        print("pruned %d stale milestone(s): %s"
+              % (len(removed), ", ".join(removed)))
+    if not os.path.isdir(REVIEW_DIR):
+        return
+    try:
+        with open(REVIEW_MANIFEST) as fh:
+            manifest = json.load(fh)
+        listed = {e["file"] for e in manifest.get("shots", [])}
+    except (OSError, ValueError) as exc:
+        print("warning: review manifest unreadable (%s) — review/ left "
+              "untouched" % exc)
+        return
+    removed = []
+    for f in sorted(os.listdir(REVIEW_DIR)):
+        if f.endswith(".png") and f not in listed:
+            os.remove(os.path.join(REVIEW_DIR, f))
+            removed.append(f)
+    if removed:
+        print("pruned %d stale review shot(s): %s"
+              % (len(removed), ", ".join(removed)))
+
+
+def run(clean=False):
     if not os.path.isfile(ROM):
         print("error: release ROM not found — build it first (make "
               "release)", file=sys.stderr)
         return 1
 
     os.makedirs(OUT, exist_ok=True)
-    # Drop frames from previous runs: renamed/removed milestones must not
-    # linger as stale PNGs next to the current set.
-    for old in os.listdir(OUT):
-        if old.endswith(".png"):
-            os.remove(os.path.join(OUT, old))
+    if clean:
+        prune()
 
     failures = []
     planner = Planner()
@@ -86,4 +139,10 @@ def run():
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--clean", action="store_true",
+                    help="prune stale PNGs: top-level shots no longer in "
+                         "the milestone set and review/ shots missing "
+                         "from the manifest (CI mode)")
+    args = ap.parse_args()
+    sys.exit(run(clean=args.clean))

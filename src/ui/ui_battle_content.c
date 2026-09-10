@@ -399,10 +399,17 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
                 g_tilemap_mirror[(top + r) * 32 + x + 1] = (uint8_t)(frame + 4);
 #endif
             }
-            battle_vram_sync_write(&dst[2], (uint8_t)(frame + 5));
+            /* The two-digit power row keeps its 'ones' cell: skip the
+             * right-rail stamp that would clobber it. */
+            if (!(r == 1 && two_digit)) {
+                battle_vram_sync_write(&dst[2], (uint8_t)(frame + 5));
+            }
 #ifdef DEBUG_BUILD
             g_tilemap_mirror[(top + r) * 32 + x] = (uint8_t)(frame + 3);
-            g_tilemap_mirror[(top + r) * 32 + x + 2] = (uint8_t)(frame + 5);
+            if (!(r == 1 && two_digit)) {
+                g_tilemap_mirror[(top + r) * 32 + x + 2] =
+                    (uint8_t)(frame + 5);
+            }
 #endif
         }
     }

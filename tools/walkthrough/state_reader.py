@@ -98,6 +98,7 @@ BATTLE_HAND = 14 + 3 * 14 + 3 + 323   # 382
 CARD_SIZE = 8                # src/battle/card.h
 CARD_TYPE = 0                # BattleCardType
 CARD_VALUE = 1
+CARD_USES = 2                # remaining uses (0xFF = unlimited)
 CARD_COST = 3
 BATTLE_SELECTED = BATTLE_HAND + 5 * CARD_SIZE
 BATTLE_COMBO = BATTLE_SELECTED + 5          # selected_indices[5], then count

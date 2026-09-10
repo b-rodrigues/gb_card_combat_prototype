@@ -2982,6 +2982,22 @@ regen diffs it, re-run before hunting a rendering bug.
   Engine-only coverage of NPC dialogues / new enemies stays on the
   fixture suite (§42.1); the sweep proves every level boots, is enterable,
   and plays its music.
+* **Milestone hygiene.** The committed set is explicit: `CLASSIC_MILESTONES`
+  in `tools/capture_walkthrough.py` plus `sweep-<name>` per planner scene.
+  A plain run only overwrites those; `--clean` (what CI's
+  `make verify-walkthrough` uses) additionally deletes any top-level
+  `screenshots/*.png` outside the set, so renamed/retired milestones can't
+  linger and confuse reviewers.
+* **Review shots** (`screenshots/review/`, committed) hold ad-hoc captures
+  a walk can't stage deterministically (e.g. a shop-only bow dealt into a
+  battle hand — `tools/capture_bow_shot.py`, which stages hand state
+  through PyBoy memory exactly like the debug harness's `set_hand_card`).
+  `review/manifest.json` is the source of truth: file, description, and
+  the commit it was taken from.  `--clean` deletes review PNGs missing
+  from the manifest; an unreadable manifest leaves review/ untouched with
+  a warning — never nuke blindly.  Regenerating a shot after a visual
+  change overwrites it in place (same filename, fresh `taken_from`); a
+  renamed shot plus a manifest update lets `--clean` retire the orphan.
 * Expected values are read from `levels/*.json` and the ROM's own const
   tables (card prices, shop stock, gold rewards) — never hardcoded.  When
   a gameplay constant must be mirrored (struct offsets, enum values), it
