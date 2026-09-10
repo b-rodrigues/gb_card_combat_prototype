@@ -302,9 +302,10 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     uint8_t top, r;
     uint8_t frame = UI_TILE_CARD_FRAME_BASE;
     uint8_t digit_tile;
-    /* Two-digit power for the arrow-counter type: its first interior
-     * row shows the power as digit glyphs (e.g. "10") instead of the
-     * weapon icon; the arrow counter owns the digit row below. */
+    /* Two-digit power for the arrow-counter type: its middle interior
+     * row shows the power as digit glyphs (e.g. "10"); the arrow counter
+     * owns the bottom border row below.  The weapon icon stays on the
+     * first interior row like every other card. */
     uint8_t two_digit;
     char tens_ch, ones_ch;
     char *buf;
@@ -320,9 +321,8 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     tile_wpn = battle_card_weapon_tile(type, is_heal);
     /* Finite-use cards of the skin's arrow-counter type draw the
-     * remaining-uses glyph (4/3/2/1/zero, clamped) on the digit row
-     * instead of the power digit; unlimited cards keep the power digit. */
-    two_digit = (uses != 0xFF && type == g_card_skin_wram.uses_type);
+     * remaining-uses glyph (4/3/2/1/zero, clamped) on the bottom border
+     * row instead of a frame center; unlimited cards keep the frame. */
     two_digit = (uses != 0xFF && type == g_card_skin_wram.uses_type);
     tens_ch = '0';
     ones_ch = (char)('0' + value);
@@ -352,23 +352,38 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
             g_tilemap_mirror[(top + r) * 32 + x + 2] = (uint8_t)(frame + 2);
 #endif
         } else if (r == (uint8_t)(bh - 1)) {
-            /* Bottom border: BL BM BR */
+            /* Bottom border: BL BM BR — EXCEPT for the arrow-counter
+             * type, where the floor center carries the remaining-uses
+             * glyph and keeps the BL/BR corners. */
             battle_vram_sync_write(&dst[0], (uint8_t)(frame + 6));
-            battle_vram_sync_write(&dst[1], (uint8_t)(frame + 7));
+            if (two_digit) {
+                digit_tile = g_card_skin_wram.uses_tile[uses > 4 ? 4 : uses];
+                battle_vram_sync_write(&dst[1], digit_tile);
+            } else {
+                battle_vram_sync_write(&dst[1], (uint8_t)(frame + 7));
+            }
             battle_vram_sync_write(&dst[2], (uint8_t)(frame + 8));
 #ifdef DEBUG_BUILD
             g_tilemap_mirror[(top + r) * 32 + x] = (uint8_t)(frame + 6);
-            g_tilemap_mirror[(top + r) * 32 + x + 1] = (uint8_t)(frame + 7);
+            if (two_digit) {
+                g_tilemap_mirror[(top + r) * 32 + x + 1] = digit_tile;
+            } else {
+                g_tilemap_mirror[(top + r) * 32 + x + 1] = (uint8_t)(frame + 7);
+            }
             g_tilemap_mirror[(top + r) * 32 + x + 2] = (uint8_t)(frame + 8);
 #endif
         } else {
             /* Middle band: side rails + interior content.  The first
-             * interior row carries the weapon icon — EXCEPT for the
-             * arrow-counter type, where it shows the card's power as
-             * digit glyphs ('1'+'0' for a 10-power card; the arrow
-             * counter owns the digit row below). */
+             * interior row carries the weapon icon; the second carries
+             * the power digit — or, for the arrow-counter type, the
+             * two-digit power ('1'+'0' for a 10-power card). */
             battle_vram_sync_write(&dst[0], (uint8_t)(frame + 3));
             if (r == 1) {
+                battle_vram_sync_write(&dst[1], tile_wpn);
+#ifdef DEBUG_BUILD
+                g_tilemap_mirror[(top + r) * 32 + x + 1] = tile_wpn;
+#endif
+            } else if (r == (uint8_t)(bh - 2)) {
                 if (two_digit) {
                     battle_vram_sync_write(&dst[1],
                         (uint8_t)(ui_font_tile_base + (tens_ch - ' ')));
@@ -383,16 +398,11 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
                         (uint8_t)(ui_font_tile_base + (ones_ch - ' '));
 #endif
                 } else {
-                    battle_vram_sync_write(&dst[1], tile_wpn);
+                    battle_vram_sync_write(&dst[1], digit_tile);
 #ifdef DEBUG_BUILD
-                    g_tilemap_mirror[(top + r) * 32 + x + 1] = tile_wpn;
+                    g_tilemap_mirror[(top + r) * 32 + x + 1] = digit_tile;
 #endif
                 }
-            } else if (r == (uint8_t)(bh - 2)) {
-                battle_vram_sync_write(&dst[1], digit_tile);
-#ifdef DEBUG_BUILD
-                g_tilemap_mirror[(top + r) * 32 + x + 1] = digit_tile;
-#endif
             } else {
                 battle_vram_sync_write(&dst[1], (uint8_t)(frame + 4));
 #ifdef DEBUG_BUILD
@@ -401,12 +411,12 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
             }
             /* The two-digit power row keeps its 'ones' cell: skip the
              * right-rail stamp that would clobber it. */
-            if (!(r == 1 && two_digit)) {
+            if (!(r == (uint8_t)(bh - 2) && two_digit)) {
                 battle_vram_sync_write(&dst[2], (uint8_t)(frame + 5));
             }
 #ifdef DEBUG_BUILD
             g_tilemap_mirror[(top + r) * 32 + x] = (uint8_t)(frame + 3);
-            if (!(r == 1 && two_digit)) {
+            if (!(r == (uint8_t)(bh - 2) && two_digit)) {
                 g_tilemap_mirror[(top + r) * 32 + x + 2] =
                     (uint8_t)(frame + 5);
             }
@@ -418,15 +428,12 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     /* Semantic screen buffer keeps the type code + the digit that the
      * row represents (arrow-counter cards show their remaining uses;
-     * harness/LLM assertions read text, not art tiles).  The power row
-     * carries the two-digit power as text for the arrow-counter type. */
+     * harness/LLM assertions read text, not art tiles). */
     buf = &g_ui_screen_buf[y - 1][x];
     buf[0] = code[0];
     buf[1] = code[1];
     if (two_digit) {
         buf[2] = (char)('0' + (uses > 4 ? 4 : uses));
-        g_ui_screen_buf[y - 2][x + 1] = tens_ch;
-        g_ui_screen_buf[y - 2][x + 2] = ones_ch;
     } else {
         buf[2] = (char)('0' + value);
     }

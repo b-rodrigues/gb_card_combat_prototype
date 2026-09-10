@@ -3,12 +3,12 @@
     {
       "file": "bow-card-uses2.png",
       "description": "Bow hand card, 2 uses left: power '10' row + 2-arrows counter",
-      "taken_from": "7233344"
+      "taken_from": "e2e2fd8"
     },
     {
       "file": "bow-card-depleted.png",
       "description": "Bow hand card depleted: zero-arrows glyph + grey tint",
-      "taken_from": "7233344"
+      "taken_from": "e2e2fd8"
     }
   ]
 }

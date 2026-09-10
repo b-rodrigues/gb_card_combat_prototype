@@ -1,7 +1,7 @@
 {
  "name": "battle_bow_uses_display",
  "test": true,
- "description": "The 2-shot bow draws its remaining-uses arrow counter on the card's digit row (2 arrows fresh), the power '10' as digit glyphs on the power row, and the semantic rows read BO2 / 10.",
+ "description": "The 2-shot bow draws its power '10' as digit glyphs on the card's middle row (tiles 17/16) and the remaining-uses arrow counter on the floor row (2 arrows fresh, tile 100); the semantic row reads BO2.",
  "scenario_id": "BATTLE_BOOT",
  "initial_state": {
   "scene": "TEST_FIELD",
@@ -53,12 +53,19 @@
    "type": "tilemap_cell",
    "row": 13,
    "col": 1,
-   "expected": 100
+   "expected": 17
   },
   {
-   "type": "screen_row",
-   "row": 12,
-   "contains": "10"
+   "type": "tilemap_cell",
+   "row": 13,
+   "col": 2,
+   "expected": 16
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 14,
+   "col": 1,
+   "expected": 100
   }
  ]
 }

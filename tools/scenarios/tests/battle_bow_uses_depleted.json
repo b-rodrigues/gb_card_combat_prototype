@@ -1,7 +1,7 @@
 {
  "name": "battle_bow_uses_depleted",
  "test": true,
- "description": "A bow with its uses spent renders the zero-arrows glyph on the digit row (tile 102) and the semantic row reads BO0 \u2014 the grey tint is CGB-only cosmetics; playability lock lives in battle_depleted_message.",
+ "description": "A bow with its uses spent renders the zero-arrows glyph on the floor row (tile 102) while the middle row keeps the power '10'; the semantic row reads BO0.",
  "scenario_id": "BATTLE_BOOT",
  "initial_state": {
   "scene": "TEST_FIELD",
@@ -52,6 +52,18 @@
   {
    "type": "tilemap_cell",
    "row": 13,
+   "col": 1,
+   "expected": 17
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 13,
+   "col": 2,
+   "expected": 16
+  },
+  {
+   "type": "tilemap_cell",
+   "row": 14,
    "col": 1,
    "expected": 102
   }
