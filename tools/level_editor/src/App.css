@@ -77,6 +77,16 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Filterable level/scene picker in the header.  The FilterCombo root is an
+ * auto-width div, so without an explicit width the input collapses; this
+ * gives it a comfortable, responsive size and lets the dropdown match. */
+.header-level-combo {
+  width: clamp(260px, 42vw, 560px);
 }
 
 .header-levels-label {

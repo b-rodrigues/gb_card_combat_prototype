@@ -974,6 +974,7 @@ export const App: React.FC = () => {
             onPick={(v) => handleSelectLevel(v)}
             staleLabel={(v) => `${v} (unknown — pick below)`}
             placeholder="Filter levels..."
+            className="header-level-combo"
           />
         </div>
       </header>
