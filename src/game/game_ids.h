@@ -38,7 +38,7 @@
 #define CARD_FIRE_SWORD    (CARD_FIRST_GAME + 3)
 #define CARD_POISON_DAGGER (CARD_FIRST_GAME + 4)
 #define CARD_AMULET        (CARD_FIRST_GAME + 5)
-#define CARD_BOW_10        (CARD_FIRST_GAME + 6)
+#define CARD_BOW_9        (CARD_FIRST_GAME + 6)
 #define GAME_CARD_COUNT    7
 
 /* ── Events (engine range: NONE=0; game range >= 0x80) ── */

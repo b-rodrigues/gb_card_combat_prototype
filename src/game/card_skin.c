@@ -19,7 +19,8 @@ const CardSkinDef g_card_skin = {
     { 0, 112, 110, 111 },
     /* elem_color: none poison fire ice */
     { 0, 4, 1, 2 },
-    /* uses_type (0xFF = none), uses_tile: uses 0..4 */
+    /* uses_type (0xFF = none), uses_tile: uses 0..4, uses_power_tile */
     2,
-    { 102, 101, 100, 99, 98 }
+    { 98, 99, 100, 101, 101 },
+    102
 };

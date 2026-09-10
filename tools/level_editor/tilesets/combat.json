@@ -724,13 +724,13 @@
       "category": "terrain"
     },
     {
-      "id": "combat_4_arrows_left",
-      "label": "4_arrows_left",
-      "gb_constant": "TILE_COMBAT_4_ARROWS_LEFT",
+      "id": "combat_0_arrows_left",
+      "label": "0_arrows_left",
+      "gb_constant": "TILE_COMBAT_0_ARROWS_LEFT",
       "walkable": false,
-      "color": "#bc9a69",
+      "color": "#cca977",
       "ascii": "#",
-      "image_url": "/tiles/combat/combat_4_arrows_left.png",
+      "image_url": "/tiles/combat/combat_0_arrows_left.png",
       "category": "terrain"
     },
     {
@@ -738,7 +738,7 @@
       "label": "3_arrows_left",
       "gb_constant": "TILE_COMBAT_3_ARROWS_LEFT",
       "walkable": false,
-      "color": "#c3a06f",
+      "color": "#c09e6d",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_3_arrows_left.png",
       "category": "terrain"
@@ -748,7 +748,7 @@
       "label": "2_arrows_left",
       "gb_constant": "TILE_COMBAT_2_ARROWS_LEFT",
       "walkable": false,
-      "color": "#caa776",
+      "color": "#c29f6e",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_2_arrows_left.png",
       "category": "terrain"
@@ -758,7 +758,7 @@
       "label": "1_arrow_left",
       "gb_constant": "TILE_COMBAT_1_ARROW_LEFT",
       "walkable": false,
-      "color": "#d2ae7c",
+      "color": "#c4a16f",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_1_arrow_left.png",
       "category": "terrain"
@@ -771,6 +771,16 @@
       "color": "#b09164",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_zero_icon.png",
+      "category": "terrain"
+    },
+    {
+      "id": "combat_nine_icon",
+      "label": "nine icon",
+      "gb_constant": "TILE_COMBAT_NINE_ICON",
+      "walkable": false,
+      "color": "#b29265",
+      "ascii": "#",
+      "image_url": "/tiles/combat/combat_nine_icon.png",
       "category": "terrain"
     },
     {
@@ -791,16 +801,6 @@
       "color": "#000000",
       "ascii": "#",
       "image_url": "/tiles/combat/combat_black_emptyness_3.png",
-      "category": "object"
-    },
-    {
-      "id": "combat_black_emptyness_4",
-      "label": "empty",
-      "gb_constant": "TILE_COMBAT_BLACK_EMPTYNESS",
-      "walkable": false,
-      "color": "#000000",
-      "ascii": "#",
-      "image_url": "/tiles/combat/combat_black_emptyness_4.png",
       "category": "object"
     }
   ]

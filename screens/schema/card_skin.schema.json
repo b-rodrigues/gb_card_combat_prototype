@@ -75,6 +75,17 @@
           "type": "string",
           "enum": ["none", "fire", "iron", "field", "poison", "wood", "gold", "dim"],
           "description": "CGB BG palette index (UI_COLOR_*) applied to the box/icons. On DMG this only affects shade grouping."
+        },
+        "uses_icons": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": { "type": "string" },
+          "description": "Optional, at most one card type: remaining-uses floor glyphs, ordered uses 4,3,2,1,0. Slot 4 doubles as the clamp target for uses above 4."
+        },
+        "uses_power_icon": {
+          "type": "string",
+          "description": "Optional, same single card type: power glyph drawn on the middle interior row instead of the power digit."
         }
       }
     }

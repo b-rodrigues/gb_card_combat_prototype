@@ -2254,7 +2254,7 @@ boxed hand cards (`cards_row`=14 is the BOTTOM
 row; each card is a 3-wide x `box_h`-tall frame from the compiled
 `card_frame_tiles` at VRAM `UI_TILE_CARD_FRAME_BASE` 118, weapon icon on
 the first interior row, power digit on the second (the arrow-counter
-type — the bow — instead draws its two-digit power there and the
+type — the bow — instead draws its power icon there and the
 remaining-uses glyph on the bottom border floor, keeping its frame
 corners; the semantic screen
 buffer keeps the type code + digit on row 13 for assertions), `15`

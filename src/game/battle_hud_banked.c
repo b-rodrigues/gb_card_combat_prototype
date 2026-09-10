@@ -58,6 +58,7 @@ void battle_hud_load_banked(void)
     for (k = 0; k < 5; k++) {
         g_card_skin_wram.uses_tile[k] = g_card_skin.uses_tile[k];
     }
+    g_card_skin_wram.uses_power_tile = g_card_skin.uses_power_tile;
 
     /* Stage the HUD skin (same contract). */
     g_hud_skin_wram.hp_icon_tile = g_hud_skin.hp_icon_tile;

@@ -302,12 +302,10 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     uint8_t top, r;
     uint8_t frame = UI_TILE_CARD_FRAME_BASE;
     uint8_t digit_tile;
-    /* Two-digit power for the arrow-counter type: its middle interior
-     * row shows the power as digit glyphs (e.g. "10"); the arrow counter
-     * owns the bottom border row below.  The weapon icon stays on the
-     * first interior row like every other card. */
-    uint8_t two_digit;
-    char tens_ch, ones_ch;
+    /* Arrow-counter type (the bow): finite-use cards draw the power icon
+     * on the middle row and the remaining-uses glyph on the floor row.
+     * Weapon icon and power digit stay exactly like every other card. */
+    uint8_t limited;
     char *buf;
 
     if (bh < 3 || bh > 5) bh = 4;
@@ -321,17 +319,11 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
 
     tile_wpn = battle_card_weapon_tile(type, is_heal);
     /* Finite-use cards of the skin's arrow-counter type draw the
-     * remaining-uses glyph (4/3/2/1/zero, clamped) on the bottom border
-     * row instead of a frame center; unlimited cards keep the frame. */
-    two_digit = (uses != 0xFF && type == g_card_skin_wram.uses_type);
-    tens_ch = '0';
-    ones_ch = (char)('0' + value);
-    if (two_digit) {
+     * remaining-uses glyph (0..3, clamped) on the floor row; unlimited
+     * cards keep the frame center. */
+    limited = (uses != 0xFF && type == g_card_skin_wram.uses_type);
+    if (limited) {
         digit_tile = g_card_skin_wram.uses_tile[uses > 4 ? 4 : uses];
-        while (ones_ch >= '0' + 10) {   /* repeated subtraction: no div/mod (52.18) */
-            ones_ch = (char)(ones_ch - 10);
-            tens_ch++;
-        }
     } else {
         digit_tile = (uint8_t)('0' - ' ' + value);
     }
@@ -356,7 +348,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
              * type, where the floor center carries the remaining-uses
              * glyph and keeps the BL/BR corners. */
             battle_vram_sync_write(&dst[0], (uint8_t)(frame + 6));
-            if (two_digit) {
+            if (limited) {
                 digit_tile = g_card_skin_wram.uses_tile[uses > 4 ? 4 : uses];
                 battle_vram_sync_write(&dst[1], digit_tile);
             } else {
@@ -365,7 +357,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
             battle_vram_sync_write(&dst[2], (uint8_t)(frame + 8));
 #ifdef DEBUG_BUILD
             g_tilemap_mirror[(top + r) * 32 + x] = (uint8_t)(frame + 6);
-            if (two_digit) {
+            if (limited) {
                 g_tilemap_mirror[(top + r) * 32 + x + 1] = digit_tile;
             } else {
                 g_tilemap_mirror[(top + r) * 32 + x + 1] = (uint8_t)(frame + 7);
@@ -376,7 +368,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
             /* Middle band: side rails + interior content.  The first
              * interior row carries the weapon icon; the second carries
              * the power digit — or, for the arrow-counter type, the
-             * two-digit power ('1'+'0' for a 10-power card). */
+             * power icon from the skin (the nine). */
             battle_vram_sync_write(&dst[0], (uint8_t)(frame + 3));
             if (r == 1) {
                 battle_vram_sync_write(&dst[1], tile_wpn);
@@ -384,18 +376,12 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
                 g_tilemap_mirror[(top + r) * 32 + x + 1] = tile_wpn;
 #endif
             } else if (r == (uint8_t)(bh - 2)) {
-                if (two_digit) {
+                if (limited) {
                     battle_vram_sync_write(&dst[1],
-                        (uint8_t)(ui_font_tile_base + (tens_ch - ' ')));
+                        g_card_skin_wram.uses_power_tile);
 #ifdef DEBUG_BUILD
                     g_tilemap_mirror[(top + r) * 32 + x + 1] =
-                        (uint8_t)(ui_font_tile_base + (tens_ch - ' '));
-#endif
-                    battle_vram_sync_write(&dst[2],
-                        (uint8_t)(ui_font_tile_base + (ones_ch - ' ')));
-#ifdef DEBUG_BUILD
-                    g_tilemap_mirror[(top + r) * 32 + x + 2] =
-                        (uint8_t)(ui_font_tile_base + (ones_ch - ' '));
+                        g_card_skin_wram.uses_power_tile;
 #endif
                 } else {
                     battle_vram_sync_write(&dst[1], digit_tile);
@@ -409,17 +395,11 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
                 g_tilemap_mirror[(top + r) * 32 + x + 1] = (uint8_t)(frame + 4);
 #endif
             }
-            /* The two-digit power row keeps its 'ones' cell: skip the
-             * right-rail stamp that would clobber it. */
-            if (!(r == (uint8_t)(bh - 2) && two_digit)) {
-                battle_vram_sync_write(&dst[2], (uint8_t)(frame + 5));
-            }
+            battle_vram_sync_write(&dst[2], (uint8_t)(frame + 5));
 #ifdef DEBUG_BUILD
             g_tilemap_mirror[(top + r) * 32 + x] = (uint8_t)(frame + 3);
-            if (!(r == (uint8_t)(bh - 2) && two_digit)) {
-                g_tilemap_mirror[(top + r) * 32 + x + 2] =
-                    (uint8_t)(frame + 5);
-            }
+            g_tilemap_mirror[(top + r) * 32 + x + 2] =
+                (uint8_t)(frame + 5);
 #endif
         }
     }
@@ -432,7 +412,7 @@ static void battle_draw_card_at(uint8_t x, uint8_t y, uint8_t type, uint8_t valu
     buf = &g_ui_screen_buf[y - 1][x];
     buf[0] = code[0];
     buf[1] = code[1];
-    if (two_digit) {
+    if (limited) {
         buf[2] = (char)('0' + (uses > 4 ? 4 : uses));
     } else {
         buf[2] = (char)('0' + value);
@@ -906,13 +886,13 @@ static const uint8_t s_card_tile_vram_ids[30] = {
     110, 111, 112,                                /* status: fire, ice, poison */
     104, 105, 106, 107, 108,                      /* weapons: sword, shield, bow, dagger, ring */
     97,                                           /* spare blank (unused scratch) */
-    /* Limited-use arrow counters (bow digit row): uses 4/3/2/1 then the
-     * depleted marker, plus the trailing blank cell mapped to the unused
-     * BG fetch slot 103.  Ids 98-103 are free BG fetch slots: the atlas
+    /* Limited-use arrow counters (bow floor row): uses 0/1/2/3, power
+     * icon, plus the trailing blank cell mapped to the unused BG fetch
+     * slot 103.  Ids 98-103 are free BG fetch slots: the atlas
      * only loads 104-116, the font 0-95, and no tilemap ever references
      * 98-103 (their same-numbered OAM ids live in the 0x8000 sprite
      * block — a different physical address, AGENTS.md 52.22). */
-    98, 99, 100, 101, 102, 103,                   /* arrows 4, 3, 2, 1, zero, blank */
+    98, 99, 100, 101, 102, 103,                   /* arrows 0, 1, 2, 3, nine, blank */
 };
 
 void ui_card_tiles_load_banked(void)
