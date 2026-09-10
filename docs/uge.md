@@ -506,11 +506,20 @@ transition test
 
 ### Phase 6 — Remove legacy music
 
+> **Done (Sep 2026).**  All hardcoded chiptune playback is gone:
+> `s_note_freqs`, `play_note`, the `lacrimosa` (overworld), `victory`, and
+> `title` note arrays and the `s_track_*` tables were deleted from
+> `src/audio/audio.c`; `audio_update` only steps hUGEDriver now.  The title
+> theme plays an authored `.uge` (currently `title short.uge`, bank 6);
+> MUSIC_OVERWORLD / MUSIC_VICTORY are silent until `.uge` assets exist.
+> `tools/compile_music.py` also patches the empty `waves[]` table some
+> wave-less songs emit (SDCC error 286).
+
 Once every track has been converted:
 
 ```text
 remove old note arrays
-remove old music playback code
+remove old playback code
 remove compatibility code
 remove USE_HUGE_MUSIC switch
 ```

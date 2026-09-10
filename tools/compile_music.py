@@ -64,6 +64,10 @@ src = re.sub(r"static const hUGEDutyInstr_t duty_instruments\[\] = \{\s*\};",
               "static const hUGEDutyInstr_t duty_instruments[1] = {{0, 0, 0, 0, 0}};", src)
 src = re.sub(r"static const hUGEWaveInstr_t wave_instruments\[\] = \{\s*\};",
               "static const hUGEWaveInstr_t wave_instruments[1] = {{0, 0, 0, 0, 0}};", src)
+# A song with no wave instruments emits an empty `waves[]` table; SDCC
+# rejects the empty initializer (error 286).  Give it one zero wave.
+src = re.sub(r"static const unsigned char waves\[\] = \{\s*\};",
+              "static const unsigned char waves[1] = {0};", src)
 
 # Deduplicate byte-identical pattern arrays.  uge2source emits one C array
 # per tracker pattern slot, so a repeated section (e.g. Forest.uge P2/P6)

@@ -42,7 +42,7 @@ DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 DEBUG_ONLY_SRCS = $(SRC_DIR)/debug/scenarios.c $(SRC_DIR)/debug/assertions.c $(SRC_DIR)/debug/telemetry_snap.c $(SRC_DIR)/debug/snapshot_banked.c
 RELEASE_SRCS = $(filter-out $(DEBUG_ONLY_SRCS),$(SRCS))
 
-MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c
+MUSIC_SRCS = $(GENERATED_MUSIC_DIR)/battle.c $(GENERATED_MUSIC_DIR)/desolate_landscape.c $(GENERATED_MUSIC_DIR)/forest.c $(GENERATED_MUSIC_DIR)/boss_fight.c $(GENERATED_MUSIC_DIR)/village.c $(GENERATED_MUSIC_DIR)/castle.c $(GENERATED_MUSIC_DIR)/mimic.c $(GENERATED_MUSIC_DIR)/title.c
 GENERATED_SFX_DIR = generated/sfx
 # Explicit list (not wildcard): asset names contain spaces, which make
 # would split. Escaped following the assets/music rules' convention.
@@ -544,6 +544,11 @@ $(GENERATED_MUSIC_DIR)/castle.c: assets/music/castle.uge tools/compile_music.py 
 # rules).  huge_music.c switches to the song's bank around hUGE calls.
 $(GENERATED_MUSIC_DIR)/mimic.c: assets/music/Mimic.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
 	python3 tools/compile_music.py "$<" 7 song_mimic "$@"
+
+# Title theme.  Replaces the old hardcoded chiptune title table now that
+# the legacy music engine is gone (docs/uge.md Phase 6).
+$(GENERATED_MUSIC_DIR)/title.c: assets/music/title\ short.uge tools/compile_music.py | $(GENERATED_MUSIC_DIR) doctor
+	python3 tools/compile_music.py "$<" 6 song_title "$@"
 
 # WAV previews for the level editor's BGM toggle (Inspector Map Info).
 # Rendered from the generated song C by tools/render_music_preview.py
