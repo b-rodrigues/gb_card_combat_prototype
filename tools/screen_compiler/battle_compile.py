@@ -48,10 +48,19 @@ from compose_enemy_sprites import TILE_COORDS as ENEMY_TILE_COORDS
 from compose_hero_sprites import TILE_COORDS as HERO_TILE_COORDS
 
 # Shared overworld enemy OAM base (must match ENEMY_OW_BASE in src/ui/ui.h).
-# Blob: concatenated per-enemy frames in sorted enemy-id order; OAM ids
-# 128+ alias BG tiles, so the blob must stay below 128 (clear error below).
+# Blob: concatenated per-enemy frames in pinned order (see OW_ORDER_PINNED
+# below); OAM ids 128+ alias BG tiles, so the blob must stay below 128
+# (clear error below).
 ENEMY_OW_BASE = 100
 ENEMY_OW_LIMIT = 128
+
+# Packing order for the shared overworld blob.  The six pre-dog/fire ids
+# are pinned in their committed positions (verify_oam.py asserts bat
+# 100-101, mimic 104-105, slime 106-107, boss 108-111): alphabetical
+# packing cannot provide append-only stability, so any id NOT in this
+# list is appended after it in sorted order and can never shift the
+# pinned prefix.  Never reorder this list; append-only.
+OW_ORDER_PINNED = ['bat', 'kobold', 'mimic', 'slime', 'slime_lord', 'spider']
 
 # Hero overworld is always first in the OW blob at ENEMY_OW_BASE (100).
 # Hero has 1-2 frames; enemies follow after.
@@ -369,7 +378,8 @@ def build_battle_screens_output(battle_screens, enemy_types):
 def ow_blob_layout(enemy_types, hero_json=None):
     """Shared overworld blob layout: returns (offsets, cells) where offsets
     maps id -> blob tile offset and cells is the ordered tile-name
-    list (hero first, then sorted enemy-id order, append-only stability).
+    list (hero first, then the pinned prefix OW_ORDER_PINNED, then any
+    remaining ids in sorted order: append-only, pinned tiles never move).
     Overworld sprites may be multi-tile grids (width*height cells per frame,
     frame-major): each type contributes width*height*frames cells, and the
     per-type base is the cumulative tile offset.
@@ -397,8 +407,10 @@ def ow_blob_layout(enemy_types, hero_json=None):
             cells.extend(names)
             at += len(names)
     
-    # Then enemies in sorted order
-    et_ids = sorted(enemy_types.keys())
+    # Enemies in pinned-prefix order, then any unlisted ids sorted:
+    # new content appends at the tail and can never shift pinned tiles.
+    et_ids = ([i for i in OW_ORDER_PINNED if i in enemy_types] +
+              sorted(i for i in enemy_types.keys() if i not in OW_ORDER_PINNED))
     for et_id in et_ids:
         ow = (enemy_types[et_id].get('overworld') or None)
         if ow is None:
