@@ -561,7 +561,7 @@ def actor_interaction(obj):
         return "INTERACTION_SHOP"
     if "save" in props:
         return "INTERACTION_SAVE"
-    if "dialogue" in props:
+    if "dialogue" in props and props["dialogue"]:
         return "INTERACTION_DIALOGUE"
     return "INTERACTION_NONE"
 
@@ -580,10 +580,14 @@ def emit_actor_row(obj, enemy_ids):
         flags = default_actor_flags(obj.get("type"))
     flag_expr = " | ".join("ACTOR_FLAG_" + f for f in flags) if flags else "0"
     visual = "'" + props.get("visual", default_actor_visual(obj)) + "'"
-    name = '"%s"' % props.get("display_name", ent)
     inter = actor_interaction(obj)
     shop = props.get("shop", 0)
-    dlg = props.get("dialogue", "DIALOGUE_ID_NONE")
+    # Empty strings from the editor templates fall back to sane defaults
+    # (an empty dialogue is "no dialogue", an empty name falls back to
+    # the entity id's semantic suffix).
+    dlg = props.get("dialogue") or "DIALOGUE_ID_NONE"
+    name = '"%s"' % (props.get("display_name")
+                     or (ent.replace("ENTITY_ID_", "") if ent else "?"))
     battle = props.get("battle", "BATTLE_NONE")
     ai = props.get("ai", "AI_NONE")
     hp = props.get("hp", 0)

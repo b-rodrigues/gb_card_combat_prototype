@@ -564,7 +564,8 @@
         "dialogue": "",
         "overworld_sprite": "interior.villager",
         "battle_sprite": "",
-        "battle_name": "VILLAGER"
+        "battle_name": "VILLAGER",
+        "entity_id": "ENTITY_ID_FIRE"
       },
       "animation_frames": [
         "village.village_fire_frame_1",
@@ -584,7 +585,8 @@
         "dialogue": "",
         "overworld_sprite": "interior.villager",
         "battle_sprite": "",
-        "battle_name": "VILLAGER"
+        "battle_name": "VILLAGER",
+        "entity_id": "ENTITY_ID_FIRE"
       },
       "animation_frames": [
         "village.village_fire_frame_1",
@@ -604,7 +606,8 @@
         "dialogue": "",
         "overworld_sprite": "interior.villager",
         "battle_sprite": "",
-        "battle_name": "VILLAGER"
+        "battle_name": "VILLAGER",
+        "entity_id": "ENTITY_ID_FIRE"
       },
       "animation_frames": [
         "village.village_fire_frame_1",
@@ -624,7 +627,8 @@
         "dialogue": "",
         "overworld_sprite": "interior.villager",
         "battle_sprite": "",
-        "battle_name": "VILLAGER"
+        "battle_name": "VILLAGER",
+        "entity_id": "ENTITY_ID_DOG"
       },
       "animation_frames": [
         "actors.actors_dog_frame_1",
@@ -644,7 +648,8 @@
         "dialogue": "",
         "overworld_sprite": "interior.villager",
         "battle_sprite": "",
-        "battle_name": "VILLAGER"
+        "battle_name": "VILLAGER",
+        "entity_id": "ENTITY_ID_DOG"
       },
       "animation_frames": [
         "actors.actors_dog_frame_1",

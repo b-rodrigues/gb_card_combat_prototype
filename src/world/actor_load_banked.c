@@ -27,7 +27,7 @@ extern char s_actor_names[MAX_WORLD_ACTORS][12];
  * (src/rpg/state.c) -- KEEP IN SYNC with those if their storage layout
  * ever changes. */
 
-extern WorldActorDefinition g_static_actors[7];
+extern StaticActorDefinition g_static_actors[MAX_STATIC_ACTORS];
 extern uint8_t g_static_actor_count;
 
 static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
@@ -131,10 +131,11 @@ void actor_load_scene_banked(void)
                     world->actors[slot].display_name = dst;
                     slot++;
                 }
-            } else if (g_static_actor_count < 6) {
-                /* Field-wise copy: struct assignment lowers to
-                 * __memcpy, which lives in the fixed bank and is
-                 * unreachable while bank 2 is mapped (see
+            } else if (g_static_actor_count < MAX_STATIC_ACTORS) {
+                /* Field-wise copy into the compact StaticActorDefinition
+                 * (hostile-only payload dropped): struct assignment
+                 * lowers to __memcpy, which lives in the fixed bank and
+                 * is unreachable while bank 2 is mapped (see
                  * status_content.c for the identical pattern). */
                 g_static_actors[g_static_actor_count].actor_id = def->actor_id;
                 g_static_actors[g_static_actor_count].id = def->id;
@@ -154,19 +155,6 @@ void actor_load_scene_banked(void)
                 g_static_actors[g_static_actor_count].shop_id = def->shop_id;
                 g_static_actors[g_static_actor_count].dialogue_id =
                     def->dialogue_id;
-                g_static_actors[g_static_actor_count].battle_id =
-                    def->battle_id;
-                g_static_actors[g_static_actor_count].ai_type = def->ai_type;
-                g_static_actors[g_static_actor_count].hp = def->hp;
-                g_static_actors[g_static_actor_count].max_hp = def->max_hp;
-                g_static_actors[g_static_actor_count].gold_reward =
-                    def->gold_reward;
-                g_static_actors[g_static_actor_count].reward_currency =
-                    def->reward_currency;
-                g_static_actors[g_static_actor_count].spawn_variable =
-                    def->spawn_variable;
-                g_static_actors[g_static_actor_count].spawn_value =
-                    def->spawn_value;
                 g_static_actor_count++;
             }
         }

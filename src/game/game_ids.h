@@ -28,6 +28,8 @@
 #define ENTITY_ID_MIMIC       (ENTITY_ID_FIRST_GAME + 10)
 #define ENTITY_ID_SPIDER      (ENTITY_ID_FIRST_GAME + 11)
 #define ENTITY_ID_KOBOLD      (ENTITY_ID_FIRST_GAME + 12)
+#define ENTITY_ID_FIRE        (ENTITY_ID_FIRST_GAME + 13)
+#define ENTITY_ID_DOG         (ENTITY_ID_FIRST_GAME + 14)
 
 /* ── Cards (engine range: NONE=0; game range >= CARD_FIRST_GAME) ── */
 #define CARD_IRON_SWORD    (CARD_FIRST_GAME + 0)

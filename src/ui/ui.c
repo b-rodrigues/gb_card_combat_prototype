@@ -552,7 +552,7 @@ static void ui_draw_world_cell(const World *world, uint8_t col, uint8_t row)
     uint8_t sx;
     uint8_t sy;
     char glyph;
-    const WorldActorDefinition *actor;
+    const StaticActorDefinition *actor;
     volatile uint8_t *tilemap = (volatile uint8_t *)0x9800;
 
     if (col >= world->width || row >= world->height) {

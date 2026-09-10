@@ -195,7 +195,7 @@ void ui_actors_sprites_banked(void)
         oam_slot = (uint8_t)(oam_slot + (gh == 2 ? (gw == 2 ? 4 : 2) : gw));
     }
     for (i = 0; i < MAX_STATIC_ACTORS; i++) {
-        const WorldActorDefinition *d;
+        const StaticActorDefinition *d;
         volatile uint8_t *e = (volatile uint8_t *)(SHADOW_OAM_BASE +
                                                    ((uint16_t)(oam_slot + i) << 2));
         uint8_t tile;

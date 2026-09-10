@@ -88,6 +88,23 @@ def load_tilesets(tilesets_dir=None):
     return tilesets
 
 
+_KNOWN_ENTITY_IDS = None
+
+
+def known_entity_ids():
+    """Parse ENTITY_ID_* #defines out of src/game/game_ids.h (the single
+    source of truth for the game-layer entity id range)."""
+    global _KNOWN_ENTITY_IDS
+    if _KNOWN_ENTITY_IDS is None:
+        import re
+        path = (Path(__file__).resolve().parent.parent.parent
+                / "src" / "game" / "game_ids.h")
+        text = path.read_text()
+        _KNOWN_ENTITY_IDS = set(re.findall(r"#define\s+(ENTITY_ID_\w+)", text))
+        _KNOWN_ENTITY_IDS.add("ENTITY_ID_PLAYER")
+    return _KNOWN_ENTITY_IDS
+
+
 def validate_level(level_data, tilesets=None, all_level_ids=None):
     """Validate a loaded level dict. Returns (is_valid, list_of_errors, list_of_warnings, checks_passed)."""
     errors = []
@@ -311,6 +328,17 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
                     errors.append(f"Object '{oid}' has no entity_id but carries actor slot '{key}'")
                     objects_ok = False
             continue
+        # Entity ids must exist in the game layer (src/game/game_ids.h
+        # defines; single source of truth, parsed so the list never
+        # drifts).  Unknown ids would raise at C-compile time anyway —
+        # surface them here with the fix instead.
+        known_entities = known_entity_ids()
+        ent_id = props.get("entity_id")
+        if ent_id not in known_entities:
+            errors.append(
+                f"Object '{oid}': unknown entity_id '{ent_id}' — add "
+                f"#define {ent_id} (ENTITY_ID_FIRST_GAME + N) to src/game/game_ids.h")
+            objects_ok = False
         aid = props.get("actor_id", 0)
         if not isinstance(aid, int) or aid < 0 or aid > 65535:
             errors.append(f"Object '{oid}' has invalid actor_id '{aid}' (0..65535)")
@@ -342,23 +370,34 @@ def validate_level(level_data, tilesets=None, all_level_ids=None):
 
     # Engine actor-slot caps: actor_load_banked() spawns hostile rows into
     # World.actors[MAX_WORLD_ACTORS=4] and friendly rows into
-    # g_static_actors (cap 6).  Rows beyond the cap are SILENTLY DROPPED
+    # g_static_actors (MAX_STATIC_ACTORS, parsed from src/world/actor.h —
+    # single source of truth).  Rows beyond the cap are SILENTLY DROPPED
     # at runtime -- catch the overflow at validation time instead.
+    def _engine_cap(name):
+        import re
+        src = (Path(__file__).resolve().parent.parent.parent
+               / "src" / "world" / "actor.h").read_text()
+        m = re.search(r"#define %s\s+(\d+)" % name, src)
+        return int(m.group(1)) if m else None
+
+    hostile_cap = _engine_cap("MAX_WORLD_ACTORS")
+    static_cap = _engine_cap("MAX_STATIC_ACTORS")
     hostile_rows = [o.get("id") for o in objects
                     if (o.get("properties") or {}).get("entity_id")
                     and "HOSTILE" in ((o.get("properties") or {}).get("flags") or [])]
     static_rows = [o.get("id") for o in objects
                    if (o.get("properties") or {}).get("entity_id")
                    and "HOSTILE" not in ((o.get("properties") or {}).get("flags") or [])]
-    if len(hostile_rows) > 4:
+    if hostile_cap and len(hostile_rows) > hostile_cap:
         errors.append(
             f"Level has {len(hostile_rows)} hostile actors but the engine spawns at most "
-            f"MAX_WORLD_ACTORS=4; extra would be silently dropped: {hostile_rows[4:]}")
+            f"MAX_WORLD_ACTORS={hostile_cap}; extra would be silently dropped: {hostile_rows[hostile_cap:]}")
         objects_ok = False
-    if len(static_rows) > 6:
+    if static_cap and len(static_rows) > static_cap:
         errors.append(
-            f"Level has {len(static_rows)} friendly actors but the engine loads at most 6 "
-            f"static rows; extra would be silently dropped: {static_rows[6:]}")
+            f"Level has {len(static_rows)} friendly actors but the engine loads at most "
+            f"{static_cap} static rows (MAX_STATIC_ACTORS, src/world/actor.h); extra would be "
+            f"silently dropped: {static_rows[static_cap:]}")
         objects_ok = False
 
     if objects_ok:

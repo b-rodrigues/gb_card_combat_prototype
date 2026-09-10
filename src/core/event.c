@@ -126,7 +126,7 @@ static const EventDefinition *event_first_match(Game *g, EventTriggerType trigge
     return NULL;
 }
 
-ActorEngageResult event_engage_actor(Game *g, const WorldActorDefinition *actor)
+ActorEngageResult event_engage_actor(Game *g, const StaticActorDefinition *actor)
 {
     bool dialogue_started = false;
     const EventDefinition *def;

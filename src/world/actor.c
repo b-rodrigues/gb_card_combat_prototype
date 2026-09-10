@@ -15,7 +15,7 @@ const WorldActorTable *g_actor_registry = NULL;
 uint8_t g_actor_registry_count = 0;
 static uint8_t g_actor_bank = 2;
 
-WorldActorDefinition g_static_actors[MAX_STATIC_ACTORS];
+StaticActorDefinition g_static_actors[MAX_STATIC_ACTORS];
 uint8_t g_static_actor_count = 0;
 
 /* Per-slot display-name staging (fixed WRAM, always mapped).  The banked
@@ -45,7 +45,7 @@ uint8_t actor_find_hostile_slot(const World *world, uint8_t x, uint8_t y)
     return NO_ACTOR_INDEX;
 }
 
-const WorldActorDefinition *actor_find_at(const World *world, uint8_t x, uint8_t y)
+const StaticActorDefinition *actor_find_at(const World *world, uint8_t x, uint8_t y)
 {
     uint8_t i;
     (void)world;
@@ -57,7 +57,7 @@ const WorldActorDefinition *actor_find_at(const World *world, uint8_t x, uint8_t
     return NULL;
 }
 
-ActorEngageResult actor_engage(const WorldActorDefinition *actor, DialogueState *dialogue)
+ActorEngageResult actor_engage(const StaticActorDefinition *actor, DialogueState *dialogue)
 {
     if (!actor) return ENGAGE_NONE;
     if (actor->flags & ACTOR_FLAG_HOSTILE) {

@@ -179,7 +179,7 @@ export const Inspector: React.FC<InspectorProps> = ({
     }).catch(() => undefined);
   }, []);
   const selectedEnemyType = (() => {
-    if (!selectedObject || selectedObject.type !== 'enemy') return null;
+    if (!selectedObject || (selectedObject.type !== 'enemy' && selectedObject.type !== 'npc')) return null;
     const props = selectedObject.properties || {};
     const explicit = props.enemy_type;
     if (explicit && owEnemyIds.has(explicit)) return explicit;
@@ -1372,6 +1372,50 @@ export const Inspector: React.FC<InspectorProps> = ({
                     }
                   />
                 </div>
+
+                {/* NPC object identity: the entity id is required for the
+                    object to become an engine actor (entity-less objects
+                    compile as decoration).  Art Type reuses the shared
+                    enemy-types registry — SPRITE_KIND_ENEMY works for
+                    statics too (sprite_tile_for is hostile-agnostic). */}
+                {selectedObject.type === 'npc' && (
+                  <>
+                    <div className="form-group">
+                      <label>Entity ID (required for engine actors)</label>
+                      <input
+                        type="text"
+                        placeholder="ENTITY_ID_DOG"
+                        value={selectedObject.properties?.entity_id || ''}
+                        onChange={(e) => {
+                          const props = { ...(selectedObject.properties || {}) };
+                          const v = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                          if (v) props.entity_id = v; else delete props.entity_id;
+                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Art Type (shared sprite from the type registry)</label>
+                      <select
+                        value={selectedEnemyType || ''}
+                        onChange={(e) => {
+                          const props = { ...(selectedObject.properties || {}) };
+                          if (!e.target.value) {
+                            delete props.enemy_type;
+                          } else {
+                            props.enemy_type = e.target.value;
+                          }
+                          onUpdateObject(selectedEntityIndex, { ...selectedObject, properties: props });
+                        }}
+                      >
+                        <option value="">(none — tile/ASCII fallback)</option>
+                        {enemyTypeList.map((t) => (
+                          <option key={t.id} value={t.id}>{t.label} ({t.id})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
 
                 {selectedObject.type === 'enemy' && (
                   <>

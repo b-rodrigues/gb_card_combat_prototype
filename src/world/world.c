@@ -124,7 +124,7 @@ WorldMoveResult world_try_begin_move(World *w, int8_t dx, int8_t dy,
 {
     uint8_t target_x, target_y;
     uint8_t hostile_slot;
-    const WorldActorDefinition *actor;
+    const StaticActorDefinition *actor;
 
     if (!w || w->move_state == MOVE_STATE_MOVING) return MOVE_RESULT_NONE;
     (void)state;

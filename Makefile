@@ -428,7 +428,15 @@ build/debug/world/scene_load.o: src/world/scene_load.c | $(BUILD_DIR)
 
 build/debug/world/actor_load_banked.o: src/world/actor_load_banked.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS $(INCLUDES) -o $@ $<
+	$(CC) -c -DDEBUG_BUILD -DTEST_LEVELS -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
+
+# Alloc cap (52.19): the MAX_STATIC_ACTORS growth re-exposed a latent
+# pointer-cache miscompile when this unit compiled at default flags
+# (hostile spawns silently skipped at cap >= 10).  Keep in sync with the
+# release rule below.
+build/world/actor_load_banked.o: src/world/actor_load_banked.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) -c -Wf--max-allocs-per-node500 $(INCLUDES) -o $@ $<
 
 build/debug/world/actor.o: src/world/actor.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
