@@ -6,11 +6,11 @@
     "forest": 2,
     "mountain_pass": 3,
     "castle": 4,
-    "south_field": 5,
-    "forestbis": 7
+    "south_field": 5
   },
   "_retired": {
-    "forest2": 6
+    "forest2": 6,
+    "forestbis": 7
   },
   "_test_base": 240
 }

@@ -313,15 +313,6 @@
       "target_y": 1,
       "direction": "SOUTH",
       "tile_char": "<"
-    },
-    {
-      "x": 9,
-      "y": 14,
-      "target_scene": "forestbis",
-      "target_x": 12,
-      "target_y": 4,
-      "direction": "SOUTH",
-      "tile_char": ">"
     }
   ],
   "objects": [

@@ -206,16 +206,6 @@ static const WorldActorDefinition g_south_field_actors[] = {
     },
 };
 
-static const WorldActorDefinition g_forestbis_actors[] = {
-    {
-        15, ENTITY_ID_BAT, 10, 9, DIRECTION_DOWN,
-        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        'B', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 8, 8, 8, CURRENCY_ID_GOLD,
-        0, 0,
-         SPRITE_KIND_ENEMY, 0, 0
-    },
-};
-
 const WorldActorTable g_actor_tables[] = {
     { MAP_FIELD,           g_field_actors,
         (uint8_t)(sizeof(g_field_actors) / sizeof(g_field_actors[0])) },
@@ -229,6 +219,4 @@ const WorldActorTable g_actor_tables[] = {
         (uint8_t)(sizeof(g_castle_actors) / sizeof(g_castle_actors[0])) },
     { MAP_SOUTH_FIELD,     g_south_field_actors,
         (uint8_t)(sizeof(g_south_field_actors) / sizeof(g_south_field_actors[0])) },
-    { MAP_FORESTBIS,       g_forestbis_actors,
-        (uint8_t)(sizeof(g_forestbis_actors) / sizeof(g_forestbis_actors[0])) },
 };
