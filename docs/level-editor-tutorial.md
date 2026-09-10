@@ -143,6 +143,16 @@ would add; **Create** writes the reciprocal into the target (opposite
 side, one tile inside, landing on the spawn row/col) and upserts the
 from-exit, so the pair can never drift. Recompile to apply.
 
+The level dropdown's `Palettes` group opens the Palette view: it shows
+the engine's actual CGB ramps — the 8 background ramps per tileset
+(`generated/tiles/<tileset>.json`, from `tiles_content.c`) and the 4
+object ramps (`ui.c`) — and renders a tile or enemy sprite recolored under
+any of them. Click a tile/enemy, compare it under every ramp, then
+**assign** the one you want: BG assignment writes an explicit `palette`
+into the tileset JSON (honored by `palette_compiler.py`); enemy/hero
+assignment writes `overworld.palette` (already data-driven). Recompile to
+apply.
+
 ## 6. Tilesets & the tile importer
 
 The palette's `🎨 Import/Review Tiles` button opens the Tileset Reviewer:
