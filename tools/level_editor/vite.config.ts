@@ -507,6 +507,58 @@ function levelEditorApiPlugin(): Plugin {
           return;
         }
 
+        // Sound registry (screens/sfx.json): maps each fixed SFX id to a
+        // .uge file.  Curator only — the .uge stays the authored source;
+        // tools/transcribe_sfx.py reads this same file to emit the step
+        // tables (make sfx), so the editor and the build cannot drift.
+        const UGE_DIRS = ['assets/sfx', 'assets/music'];
+        if (req.method === 'GET' && req.url === '/api/uge-files') {
+          try {
+            const files: Array<{ path: string; name: string; dir: string }> = [];
+            for (const d of UGE_DIRS) {
+              for (const f of fs.readdirSync(path.join(repoRoot, d))) {
+                if (f.endsWith('.uge')) {
+                  files.push({ path: `${d}/${f}`, name: f, dir: d });
+                }
+              }
+            }
+            files.sort((a, b) => a.path.localeCompare(b.path));
+            sendJson({ success: true, files });
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && req.url === '/api/sfx') {
+          try {
+            sendJson({ success: true, data: readJsonFile(path.join('screens', 'sfx.json')) });
+          } catch (err: any) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && req.url === '/api/save-sfx') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { data } = JSON.parse(body);
+              const targetPath = path.join(repoRoot, 'screens', 'sfx.json');
+              writeJsonAtomic(targetPath, data);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, path: targetPath }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         // Hero definition (screens/hero.json): single read + save for the
         // hero manager (art, stats, starter deck).  The client sends and
         // receives the hero object directly (not wrapped).
@@ -795,7 +847,7 @@ function levelEditorApiPlugin(): Plugin {
           // (build/*.o vs build/debug/*.o), and the two link steps write
           // disjoint outputs.  Two SEPARATE make processes would race on
           // the shared lite libs -- never split this into parallel execs.
-          runInToolchain('make clean && python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ && python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/ && make debug release -j$(nproc 2>/dev/null || echo 4)', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
+          runInToolchain('make clean && python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c && python3 tools/screen_compiler/title_compile.py -o src/game/title_data.c screens/title.json && python3 tools/screen_compiler/battle_compile.py --all -o src/game/ && python3 tools/screen_compiler/dialogue_compile.py --all -o src/game/ && python3 tools/screen_compiler/tutorial_compile.py --all -o src/screens/ && make debug release -j$(nproc 2>/dev/null || echo 4) && make sfx-preview', ((err: any, stdout: string, stderr: string, attempts: any[]) => {
             if (err) {
               console.error('Compile error:', err.message);
               if (stderr) console.error('Compile stderr:\n' + stderr);

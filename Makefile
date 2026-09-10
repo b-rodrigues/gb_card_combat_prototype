@@ -49,6 +49,15 @@ GENERATED_SFX_DIR = generated/sfx
 SFX_UGE = assets/sfx/sfx\ accept.uge assets/sfx/sfx\ back.uge \
           assets/sfx/sfx\ block.uge assets/sfx/sfx\ cursor.uge \
           assets/sfx/sfx\ hit.uge assets/sfx/sfx\ hit2.uge
+# screens/sfx.json may map any SFX id to any .uge (assets/sfx or
+# assets/music), so the tables depend on the registry plus both pools.
+SFX_REGISTRY = screens/sfx.json
+SFX_ALL_UGE = $(SFX_UGE) \
+              assets/music/Battle\ BGM.uge assets/music/Boss\ fight.uge \
+              assets/music/castle.uge assets/music/desolate_landscape.uge \
+              assets/music/Forest.uge assets/music/Mimic.uge \
+              assets/music/title\ long.uge assets/music/title\ short.uge \
+              assets/music/Village.uge
 # Both C files come from one transcriber run (plus sfx_tables.h); the
 # recipe is deterministic, so a double invocation is a harmless no-op.
 SFX_TABLES = $(GENERATED_SFX_DIR)/sfx_tables.c $(GENERATED_SFX_DIR)/sfx_index.c
@@ -481,8 +490,8 @@ music: $(MUSIC_SRCS) sfx
 # rerunning reproduces generated/sfx/sfx_tables.c byte-identically.
 sfx: $(SFX_TABLES)
 
-$(SFX_TABLES): $(SFX_UGE) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
-	python3 tools/transcribe_sfx.py --out "$@" $(SFX_UGE)
+$(SFX_TABLES): $(SFX_ALL_UGE) $(SFX_REGISTRY) tools/transcribe_sfx.py | $(GENERATED_SFX_DIR) doctor
+	python3 tools/transcribe_sfx.py --out "$@"
 
 $(GENERATED_SFX_DIR):
 	mkdir -p $(GENERATED_SFX_DIR)
