@@ -88,7 +88,7 @@
       "label": "spider frame 1",
       "gb_constant": "TILE_ACTORS_SPIDER_FRAME_1",
       "walkable": false,
-      "color": "#000000",
+      "color": "#121212",
       "ascii": "#",
       "image_url": "/tiles/actors/actors_spider_frame_1.png",
       "category": "enemy"
@@ -98,7 +98,7 @@
       "label": "spider frame 2",
       "gb_constant": "TILE_ACTORS_SPIDER_FRAME_2",
       "walkable": false,
-      "color": "#000000",
+      "color": "#121212",
       "ascii": "#",
       "image_url": "/tiles/actors/actors_spider_frame_2.png",
       "category": "enemy"

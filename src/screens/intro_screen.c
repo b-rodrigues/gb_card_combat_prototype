@@ -16,7 +16,7 @@
 /* Shared slide-show renderer used by the intro, tutorial and splash
  * screens: a full clear, a banked content-body call staged on the address
  * of the renderer + slide byte, telemetry, and a render-cache commit.
- * `bank` selects the content body's ROM bank (4 = ASCII slides, 7 = the
+ * `bank` selects the content body's ROM bank (4 = ASCII slides, 2 = the
  * studio splash bitmap body).  Kept in the fixed bank to hold the fixed
  * _CODE/_HOME area within budget (make memmap). */
 
