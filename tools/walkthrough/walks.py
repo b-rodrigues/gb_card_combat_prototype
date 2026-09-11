@@ -189,6 +189,14 @@ def walk_a(planner, checks, sram_out=None):
             bump_actor(s, planner, "town", (9, 8), "right", "GUARD:"),
             expected="GUARD:", actual="none")
     s.shoot("03-guard-dialogue", need="GUARD:")
+    # The box is background tiles at rows 12-17; no actor OAM entry (the
+    # town fire/dog use enemy-kind OAM art) may draw over it.  Box top
+    # row 12 -> stored OAM y 112.  Regression for the fire/dog overlay.
+    s.tick(4)
+    _over = [y for y in s.oam_actor_ys() if y >= 112]
+    s.check("guard dialogue: no actor sprite over the box", not _over,
+            expected="actor OAM y < 112 (box top row 12)",
+            actual=str(_over))
     s.press("a", settle=30)
     s.shoot("04-dialogue-next")
     close_dialogue(s, "GUARD:")

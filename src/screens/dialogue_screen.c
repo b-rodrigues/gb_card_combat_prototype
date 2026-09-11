@@ -49,6 +49,9 @@ void dialogue_screen_render(Game *g)
         ui_sprite_move((uint8_t)(world_player_px(w) - w->camera_px_x),
                        (uint8_t)(world_player_py(w) - w->camera_px_y));
         ui_draw_actors_sprites(w);
+        /* The box is background tiles at rows 12-17; hide any actor sprite
+         * (e.g. the town fire/dog) that would draw over the text. */
+        ui_sprite_hide_actors_below((uint8_t)(12 * 8));
         rc->valid = true;
         rc->prev_screen = SCREEN_DIALOGUE;
         rc->prev_dialogue_active = true;

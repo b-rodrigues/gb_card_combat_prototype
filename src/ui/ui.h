@@ -137,6 +137,7 @@ void ui_draw_font_test_banked(void);
 void ui_sprite_init(void);
 void ui_sprite_move(uint8_t px, uint8_t py);
 void ui_sprite_hide(void);
+void ui_sprite_hide_actors_below(uint8_t screen_y);
 void ui_sprite_begin_transition(void);
 void ui_sprite_commit(void);
 void oam_dma_init(void);

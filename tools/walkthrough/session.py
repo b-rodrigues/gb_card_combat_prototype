@@ -272,6 +272,14 @@ class Session:
                 return self.reader.scene_state()["scene_id"] == expect_scene
         return self.reader.scene_state()["scene_id"] == expect_scene
 
+    # ── OAM ──────────────────────────────────────────────────────────
+    def oam_actor_ys(self):
+        """Real-OAM Y bytes for the actor region (entries 1..26; entry 0 is
+        the player).  0 = hidden; GBDK stores screenY + 16.  Used to assert
+        nothing draws over the dialogue box."""
+        base = 0xFE00
+        return [self.pb.memory[base + i * 4] for i in range(1, 27)]
+
     # ── assertions ───────────────────────────────────────────────────
     def check(self, name, ok, expected="", actual=""):
         self.checks.append((self.label, name, bool(ok),

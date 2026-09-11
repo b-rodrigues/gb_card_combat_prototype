@@ -298,6 +298,24 @@ void ui_sprite_commit(void)
     refresh_OAM();
 }
 
+/* Hide every player/actor OAM entry that would draw over the dialogue box.
+ * The box is background tiles (rows 12-17) and sprites always draw on top,
+ * so a static actor below the box (the town fire/dog use enemy-kind OAM
+ * art) would otherwise cover the text.  `screen_y` is the first box row's
+ * pixel Y; entries at/under it are hidden.  Called on dialogue entry after
+ * ui_draw_actors_sprites(); the overworld redraw restores them on exit. */
+void ui_sprite_hide_actors_below(uint8_t screen_y)
+{
+    uint8_t i;
+    uint8_t thresh = (uint8_t)(screen_y + 16);   /* OAM stores Y + 16 */
+
+    for (i = 0; i < OAM_MAX_ACTOR_ENTRIES; i++) {
+        if (shadow_OAM[i].y >= thresh) {
+            shadow_OAM[i].y = 0;
+        }
+    }
+}
+
 void ui_lcd_off(void)
 {
     LCDC_REG &= ~0x80;
