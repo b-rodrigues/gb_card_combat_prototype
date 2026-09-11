@@ -13,7 +13,7 @@ Source
 - https://opengameart.org/content/8x8-icons-and-symbols
 - Dungeon tileset: https://rekkimaru.itch.io/gb-studio-dungeon-tileset-8x8
 - houses and various thing: https://nemozhlyve.itch.io/2bit-tileset
-- Combat is original art by Putosaure
+- Combat is original art by Florent Bérault
 
 Assets made by Florent Bérault are licensed under the [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/):
 

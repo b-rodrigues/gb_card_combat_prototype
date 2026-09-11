@@ -37,12 +37,21 @@ Kaartenheld is built with a deliberately split creative process:
 ## The Game
 
 - **Top-down adventure**: explore tile-based maps, talk to characters, follow the story.
-- **Card combat**: battles are fought with a 20-card deck; you play cards from a 5-card hand.
+- **Card combat**: battles are fought with a deck of up to 20 cards; you play a 5-card hand.
 - **Poker combos**: the values of the cards in your hand form poker hands — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND — and stronger hands mean stronger effects. Ring cards act as jokers, substituting any value.
 - **No RPG grind**: there is no equipment and no leveling. Deck composition is your entire progression.
-- **Loot cards**: every victory drops a procedurally generated card (names, values, riders, rarity tiers). Keep it, build it into your deck, or sell it to a merchant for ECUs, the in-game currency.
+- **Loot cards**: every victory drops a procedurally generated card (names, values, riders, rarity tiers). Keep it, build it into your deck, or sell it to a merchant for gold, the in-game currency.
 - **Status effects**: POISON, BURN, and FREEZE ride on card hits with stacking rules and per-round ticks.
 - **Persistence**: battery-backed SRAM save/load with slots.
+
+### What's in the demo
+
+The demo's world is **14 connected rooms**: the Field and Town; a Forest branch
+(Mossy Glade → Deep Woods → Sunken Grove, plus the Overgrown Shrine); a
+desolate South Field / Howling Ridge spur; and a Castle chain (Entry → Great
+Hall → the Ruined Castle → the Throne Room, where the Lord of Slimes waits).
+The rooms are populated with enemy encounters (slimes, bats, kobolds, spiders,
+and a mimic) and a few NPCs who offer advice.
 
 ## About Gallia Belgica Systems
 
@@ -79,7 +88,7 @@ Host-Side AI Agent / Test Runner (Python)
 
 #### Key LLM-First Capabilities
 
-- **Declarative Scenario Fixtures**: 159 deterministic scenarios in `tools/scenarios/tests/*.json` that configure map coordinates, story flags, party stats, decks, hands, inventory, and enemy states before running scripted inputs.
+- **Declarative Scenario Fixtures**: 193 deterministic scenarios in `tools/scenarios/tests/*.json` that configure map coordinates, story flags, party stats, decks, hands, inventory, and enemy states before running scripted inputs.
 - **Parallel Test Harness**: Runs test scenarios concurrently across host CPU cores (`make test-harness JOBS=16`), achieving over 7x speedup compared to serial execution.
 - **Structured Telemetry**: Every state transition, map crossing, collision, dialogue event, quest update, card action, combo resolution, loot drop, and battle action emits structured telemetry into a bounded ring buffer.
 - **Semantic State Snapshots**: Agents inspect exact world coordinates, active screens, dialogue trees, story flags, deck/collection contents, and combat stats rather than parsing pixel frames.
@@ -97,7 +106,7 @@ The codebase includes a complete, playable vertical slice proving all core syste
   - Collision detection, walkability allowlists, and warp gates;
   - Persistent actors, NPC patrolling, and proximity interaction.
 - **Card Combat** (see [`docs/card-battle.md`](docs/card-battle.md)):
-  - Attack/defend phases with a 5-card hand drawn from a 20-card deck;
+  - Attack/defend phases with a 5-card hand drawn from your deck (up to 20 copies);
   - Number-based **poker-style combos**: the hand you make determines the tier — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND;
   - **Ring cards act as jokers**, substituting any value;
   - Card types (sword, shield, bow, heal, dagger) with deterministic effect resolution and a visible turn timer;
@@ -109,7 +118,7 @@ The codebase includes a complete, playable vertical slice proving all core syste
 - **Procedural Card Loot** (Borderlands-inspired, see [`docs/loot.md`](docs/loot.md)):
   - Enemies drop **cards**, not generic items — every drop is either deck material or sellable loot;
   - Procedural card synthesis (names, values, riders) with rarity tiers;
-  - Cards can be sold back to the merchant for **ECUs**, the game's currency.
+  - Cards can be sold back to the merchant for **gold**, the game's currency.
 - **Status Effects** (see [`docs/combo-system.md`](docs/combo-system.md)):
   - POISON, BURN, and FREEZE as on-hit riders with deterministic chance rolls, stacking rules, and per-round ticks.
 - **Story & Events**:
@@ -184,6 +193,8 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | `make test-scenario SCENARIO=<name>` | Run one scenario with full diagnostics | PASS/FAIL + state + telemetry |
 | `make test` | Validate ROM header and checksums | ROM verification |
 | `make verify-oam` | mGBA debugger OAM fidelity checks across transitions | OAM verification |
+| `make verify-walkthrough` | Drive the release ROM (real `levels/` content) and assert canonical state | PASS/FAIL checks |
+| `make verify-scroll` / `verify-music` / `verify-patrol` / `verify-endurance` | Extra PyBoy regression checks | PASS/FAIL |
 | `make memmap` | Check ROM and WRAM memory budget | Invariant check (`_HOME < 0x8000`) |
 | `make lint` | Compile-to-assembly `-Wall` pass over all sources | Warning report |
 | `make screenshots` | Headless PyBoy walkthrough capture | `screenshots/*.png` |
@@ -343,6 +354,41 @@ make test-scenario SCENARIO=town_arrival
 - [`docs/combo-system.md`](docs/combo-system.md) — Combo tiers, ring jokers, effect and status architecture.
 - [`docs/deck.md`](docs/deck.md) — Deck system: 20-card deck, draw/discard, collection.
 - [`docs/deck-management.md`](docs/deck-management.md) — Quick-screen deck management UX.
-- [`docs/loot.md`](docs/loot.md) — Procedural card loot, rarity, and ECU economy.
+- [`docs/loot.md`](docs/loot.md) — Procedural card loot, rarity, and gold economy.
 - [`docs/implementing-card-phases.md`](docs/implementing-card-phases.md) — Implementation status of the card phases.
 - [`docs/dialogue-boxes.md`](docs/dialogue-boxes.md) — Dialogue box rendering and camera alignment.
+
+## License
+
+This project is **split-licensed**: the code and the assets are covered by
+different terms.
+
+- **Code** (`src/`, `tools/`, `levels/`, build scripts) is released under the
+  [European Union Public Licence v. 1.2](LICENSE) (EUPL-1.2). You may use,
+  modify, and redistribute it — including commercially — provided that
+  derivative source stays under the EUPL (or a licence listed as compatible in
+  its Appendix) and the copyright/attribution notices are kept.
+- **Art, music, and other assets** are **not** covered by the EUPL and remain
+  under their own terms. In particular the assets credited to Florent Bérault
+  (e.g. `desolate_landscape.png`, `assets/music/Battle BGM.uge`,
+  `assets/music/desolate_landscape.uge`) are licensed **CC BY-NC-ND 4.0**
+  (attribution, **non-commercial**, **no derivatives**); the imported tilesets
+  follow their source pages, and the combat art is original work by Florent Bérault.
+  See [`assets/README.md`](assets/README.md) and
+  [`assets/tilesets.md`](assets/tilesets.md) for the per-asset credits.
+
+What that means in practice:
+
+- The **source code is free** to study, fork, and reuse — including in
+  commercial projects — *without* the restricted assets.
+- The **game as shipped** (the ROM bundling the art and music) is effectively
+  **non-commercial**: those assets may not be sold, and modified or derivative
+  artwork may not be distributed, without the artists' permission.
+  Attribution must be preserved.
+- Because the non-commercial / no-derivatives assets constrain the combined
+  work, the repository as a whole is not commercially usable just because the
+  code is EUPL. To build a commercial product, replace the restricted assets
+  with your own or obtain a separate licence from each rights holder.
+
+This is a plain-language summary, not legal advice; the licence texts and the
+per-asset sources are authoritative.
