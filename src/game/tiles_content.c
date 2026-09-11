@@ -148,6 +148,13 @@ const uint8_t g_intrepid_font_tiles[1536] = {
 #include "gfx/intrepid_font_tiles.inc"
 };
 
+/* Title logo (assets/title-red.png, 16x3 tiles, make gfx).  The title
+ * screen streams these into the world BG block (ids 128-175) and stamps a
+ * 16x3 tilemap with CGB palette 1. */
+const uint8_t g_title_logo_tiles[768] = {
+#include "gfx/title_logo_tiles.inc"
+};
+
 void ui_load_tileset_banked(void)
 {
     uint8_t tileset = g_bk_byte_a;
@@ -225,5 +232,23 @@ void ui_load_tileset_banked(void)
             }
             g_active_tile_palette[npc_slots[s]] = npc_pals[s];
         }
+    }
+}
+
+/* Bank-5 title-logo loader for the fixed-bank title wrapper.  Writes the
+ * 48 generated tiles straight to VRAM at the world BG block (ids 128+,
+ * signed 0x8800 fetch: AGENTS.md 52.22).  Called from the title screen's
+ * LCD-off full redraw, so no per-byte PPU wait is needed; the overworld
+ * reloads this block on entry (ui_invalidate_tileset), so nothing leaks. */
+void ui_title_logo_load_banked(void)
+{
+    const uint8_t *src = g_title_logo_tiles;
+    volatile uint8_t *dst =
+        (volatile uint8_t *)(0x8000u + ((uint16_t)RPG_TILE_BASE_WORLD << 4));
+    uint16_t n = 768u;
+
+    VBK_REG = 0;
+    while (n--) {
+        *dst++ = *src++;
     }
 }

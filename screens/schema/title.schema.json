@@ -40,6 +40,33 @@
         }
       }
     },
+    "logo_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "x", "y", "width", "height"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "url": {
+          "type": "string",
+          "description": "Editor-served PNG (public/tiles/title/logo.png); the ROM tile bytes come from make gfx."
+        },
+        "x": { "type": "integer", "minimum": 0, "maximum": 19 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 18 },
+        "palette": { "type": "integer", "minimum": 0, "maximum": 7 }
+      }
+    },
+    "subtitle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "y"],
+      "properties": {
+        "text": { "type": "string", "maxLength": 20 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 17 },
+        "align": { "type": "string", "enum": ["left", "center", "right"] }
+      }
+    },
     "prompt": {
       "type": "object",
       "additionalProperties": false,

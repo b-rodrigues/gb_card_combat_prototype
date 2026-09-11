@@ -29,18 +29,21 @@ BOOT_TICKS = 180
 # press START until the overworld; a START landing on the open overworld
 # opens the quick screen, which the loop detects and closes again).
 TITLE_LINES = (
-    "G I A U S A R",
-    "The Waking Whale",
-    "and the Closed",
+    "A GAME BY",
+    "GALLIA BELGICA",
+    "KAARTENHELD",
+    "BATTLE DEMO",
     "NEW GAME",
     "CONTINUE",
     "SOUND",
-    "The skies above",
-    "A whale stirs",
-    "in the deep.",
-    "The sky closes,",
-    "sealed against",
-    "the waking whale.",
+    "A troubled land",
+    "calls out for a",
+    "hero of a new",
+    "kind.",
+    "Your strength is",
+    "not in steel,",
+    "but in the cards",
+    "you carry.",
     "Only the Lord of",
     "Slimes stands",
     "between all that",
@@ -92,6 +95,12 @@ class Session:
 
     # ── boot ─────────────────────────────────────────────────────────
     def on_title_or_intro(self):
+        # The canonical screen id is authoritative (g_game.screen, offset 0
+        # of the Game struct): the splash renders a bitmap logo whose BG
+        # tiles read as non-text, so the text markers alone cannot detect it.
+        screen = self.pb.memory[self.reader.g_game]
+        if screen in (9, 10, 11, 12):  # TITLE, INTRO, TUTORIAL, SPLASH
+            return True
         return any(m in r for r in self.bg_text() for m in TITLE_LINES)
 
     def quick_open(self):
@@ -100,21 +109,30 @@ class Session:
     def on_overworld(self):
         return (not self.quick_open()) and not self.on_title_or_intro()
 
+    def _stable_overworld(self, frames=15):
+        """on_overworld held for `frames` consecutive ticks.  The boot
+        studio splash / title / intro each perform an LCD-off redraw that
+        briefly blanks the screen, and on_overworld is a negative
+        heuristic (anything not title/intro/quick counts) — a single
+        blank transition frame would otherwise be mistaken for the
+        overworld (AGENTS.md 56.2)."""
+        return self.stable(self.on_overworld, frames=frames)
+
     def boot_to_overworld(self, tries=12):
-        """Press START through the boot title splash, menu and the 3-slide
-        intro until the overworld (self-healing, per §56.2)."""
+        """Press START through the boot splash, title menu and the 3-slide
+        intro until the overworld is stable (self-healing, per §56.2)."""
         self.check("%s: reached overworld" % self.label,
-                   self.wait_for(self.on_overworld, ticks=90)
+                   self.wait_for(self._stable_overworld, ticks=120)
                    or self._start_through(tries))
         return self.on_overworld()
 
     def _start_through(self, tries):
         for _ in range(tries):
             self.wait_for(lambda: self.screen_alnum(), ticks=360)
-            if self.on_overworld():
+            if self._stable_overworld():
                 return True
             self.press("start", settle=40)
-            if self.wait_for(self.on_overworld, ticks=90):
+            if self.wait_for(self._stable_overworld, ticks=120):
                 return True
         return self.on_overworld()
 

@@ -119,6 +119,8 @@ export interface EditorLevel {
   titleLayout?: {
     title?: string;
     logo?: { x: number; y: number; lines: string[] };
+    logoImage?: { enabled: boolean; url?: string; x: number; y: number; width: number; height: number; palette?: number };
+    subtitle?: { text: string; y: number; align?: 'left' | 'center' | 'right' };
     graphic?: { enabled: boolean; x: number; y: number; width: number; height: number; lines: string[] };
     prompt?: { text: string; x: number; y: number; align?: 'left' | 'center' | 'right' };
     credits?: { enabled: boolean; text: string; x: number; y: number; align?: 'left' | 'center' | 'right' };
@@ -153,7 +155,7 @@ export function titleScreenToEditor(data: any): EditorLevel {
       properties: {
         sprite_width: 2,
         sprite_height: 1,
-        display_name: data.logo?.lines?.[0]?.trim() || data.title || 'GIAUSAR',
+        display_name: data.logo?.lines?.[0]?.trim() || data.title || 'KAARTENHELD',
         dialogue_id: data.logo?.lines ? data.logo.lines.join('\n') : data.title
       }
     },
@@ -214,11 +216,13 @@ export function titleScreenToEditor(data: any): EditorLevel {
     regions,
     isScreen: true,
     titleLayout: {
-      title: data.title || 'Giausar',
+      title: data.title || 'Kaartenheld',
       logo: data.logo ? JSON.parse(JSON.stringify(data.logo)) : { x: 0, y: 1, lines: [] },
+      logoImage: data.logo_image ? JSON.parse(JSON.stringify(data.logo_image)) : { enabled: false, url: '/tiles/title/logo.png', x: 2, y: 1, width: 16, height: 3, palette: 1 },
+      subtitle: data.subtitle ? JSON.parse(JSON.stringify(data.subtitle)) : { text: 'BATTLE DEMO', y: 5, align: 'center' },
       graphic: data.graphic ? JSON.parse(JSON.stringify(data.graphic)) : { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] },
       prompt: data.prompt ? JSON.parse(JSON.stringify(data.prompt)) : { text: 'PRESS START', x: 4, y: 14, align: 'center' },
-      credits: data.credits ? JSON.parse(JSON.stringify(data.credits)) : { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' },
+      credits: data.credits ? JSON.parse(JSON.stringify(data.credits)) : { enabled: false, text: 'GALLIA BELGICA', x: 6, y: 17, align: 'right' },
       menu: data.menu ? JSON.parse(JSON.stringify(data.menu)) : { x: 3, caret_x: 3, first_row: 10, row_step: 2, options: [] },
     },
     originalScreenData: data
@@ -472,6 +476,8 @@ export function editorToLevelData(lvl: EditorLevel): any {
       if (lvl.titleLayout) {
         if (lvl.titleLayout.title) screenData.title = lvl.titleLayout.title;
         if (lvl.titleLayout.logo) screenData.logo = lvl.titleLayout.logo;
+        if (lvl.titleLayout.logoImage) screenData.logo_image = lvl.titleLayout.logoImage;
+        if (lvl.titleLayout.subtitle) screenData.subtitle = lvl.titleLayout.subtitle;
         if (lvl.titleLayout.graphic) screenData.graphic = lvl.titleLayout.graphic;
         if (lvl.titleLayout.prompt) screenData.prompt = lvl.titleLayout.prompt;
         if (lvl.titleLayout.credits) screenData.credits = lvl.titleLayout.credits;

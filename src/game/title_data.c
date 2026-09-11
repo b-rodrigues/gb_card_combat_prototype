@@ -7,17 +7,24 @@
 
 #include <stdint.h>
 
-const char g_title_logo[5][20+1] = {
-"   G I A U S A R    ",
-"------------------  ",
-"The Waking Whale    ",
-" and the Closed     ",
-"       Sky          "
+const char g_title_logo[1][20+1] = {
+"KAARTENHELD         "
 };
 
 uint8_t const g_title_logo_x = 0;
 uint8_t const g_title_logo_y = 1;
-uint8_t const g_title_logo_count = 5;
+uint8_t const g_title_logo_count = 1;
+
+uint8_t const g_title_logo_image_enabled = 1;
+uint8_t const g_title_logo_image_x = 2;
+uint8_t const g_title_logo_image_y = 1;
+uint8_t const g_title_logo_image_width = 16;
+uint8_t const g_title_logo_image_height = 3;
+uint8_t const g_title_logo_image_palette = 1;
+
+const char g_title_subtitle_text[21] = "BATTLE DEMO         ";
+uint8_t const g_title_subtitle_x = 4;
+uint8_t const g_title_subtitle_y = 5;
 
 const char g_title_graphic[5][20+1] = {
 "  /\\____/\\          ",
@@ -30,16 +37,16 @@ const char g_title_graphic[5][20+1] = {
 uint8_t const g_title_graphic_x = 2;
 uint8_t const g_title_graphic_y = 7;
 uint8_t const g_title_graphic_count = 5;
-uint8_t const g_title_graphic_enabled = 1;
+uint8_t const g_title_graphic_enabled = 0;
 
 const char g_title_prompt_text[21] = "PRESS START         ";
 uint8_t const g_title_prompt_x = 4;
 uint8_t const g_title_prompt_y = 14;
 
-const char g_title_credits_text[21] = "GAME BY BRODRIGUES  ";
-uint8_t const g_title_credits_x = 2;
+const char g_title_credits_text[21] = "GALLIA BELGICA      ";
+uint8_t const g_title_credits_x = 6;
 uint8_t const g_title_credits_y = 17;
-uint8_t const g_title_credits_enabled = 1;
+uint8_t const g_title_credits_enabled = 0;
 
 const char g_title_menu_options[4][20+1] = {
 "> NEW GAME          ",

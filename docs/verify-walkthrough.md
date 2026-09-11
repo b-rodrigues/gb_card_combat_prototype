@@ -29,6 +29,7 @@ saves stay non-gating (AGENTS.md §56.4 updated accordingly).
 | Shop | shopkeeper (shop_id=1) sells CARD_WOOD_RING; A buys; `g_game.shop_message` readable; gold/collection WRAM-readable |
 | Battle | `g_battle.player.hp`, `enemies[i].hp`, result/phase bytes readable; victory loot hook credits slime `gold_reward` from `levels/field.json` |
 | Title CONTINUE | menu index 1 → SCREEN_SAVE_LOAD (mode=LOAD) → A on slot 1 restores scene/pos |
+| Title splash | boot → SCREEN_SPLASH (screen id 12, "A GAME BY / GALLIA BELGICA / SYSTEMS") auto-advances to SCREEN_TITLE after 150 frames or is skipped with A/START |
 | CI | `.github/workflows/ci.yml` test job: clean+lint+test+memmap+test-harness(JOBS=4)+verify-oam → append `make verify-walkthrough` |
 
 ## 3. Architecture

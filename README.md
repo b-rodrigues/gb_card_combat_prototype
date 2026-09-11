@@ -1,6 +1,6 @@
 # Kaartenheld — Game Boy Demo
 
-**Kaartenheld** (Luxembourgish for "Card Hero") is an upcoming top-down adventure game for the Nintendo Game Boy by **FroBlo Studios**, a two-person indie team of inexperienced-but-relentless developers.
+**Kaartenheld** (Luxembourgish for "Card Hero") is an upcoming top-down adventure game for the Nintendo Game Boy by **Gallia Belgica Systems**, a two-person indie team of inexperienced-but-relentless developers.
 
 This repository contains the playable **demo** for Kaartenheld: a top-down adventure with a deck-building card combat system in which you build **poker hands to trigger combos**, explore the world, and grow your deck — with **no traditional RPG mechanics**: no equipment, no levels, no XP. Your power is entirely determined by the cards you carry.
 
@@ -10,7 +10,7 @@ Every combat victory rewards you with a **new random card**: add it to your deck
 
 Kaartenheld is built with a deliberately split creative process:
 
-- **Art and music are entirely human-made** — every sprite, tileset, and track is crafted by hand by FroBlo Studios.
+- **Art and music are entirely human-made** — every sprite, tileset, and track is crafted by hand by Gallia Belgica Systems.
 - **The code is written by AI coding agents** — an LLM-first development workflow in which agents build, test, and debug the game through a deterministic, machine-readable harness (see the technical documentation below).
 - **Levels are authored in a bespoke level editor** built specifically for this game, which compiles directly into the game's build pipeline.
 
@@ -24,9 +24,9 @@ Kaartenheld is built with a deliberately split creative process:
 - **Status effects**: POISON, BURN, and FREEZE ride on card hits with stacking rules and per-round ticks.
 - **Persistence**: battery-backed SRAM save/load with slots.
 
-## About FroBlo Studios
+## About Gallia Belgica Systems
 
-FroBlo Studios is two inexperienced indie developers making a Game Boy game the hard way: authentic hardware constraints, a fully reproducible Nix toolchain, and an AI-agent-first development workflow (more on that below).
+Gallia Belgica Systems is two inexperienced indie developers making a Game Boy game the hard way: authentic hardware constraints, a fully reproducible Nix toolchain, and an AI-agent-first development workflow (more on that below).
 
 ---
 

@@ -250,6 +250,30 @@ def build_title_c_output(data: dict) -> str:
         graphic_init_parts.append('"%s"' % escaped)
     graphic_init = ",\n".join(graphic_init_parts)
 
+    # Logo image (bitmap): the tile bytes come from make gfx
+    # (src/gfx/title_logo_tiles.inc); this compiles only placement/flags.
+    logo_image = data.get("logo_image", {})
+    logo_image_enabled = 1 if logo_image.get("enabled", False) else 0
+    logo_image_x = logo_image.get("x", 2)
+    logo_image_y = logo_image.get("y", 1)
+    logo_image_width = logo_image.get("width", 16)
+    logo_image_height = logo_image.get("height", 3)
+    logo_image_palette = logo_image.get("palette", 1)
+
+    # Subtitle line drawn under the logo.
+    subtitle = data.get("subtitle", {})
+    subtitle_text = subtitle.get("text", "")
+    subtitle_align = subtitle.get("align", "center")
+    if subtitle_align == "right":
+        subtitle_x = max(0, 20 - len(subtitle_text.strip()))
+    elif subtitle_align == "left":
+        subtitle_x = subtitle.get("x", 0)
+    else:  # center
+        subtitle_x = max(0, (20 - len(subtitle_text.strip())) // 2)
+    subtitle_y = subtitle.get("y", 5)
+    subtitle_padded = subtitle_text + " " * (20 - len(subtitle_text))
+    escaped_subtitle = subtitle_padded.replace('\\', '\\\\').replace('"', '\\"')
+
     # Credits data
     credits_data = data.get("credits", {})
     credits_enabled = 1 if credits_data.get("enabled", False) else 0
@@ -298,6 +322,19 @@ def build_title_c_output(data: dict) -> str:
     lines.append("uint8_t const g_title_logo_x = %d;" % data["logo"]["x"])
     lines.append("uint8_t const g_title_logo_y = %d;" % data["logo"]["y"])
     lines.append("uint8_t const g_title_logo_count = %d;" % n_logo)
+    lines.append("")
+    # --- Logo bitmap (placement only; tile bytes in gfx/title_logo_tiles.inc) ---
+    lines.append("uint8_t const g_title_logo_image_enabled = %d;" % logo_image_enabled)
+    lines.append("uint8_t const g_title_logo_image_x = %d;" % logo_image_x)
+    lines.append("uint8_t const g_title_logo_image_y = %d;" % logo_image_y)
+    lines.append("uint8_t const g_title_logo_image_width = %d;" % logo_image_width)
+    lines.append("uint8_t const g_title_logo_image_height = %d;" % logo_image_height)
+    lines.append("uint8_t const g_title_logo_image_palette = %d;" % logo_image_palette)
+    lines.append("")
+    # --- Subtitle ---
+    lines.append("const char g_title_subtitle_text[21] = \"%s\";" % escaped_subtitle)
+    lines.append("uint8_t const g_title_subtitle_x = %d;" % subtitle_x)
+    lines.append("uint8_t const g_title_subtitle_y = %d;" % subtitle_y)
     lines.append("")
     # --- Graphic / Multi-tile Image ---
     lines.append("const char g_title_graphic[%d][%d+1] = {" % (n_graphic, grid_w))

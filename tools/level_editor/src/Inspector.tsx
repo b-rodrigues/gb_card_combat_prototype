@@ -409,7 +409,7 @@ export const Inspector: React.FC<InspectorProps> = ({
               <input
                 type="text"
                 placeholder="Game Title"
-                value={level.titleLayout?.title ?? 'Giausar'}
+                value={level.titleLayout?.title ?? 'Kaartenheld'}
                 onChange={(e) =>
                   onUpdateLevelMeta({
                     titleLayout: {
@@ -436,6 +436,181 @@ export const Inspector: React.FC<InspectorProps> = ({
                   })
                 }
               />
+            </div>
+
+            {/* Title Logo Bitmap (assets/title-red.png via make gfx) */}
+            <div className="form-group" style={{ background: 'rgba(30, 41, 59, 0.4)', padding: 8, borderRadius: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ fontWeight: 600 }}>🏆 Title Logo Bitmap</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <input
+                    type="checkbox"
+                    checked={level.titleLayout?.logoImage?.enabled ?? true}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          logoImage: {
+                            ...(level.titleLayout?.logoImage || { x: 2, y: 1, width: 16, height: 3, palette: 1, url: '/tiles/title/logo.png' }),
+                            enabled: e.target.checked,
+                          },
+                        },
+                      })
+                    }
+                  />
+                  Enabled
+                </label>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, margin: '6px 0' }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Col X</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={19}
+                    value={level.titleLayout?.logoImage?.x ?? 2}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          logoImage: {
+                            ...(level.titleLayout?.logoImage || { enabled: true, y: 1, width: 16, height: 3, palette: 1, url: '/tiles/title/logo.png' }),
+                            x: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row Y</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.logoImage?.y ?? 1}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          logoImage: {
+                            ...(level.titleLayout?.logoImage || { enabled: true, x: 2, width: 16, height: 3, palette: 1, url: '/tiles/title/logo.png' }),
+                            y: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Width</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={level.titleLayout?.logoImage?.width ?? 16}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          logoImage: {
+                            ...(level.titleLayout?.logoImage || { enabled: true, x: 2, y: 1, height: 3, palette: 1, url: '/tiles/title/logo.png' }),
+                            width: parseInt(e.target.value) || 16,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Height</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={18}
+                    value={level.titleLayout?.logoImage?.height ?? 3}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          logoImage: {
+                            ...(level.titleLayout?.logoImage || { enabled: true, x: 2, y: 1, width: 16, palette: 1, url: '/tiles/title/logo.png' }),
+                            height: parseInt(e.target.value) || 3,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: '#94a3b8' }}>
+                Tiles from <code>assets/title-red.png</code> via <code>make gfx</code>
+                (editor copies <code>public/tiles/title/logo.png</code>).
+              </div>
+            </div>
+
+            {/* Subtitle (drawn under the logo bitmap) */}
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>📝 Subtitle</label>
+              <input
+                type="text"
+                placeholder="BATTLE DEMO"
+                value={level.titleLayout?.subtitle?.text ?? 'BATTLE DEMO'}
+                onChange={(e) =>
+                  onUpdateLevelMeta({
+                    titleLayout: {
+                      ...(level.titleLayout || {}),
+                      subtitle: {
+                        ...(level.titleLayout?.subtitle || { y: 5, align: 'center' }),
+                        text: e.target.value,
+                      },
+                    },
+                  })
+                }
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, marginTop: 4 }}>
+                <div>
+                  <label style={{ fontSize: 11 }}>Row Y</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={17}
+                    value={level.titleLayout?.subtitle?.y ?? 5}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          subtitle: {
+                            ...(level.titleLayout?.subtitle || { text: 'BATTLE DEMO', align: 'center' }),
+                            y: parseInt(e.target.value) || 0,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11 }}>Align</label>
+                  <select
+                    value={level.titleLayout?.subtitle?.align ?? 'center'}
+                    onChange={(e) =>
+                      onUpdateLevelMeta({
+                        titleLayout: {
+                          ...(level.titleLayout || {}),
+                          subtitle: {
+                            ...(level.titleLayout?.subtitle || { text: 'BATTLE DEMO', y: 5 }),
+                            align: e.target.value as 'left' | 'center' | 'right',
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <option value="center">center</option>
+                    <option value="left">left</option>
+                    <option value="right">right</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Big Title Graphic / Tile Image */}
@@ -746,7 +921,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' }),
+                            ...(level.titleLayout?.credits || { text: 'GALLIA BELGICA', x: 2, y: 17, align: 'right' }),
                             enabled: e.target.checked,
                           },
                         },
@@ -762,7 +937,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                   <label style={{ fontSize: 11 }}>Credits Text</label>
                   <input
                     type="text"
-                    value={level.titleLayout?.credits?.text ?? 'GAME BY BRODRIGUES'}
+                    value={level.titleLayout?.credits?.text ?? 'GALLIA BELGICA'}
                     onChange={(e) =>
                       onUpdateLevelMeta({
                         titleLayout: {
@@ -788,7 +963,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, align: 'right' }),
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GALLIA BELGICA', x: 2, align: 'right' }),
                             y: parseInt(e.target.value) || 17,
                           },
                         },
@@ -805,7 +980,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17 }),
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GALLIA BELGICA', x: 2, y: 17 }),
                             align: e.target.value as any,
                           },
                         },

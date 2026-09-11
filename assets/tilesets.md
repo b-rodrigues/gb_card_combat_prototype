@@ -118,10 +118,21 @@ Like combat art, these curated PNGs are hand-maintained (no
 ## Fonts, icons, audio, mockups
 
 - `assets/intrepid.png` -> `intrepid_font_tiles.inc` (font).
+- `assets/title-red.png` (128×24, 16×3 tiles) -> `title_logo_tiles.inc`
+  (`make gfx`), the bitmap title logo.  Loaded into the world BG block
+  (ids 128-175) with CGB palette 1 by the title screen; a copy is
+  published to `tools/level_editor/public/tiles/title/logo.png` so the
+  editor's title preview mirrors the ROM 1:1.  `title-brun.png` is the
+  unused brown variant (reference only).
+- `assets/gallia_belgica_systems.png` (104×40, 13×5 cells) -> the deduped
+  `splash_logo_tiles.h` blob + raster map (`make gfx`,
+  `tools/screen_compiler/splash_logo_compile.py`), the boot studio splash.
+  Rendered from the bank-7 `ui_splash_logo_render_banked` body with one CGB
+  palette `[white, red, blue, black]` (the gray anti-aliasing folds into
+  black).  LLM-only content: the editor has no splash screen.
 - `assets/equipment_8x8.png` + `assets/symbols_8x8.png` -> icon atlas
   (`tools/asset_atlas.py`, 9px stride).
 - `assets/music/*.uge` -> hUGETracker soundtrack, ROM bank 6.
   `assets/sfx/*.uge` -> transcribed SFX tables, ROM bank 7.
 - Reference/mockups only (never build inputs): `battle_screen_mockup.jpg`,
-  `desolate_landscape_example.png`, `forest-json.png`, `title-brun.png`,
-  `title-red.png`.
+  `desolate_landscape_example.png`, `forest-json.png`, `title-brun.png`.

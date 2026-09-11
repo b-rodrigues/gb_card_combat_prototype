@@ -197,6 +197,22 @@ gfx:
 	@python3 tools/png2gb.py assets/npc_tiles.png --name rpg_actor_npc_tiles \
 		--palette auto --anchor-color "#f1eb03" --raw \
 		-o $(GFX_OUT_DIR)/rpg_actor_npc_tiles.inc
+	# ── Title logo (assets/title-red.png, 16 cols × 3 rows) ──────────────
+	# Full 48-tile logo sheet, loaded into the world BG block (ids 128-175)
+	# with CGB palette 1 on the title screen.  The level-editor Title Studio
+	# previews the exact same image, so a copy is published under
+	# public/tiles/title/ (mirrors the ROM 1:1; the CI drift diff covers it).
+	@python3 tools/png2gb.py assets/title-red.png --name title_logo_tiles \
+		--palette auto --anchor-color "#ffffff" --raw \
+		-o $(GFX_OUT_DIR)/title_logo_tiles.inc
+	@mkdir -p tools/level_editor/public/tiles/title
+	@cp assets/title-red.png tools/level_editor/public/tiles/title/logo.png
+	@echo "Title logo: src/gfx/title_logo_tiles.inc + public/tiles/title/logo.png"
+	# ── Studio splash logo (assets/gallia_belgica_systems.png, 13x5) ──────
+	# Fixed global shade map -> one CGB palette [white, red, blue, black]
+	# rendered by the bank-7 splash body.  LLM-only content (no editor view).
+	@python3 tools/screen_compiler/splash_logo_compile.py \
+		-o $(GFX_OUT_DIR)/splash_logo_tiles.h
 
 
 

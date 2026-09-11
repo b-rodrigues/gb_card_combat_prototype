@@ -21,6 +21,13 @@ void title_screen_render(Game *g)
     rc = &g->render_cache;
     if (!rc->valid || rc->prev_screen != SCREEN_TITLE) {
         ui_clear_screen();
+        /* Stream the bitmap logo into the world BG block (bank-5 loader)
+         * before the bank-4 content body stamps its tilemap.  This runs
+         * inside the LCD-off full redraw, so the raw VRAM writes are
+         * safe; the overworld reloads the block on entry. */
+        g_bk_call_bank = 5;
+        g_bk_call_target = (uint16_t)&ui_title_logo_load_banked;
+        banked_call_run();
         g_bk_call_bank = 4;
         g_bk_call_target = (uint16_t)&title_content_render;
         g_bk_byte_a = g->title_menu_showing;

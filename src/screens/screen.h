@@ -23,7 +23,8 @@ typedef enum {
     SCREEN_SAVE_LOAD = 8,
     SCREEN_TITLE     = 9,
     SCREEN_INTRO     = 10,
-    SCREEN_TUTORIAL  = 11
+    SCREEN_TUTORIAL  = 11,
+    SCREEN_SPLASH    = 12
 } ScreenId;
 
 /*
@@ -69,6 +70,8 @@ void save_load_screen_update(Game *g);
 void save_load_screen_render(Game *g);
 void title_screen_update(Game *g);
 void title_screen_render(Game *g);
+void splash_screen_update(Game *g);
+void splash_screen_render(Game *g);
 void intro_screen_update(Game *g);
 void intro_screen_render(Game *g);
 void tutorial_screen_update(Game *g);
@@ -81,8 +84,9 @@ void tutorial_screen_render(Game *g);
  * tutorial_content.c (static data must not duplicate per TU). */
 #include "tutorial_count_generated.h"
 
-/* Shared slide-show renderer (intro + tutorial screens). */
-void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide);
+/* Shared slide-show renderer (intro + tutorial + splash screens).
+ * `bank` is the content body's ROM bank (4 = ASCII slides, 7 = splash). */
+void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide, uint8_t bank);
 
 /* Bank-2 no-arg bodies dispatched by title_screen_render() (banked layout
  * constraint, AGENTS.md 52.11.1).  title_content_render() reads
