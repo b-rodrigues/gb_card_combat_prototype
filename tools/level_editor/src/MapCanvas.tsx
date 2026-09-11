@@ -38,6 +38,31 @@ interface MapCanvasProps {
 
 const TILE_SIZE = 24; // Base pixel size per tile
 
+/* Draw ROM-accurate title text with the intrepid font tiles.  The ROM maps
+ * char `ch` to tile `ch - ' '` (ui_font_tile_base = 0), so the 96 tile PNGs
+ * (16 cols x 6 rows) index directly by charCode - 32.  Out-of-range cells
+ * are clipped to the 20-column grid. */
+function drawTitleText(
+  ctx: CanvasRenderingContext2D,
+  fontImgs: Map<number, HTMLImageElement>,
+  x: number,
+  y: number,
+  text: string,
+  tileSize: number
+) {
+  if (fontImgs.size === 0) return;
+  for (let i = 0; i < text.length; i++) {
+    const col = x + i;
+    if (col >= 20) break;
+    if (col < 0) continue;
+    const code = text.charCodeAt(i);
+    if (code < 32 || code > 127) continue;
+    const img = fontImgs.get(code - 32);
+    if (img) ctx.drawImage(img, col * tileSize, y * tileSize, tileSize, tileSize);
+  }
+}
+
+
 export const MapCanvas: React.FC<MapCanvasProps> = ({
   level,
   activeTool,
@@ -104,6 +129,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const [combatSets, setCombatSets] = useState<Map<string, { w: number; h: number; f0: Array<string | null>; f1: Array<string | null> }>>(new Map());
   const [enemyArtByName, setEnemyArtByName] = useState<Map<string, string>>(new Map());
   const [combatImgs, setCombatImgs] = useState<Map<string, HTMLImageElement>>(new Map());
+  const [titleFontImgs, setTitleFontImgs] = useState<Map<number, HTMLImageElement>>(new Map());
+  const [titleLogoImg, setTitleLogoImg] = useState<HTMLImageElement | null>(null);
   /* Shared overworld enemy sprites (UPPER name -> cells): type-owned art
    * wins over per-instance sprite names, mirroring the ROM. */
   const [enemyOwByName, setEnemyOwByName] = useState<Map<string, string[]>>(new Map());
@@ -167,6 +194,27 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       img.onerror = fin;
     });
   }, []);
+  // Title-screen authentic preview assets: the intrepid font tiles (96,
+  // 16 cols x 6 rows; char tile index = charCode - 32) and the bitmap title
+  // logo (public copy of assets/title-red.png, published by `make gfx`).
+  useEffect(() => {
+    const imgs = new Map<number, HTMLImageElement>();
+    let done = 0;
+    for (let i = 0; i < 96; i++) {
+      const img = new Image();
+      img.src = `/tiles/intrepid/tile_${Math.floor(i / 16)}_${i % 16}.png`;
+      const fin = () => { done++; imgs.set(i, img); if (done === 96) setTitleFontImgs(new Map(imgs)); };
+      img.onload = fin;
+      img.onerror = fin;
+    }
+  }, []);
+  const titleLogoUrl = level.titleLayout?.logoImage?.url || '/tiles/title/logo.png';
+  useEffect(() => {
+    const img = new Image();
+    img.src = titleLogoUrl;
+    img.onload = () => setTitleLogoImg(img);
+    img.onerror = () => setTitleLogoImg(null);
+  }, [titleLogoUrl]);
   const tilesetIdsKey = Object.keys(BUILTIN_TILESETS).sort().join(',');
   useEffect(() => {
     setTileImages((prev) => {
@@ -247,15 +295,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // ── TITLE SCREEN AUTHENTIC RENDERER ──
+    // Mirrors the ROM 1:1: white GB background, the bitmap logo
+    // (assets/title-red.png, drawn at its tile position), and all text
+    // using the intrepid font tiles at the exact ROM rows/columns.  The
+    // "Objects" toggle picks the ROM's two title states: menu (caret on
+    // NEW GAME, post-START) when on, PRESS START prompt when off.
     if (level.isScreen && (level.mapId === 'SCREEN_TITLE' || level.id === 'title')) {
       const titleLayout = level.titleLayout || {};
       const logo = titleLayout.logo || { x: 0, y: 1, lines: [] };
-      const graphic = titleLayout.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] };
+      const logoImage = titleLayout.logoImage;
+      const subtitle = titleLayout.subtitle;
+      const graphic = titleLayout.graphic || { enabled: false, x: 2, y: 7, width: 16, height: 5, lines: [] };
       const prompt = titleLayout.prompt || { text: 'PRESS START', x: 4, y: 14, align: 'center' };
       const credits = titleLayout.credits || { enabled: false, text: 'GALLIA BELGICA', x: 6, y: 17, align: 'right' };
+      const menu = titleLayout.menu || { x: 3, caret_x: 3, first_row: 10, row_step: 2, options: [] };
 
-      // 1. Dark fantasy / classic Game Boy title screen background
-      ctx.fillStyle = '#0f172a';
+      // 1. GB white background (the ROM title is font + logo over white).
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
       // 2. Cyan grid lines if enabled
@@ -274,79 +330,74 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ctx.stroke();
       }
 
-      // 3. Logo Lines (rows logo.y + idx)
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      if (logo.lines && logo.lines.length > 0) {
+      // 3. Bitmap logo (nearest-neighbour, exact tile footprint).
+      const li = titleLogoImg;
+      if (logoImage && logoImage.enabled !== false && li) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(
+          li,
+          logoImage.x * tileSize,
+          logoImage.y * tileSize,
+          logoImage.width * tileSize,
+          logoImage.height * tileSize
+        );
+      } else if (logo.lines && logo.lines.length > 0) {
+        // Fallback: the ASCII logo identity (image disabled / not loaded).
         logo.lines.forEach((line: string, idx: number) => {
-          const rowY = (logo.y + idx) * tileSize + tileSize * 0.5;
-          if (idx === 0) {
-            ctx.fillStyle = '#f6d365';
-            ctx.font = `bold ${Math.max(12, Math.floor(tileSize * 0.85))}px monospace`;
-            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
-          } else if (idx === 1) {
-            ctx.fillStyle = '#64748b';
-            ctx.font = `bold ${Math.max(10, Math.floor(tileSize * 0.7))}px monospace`;
-            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
-          } else {
-            ctx.fillStyle = '#cbd5e1';
-            ctx.font = `${Math.max(10, Math.floor(tileSize * 0.65))}px monospace`;
-            ctx.fillText(line.trim(), canvasWidth / 2, rowY);
-          }
+          drawTitleText(ctx, titleFontImgs, logo.x, logo.y + idx, line, tileSize);
         });
       }
 
-      // 4. Big Title Graphic / Artwork (rows graphic.y + idx)
+      // 4. Subtitle (e.g. BATTLE DEMO), centered by align like the compiler.
+      if (subtitle && subtitle.text) {
+        const len = subtitle.text.length;
+        const sx =
+          subtitle.align === 'right'
+            ? 20 - len
+            : subtitle.align === 'left'
+            ? 0
+            : Math.max(0, Math.floor((20 - len) / 2));
+        drawTitleText(ctx, titleFontImgs, sx, subtitle.y, subtitle.text, tileSize);
+      }
+
+      // 5. Big Title Graphic / ASCII artwork (if enabled), drawn with the
+      //    same font tiles the ROM uses.
       if (graphic.enabled && graphic.lines && graphic.lines.length > 0) {
-        const gx = graphic.x * tileSize;
-        const gy = graphic.y * tileSize;
-        const gw = (graphic.width || 16) * tileSize;
-        const gh = (graphic.height || graphic.lines.length) * tileSize;
-
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 1.5;
-        ctx.fillRect(gx, gy, gw, gh);
-        ctx.strokeRect(gx, gy, gw, gh);
-
-        ctx.font = `bold ${Math.max(9, Math.floor(tileSize * 0.65))}px monospace`;
-        ctx.fillStyle = '#38bdf8';
-        ctx.textAlign = 'left';
         graphic.lines.forEach((line: string, idx: number) => {
-          const lineY = gy + (idx + 0.5) * tileSize;
-          ctx.fillText(line, gx + tileSize * 0.5, lineY);
+          drawTitleText(ctx, titleFontImgs, graphic.x, graphic.y + idx, line, tileSize);
         });
       }
 
-      // 5. Centered "PRESS START" Prompt
-      if (prompt.text) {
-        const promptY = (prompt.y ?? 14) * tileSize + tileSize * 0.5;
-        const isBlink = animTick % 2 === 0;
-        ctx.fillStyle = isBlink ? '#ffffff' : '#94a3b8';
-        ctx.font = `bold ${Math.max(11, Math.floor(tileSize * 0.75))}px monospace`;
-        ctx.textAlign = prompt.align === 'left' ? 'left' : prompt.align === 'right' ? 'right' : 'center';
-        const promptX =
-          prompt.align === 'left'
-            ? (prompt.x ?? 2) * tileSize
-            : prompt.align === 'right'
-            ? ((prompt.x ?? 18) + 1) * tileSize
-            : canvasWidth / 2;
-        ctx.fillText(prompt.text, promptX, promptY);
+      // 6. Menu (post-START state) or the PRESS START prompt, never both.
+      //    The menu options are editor objects, so the existing "Objects"
+      //    toggle switches the preview between the ROM's two title states.
+      if (showObjects && menu.options && menu.options.length > 0) {
+        menu.options.forEach((opt: string, idx: number) => {
+          const selected = idx === 0; // ROM boot cursor sits on NEW GAME
+          const text = (selected ? '>' : ' ') + opt.slice(1);
+          drawTitleText(ctx, titleFontImgs, menu.x, menu.first_row + idx * menu.row_step, text, tileSize);
+        });
+      } else if (prompt.text) {
+        const len = prompt.text.length;
+        const px =
+          prompt.align === 'right'
+            ? 20 - len
+            : prompt.align === 'left'
+            ? prompt.x ?? 0
+            : Math.max(0, Math.floor((20 - len) / 2));
+        drawTitleText(ctx, titleFontImgs, px, prompt.y ?? 14, prompt.text, tileSize);
       }
 
-      // 6. Bottom Row Credits (e.g. Row 17, right-aligned)
+      // 7. Bottom-row credits, drawn with the font tiles.
       if (credits.enabled && credits.text) {
-        const credY = (credits.y ?? 17) * tileSize + tileSize * 0.5;
-        ctx.fillStyle = '#64748b';
-        ctx.font = `bold ${Math.max(8, Math.floor(tileSize * 0.55))}px monospace`;
-        ctx.textAlign = credits.align === 'left' ? 'left' : credits.align === 'center' ? 'center' : 'right';
-        const credX =
-          credits.align === 'left'
-            ? (credits.x ?? 0) * tileSize + tileSize * 0.2
-            : credits.align === 'center'
-            ? canvasWidth / 2
-            : canvasWidth - tileSize * 0.5;
-        ctx.fillText(credits.text, credX, credY);
+        const len = credits.text.length;
+        const cx =
+          credits.align === 'center'
+            ? Math.max(0, Math.floor((20 - len) / 2))
+            : credits.align === 'left'
+            ? credits.x ?? 0
+            : 20 - len;
+        drawTitleText(ctx, titleFontImgs, cx, credits.y ?? 17, credits.text, tileSize);
       }
 
       return;
@@ -1093,6 +1144,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     isCapturingClone,
     cardSkin,
     hudSkin,
+    titleFontImgs,
+    titleLogoImg,
   ]);
 
   useEffect(() => {

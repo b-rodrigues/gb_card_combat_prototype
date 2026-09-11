@@ -25,7 +25,7 @@ jobs:
 
       - name: Generated tile headers in sync with assets
         run: |
-          nix develop -c bash -c "make gfx && git diff --exit-code -- src/gfx assets"
+          nix develop -c bash -c "make gfx && git diff --exit-code -- src/gfx assets tools/level_editor/public/tiles/title"
 
       - name: Upload ROMs
         uses: actions/upload-artifact@v4

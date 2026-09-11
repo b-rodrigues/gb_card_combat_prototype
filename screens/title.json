@@ -7,10 +7,22 @@
     "x": 0,
     "y": 1,
     "lines": [
-      "    KAARTENHELD",
-      "------------------",
-      "    BATTLE DEMO"
+      "KAARTENHELD"
     ]
+  },
+  "logo_image": {
+    "enabled": true,
+    "url": "/tiles/title/logo.png",
+    "x": 2,
+    "y": 1,
+    "width": 16,
+    "height": 3,
+    "palette": 1
+  },
+  "subtitle": {
+    "text": "BATTLE DEMO",
+    "y": 5,
+    "align": "center"
   },
   "prompt": {
     "x": 4,

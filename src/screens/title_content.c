@@ -5,7 +5,9 @@
 #include "banked.h"
 #include "screen.h"
 #include "game.h"
+#include "gfx/rpg_tile_lookup.h"
 #include <gb/gb.h>
+#include <gb/cgb.h>
 
 /* Bank-4 self-contained title/splash/intro render bodies (AGENTS.md
  * 52.11.1): the fixed _CODE/_HOME area is at its size limit (see make
@@ -23,8 +25,13 @@ extern uint8_t ui_font_tile_base;
 extern uint8_t g_sound_enabled;
 
 /* Generated title screen data (bank 4, read directly by the renderer) */
-extern const char g_title_logo[5][21];
+extern const char g_title_logo[][21];
 extern uint8_t g_title_logo_x, g_title_logo_y, g_title_logo_count;
+extern uint8_t const g_title_logo_image_enabled, g_title_logo_image_x,
+    g_title_logo_image_y, g_title_logo_image_width, g_title_logo_image_height,
+    g_title_logo_image_palette;
+extern const char g_title_subtitle_text[21];
+extern uint8_t const g_title_subtitle_x, g_title_subtitle_y;
 extern const char g_title_graphic[5][21];
 extern uint8_t const g_title_graphic_x, g_title_graphic_y, g_title_graphic_count, g_title_graphic_enabled;
 extern const char g_title_prompt_text[21];
@@ -33,6 +40,9 @@ extern const char g_title_credits_text[21];
 extern uint8_t const g_title_credits_x, g_title_credits_y, g_title_credits_enabled;
 extern const char g_title_menu_options[4][21];
 extern uint8_t g_title_menu_x, g_title_menu_caret_x, g_title_menu_first_row, g_title_menu_row_step, g_title_menu_count;
+
+/* CGB calibration index (ui.c): palette programming is skipped on DMG. */
+extern uint8_t g_is_cgb;
 
 static void title_vram_sync_write(volatile uint8_t *dst, uint8_t tile)
 {
@@ -95,6 +105,72 @@ static void title_draw_logo(void)
     }
 }
 
+/* CGB BG palette ramp for the bitmap logo (title-red.png): white, light
+ * pink, red, dark red.  Slot g_title_logo_image_palette (1) is rewritten
+ * here each title redraw; other screens reload CRAM on entry. */
+static void title_program_logo_palette(void)
+{
+    static const palette_color_t ramp[4] = {
+        RGB8(255, 255, 255), RGB8(228, 180, 180),
+        RGB8(202, 106, 106), RGB8(139, 27, 27)
+    };
+    const uint8_t *bytes = (const uint8_t *)ramp;
+    uint8_t i;
+
+    if (!g_is_cgb) return;
+    BCPS_REG = (uint8_t)(0x80 | (g_title_logo_image_palette << 3));
+    for (i = 0; i < 8; i++) {
+        BCPD_REG = bytes[i];
+    }
+}
+
+/* Bitmap logo: BG tile ids RPG_TILE_BASE_WORLD.. (+width*height) stamped
+ * at (x,y) with CGB palette `palette`.  The tile bytes were streamed into
+ * the same VRAM block by ui_title_logo_load_banked() (bank 5) before this
+ * body runs.  Runs with the LCD off (full redraw), so the raw writes need
+ * no PPU wait; the overworld reloads the block on entry. */
+static void title_draw_logo_image(void)
+{
+    uint8_t x = g_title_logo_image_x;
+    uint8_t y = g_title_logo_image_y;
+    uint8_t w = g_title_logo_image_width;
+    uint8_t h = g_title_logo_image_height;
+    uint8_t tile = (uint8_t)RPG_TILE_BASE_WORLD;
+    uint8_t row, col;
+    volatile uint8_t *dst;
+
+    if ((uint8_t)(y + h) > 18) h = (uint8_t)(18 - y);
+    if ((uint8_t)(x + w) > 20) w = (uint8_t)(20 - x);
+
+    /* Tile indices (row-major, no 8-bit multiply). */
+    for (row = 0; row < h; row++) {
+        VBK_REG = 0;
+        dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(y + row) << 5) + x);
+        for (col = 0; col < w; col++) {
+            title_vram_sync_write(&dst[col], tile);
+            tile++;
+        }
+    }
+
+    /* CGB BG-palette attribute per tile (DMG ignores VRAM bank 1). */
+    VBK_REG = 1;
+    for (row = 0; row < h; row++) {
+        dst = (volatile uint8_t *)(0x9800 + ((uint16_t)(y + row) << 5) + x);
+        for (col = 0; col < w; col++) {
+            dst[col] = g_title_logo_image_palette;
+        }
+    }
+    VBK_REG = 0;
+
+    /* The screen is a bitmap, so expose the logo's text identity in the
+     * semantic screen buffer for harness assertions (AGENTS.md 53.7). */
+    if (g_title_logo_count > 0) {
+        for (col = 0; col < 20; col++) {
+            g_ui_screen_buf[y][col] = g_title_logo[0][col];
+        }
+    }
+}
+
 static void title_draw_graphic(void)
 {
     uint8_t i;
@@ -121,7 +197,17 @@ void title_content_render(void)
     uint8_t showing = g_bk_byte_a;
     uint8_t index = g_bk_byte_b;
 
-    title_draw_logo();
+    if (g_title_logo_image_enabled) {
+        title_program_logo_palette();
+        title_draw_logo_image();
+    } else {
+        title_draw_logo();
+    }
+
+    if (g_title_subtitle_text[0] != ' ') {
+        title_draw_text(g_title_subtitle_x, g_title_subtitle_y,
+                        g_title_subtitle_text, 20);
+    }
 
     if (!showing) {
         title_draw_graphic();

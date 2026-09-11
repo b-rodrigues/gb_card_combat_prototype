@@ -61,14 +61,14 @@ quest is complete (his spawn is gated on the quest variable, see §4.2), so
 Boot lands on the **studio splash** — `A GAME BY / GALLIA BELGICA /
 SYSTEMS` — which auto-advances to the title screen after ~2.5 seconds or
 is skipped immediately with `A`/`START`.  The title screen then shows the
-**KAARTENHELD** logo, its **BATTLE DEMO** subtitle, and `PRESS START`.
+**KAARTENHELD** logo (a red bitmap logo, `assets/title-red.png`), its
+**BATTLE DEMO** subtitle, and `PRESS START`.
 
-The on-screen logo block reads exactly:
+The on-screen title block is:
 
 ```
-    KAARTENHELD
-------------------
-    BATTLE DEMO
+    [  KAARTENHELD  ]     (red bitmap logo, assets/title-red.png)
+    BATTLE DEMO           (text)
 ```
 
 Pressing START opens a menu with four entries (`title_screen.c`,
