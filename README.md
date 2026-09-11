@@ -6,6 +6,16 @@ This repository contains the playable **demo** for Kaartenheld: a top-down adven
 
 Every combat victory rewards you with a **new random card**: add it to your deck, or sell it.
 
+## Demo
+
+The boot: the Gallia Belgica Systems splash, then the title screen.
+
+![Kaartenheld boot: studio splash then title screen](screenshots/boot.gif)
+
+Card combat: selecting a **TWO PAIR** combo and attacking a kobold trio.
+
+![Kaartenheld battle: TWO PAIR combo and attack](screenshots/battle.gif)
+
 ## How It Is Made
 
 Kaartenheld is built with a deliberately split creative process:
@@ -167,6 +177,7 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | `make memmap` | Check ROM and WRAM memory budget | Invariant check (`_HOME < 0x8000`) |
 | `make lint` | Compile-to-assembly `-Wall` pass over all sources | Warning report |
 | `make screenshots` | Headless PyBoy walkthrough capture | `screenshots/*.png` |
+| `make gifs` | Regenerate the README GIFs (boot splash+title, kobold battle) | `screenshots/boot.gif`, `screenshots/battle.gif` |
 | `make run` | Launch release ROM in emulator | Game window |
 | `make run-debug` | Launch debug ROM in emulator | Debug game window |
 | `make screenshot` | Capture headless emulator screenshot | `build/screenshot.png` |
