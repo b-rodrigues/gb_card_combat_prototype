@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """README GIF captures (host-side, never CI-gated).
 
-Produces two headless PyBoy recordings of the RELEASE ROM, assembled to GIF
+Produces three headless PyBoy recordings of the RELEASE ROM, assembled to GIF
 with Pillow:
 
-  screenshots/boot.gif    Gallia Belgica splash -> Kaartenheld title
-  screenshots/battle.gif  kobold trio: TWO PAIR combo selection + attack
+  screenshots/boot.gif       Gallia Belgica splash -> Kaartenheld title
+  screenshots/battle.gif     kobold trio: TWO PAIR combo selection + attack
+  screenshots/overworld.gif  Field -> forest gate -> wander to the chest
 
 Regenerate with `make gifs`.  The frames are a visual aid only; the semantic
 gate is `make verify-walkthrough` (docs/verify-walkthrough.md).
@@ -29,6 +30,7 @@ SCALE = 3
 OUT = os.path.join(REPO, "screenshots")
 BOOT_GIF = os.path.join(OUT, "boot.gif")
 BATTLE_GIF = os.path.join(OUT, "battle.gif")
+OVERWORLD_GIF = os.path.join(OUT, "overworld.gif")
 
 # Release-ROM screen ids (src/screens/screen.h).
 SCREEN_TITLE = 9
@@ -138,15 +140,61 @@ def capture_battle():
     return frames
 
 
+def capture_overworld():
+    """Field spawn -> forest gate -> wander to the amulet chest."""
+    checks = []
+    planner = Planner()
+    s = Session(checks, "gif-overworld")
+    try:
+        field = W._level("field")
+        sp = field["player"]["spawn"]
+        spawn = (sp["x"], sp["y"])
+        e = next(e for e in field["exits"]
+                 if e["target_scene"] == "forest")
+        goal = (e["target_x"], e["target_y"])
+
+        frames = []
+
+        def cap_tick(n=1):
+            for _ in range(n):
+                s.pb.tick()
+                frames.append(s.pb.screen.image.copy())
+
+        s.tick = cap_tick
+
+        # Walk the Field to the north gate; the crossing wipes to the Forest.
+        W.follow(s, planner, "field", spawn, "forest", goal)
+        s.settle_scene(expected_scene=W.SCENE_FOREST)
+        s.tick(20)
+
+        # Wander east to the Lost Amulet chest and stop facing it.
+        chest = next(o for o in W._level("forest")["objects"]
+                     if (o.get("properties") or {}).get("entity_id")
+                     == "ENTITY_ID_AMULET")
+        cxy = (chest["position"]["x"], chest["position"]["y"])
+        path = planner.path("forest", goal, (cxy[0] - 1, cxy[1]))
+        if path:
+            W._walk_path(s, path)
+        s.tick(40)
+    finally:
+        s.close()
+    return frames
+
+
 def main():
     ap = argparse.ArgumentParser(description="README GIF captures")
-    ap.add_argument("--only", choices=["boot", "battle"], default=None)
+    ap.add_argument("--only", choices=["boot", "battle", "overworld"],
+                    default=None)
     args = ap.parse_args()
 
     if args.only in (None, "boot"):
         save_gif(capture_boot(), BOOT_GIF, duration=90)
     if args.only in (None, "battle"):
         save_gif(capture_battle(), BATTLE_GIF, duration=50, keep=3)
+    if args.only in (None, "overworld"):
+        # Smooth 30 fps for the camera scroll: record every frame, keep
+        # every 2nd, 33 ms each.
+        save_gif(capture_overworld(), OVERWORLD_GIF, duration=33, keep=2)
     return 0
 
 

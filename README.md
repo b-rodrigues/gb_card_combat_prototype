@@ -20,6 +20,12 @@ Every combat victory rewards you with a **new random card**: add it to your deck
   <em>Card combat — playing a <strong>TWO PAIR</strong> combo against a kobold trio.</em>
 </p>
 
+<p align="center">
+  <img src="screenshots/overworld.gif" alt="Kaartenheld overworld: walking from the Field through the gate into the Forest, out to the treasure chest" width="480">
+  <br>
+  <em>Overworld — from the Field through the gate into the Forest, out to the chest.</em>
+</p>
+
 ## How It Is Made
 
 Kaartenheld is built with a deliberately split creative process:
@@ -181,7 +187,7 @@ All build tools, compilers, emulators, and test runners are automatically provid
 | `make memmap` | Check ROM and WRAM memory budget | Invariant check (`_HOME < 0x8000`) |
 | `make lint` | Compile-to-assembly `-Wall` pass over all sources | Warning report |
 | `make screenshots` | Headless PyBoy walkthrough capture | `screenshots/*.png` |
-| `make gifs` | Regenerate the README GIFs (boot splash+title, kobold battle) | `screenshots/boot.gif`, `screenshots/battle.gif` |
+| `make gifs` | Regenerate the README GIFs (boot, kobold battle, overworld) | `screenshots/boot.gif`, `screenshots/battle.gif`, `screenshots/overworld.gif` |
 | `make run` | Launch release ROM in emulator | Game window |
 | `make run-debug` | Launch debug ROM in emulator | Debug game window |
 | `make screenshot` | Capture headless emulator screenshot | `build/screenshot.png` |
