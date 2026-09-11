@@ -791,9 +791,14 @@ verify-vram: debug
 verify-scroll: debug
 	@python3 tools/verify_scroll.py
 
-# Verify autonomous enemy patrol AI patterns (Slimes cross, Bats circle).
+# Verify autonomous enemy patrol AI.  The authoritative patrol regressions
+# are the harness sentinel scenarios (telemetry-based; see AGENTS.md 52.19):
+# patrol_slime_cross (cross stepping) and patrol_enemy_bumps_player
+# (patrol -> collision -> encounter).  The old tools/verify_patrol.py used
+# stale hardcoded WRAM offsets and was retired.
 verify-patrol: debug
-	@python3 tools/verify_patrol.py
+	@python3 tools/dev.py scenario patrol_slime_cross
+	@python3 tools/dev.py scenario patrol_enemy_bumps_player
 
 # Verify the music clock never stalls across screen/map transitions: boots the
 # debug ROM WITHOUT harness mode (real interrupts) and walks FIELD -> TOWN and
