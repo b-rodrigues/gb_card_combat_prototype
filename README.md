@@ -8,13 +8,17 @@ Every combat victory rewards you with a **new random card**: add it to your deck
 
 ## Demo
 
-The boot: the Gallia Belgica Systems splash, then the title screen.
+<p align="center">
+  <img src="screenshots/boot.gif" alt="Kaartenheld boot: the Gallia Belgica Systems splash, then the title screen" width="480">
+  <br>
+  <em>Boot — the <strong>Gallia Belgica Systems</strong> splash, then the title screen.</em>
+</p>
 
-![Kaartenheld boot: studio splash then title screen](screenshots/boot.gif)
-
-Card combat: selecting a **TWO PAIR** combo and attacking a kobold trio.
-
-![Kaartenheld battle: TWO PAIR combo and attack](screenshots/battle.gif)
+<p align="center">
+  <img src="screenshots/battle.gif" alt="Kaartenheld card combat: selecting a TWO PAIR combo and attacking a kobold trio" width="480">
+  <br>
+  <em>Card combat — playing a <strong>TWO PAIR</strong> combo against a kobold trio.</em>
+</p>
 
 ## How It Is Made
 
