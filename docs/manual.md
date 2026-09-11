@@ -129,7 +129,7 @@ you own:
 | **Sword** (`SW`) | Hurts the monster. |
 | **Shield** (`SH`) | Blocks damage when the monster attacks. |
 | **Bow** (`BO`) | Hurts from far away. The mighty Mythril Bow costs extra Energy. |
-| **Ring / Heal** (`HE`) | Heals your health. Rings are also wild jokers! |
+| **Ring / Heal** (`HE`) | Heals your health. A Ring can also pretend to be any number when you make a combo. |
 | **Dagger** (`DA`) | A small hit that can poison. |
 
 Some cards are extra special: a **Fire Sword** burns, a **Poison Dagger**
@@ -218,8 +218,10 @@ The more alike your cards are, the stronger your attack becomes.
 The higher the combo, the harder you hit. Try to build the best hand you
 can!
 
-**Rings are jokers.** A Ring can pretend to be any number you need — a
-great way to finish a combo.
+**Rings are clever helpers.** When you make a combo, a Ring can count as
+any *number* you need — super for making pairs or straights. But it is
+still a heal card, so it will **break** a "flush" (five cards of the same
+kind). And a Ring never hits the monster: it heals you instead.
 
 ---
 
@@ -227,7 +229,8 @@ great way to finish a combo.
 
 - **Shields** only block. They do not hurt the monster, but they keep you
   safe — and they still count toward your combo.
-- **Rings** heal you, or act as wild shields on defence.
+- **Rings** heal you, count as any number in a combo, or act as wild
+  shields on defence.
 - **Poison** and **Burn** hurt a little every turn. Watch the little marks
   beside a fighter.
 - **Freeze** is nasty: a frozen fighter **misses a whole turn!**
@@ -303,7 +306,8 @@ ending. The land is saved, thanks to you!
 
 - **Read the signposts** — they tell you real secrets.
 - **Only Shields block.** Save your shields for defence.
-- **Rings are wild!** Keep one for a combo or a heal.
+- **Rings are flexible!** Use one to finish a number combo, or save it to
+  heal.
 - **Watch your Energy.** Six points a round goes fast.
 - **Do not waste your timer.** Decide, then press **SELECT**.
 - **Beat the 3 monsters early** to win the Iron Sword.
