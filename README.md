@@ -367,7 +367,7 @@ different terms.
   (e.g. `desolate_landscape.png`, `assets/music/Battle BGM.uge`,
   `assets/music/desolate_landscape.uge`) are licensed **CC BY-NC-ND 4.0**
   (attribution, **non-commercial**, **no derivatives**); the imported tilesets
-  follow their source pages, and the combat art is original work by Putosaure.
+  follow their source pages, and the combat art is original work by Florent Bérault.
   See [`assets/README.md`](assets/README.md) and
   [`assets/tilesets.md`](assets/tilesets.md) for the per-asset credits.
 
