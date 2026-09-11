@@ -1,17 +1,15 @@
 {
   "$schema": "./schema/title.schema.json",
-  "title": "Giausar",
+  "title": "Kaartenheld",
   "grid_width": 20,
   "grid_height": 18,
   "logo": {
     "x": 0,
     "y": 1,
     "lines": [
-      "   G I A U S A R",
+      "    KAARTENHELD",
       "------------------",
-      "The Waking Whale",
-      " and the Closed",
-      "       Sky"
+      "    BATTLE DEMO"
     ]
   },
   "prompt": {
@@ -21,7 +19,7 @@
     "align": "center"
   },
   "graphic": {
-    "enabled": true,
+    "enabled": false,
     "x": 2,
     "y": 7,
     "width": 16,
@@ -35,10 +33,10 @@
     ]
   },
   "credits": {
-    "enabled": true,
+    "enabled": false,
     "x": 1,
     "y": 17,
-    "text": "GAME BY BRODRIGUES",
+    "text": "GALLIA BELGICA",
     "align": "right"
   },
   "menu": {

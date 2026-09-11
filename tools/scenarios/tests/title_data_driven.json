@@ -1,7 +1,7 @@
 {
  "name": "title_data_driven",
  "test": true,
- "description": "Title screen renders data-driven logo, big title graphic, centered PRESS START prompt, and bottom-row credits",
+ "description": "Title screen renders the data-driven KAARTENHELD logo with its BATTLE DEMO subtitle and the centered PRESS START prompt. The title credits are disabled (the studio credit lives on the boot splash instead).",
  "scenario_id": "TITLE_BOOT",
  "initial_state": {
   "scene": "TEST_FIELD",
@@ -27,7 +27,12 @@
   {
    "type": "screen_row",
    "row": 1,
-   "contains": "G I A U S A R"
+   "contains": "KAARTENHELD"
+  },
+  {
+   "type": "screen_row",
+   "row": 3,
+   "contains": "BATTLE DEMO"
   },
   {
    "type": "screen_row",
@@ -35,9 +40,9 @@
    "contains": "PRESS START"
   },
   {
-   "type": "screen_row",
+   "type": "screen_row_not_contains",
    "row": 17,
-   "contains": "BRODRIGUES"
+   "contains": "GALLIA"
   }
  ]
 }

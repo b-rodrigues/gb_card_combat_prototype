@@ -153,7 +153,7 @@ export function titleScreenToEditor(data: any): EditorLevel {
       properties: {
         sprite_width: 2,
         sprite_height: 1,
-        display_name: data.logo?.lines?.[0]?.trim() || data.title || 'GIAUSAR',
+        display_name: data.logo?.lines?.[0]?.trim() || data.title || 'KAARTENHELD',
         dialogue_id: data.logo?.lines ? data.logo.lines.join('\n') : data.title
       }
     },
@@ -214,11 +214,11 @@ export function titleScreenToEditor(data: any): EditorLevel {
     regions,
     isScreen: true,
     titleLayout: {
-      title: data.title || 'Giausar',
+      title: data.title || 'Kaartenheld',
       logo: data.logo ? JSON.parse(JSON.stringify(data.logo)) : { x: 0, y: 1, lines: [] },
       graphic: data.graphic ? JSON.parse(JSON.stringify(data.graphic)) : { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] },
       prompt: data.prompt ? JSON.parse(JSON.stringify(data.prompt)) : { text: 'PRESS START', x: 4, y: 14, align: 'center' },
-      credits: data.credits ? JSON.parse(JSON.stringify(data.credits)) : { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' },
+      credits: data.credits ? JSON.parse(JSON.stringify(data.credits)) : { enabled: false, text: 'GALLIA BELGICA', x: 6, y: 17, align: 'right' },
       menu: data.menu ? JSON.parse(JSON.stringify(data.menu)) : { x: 3, caret_x: 3, first_row: 10, row_step: 2, options: [] },
     },
     originalScreenData: data

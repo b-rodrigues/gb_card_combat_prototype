@@ -1,7 +1,7 @@
 # GB Card Combat Prototype — Game Manual
 
-A complete, player-facing guide to **GIAUSAR — The Waking Whale and the
-Closed Sky**, the Game Boy card-combat RPG.
+A complete, player-facing guide to **KAARTENHELD — BATTLE DEMO**, the
+Game Boy card-combat RPG.
 
 This manual describes the game exactly as implemented.  Where a design
 document and the code disagree, the code wins (for example the BURN/POISON
@@ -20,24 +20,25 @@ it live with the deterministic harness (`make test-harness`,
 Three slides play over the intro (`src/screens/title_content.c`,
 `intro_screen.c`):
 
-> The skies above
-> Giausar grow dark.
-> A whale stirs
-> in the deep.
+> A troubled land
+> calls out for a
+> hero of a new
+> kind.
 >
-> The sky closes,
-> sealed against
-> the waking whale.
+> Your strength is
+> not in steel,
+> but in the cards
+> you carry.
 >
 > Only the Lord of
 > Slimes stands
 > between all that
 > lives and the end.
 
-A Waking Whale stirs beneath the world of **Giausar** and the sky is
-closing.  The Lord of Slimes — a slime of terrible size — stands between
-everything living and the end, and slimes have begun to menace the
-settlements.
+The land calls for a hero — but not one of sword and steel alone.  Your
+strength is in the **cards** you carry.  Monsters have begun to menace the
+settlements, and the Lord of Slimes — a slime of terrible size — stands
+between everything living and the end.
 
 You play the **Hero**.  Your task, given indirectly by the Mayor of the
 town, is to clear the monster threat, claim the reward, and finally reach
@@ -57,17 +58,17 @@ quest is complete (his spawn is gated on the quest variable, see §4.2), so
 
 ### 2.1 Title screen
 
-Boot lands on the title screen: the **GIAUSAR** logo, subtitle "The
-Waking Whale and the Closed Sky", and `PRESS START`.
+Boot lands on the **studio splash** — `A GAME BY / GALLIA BELGICA /
+SYSTEMS` — which auto-advances to the title screen after ~2.5 seconds or
+is skipped immediately with `A`/`START`.  The title screen then shows the
+**KAARTENHELD** logo, its **BATTLE DEMO** subtitle, and `PRESS START`.
 
 The on-screen logo block reads exactly:
 
 ```
-   G I A U S A R
+    KAARTENHELD
 ------------------
-The Waking Whale
- and the Closed
-       Sky
+    BATTLE DEMO
 ```
 
 Pressing START opens a menu with four entries (`title_screen.c`,

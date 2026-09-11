@@ -252,7 +252,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       const logo = titleLayout.logo || { x: 0, y: 1, lines: [] };
       const graphic = titleLayout.graphic || { enabled: true, x: 2, y: 7, width: 16, height: 5, lines: [] };
       const prompt = titleLayout.prompt || { text: 'PRESS START', x: 4, y: 14, align: 'center' };
-      const credits = titleLayout.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' };
+      const credits = titleLayout.credits || { enabled: false, text: 'GALLIA BELGICA', x: 6, y: 17, align: 'right' };
 
       // 1. Dark fantasy / classic Game Boy title screen background
       ctx.fillStyle = '#0f172a';

@@ -7,11 +7,11 @@
 #include "game.h"
 #include <gb/gb.h>
 
-/* Bank-2 self-contained title/intro render bodies (AGENTS.md 52.11.1):
- * the fixed _CODE/_HOME area is at its size limit (see make memmap), so
- * the entire title logo + menu draw lives here, writing VRAM directly
- * with bank-local helpers (a banked body must never call fixed-bank
- * functions -- see ui_battle_content.c for the same pattern).
+/* Bank-4 self-contained title/splash/intro render bodies (AGENTS.md
+ * 52.11.1): the fixed _CODE/_HOME area is at its size limit (see make
+ * memmap), so the entire title logo + menu draw lives here, writing VRAM
+ * directly with bank-local helpers (a banked body must never call
+ * fixed-bank functions -- see ui_battle_content.c for the same pattern).
  *
  * Staged inputs (set by the fixed wrapper in title_screen.c):
  *   g_bk_byte_a = title_menu_showing (0 = PRESS START, 1 = menu)
@@ -86,15 +86,6 @@ static void title_draw_text(uint8_t x, uint8_t y, const char *text, uint8_t max_
         buf++;
     }
 }
-
-/* ASCII logo block for the title screen. */
-static const char s_logo[5][20] = {
-    "   G I A U S A R",
-    "------------------",
-    "The Waking Whale",
-    " and the Closed",
-    "       Sky",
-};
 
 static void title_draw_logo(void)
 {
@@ -179,19 +170,35 @@ void title_menu_step_banked(void)
     g->title_menu_index = new_index;
 }
 
+/* ── Studio splash: shown once at boot, before the title screen ───── */
+
+static const char s_splash[3][20] = {
+    "     A GAME BY",
+    "   GALLIA BELGICA",
+    "      SYSTEMS",
+};
+
+void splash_content_render(void)
+{
+    uint8_t i;
+    for (i = 0; i < 3; i++) {
+        title_draw_text(0, (uint8_t)(7 + (i << 1)), s_splash[i], 20);
+    }
+}
+
 /* ── Intro: three scripted ASCII slides ───────────────────────────── */
 
 static const char s_intro_0[4][20] = {
-    "The skies above",
-    "Giausar grow dark.",
-    "A whale stirs",
-    "in the deep.",
+    "A troubled land",
+    "calls out for a",
+    "hero of a new",
+    "kind.",
 };
 static const char s_intro_1[4][20] = {
-    "The sky closes,",
-    "sealed against",
-    "the waking whale.",
-    "",
+    "Your strength is",
+    "not in steel,",
+    "but in the cards",
+    "you carry.",
 };
 static const char s_intro_2[4][20] = {
     "Only the Lord of",

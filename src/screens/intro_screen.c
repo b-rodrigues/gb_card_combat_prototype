@@ -6,10 +6,10 @@
 #include "banked.h"
 
 /* ASCII intro sequence shown when starting a NEW GAME from the title
- * screen.  Three scripted slides (the waking whale, the closed sky, the
- * slime blight); A/START advances, the final slide drops into a fresh
- * overworld playthrough.  Rendering lives in the bank-2 intro_content
- * body (title_content.c) to keep the fixed bank small. */
+ * screen.  Three scripted slides (a hero of a new kind, cards as your
+ * strength, the slime blight); A/START advances, the final slide drops
+ * into a fresh overworld playthrough.  Rendering lives in the bank-4
+ * intro_content body (title_content.c) to keep the fixed bank small. */
 
 #define INTRO_SLIDE_COUNT 3
 

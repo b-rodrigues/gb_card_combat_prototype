@@ -409,7 +409,7 @@ export const Inspector: React.FC<InspectorProps> = ({
               <input
                 type="text"
                 placeholder="Game Title"
-                value={level.titleLayout?.title ?? 'Giausar'}
+                value={level.titleLayout?.title ?? 'Kaartenheld'}
                 onChange={(e) =>
                   onUpdateLevelMeta({
                     titleLayout: {
@@ -746,7 +746,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { text: 'GAME BY BRODRIGUES', x: 2, y: 17, align: 'right' }),
+                            ...(level.titleLayout?.credits || { text: 'GALLIA BELGICA', x: 2, y: 17, align: 'right' }),
                             enabled: e.target.checked,
                           },
                         },
@@ -762,7 +762,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                   <label style={{ fontSize: 11 }}>Credits Text</label>
                   <input
                     type="text"
-                    value={level.titleLayout?.credits?.text ?? 'GAME BY BRODRIGUES'}
+                    value={level.titleLayout?.credits?.text ?? 'GALLIA BELGICA'}
                     onChange={(e) =>
                       onUpdateLevelMeta({
                         titleLayout: {
@@ -788,7 +788,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, align: 'right' }),
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GALLIA BELGICA', x: 2, align: 'right' }),
                             y: parseInt(e.target.value) || 17,
                           },
                         },
@@ -805,7 +805,7 @@ export const Inspector: React.FC<InspectorProps> = ({
                         titleLayout: {
                           ...(level.titleLayout || {}),
                           credits: {
-                            ...(level.titleLayout?.credits || { enabled: true, text: 'GAME BY BRODRIGUES', x: 2, y: 17 }),
+                            ...(level.titleLayout?.credits || { enabled: true, text: 'GALLIA BELGICA', x: 2, y: 17 }),
                             align: e.target.value as any,
                           },
                         },
