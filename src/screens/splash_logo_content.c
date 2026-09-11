@@ -1,4 +1,4 @@
-#pragma bank 7
+#pragma bank 2
 
 #include <stdint.h>
 #include <gb/gb.h>
@@ -7,9 +7,9 @@
 
 /* Studio splash logo (assets/gallia_belgica_systems.png, 13x5 cells,
  * make gfx -> src/gfx/splash_logo_tiles.h: a deduped tile blob + a raster
- * tile map).  Lives in bank 7 with its renderer because the world-tiles
- * bank (5) is over budget in the release build, and a banked body may only
- * read its own bank's data. */
+ * tile map).  Lives in bank 2 with its renderer (the world-tiles bank 5 and
+ * the sfx/atlas bank 7 are both over budget in the release build); a banked
+ * body may only read its own bank's data. */
 #include "gfx/splash_logo_tiles.h"
 
 /* Bitmap footprint on the 20x18 BG grid (centered: cols 3-15, rows 6-10). */
