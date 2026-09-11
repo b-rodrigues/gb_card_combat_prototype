@@ -766,9 +766,10 @@ parity: debug
 screenshots: $(TARGET)
 	@python3 tools/capture_walkthrough.py
 
-# README GIFs (host-side, never CI-gated): boot splash+title and a kobold
-# battle.  Committed under screenshots/ (the walkthrough --clean prune only
-# removes *.png, so these survive).
+# README GIFs (host-side, never CI-gated): boot splash+title, a kobold
+# battle, and the Field -> Forest overworld walk.  Committed under
+# screenshots/ (the walkthrough --clean prune only removes *.png, so these
+# survive).
 gifs: $(TARGET)
 	@python3 tools/capture_gifs.py
 
