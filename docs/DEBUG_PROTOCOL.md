@@ -154,7 +154,7 @@ make debug
 Result:
 
 ```text
-build/rpg_card_proto_debug.gb
+build/kaartenheld_debug.gb
 ```
 
 The release ROM:
@@ -2175,7 +2175,7 @@ Example:
 ```text
 REPLAY:
 
-ROM: rpg_card_proto_debug
+ROM: kaartenheld_debug
 SCENARIO: first_encounter
 RNG: 12345
 
@@ -2362,7 +2362,7 @@ Conceptual response:
   },
 
   "game": {
-    "name": "rpg_card_proto",
+    "name": "kaartenheld",
     "build": "debug"
   }
 }

@@ -431,7 +431,7 @@ class TelemetryEventList(list):
 
 
 class EmulatorSession:
-    def __init__(self, rom_path="build/rpg_card_proto_debug.gb"):
+    def __init__(self, rom_path="build/kaartenheld_debug.gb"):
         self.rom_path = rom_path
         self.sym_path = rom_path.replace(".gb", ".sym")
         self.master = None

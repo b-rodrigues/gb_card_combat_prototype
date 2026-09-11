@@ -37,7 +37,7 @@ make release
 Produces:
 
 ```text
-build/rpg_card_proto.gb
+build/kaartenheld.gb
 ```
 
 The release ROM must not depend on debug-only functionality.
@@ -53,7 +53,7 @@ make debug
 Produces:
 
 ```text
-build/rpg_card_proto_debug.gb
+build/kaartenheld_debug.gb
 ```
 
 The debug ROM includes development harness functionality such as:

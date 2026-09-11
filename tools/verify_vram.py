@@ -38,8 +38,8 @@ import subprocess
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(TOOLS)
-ROM = os.path.join(ROOT, "build", "rpg_card_proto_debug.gb")
-SYM = os.path.join(ROOT, "build", "rpg_card_proto_debug.sym")
+ROM = os.path.join(ROOT, "build", "kaartenheld_debug.gb")
+SYM = os.path.join(ROOT, "build", "kaartenheld_debug.sym")
 BG_TM = 0x9800
 VIEW_ROWS = 12
 VIEW_COLS = 20

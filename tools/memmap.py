@@ -2,7 +2,7 @@
 """Print a reproducible memory budget for the debug ROM from its linker map.
 
 Usage:
-    python3 tools/memmap.py build/rpg_card_proto_debug.map
+    python3 tools/memmap.py build/kaartenheld_debug.map
 
 Reports the fixed code area (_CODE), the non-bankable _HOME area (which must
 stay below 0x8000 on MBC5 -- CPU addresses >= 0x8000 alias VRAM), and the WRAM

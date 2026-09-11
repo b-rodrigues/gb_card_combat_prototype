@@ -11,8 +11,9 @@ Verifies:
 import os
 import sys
 
-ROM_DEBUG = "/home/brodrigues/Documents/repos/gb_card_rpg_proto/build/rpg_card_proto_debug.gb"
-SYM_DEBUG = "/home/brodrigues/Documents/repos/gb_card_rpg_proto/build/rpg_card_proto_debug.sym"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROM_DEBUG = os.path.join(ROOT, "build", "kaartenheld_debug.gb")
+SYM_DEBUG = os.path.join(ROOT, "build", "kaartenheld_debug.sym")
 
 failures = []
 

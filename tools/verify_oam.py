@@ -68,7 +68,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from emulator import EmulatorSession
 
 ROM = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                   "..", "build", "rpg_card_proto_debug.gb")
+                   "..", "build", "kaartenheld_debug.gb")
 SCENARIOS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "scenarios", "tests")
 

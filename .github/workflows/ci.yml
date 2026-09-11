@@ -32,7 +32,7 @@ jobs:
         with:
           name: roms
           path: |
-            build/rpg_card_proto.gb
-            build/rpg_card_proto_debug.gb
-            build/rpg_card_proto_debug.sym
+            build/kaartenheld.gb
+            build/kaartenheld_debug.gb
+            build/kaartenheld_debug.sym
           if-no-files-found: error

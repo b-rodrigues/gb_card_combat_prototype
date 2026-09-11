@@ -18,7 +18,7 @@ from walkthrough.state_reader import StateReader
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
-ROM = os.path.join(REPO, "build", "rpg_card_proto.gb")
+ROM = os.path.join(REPO, "build", "kaartenheld.gb")
 OUT = os.path.join(REPO, "screenshots")
 LEVELS_DIR = os.path.join(REPO, "levels")
 

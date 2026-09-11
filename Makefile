@@ -6,8 +6,8 @@ RGBFIX = rgbfix
 BUILD_DIR = build
 SRC_DIR = src
 
-TARGET = $(BUILD_DIR)/rpg_card_proto.gb
-TARGET_DEBUG = $(BUILD_DIR)/rpg_card_proto_debug.gb
+TARGET = $(BUILD_DIR)/kaartenheld.gb
+TARGET_DEBUG = $(BUILD_DIR)/kaartenheld_debug.gb
 
 JOBS ?= auto
 
@@ -699,13 +699,13 @@ LDFLAGS = -Wl-b_DATA=0xC940
 
 $(TARGET): gfx tiles levels screens dialogues shops entities music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
-	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
-	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
+	@python3 tools/make_sym.py $(BUILD_DIR)/kaartenheld.noi $(BUILD_DIR)/kaartenheld.sym
+	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "KAARTENHELD" $@
 
 $(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops entities music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
-	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
-	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
+	@python3 tools/make_sym.py $(BUILD_DIR)/kaartenheld_debug.noi $(BUILD_DIR)/kaartenheld_debug.sym
+	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "KAARTENHELD" $@
 
 build/crt0.o: src/crt0.s | $(BUILD_DIR)
 	sdasgb -o $@ $<
@@ -729,7 +729,7 @@ run-debug: $(TARGET_DEBUG)
 test: $(TARGET)
 	@echo "Validating Game Boy ROM header..."
 	@if command -v $(RGBFIX) >/dev/null 2>&1; then \
-		$(RGBFIX) -v -C -t "GBCARDRPG" $(TARGET); \
+		$(RGBFIX) -v -C -t "KAARTENHELD" $(TARGET); \
 	else \
 		test -s $(TARGET); \
 	fi
@@ -833,7 +833,7 @@ vram-dialogue: release
 # Print a reproducible memory budget (code/WRAM usage, _HOME headroom vs the
 # 0x8000 ceiling).  Exits non-zero if a documented invariant is violated.
 memmap: debug
-	@python3 tools/memmap.py $(BUILD_DIR)/rpg_card_proto_debug.map
+	@python3 tools/memmap.py $(BUILD_DIR)/kaartenheld_debug.map
 
 clean:
 	rm -rf $(BUILD_DIR) $(GENERATED_MUSIC_DIR)

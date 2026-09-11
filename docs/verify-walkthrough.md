@@ -47,7 +47,7 @@ tools/walkthrough/
 
 ### Phase 1 — StateReader
 
-* Parse `build/rpg_card_proto.sym`; resolve WRAM symbols (addresses
+* Parse `build/kaartenheld.sym`; resolve WRAM symbols (addresses
   0xC000-0xDFFF only).
 * Python offset mirror of `Game`/`GameState`/`Battle`/`DeckState`,
   documented per-field with header references.
