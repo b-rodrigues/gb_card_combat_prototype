@@ -402,6 +402,28 @@ def walk_e(planner, checks):
 
 # ── Walk S: content sweep — every level in levels/ is visited ────────
 
+def _hostile_floor(level):
+    """How many UNGATED hostile actors a level declares (0 = hub/empty).
+    Gated spawns (quest_var) are skipped: they may be legitimately absent."""
+    n = 0
+    for o in level.get("objects", []):
+        p = o.get("properties") or {}
+        if "HOSTILE" not in (p.get("flags") or []):
+            continue
+        if p.get("quest_var"):
+            continue
+        n += 1
+    return n
+
+
+_TILESET_KIND = {"forest": 2, "village": 12, "desolate_landscape": 14,
+                 "desolate": 14, "castle": 15}
+
+
+def _tileset_kind(level):
+    return _TILESET_KIND.get(level["map"].get("tileset"), 2)
+
+
 def walk_sweep(planner, checks):
     """Sweep every level the editor can produce: for each level reachable
     from the field spawn, boot a fresh session, BFS-route there, assert
@@ -428,6 +450,11 @@ def walk_sweep(planner, checks):
                        scene.scene_id)
             s.check_eq("sweep %s music" % name,
                        s.reader.music_track(), want_music)
+            if _hostile_floor(scene.level):
+                got = s.reader.world_hostile_count(_tileset_kind(scene.level))
+                s.check("sweep %s hostiles" % name, got >= 1,
+                        expected=">=1 of %d spawned" % _hostile_floor(scene.level),
+                        actual=str(got))
             s.shoot("sweep-%s" % name)
             s.close()
             continue
@@ -444,6 +471,11 @@ def walk_sweep(planner, checks):
         s.check_eq("sweep %s scene" % name, st["scene_id"], scene.scene_id)
         s.check_eq("sweep %s music" % name, s.reader.music_track(),
                    want_music)
+        if _hostile_floor(scene.level):
+            got = s.reader.world_hostile_count(_tileset_kind(scene.level))
+            s.check("sweep %s hostiles" % name, got >= 1,
+                    expected=">=1 of %d spawned" % _hostile_floor(scene.level),
+                    actual=str(got))
         s.shoot("sweep-%s" % name)
         s.close()
 

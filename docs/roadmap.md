@@ -1364,14 +1364,23 @@ Lord of Slimes relocated to the throne room).  Reused enemy types with
 per-placement HP/gold variants; advice is carried by signpost `?` NPCs;
 no new entities/quests/assets.
 
-Memory note: the real scene table lives in bank 5 and the actor table in
-bank 2, both of which were nearly full.  To fit the new rooms, the release
-build moves the title-logo tiles + loader to bank 4
-(`src/screens/title_logo_content.c`, `RELEASE_ONLY_SRCS`); the harness
-(debug) build keeps them in bank 5 because moving them flips a
-layout-sensitive SDCC dialogue miscompile (AGENTS.md §52.19 — verified via
-`make verify-oam`).  The fixed title wrapper selects the matching bank at
-compile time.  After this expansion the release bank headroom is small
-(bank 2 ≈57 B, bank 5 ≈138 B); the next large content change needs a real
-bank plan (split banked tables / more ROM banks), not another relocation.
+Memory note (two waves):
+1. The real scene table lives in bank 5 and the actor table in bank 2,
+   both of which were nearly full.  To fit the new rooms, the release build
+   moves the title-logo tiles + loader to bank 2 (spare after wave 2),
+   while the harness build keeps them in bank 5 because moving them flips a
+   layout-sensitive SDCC dialogue miscompile (AGENTS.md §52.19 — verified
+   via `make verify-oam`).  The fixed title wrapper selects the matching
+   bank at compile time.
+2. Enemy wave: bank 2 (actor table) had only ~57 B left, so the **actor
+   tables + loader moved to bank 4** (`GAME_ACTOR_BANK`, `--actors-bank 4`,
+   `actor_load_banked.c #pragma bank 4`) — the debug build already linked
+   the fixture actors in bank 4, so the harness is untouched.  Bank 2 then
+   held ~3 KB spare, enough for the extra enemies while bank 4 keeps ~1 KB.
+   The per-scene actor-table count is now **generated**
+   (`g_actor_table_count`, read by the bank-4 loader) -- the previous
+   hardcoded `GAME_ACTOR_TABLE_COUNT 6` silently dropped maps 8+ (the new
+   rooms spawned no enemies).  `walk_sweep` now asserts each combat level
+   spawns ≥1 hostile, so that regression cannot recur.
+   Current release headroom: bank 2 ≈2.1 KB, bank 4 ≈1.1 KB, bank 5 ≈138 B.
 

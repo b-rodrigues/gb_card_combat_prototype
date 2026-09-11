@@ -97,4 +97,11 @@ typedef enum {
  * at 8 banks (-yo8), and the fixtures can diverge freely. */
 #define GAME_TEST_CONTENT_BANK 4
 
+/* Per-scene actor tables (actors_content.c) live in bank 4 in BOTH builds:
+ * the debug build already links the fixture actor tables there
+ * (GAME_TEST_CONTENT_BANK) and the release build moved there to free the
+ * tight bank 2 for the other content tables (dialogue/events/cards/...).
+ * actor_load_banked.c (#pragma bank 4) reads them in-bank. */
+#define GAME_ACTOR_BANK 4
+
 #endif /* GAME_IDS_H */

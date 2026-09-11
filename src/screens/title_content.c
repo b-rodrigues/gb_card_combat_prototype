@@ -126,7 +126,7 @@ static void title_program_logo_palette(void)
 
 /* Bitmap logo: BG tile ids RPG_TILE_BASE_WORLD.. (+width*height) stamped
  * at (x,y) with CGB palette `palette`.  The tile bytes were streamed into
- * the same VRAM block by ui_title_logo_load_banked() (bank 6) before this
+ * the same VRAM block by ui_title_logo_load_banked() (bank 5 debug / 2 release) before this
  * body runs.  Runs with the LCD off (full redraw), so the raw writes need
  * no PPU wait; the overworld reloads the block on entry. */
 static void title_draw_logo_image(void)

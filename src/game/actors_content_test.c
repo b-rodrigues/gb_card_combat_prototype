@@ -171,3 +171,5 @@ const WorldActorTable g_actor_tables[] = {
     { MAP_TEST_SOUTH_FIELD, g_test_south_field_actors,
         (uint8_t)(sizeof(g_test_south_field_actors) / sizeof(g_test_south_field_actors[0])) },
 };
+
+const uint8_t g_actor_table_count = 6;

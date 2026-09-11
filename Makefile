@@ -234,12 +234,12 @@ atlas:
 LEVEL ?= forest
 level:
 	@python3 tools/level_compiler/validate.py levels/$(LEVEL).json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 	@echo "Compiled level: $(LEVEL)"
 
 levels:
 	@python3 tools/level_compiler/validate.py levels/*.json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
 
 # JSON is the source of truth: committed C must equal fresh compile (no
@@ -247,10 +247,10 @@ levels:
 # tool, not a gate (see docs/level-editor.md Phase 15).
 levels-check:
 	@python3 tools/level_compiler/validate.py levels/*.json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c --check
 
 src/game/scenes_content.c src/world/scene_ids_generated.h &: $(wildcard levels/*.json)
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 # ^ Also (re)generates src/world/scene_ids_generated.h (MAP_*/SCENE_* values
 # from levels/registry.json) as a side effect; the wildcard above includes
 # registry.json so id assignments trigger a rebuild.  --check verifies it too.

@@ -483,6 +483,11 @@ def main():
                              "tables (default: 5 for scenes, 2 for actors). "
                              "The frozen test fixtures compile with --bank 4 so the "
                              "release budgets are untouched.")
+    parser.add_argument("--actors-bank", type=int, default=None,
+                        help="Override the #pragma bank for the emitted actor tables "
+                             "only (default: follow --bank, else 2).  The release "
+                             "actors live in bank 4 (GAME_ACTOR_BANK) to free the "
+                             "tight bank 2 for other content.")
 
     args = parser.parse_args()
 
@@ -551,8 +556,10 @@ def main():
     else:
         output_path = Path(output_path)
 
-    actors_code = emit_actors_code(levels_by_id,
-                                   bank=args.bank if args.bank is not None else 2,
+    actors_bank = args.actors_bank
+    if actors_bank is None:
+        actors_bank = args.bank if args.bank is not None else 2
+    actors_code = emit_actors_code(levels_by_id, bank=actors_bank,
                                    registry=registry)
 
     actors_path = args.actors_output
@@ -781,6 +788,11 @@ def emit_actors_code(levels_by_id, bank=2, registry=None):
         out.append(f"    {{ {map_id_enum + ',':<20s} g_{sid}_actors,")
         out.append(f"        (uint8_t)(sizeof(g_{sid}_actors) / sizeof(g_{sid}_actors[0])) }},")
     out.append("};")
+    # Generated table count: the fixed-bank registrar stages this byte via
+    # banked_copy (no header dependency, so a stale object cannot desync it
+    # from the linked table -- AGENTS.md 52.2).
+    out.append("")
+    out.append("const uint8_t g_actor_table_count = %d;" % len(ordered))
     return "\n".join(out) + "\n"
 
 

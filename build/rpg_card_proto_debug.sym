@@ -28,7 +28,7 @@
 00:24000 00003775
 00:34000 00003AF4
 00:64000 00003BF8
-00:44000 00003F42
+00:44000 00003F61
 00:74000 00003F90
 00:0200 00007C80
 00:FF30 AUD3WAVE
@@ -390,9 +390,10 @@
 00:566EF _g_actor_npc_tiles
 00:DF66 _g_actor_registry
 00:DF68 _g_actor_registry_count
-00:47EC6 _g_actor_tables
-00:478A4 _g_all_ex
-00:478A4 _g_all_exits
+00:47EFC _g_actor_table_count
+00:47EE4 _g_actor_tables
+00:478C2 _g_all_ex
+00:478C2 _g_all_exits
 00:55610 _g_asset_
 00:54000 _g_asset_atlas_entries
 00:55610 _g_asset_icon_palettes
@@ -525,7 +526,7 @@
 00:DF4C _g_scen_load_state
 00:D319 _g_scen_s
 00:D319 _g_scen_state_buf
-00:47C8C _g_scenes
+00:47CAA _g_scenes
 00:DF2F _g_sfx_la
 00:DF2F _g_sfx_last_id
 00:DF2D _g_sfx_pl
@@ -1171,9 +1172,10 @@
 00:566EF g_actor_npc_tiles
 00:DF66 g_actor_registry
 00:DF68 g_actor_registry_count
-00:47EC6 g_actor_tables
-00:478A4 g_all_ex
-00:478A4 g_all_exits
+00:47EFC g_actor_table_count
+00:47EE4 g_actor_tables
+00:478C2 g_all_ex
+00:478C2 g_all_exits
 00:55610 g_asset_
 00:54000 g_asset_atlas_entries
 00:55610 g_asset_icon_palettes
@@ -1306,7 +1308,7 @@
 00:DF4C g_scen_load_state
 00:D319 g_scen_s
 00:D319 g_scen_state_buf
-00:47C8C g_scenes
+00:47CAA g_scenes
 00:DF2F g_sfx_la
 00:DF2F g_sfx_last_id
 00:DF2D g_sfx_pl
@@ -1504,7 +1506,7 @@
 00:7C80 l__CODE
 00:3775 l__CODE_2
 00:3AF4 l__CODE_3
-00:3F42 l__CODE_4
+00:3F61 l__CODE_4
 00:375C l__CODE_5
 00:3BF8 l__CODE_6
 00:3F90 l__CODE_7

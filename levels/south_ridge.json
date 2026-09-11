@@ -288,6 +288,33 @@
         "gold_reward": 0,
         "ai": "AI_NONE"
       }
+    },
+    {
+      "id": "ridge_spider",
+      "type": "enemy",
+      "position": {
+        "x": 15,
+        "y": 10
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_SPIDER",
+        "display_name": "SPIDER",
+        "actor_id": 53,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "S",
+        "hp": 16,
+        "max_hp": 16,
+        "gold_reward": 15,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_SPIDER",
+        "ai": "AI_PATROL_VERT",
+        "enemy_type": "spider"
+      }
     }
   ],
   "regions": [

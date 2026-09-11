@@ -242,6 +242,64 @@
         "gold_reward": 0,
         "ai": "AI_NONE"
       }
+    },
+    {
+      "id": "glade_kobold",
+      "type": "enemy",
+      "position": {
+        "x": 7,
+        "y": 13
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_KOBOLD",
+        "display_name": "KOBOLD",
+        "actor_id": 47,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "K",
+        "hp": 12,
+        "max_hp": 12,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_KOBOLD",
+        "ai": "AI_CHASE",
+        "enemy_type": "kobold"
+      }
+    },
+    {
+      "id": "glade_slime2",
+      "type": "enemy",
+      "position": {
+        "x": 13,
+        "y": 6
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME",
+        "display_name": "SLIME",
+        "actor_id": 48,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "E",
+        "hp": 20,
+        "max_hp": 20,
+        "gold_reward": 10,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_SLIME",
+        "ai": "AI_PATROL_CROSS"
+      },
+      "overworld_sprite": "actors.actors_slime_frame_1",
+      "animation_frames": [
+        "actors.actors_slime_frame_1",
+        "actors.actors_slime_frame_2"
+      ]
     }
   ],
   "regions": [

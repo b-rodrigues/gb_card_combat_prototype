@@ -106,6 +106,64 @@
         "actors.actors_boss_bottom_left_corner",
         "actors.actors_boss_bottom_right_corner"
       ]
+    },
+    {
+      "id": "throne_bat",
+      "type": "enemy",
+      "position": {
+        "x": 6,
+        "y": 10
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_BAT",
+        "display_name": "BAT",
+        "actor_id": 57,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "V",
+        "hp": 8,
+        "max_hp": 8,
+        "gold_reward": 8,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_BAT",
+        "ai": "AI_PATROL_CIRCLE"
+      },
+      "overworld_sprite": "actors.actors_bats_frame_1",
+      "animation_frames": [
+        "actors.actors_bats_frame_1",
+        "actors.actors_bats_frame_2"
+      ]
+    },
+    {
+      "id": "throne_spider",
+      "type": "enemy",
+      "position": {
+        "x": 14,
+        "y": 10
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_SPIDER",
+        "display_name": "SPIDER",
+        "actor_id": 58,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "S",
+        "hp": 16,
+        "max_hp": 16,
+        "gold_reward": 15,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_SPIDER",
+        "ai": "AI_PATROL_VERT",
+        "enemy_type": "spider"
+      }
     }
   ],
   "regions": [
