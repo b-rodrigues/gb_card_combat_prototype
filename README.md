@@ -38,7 +38,7 @@ Kaartenheld is built with a deliberately split creative process:
 
 - **Top-down adventure**: explore tile-based maps, talk to characters, follow the story.
 - **Card combat**: battles are fought with a deck of up to 20 cards; you play a 5-card hand.
-- **Poker combos**: the values of the cards in your hand form poker hands — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND — and stronger hands mean stronger effects. Ring cards act as jokers, substituting any value.
+- **Poker combos**: the values of the cards in your hand form poker hands — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND — and stronger hands mean stronger effects. Ring cards substitute any *number* in the combo (they stay heal cards, so they break a flush).
 - **No RPG grind**: there is no equipment and no leveling. Deck composition is your entire progression.
 - **Loot cards**: every victory drops a procedurally generated card (names, values, riders, rarity tiers). Keep it, build it into your deck, or sell it to a merchant for gold, the in-game currency.
 - **Status effects**: POISON, BURN, and FREEZE ride on card hits with stacking rules and per-round ticks.
@@ -108,7 +108,7 @@ The codebase includes a complete, playable vertical slice proving all core syste
 - **Card Combat** (see [`docs/card-battle.md`](docs/card-battle.md)):
   - Attack/defend phases with a 5-card hand drawn from your deck (up to 20 copies);
   - Number-based **poker-style combos**: the hand you make determines the tier — PAIR, TWO PAIR, THREE KIND, STRAIGHT, FLUSH, FULL HOUSE, FOUR KIND, STRAIGHT FLUSH, FIVE KIND;
-  - **Ring cards act as jokers**, substituting any value;
+  - **Ring cards substitute any number** in the combo (they stay heal cards, so they break a flush);
   - Card types (sword, shield, bow, heal, dagger) with deterministic effect resolution and a visible turn timer;
   - Live combo preview on the battle HUD (mirrors resolution, including ring trials).
 - **Deck & Collection** (see [`docs/deck.md`](docs/deck.md)):
