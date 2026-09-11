@@ -1,8 +1,9 @@
 # verify-walkthrough — Real-Content Semantic Verifier
 
 Status: **implemented** — `make verify-walkthrough`, required on push (CI).
-291 checks green (incl. the content sweep); PNG output byte-stable across
-runs; negative tests (offset drift, route failure) verified to fail loudly.
+759 checks green (incl. the content sweep over 14 levels); PNG output
+byte-stable across runs; negative tests (offset drift, route failure)
+verified to fail loudly.
 
 ## 1. Purpose
 
@@ -46,7 +47,7 @@ tools/walkthrough/
 
 ### Phase 1 — StateReader
 
-* Parse `build/rpg_card_proto.sym`; resolve WRAM symbols (addresses
+* Parse `build/kaartenheld.sym`; resolve WRAM symbols (addresses
   0xC000-0xDFFF only).
 * Python offset mirror of `Game`/`GameState`/`Battle`/`DeckState`,
   documented per-field with header references.
@@ -94,7 +95,9 @@ tools/walkthrough/
    `pb.stop(ram_file=)` → new `PyBoy(rom, ram_file=)` → title START →
    DOWN → CONTINUE → A → LOAD slot 1 → assert restored scene/pos/gold
    (post-purchase gold proves the loaded state is the saved one).
-5. **Scene asserts** on Forest/Pass/Castle arrivals (`reader.scene_id`).
+5. **Scene asserts** on Forest/Pass/Castle arrivals (`reader.scene_id`);
+   Walk E now routes through the expanded castle chain (entry → hall →
+   castle) to the solo Mimic.
 6. **Quick-screen deck toggle**: deck a card → assert `deck_count`
    changed.
 7. **Content sweep** (`walk_sweep`): every level in `levels/` is visited

@@ -6,8 +6,8 @@ RGBFIX = rgbfix
 BUILD_DIR = build
 SRC_DIR = src
 
-TARGET = $(BUILD_DIR)/rpg_card_proto.gb
-TARGET_DEBUG = $(BUILD_DIR)/rpg_card_proto_debug.gb
+TARGET = $(BUILD_DIR)/kaartenheld.gb
+TARGET_DEBUG = $(BUILD_DIR)/kaartenheld_debug.gb
 
 JOBS ?= auto
 
@@ -34,7 +34,13 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 TEST_CONTENT_SRCS = $(SRC_DIR)/game/scenes_content_test.c $(SRC_DIR)/game/actors_content_test.c
 CONTENT_SRCS = $(SRC_DIR)/game/scenes_content.c $(SRC_DIR)/game/actors_content.c
 SRCS := $(filter-out $(TEST_CONTENT_SRCS),$(SRCS))
-DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
+# Release-only source: the title-logo data+loader must stay in bank 5 for
+# the harness build (layout-pinned; AGENTS.md 52.19) but moves to bank 4 in
+# release to free the tight world bank for expanded content.  Excluded from
+# the debug link (the debug copy lives in tiles_content.c).
+RELEASE_ONLY_SRCS = $(SRC_DIR)/screens/title_logo_content.c
+
+DEBUG_SRCS = $(filter-out $(CONTENT_SRCS) $(RELEASE_ONLY_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events);
@@ -228,12 +234,12 @@ atlas:
 LEVEL ?= forest
 level:
 	@python3 tools/level_compiler/validate.py levels/$(LEVEL).json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 	@echo "Compiled level: $(LEVEL)"
 
 levels:
 	@python3 tools/level_compiler/validate.py levels/*.json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 	@echo "All levels compiled to src/game/scenes_content.c"
 
 # JSON is the source of truth: committed C must equal fresh compile (no
@@ -241,10 +247,10 @@ levels:
 # tool, not a gate (see docs/level-editor.md Phase 15).
 levels-check:
 	@python3 tools/level_compiler/validate.py levels/*.json
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c --check
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c --check
 
 src/game/scenes_content.c src/world/scene_ids_generated.h &: $(wildcard levels/*.json)
-	@python3 tools/level_compiler/compile.py --all -o src/game/scenes_content.c
+	@python3 tools/level_compiler/compile.py --all --actors-bank 4 -o src/game/scenes_content.c
 # ^ Also (re)generates src/world/scene_ids_generated.h (MAP_*/SCENE_* values
 # from levels/registry.json) as a side effect; the wildcard above includes
 # registry.json so id assignments trigger a rebuild.  --check verifies it too.
@@ -693,13 +699,13 @@ LDFLAGS = -Wl-b_DATA=0xC940
 
 $(TARGET): gfx tiles levels screens dialogues shops entities music $(OBJS) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -o $@ build/crt0.o $(OBJS) $(GB_LITE) $(SM83_LITE)
-	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto.noi $(BUILD_DIR)/rpg_card_proto.sym
-	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
+	@python3 tools/make_sym.py $(BUILD_DIR)/kaartenheld.noi $(BUILD_DIR)/kaartenheld.sym
+	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "KAARTENHELD" $@
 
 $(TARGET_DEBUG): gfx tiles levels levels-test screens dialogues shops entities music $(OBJS_DEBUG) build/crt0.o $(GB_LITE) $(SM83_LITE) | $(BUILD_DIR)
 	$(CC) -no-crt -Wm-yc -Wl-yt0x19 -Wl-yo8 $(LDFLAGS) -Wl-m -Wl-j -Wl-y -o $@ build/crt0.o $(OBJS_DEBUG) $(GB_LITE) $(SM83_LITE)
-	@python3 tools/make_sym.py $(BUILD_DIR)/rpg_card_proto_debug.noi $(BUILD_DIR)/rpg_card_proto_debug.sym
-	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "GBCARDRPG" $@
+	@python3 tools/make_sym.py $(BUILD_DIR)/kaartenheld_debug.noi $(BUILD_DIR)/kaartenheld_debug.sym
+	@$(RGBFIX) -v -C -m 0x1b -r 2 -t "KAARTENHELD" $@
 
 build/crt0.o: src/crt0.s | $(BUILD_DIR)
 	sdasgb -o $@ $<
@@ -723,7 +729,7 @@ run-debug: $(TARGET_DEBUG)
 test: $(TARGET)
 	@echo "Validating Game Boy ROM header..."
 	@if command -v $(RGBFIX) >/dev/null 2>&1; then \
-		$(RGBFIX) -v -C -t "GBCARDRPG" $(TARGET); \
+		$(RGBFIX) -v -C -t "KAARTENHELD" $(TARGET); \
 	else \
 		test -s $(TARGET); \
 	fi
@@ -785,9 +791,14 @@ verify-vram: debug
 verify-scroll: debug
 	@python3 tools/verify_scroll.py
 
-# Verify autonomous enemy patrol AI patterns (Slimes cross, Bats circle).
+# Verify autonomous enemy patrol AI.  The authoritative patrol regressions
+# are the harness sentinel scenarios (telemetry-based; see AGENTS.md 52.19):
+# patrol_slime_cross (cross stepping) and patrol_enemy_bumps_player
+# (patrol -> collision -> encounter).  The old tools/verify_patrol.py used
+# stale hardcoded WRAM offsets and was retired.
 verify-patrol: debug
-	@python3 tools/verify_patrol.py
+	@python3 tools/dev.py scenario patrol_slime_cross
+	@python3 tools/dev.py scenario patrol_enemy_bumps_player
 
 # Verify the music clock never stalls across screen/map transitions: boots the
 # debug ROM WITHOUT harness mode (real interrupts) and walks FIELD -> TOWN and
@@ -827,7 +838,7 @@ vram-dialogue: release
 # Print a reproducible memory budget (code/WRAM usage, _HOME headroom vs the
 # 0x8000 ceiling).  Exits non-zero if a documented invariant is violated.
 memmap: debug
-	@python3 tools/memmap.py $(BUILD_DIR)/rpg_card_proto_debug.map
+	@python3 tools/memmap.py $(BUILD_DIR)/kaartenheld_debug.map
 
 clean:
 	rm -rf $(BUILD_DIR) $(GENERATED_MUSIC_DIR)

@@ -59,8 +59,8 @@ hand-edited JSON shows up without rebuilding the editor.
 7. **Save.** Toolbar → `💾 Save` writes `levels/my_clearing.json` to disk.
    (`⬇️ Export` downloads a copy instead.)
 8. **Compile & run.** `🔨 Compile ROM` saves, runs the level/screen
-   compilers, and builds `build/rpg_card_proto_debug.gb`. Then
-   `▶️ Run Game` launches the **release** ROM (`build/rpg_card_proto.gb`)
+   compilers, and builds `build/kaartenheld_debug.gb`. Then
+   `▶️ Run Game` launches the **release** ROM (`build/kaartenheld.gb`)
    on your desktop emulator, rebuilding it first if your content is newer.
    (Compile ROM builds debug for the harness; Run Game plays release for
    true game feel.)

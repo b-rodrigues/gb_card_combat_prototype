@@ -123,32 +123,26 @@ Battle and menus have their own controls, covered in §6 and §7.
 
 ### 3.1 Maps and travel
 
-The world is one connected chain of five maps
-(`scenes_content.c`, `src/world/world.h`):
+The world is a connected network of fourteen maps (`scenes_content.c`,
+`src/world/world.h`):
 
 ```
-FIELD (32×18)  ←gates→  TOWN (20×18)
-FIELD          ←gates→  FOREST (20×18)
-FOREST         ←gates→  MOUNTAIN PASS (20×18)
-MOUNTAIN PASS  ←gates→  CASTLE (20×18)
+FIELD (32×18) ──east── TOWN (20×18)
+FIELD         ──north─ FOREST (20×18)
+FIELD         ──south─ SOUTH FIELD (20×18)
+FOREST        ──east── FOREST GLADE ──east── DEEP WOODS ──north── SUNKEN GROVE
+                                              DEEP WOODS ──east── OVERGROWN SHRINE
+SOUTH FIELD   ──east── HOWLING RIDGE
+SOUTH FIELD   ──south─ MOUNTAIN PASS ──north── CASTLE ENTRY
+                        CASTLE ENTRY  ──north── GREAT HALL
+                        GREAT HALL    ──north── CASTLE (mimic)
+                        CASTLE        ──north── THRONE ROOM (Lord of Slimes)
 ```
 
-`>` / `<` tiles on the ground are gates.  Walk onto a gate to cross.  The
-specific connections:
-
-| From | Gate tile | Arrive at |
-|---|---|---|
-| FIELD | (31,7) → east | TOWN (2,7) |
-| FIELD | (12,0) → north | FOREST (12,10) |
-| TOWN | (1,7) → west | FIELD (17,7) |
-| FOREST | (12,11) → south | FIELD (12,1) |
-| FOREST | (12,0) → north | MOUNTAIN PASS (12,10) |
-| MOUNTAIN PASS | (12,11) → south | FOREST (12,1) |
-| MOUNTAIN PASS | (12,0) → north | CASTLE (10,10) |
-| CASTLE | (12,11) → south | MOUNTAIN PASS (12,1) |
-
-Each map has its own looping music theme: FIELD/FOREST/MOUNTAIN PASS play
-the overworld theme, TOWN plays its own theme, CASTLE a dungeon theme.
+`>` / `<` tiles on the ground are gates.  Walk onto a gate to cross.  Each
+map has its own looping theme: FIELD / FOREST / FOREST rooms use the forest
+theme, SOUTH FIELD / MOUNTAIN PASS / HOWLING RIDGE the desolate theme,
+TOWN its own theme, and every castle room the dungeon theme.
 
 ### 3.2 Terrain legend
 
@@ -184,13 +178,24 @@ A slime patrols near the middle-east of the field.
 | Wizard | (6,10) | Let you save the game to one of three slots (§10). |
 
 **FOREST** — trees, stumps, a slime (12 HP), a bat (8 HP), and the Lost
-Amulet at (16,10).
+Amulet at (16,10).  An east gate opens onto the forest branch.
+
+**FOREST BRANCH** — MOSSY GLADE (slime, bat, a hermit's advice), DEEP
+WOODS (kobold, spider, a tougher slime, bat; a signpost), SUNKEN GROVE (a
+solo Mimic guarding treasure), and the OVERGROWN SHRINE (elite slime,
+spider, a shrine signpost).
+
+**SOUTH FIELD / HOWLING RIDGE** — desolate ground; the ridge east of the
+south field is thick with a kobold, a bat and a tougher slime, plus a
+scout's advice.
 
 **MOUNTAIN PASS** — a narrow walled corridor with one tougher slime
 (16 HP).
 
-**CASTLE** — interior corridors between two building blocks, a bat,
-and — after the Monster Hunt quest is complete — the Lord of Slimes.
+**CASTLE CHAIN** — CASTLE ENTRY (bat, spider), the GREAT HALL (kobold,
+spider, bat; a knight's advice), CASTLE (a bat, a spider and the solo
+Mimic), and the THRONE ROOM, where the Lord of Slimes waits once the
+Monster Hunt quest is complete.
 
 ### 3.4 Encounters
 

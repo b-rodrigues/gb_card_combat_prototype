@@ -47,7 +47,7 @@ Host-Side AI Agent / Test Runner (Python)
       mGBA / SameBoy Emulator Session
                    │
                    ▼  Memory & Registers
-      Game Boy Debug ROM (rpg_card_proto_debug.gb)
+      Game Boy Debug ROM (kaartenheld_debug.gb)
     ┌──────────────────────────────────────────────┐
     │ • Declarative State Injection (Scene/Player) │
     │ • Bounded Telemetry Ring Buffer (Events)     │
@@ -155,8 +155,8 @@ All build tools, compilers, emulators, and test runners are automatically provid
 
 | Target | Description | Output |
 | :--- | :--- | :--- |
-| `make release` | Build optimized release ROM | `build/rpg_card_proto.gb` |
-| `make debug` | Build debug ROM with harness & telemetry | `build/rpg_card_proto_debug.gb` |
+| `make release` | Build optimized release ROM | `build/kaartenheld.gb` |
+| `make debug` | Build debug ROM with harness & telemetry | `build/kaartenheld_debug.gb` |
 | `make editor` | Launch the web Level Editor (React + Vite) | Web dev server (`localhost:3000`) |
 | `make level LEVEL=<name>` | Validate and compile specific JSON level | `src/game/scenes_content.c` |
 | `make levels` | Validate and compile all `levels/*.json` to C | `src/game/scenes_content.c` |

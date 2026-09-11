@@ -49,6 +49,15 @@
       "target_y": 10,
       "direction": "SOUTH",
       "tile_char": ">"
+    },
+    {
+      "x": 19,
+      "y": 9,
+      "target_scene": "south_ridge",
+      "target_x": 2,
+      "target_y": 9,
+      "direction": "EAST",
+      "tile_char": ">"
     }
   ],
   "objects": [
@@ -157,6 +166,37 @@
         "reward_currency": "CURRENCY_ID_GOLD",
         "actor_id": 13
       }
+    },
+    {
+      "id": "south_slime2",
+      "type": "enemy",
+      "position": {
+        "x": 7,
+        "y": 14
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME",
+        "display_name": "SLIME",
+        "actor_id": 46,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "E",
+        "hp": 20,
+        "max_hp": 20,
+        "gold_reward": 10,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_SLIME",
+        "ai": "AI_PATROL_CROSS"
+      },
+      "overworld_sprite": "actors.actors_slime_frame_1",
+      "animation_frames": [
+        "actors.actors_slime_frame_1",
+        "actors.actors_slime_frame_2"
+      ]
     }
   ],
   "regions": [

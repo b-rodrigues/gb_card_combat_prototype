@@ -40,7 +40,7 @@ import os
 import sys
 
 ROM_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "..", "build", "rpg_card_proto.gb")
+                            "..", "build", "kaartenheld.gb")
 
 # Player Entity layout: position{x,y}, hp, max_hp, active, facing, id.
 # Located by scanning WRAM for the deterministic boot pattern (FIELD spawn

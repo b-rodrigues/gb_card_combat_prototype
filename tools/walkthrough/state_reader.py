@@ -234,6 +234,7 @@ class StateReader:
         self.state = self.g_game + OFF_STATE
         self.world = self.state + 209      # sizeof(GameState), see above
         self._battle_base = None           # resolved at first battle read
+        self._world_ptr_size = None        # const-char* size once probed
         self._rom = open(rom_path, "rb")
 
     def close(self):
@@ -309,16 +310,44 @@ class StateReader:
             if (head == bytes([HERO_START_HP, HERO_START_HP])
                     and name == b"H"):
                 self._battle_base = cand
+                self._world_ptr_size = ptr
                 return cand
         raise BattleProbeError(
             "could not locate g_game.battle with either const-char* "
             "candidate; World mirror or Battle layout changed — update "
             "tools/walkthrough/state_reader.py from src/world/world.h")
 
+    def world_hostile_count(self, tileset_kind):
+        """Number of active hostile slots in the current scene
+        (World.actors[0..MAX_WORLD_ACTORS)).  Proves the generated
+        actor-table count registered THIS scene's hostiles (the count used
+        to be a hardcoded 6, silently dropping maps 8+).
+
+        The const-char* size (which sets the actor stride) is not a
+        separate symbol, so it is resolved from the World tail byte
+        (tileset_kind) against the caller's expected kind -- the battle
+        probe cannot be used because g_game.battle is only initialized once
+        a battle starts."""
+        ptr = self._world_ptr_size
+        if ptr is None:
+            for cand in NAME_PTR_CANDIDATES:
+                if self.rd(self.world + world_size(cand) - 1, 1)[0] == tileset_kind:
+                    ptr = cand
+                    break
+            if ptr is None:
+                return -1
+            self._world_ptr_size = ptr
+        base = self.world + 5 + ENTITY_SIZE
+        stride = _world_actor_runtime_size(ptr)
+        n = 0
+        for s in range(MAX_WORLD_ACTORS):
+            if self.rd(base + s * stride + 3, 1)[0]:
+                n += 1
+        return n
+
     def battle_player_hp(self):
         return self.rd(self._resolve_battle_base()
                        + BATTLE_PLAYER_HP, 1)[0]
-
     def battle_player_max_hp(self):
         return self.rd(self._resolve_battle_base()
                        + BATTLE_PLAYER_MAX_HP, 1)[0]

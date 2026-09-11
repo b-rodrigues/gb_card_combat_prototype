@@ -148,12 +148,16 @@ const uint8_t g_intrepid_font_tiles[1536] = {
 #include "gfx/intrepid_font_tiles.inc"
 };
 
-/* Title logo (assets/title-red.png, 16x3 tiles, make gfx).  The title
- * screen streams these into the world BG block (ids 128-175) and stamps a
- * 16x3 tilemap with CGB palette 1. */
+#ifdef DEBUG_BUILD
+/* Title logo (assets/title-red.png, 16x3 tiles, make gfx).  Kept in bank 5
+ * for the harness build (its layout is regression-pinned: moving it out
+ * flips a layout-sensitive SDCC miscompile in the dialogue path,
+ * AGENTS.md 52.19).  The release build places it in bank 4 instead, where
+ * there is room for the expanded content (see title_logo_content.c). */
 const uint8_t g_title_logo_tiles[768] = {
 #include "gfx/title_logo_tiles.inc"
 };
+#endif
 
 void ui_load_tileset_banked(void)
 {
@@ -235,11 +239,9 @@ void ui_load_tileset_banked(void)
     }
 }
 
-/* Bank-5 title-logo loader for the fixed-bank title wrapper.  Writes the
- * 48 generated tiles straight to VRAM at the world BG block (ids 128+,
- * signed 0x8800 fetch: AGENTS.md 52.22).  Called from the title screen's
- * LCD-off full redraw, so no per-byte PPU wait is needed; the overworld
- * reloads this block on entry (ui_invalidate_tileset), so nothing leaks. */
+#ifdef DEBUG_BUILD
+/* Bank-5 title-logo loader for the fixed-bank title wrapper (harness
+ * build).  The release build's copy lives in title_logo_content.c. */
 void ui_title_logo_load_banked(void)
 {
     const uint8_t *src = g_title_logo_tiles;
@@ -252,3 +254,4 @@ void ui_title_logo_load_banked(void)
         *dst++ = *src++;
     }
 }
+#endif

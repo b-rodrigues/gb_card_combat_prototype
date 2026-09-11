@@ -1,8 +1,4 @@
-#ifdef TEST_LEVELS
 #pragma bank 4
-#else
-#pragma bank 2
-#endif
 
 #include "actor.h"
 #include "world.h"
@@ -29,6 +25,7 @@ extern char s_actor_names[MAX_WORLD_ACTORS][12];
 
 extern StaticActorDefinition g_static_actors[MAX_STATIC_ACTORS];
 extern uint8_t g_static_actor_count;
+extern const uint8_t g_actor_table_count;   /* generated, bank-local */
 
 static void actor_spawn(WorldActorRuntime *r, const WorldActorDefinition *def)
 {
@@ -81,7 +78,10 @@ void actor_load_scene_banked(void)
 
     if (!g_actor_registry) return;
 
-    for (i = 0; i < g_actor_registry_count; i++) {
+    /* The generated count is bank-local (emitted next to g_actor_tables by
+     * compile.py), so it is read directly here; g_actor_registry_count is
+     * the fixed-bank registration hint only (AGENTS.md 52.2). */
+    for (i = 0; i < g_actor_table_count; i++) {
         const WorldActorTable *tbl = &g_actor_registry[i];
         if (tbl->map_id != map_id) continue;
 

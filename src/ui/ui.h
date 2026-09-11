@@ -137,6 +137,7 @@ void ui_draw_font_test_banked(void);
 void ui_sprite_init(void);
 void ui_sprite_move(uint8_t px, uint8_t py);
 void ui_sprite_hide(void);
+void ui_sprite_hide_actors_below(uint8_t screen_y);
 void ui_sprite_begin_transition(void);
 void ui_sprite_commit(void);
 void oam_dma_init(void);
@@ -146,7 +147,8 @@ void ui_clear_screen(void);
 void ui_set_cram_palette(uint8_t overworld);
 void ui_load_cram_banked(void);
 void ui_load_tileset_banked(void);
-/* Bank-5 title-logo loader: streams the 48 logo tiles (assets/title-red.png,
+/* Title-logo loader (build-dependent bank: 5 debug / 2 release): streams the
+ * 48 logo tiles (assets/title-red.png,
  * make gfx) into the world BG block (ids 128-175).  Runs in the title
  * screen's LCD-off full redraw; AGENTS.md 52.22 signed 0x8800 fetch. */
 void ui_title_logo_load_banked(void);

@@ -1331,7 +1331,7 @@ function levelEditorApiPlugin(): Plugin {
               res.end(JSON.stringify({ success: false, error: combinedError || err.message, log: stdout, attempts: attempts || [] }));
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, log: stdout, romPath: ['build/rpg_card_proto_debug.gb', 'build/rpg_card_proto.gb'] }));
+              res.end(JSON.stringify({ success: true, log: stdout, romPath: ['build/kaartenheld_debug.gb', 'build/kaartenheld.gb'] }));
             }
           }) as any);
           return;
@@ -1340,7 +1340,7 @@ function levelEditorApiPlugin(): Plugin {
         if (req.method === 'POST' && req.url === '/api/run-game') {
           // Run Game always plays the RELEASE ROM (the debug ROM's
           // per-frame harness work makes it feel sluggish in play).
-          const romPath = path.join(repoRoot, 'build', 'rpg_card_proto.gb');
+          const romPath = path.join(repoRoot, 'build', 'kaartenheld.gb');
           const contentDirs = ['levels', 'screens',
             path.join('tools', 'level_editor', 'tilesets')];
 
@@ -1417,13 +1417,13 @@ function levelEditorApiPlugin(): Plugin {
         }
 
         if (req.method === 'GET' && req.url === '/api/rom') {
-          const romPath = path.join(repoRoot, 'build', 'rpg_card_proto_debug.gb');
+          const romPath = path.join(repoRoot, 'build', 'kaartenheld_debug.gb');
           if (fs.existsSync(romPath)) {
             const data = fs.readFileSync(romPath);
             res.writeHead(200, {
               'Content-Type': 'application/octet-stream',
               'Content-Length': data.length,
-              'Content-Disposition': 'inline; filename="rpg_card_proto_debug.gb"'
+              'Content-Disposition': 'inline; filename="kaartenheld_debug.gb"'
             });
             res.end(data);
           } else {
