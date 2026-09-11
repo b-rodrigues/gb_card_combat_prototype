@@ -58,9 +58,10 @@ quest is complete (his spawn is gated on the quest variable, see §4.2), so
 
 ### 2.1 Title screen
 
-Boot lands on the **studio splash** — `A GAME BY / GALLIA BELGICA /
-SYSTEMS` — which auto-advances to the title screen after ~2.5 seconds or
-is skipped immediately with `A`/`START`.  The title screen then shows the
+Boot lands on the **studio splash** — the GALLIA BELGICA SYSTEMS bitmap
+logo (`assets/gallia_belgica_systems.png`, red/blue bracket) — which
+auto-advances to the title screen after ~2.5 seconds or is skipped
+immediately with `A`/`START`.  The title screen then shows the
 **KAARTENHELD** logo (a red bitmap logo, `assets/title-red.png`), its
 **BATTLE DEMO** subtitle, and `PRESS START`.
 

@@ -256,22 +256,6 @@ void title_menu_step_banked(void)
     g->title_menu_index = new_index;
 }
 
-/* ── Studio splash: shown once at boot, before the title screen ───── */
-
-static const char s_splash[3][20] = {
-    "     A GAME BY",
-    "   GALLIA BELGICA",
-    "      SYSTEMS",
-};
-
-void splash_content_render(void)
-{
-    uint8_t i;
-    for (i = 0; i < 3; i++) {
-        title_draw_text(0, (uint8_t)(7 + (i << 1)), s_splash[i], 20);
-    }
-}
-
 /* ── Intro: three scripted ASCII slides ───────────────────────────── */
 
 static const char s_intro_0[4][20] = {

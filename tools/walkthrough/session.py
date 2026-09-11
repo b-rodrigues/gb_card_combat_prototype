@@ -95,6 +95,12 @@ class Session:
 
     # ── boot ─────────────────────────────────────────────────────────
     def on_title_or_intro(self):
+        # The canonical screen id is authoritative (g_game.screen, offset 0
+        # of the Game struct): the splash renders a bitmap logo whose BG
+        # tiles read as non-text, so the text markers alone cannot detect it.
+        screen = self.pb.memory[self.reader.g_game]
+        if screen in (9, 10, 11, 12):  # TITLE, INTRO, TUTORIAL, SPLASH
+            return True
         return any(m in r for r in self.bg_text() for m in TITLE_LINES)
 
     def quick_open(self):

@@ -1,7 +1,7 @@
 {
  "name": "splash_boot",
  "test": true,
- "description": "Boot lands on the studio splash (SCREEN_SPLASH) and renders the 'A GAME BY / GALLIA BELGICA / SYSTEMS' credit before the title screen appears.",
+ "description": "Boot lands on the studio splash (SCREEN_SPLASH) and renders the GALLIA BELGICA SYSTEMS bitmap logo before the title screen appears. The splash is a bitmap, so the semantic check is the screen id + render telemetry; the pixels are covered by the committed screenshot.",
  "scenario_id": "TITLE_BOOT",
  "initial_state": {
   "scene": "TEST_FIELD",
@@ -25,19 +25,8 @@
    "expected": "SPLASH"
   },
   {
-   "type": "screen_row",
-   "row": 7,
-   "contains": "A GAME BY"
-  },
-  {
-   "type": "screen_row",
-   "row": 9,
-   "contains": "GALLIA BELGICA"
-  },
-  {
-   "type": "screen_row",
-   "row": 11,
-   "contains": "SYSTEMS"
+   "type": "event_occurred",
+   "event": "RENDER_SCREEN"
   }
  ]
 }

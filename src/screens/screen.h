@@ -84,15 +84,15 @@ void tutorial_screen_render(Game *g);
  * tutorial_content.c (static data must not duplicate per TU). */
 #include "tutorial_count_generated.h"
 
-/* Shared slide-show renderer (intro + tutorial screens). */
-void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide);
+/* Shared slide-show renderer (intro + tutorial + splash screens).
+ * `bank` is the content body's ROM bank (4 = ASCII slides, 7 = splash). */
+void slide_screen_render(Game *g, ScreenId scr, uint16_t content_target, uint8_t slide, uint8_t bank);
 
 /* Bank-2 no-arg bodies dispatched by title_screen_render() (banked layout
  * constraint, AGENTS.md 52.11.1).  title_content_render() reads
  * g_bk_byte_a/b (menu showing + index); intro_content_render() reads
  * g_bk_byte_a (slide).  tutorial_content_render() reads g_bk_byte_a (slide). */
 void title_content_render(void);
-void splash_content_render(void);
 void intro_content_render(void);
 void tutorial_content_render(void);
 

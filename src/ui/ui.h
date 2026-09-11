@@ -150,6 +150,11 @@ void ui_load_tileset_banked(void);
  * make gfx) into the world BG block (ids 128-175).  Runs in the title
  * screen's LCD-off full redraw; AGENTS.md 52.22 signed 0x8800 fetch. */
 void ui_title_logo_load_banked(void);
+/* Bank-7 studio splash body: streams the deduped logo tiles
+ * (assets/gallia_belgica_systems.png, make gfx) into the world BG block
+ * (ids 128-192), stamps the 13x5 map, and programs CGB palette 1 to the
+ * logo's fixed ramp. */
+void ui_splash_logo_render_banked(void);
 extern uint8_t g_active_tile_palette[48];
 
 /* Toggle LCDC bit 7 directly (harness-safe: no GBDK display_off VBlank
