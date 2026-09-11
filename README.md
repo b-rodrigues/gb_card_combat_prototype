@@ -365,24 +365,23 @@ different terms.
 - **Art, music, and other assets** are **not** covered by the EUPL and remain
   under their own terms. In particular the assets credited to Florent Bérault
   (e.g. `desolate_landscape.png`, `assets/music/Battle BGM.uge`,
-  `assets/music/desolate_landscape.uge`) are licensed **CC BY-NC-ND 4.0**
-  (attribution, **non-commercial**, **no derivatives**); the imported tilesets
-  follow their source pages, and the combat art is original work by Florent Bérault.
-  See [`assets/README.md`](assets/README.md) and
+  `assets/music/desolate_landscape.uge`) are offered to the public under
+  **CC BY-NC-ND 4.0** (attribution, **non-commercial**, **no derivatives**); the
+  imported tilesets follow their source pages, and the combat art is original
+  work by Florent Bérault. See [`assets/README.md`](assets/README.md) and
   [`assets/tilesets.md`](assets/tilesets.md) for the per-asset credits.
 
 What that means in practice:
 
-- The **source code is free** to study, fork, and reuse — including in
-  commercial projects — *without* the restricted assets.
-- The **game as shipped** (the ROM bundling the art and music) is effectively
-  **non-commercial**: those assets may not be sold, and modified or derivative
-  artwork may not be distributed, without the artists' permission.
-  Attribution must be preserved.
-- Because the non-commercial / no-derivatives assets constrain the combined
-  work, the repository as a whole is not commercially usable just because the
-  code is EUPL. To build a commercial product, replace the restricted assets
-  with your own or obtain a separate licence from each rights holder.
+- **The project and its contributors retain all rights, and the game will be
+  sold as a commercial release** — including the ROM that bundles the art and
+  music. The non-commercial / no-derivatives terms bind public licensees, not
+  the rights holders.
+- **Third parties** may reuse the **code** under the EUPL, including in
+  commercial projects, but may **not** commercially use the CC BY-NC-ND assets
+  or distribute modified or derivative versions of them. A commercial fork
+  needs its own replacement art and music, or separate permission from each
+  rights holder. Attribution must be preserved.
 
 This is a plain-language summary, not legal advice; the licence texts and the
 per-asset sources are authoritative.
