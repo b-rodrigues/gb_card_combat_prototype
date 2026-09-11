@@ -49,6 +49,15 @@
       "target_y": 10,
       "direction": "SOUTH",
       "tile_char": ">"
+    },
+    {
+      "x": 19,
+      "y": 9,
+      "target_scene": "south_ridge",
+      "target_x": 2,
+      "target_y": 9,
+      "direction": "EAST",
+      "tile_char": ">"
     }
   ],
   "objects": [

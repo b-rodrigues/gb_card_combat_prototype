@@ -22,6 +22,34 @@
 
 const DialogueDefinition g_dialogues[] = {
     {
+        DIALOGUE_ID_ADVICE_HERMIT,
+        "HERMIT:",
+        8,
+        {"Combos beat raw", "power: a PAIR", "beats two lone", "cards.", "", "Rings are wild:", "they can finish", "any straight."},
+        0
+    },
+    {
+        DIALOGUE_ID_ADVICE_KNIGHT,
+        "KNIGHT:",
+        5,
+        {"Beyond this hall", "the throne room", "waits. Steel your", "deck before you", "face the lord."},
+        0
+    },
+    {
+        DIALOGUE_ID_ADVICE_SCOUT,
+        "SCOUT:",
+        4,
+        {"The ridge is thick", "with kobolds and", "bats. Heal up in", "town first!"},
+        0
+    },
+    {
+        DIALOGUE_ID_ADVICE_SHRINE,
+        "",
+        5,
+        {"The forest keeps", "its old secrets.", "Some doors open", "only to those", "who grow strong."},
+        0
+    },
+    {
         DIALOGUE_ID_AMULET_FOUND,
         "",
         2,

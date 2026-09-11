@@ -1,0 +1,127 @@
+{
+  "id": "throne_room",
+  "name": "Throne Room",
+  "map": {
+    "width": 20,
+    "height": 18,
+    "tileset": "castle",
+    "music": "MUSIC_DUNGEON",
+    "map_id": "MAP_THRONE_ROOM"
+  },
+  "default_walkable": "castle.castle_plain_floor",
+  "layers": {
+    "terrain": [
+      {
+        "x": 3,
+        "y": 3,
+        "width": 1,
+        "height": 4,
+        "tile": "castle.castle_left_wall"
+      },
+      {
+        "x": 16,
+        "y": 3,
+        "width": 1,
+        "height": 4,
+        "tile": "castle.castle_right_wall"
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "width": 3,
+        "height": 1,
+        "tile": "castle.castle_top_wall"
+      },
+      {
+        "x": 13,
+        "y": 3,
+        "width": 3,
+        "height": 1,
+        "tile": "castle.castle_top_wall"
+      },
+      {
+        "x": 9,
+        "y": 4,
+        "width": 2,
+        "height": 1,
+        "tile": "castle.castle_chair_facing_left"
+      }
+    ]
+  },
+  "player": {
+    "spawn": {
+      "x": 10,
+      "y": 16,
+      "facing": "UP",
+      "animation_frames": [
+        "actors.actors_hero_frame_1",
+        "actors.actors_hero_frame_2"
+      ]
+    }
+  },
+  "exits": [
+    {
+      "x": 10,
+      "y": 17,
+      "target_scene": "castle",
+      "target_x": 10,
+      "target_y": 2,
+      "direction": "SOUTH",
+      "tile_char": "<"
+    }
+  ],
+  "objects": [
+    {
+      "id": "slime_lord",
+      "type": "enemy",
+      "position": {
+        "x": 10,
+        "y": 7
+      },
+      "properties": {
+        "entity_id": "ENTITY_ID_SLIME_LORD",
+        "display_name": "LORD OF SLIMES",
+        "actor_id": 6,
+        "facing": "DOWN",
+        "flags": [
+          "HOSTILE",
+          "BLOCKING",
+          "INTERACTABLE"
+        ],
+        "visual": "L",
+        "hp": 50,
+        "max_hp": 50,
+        "gold_reward": 50,
+        "reward_currency": "CURRENCY_ID_GOLD",
+        "battle": "BATTLE_NONE",
+        "ai": "AI_NONE",
+        "solo": true,
+        "quest_var": "VARIABLE_ID_QUEST_MONSTER_HUNT",
+        "quest_val": 2
+      },
+      "overworld_sprite": "actors.actors_boss_top_left_corner",
+      "animation_frames": [
+        "actors.actors_boss_top_left_corner",
+        "actors.actors_boss_top_right_corner",
+        "actors.actors_boss_bottom_left_corner",
+        "actors.actors_boss_bottom_right_corner"
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "id": "throne_room",
+      "bounds": {
+        "x": 2,
+        "y": 2,
+        "width": 16,
+        "height": 14
+      },
+      "description": "The Lord of Slimes waits upon the ruined throne.",
+      "gameplay": {
+        "purpose": "boss",
+        "difficulty": 4
+      }
+    }
+  ]
+}

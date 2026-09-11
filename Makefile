@@ -34,7 +34,13 @@ SRCS = $(BANK5_EARLY_SRCS) $(filter-out $(BANK5_EARLY_SRCS),$(ALL_SRCS))
 TEST_CONTENT_SRCS = $(SRC_DIR)/game/scenes_content_test.c $(SRC_DIR)/game/actors_content_test.c
 CONTENT_SRCS = $(SRC_DIR)/game/scenes_content.c $(SRC_DIR)/game/actors_content.c
 SRCS := $(filter-out $(TEST_CONTENT_SRCS),$(SRCS))
-DEBUG_SRCS = $(filter-out $(CONTENT_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
+# Release-only source: the title-logo data+loader must stay in bank 5 for
+# the harness build (layout-pinned; AGENTS.md 52.19) but moves to bank 4 in
+# release to free the tight world bank for expanded content.  Excluded from
+# the debug link (the debug copy lives in tiles_content.c).
+RELEASE_ONLY_SRCS = $(SRC_DIR)/screens/title_logo_content.c
+
+DEBUG_SRCS = $(filter-out $(CONTENT_SRCS) $(RELEASE_ONLY_SRCS),$(SRCS)) $(TEST_CONTENT_SRCS)
 
 # Debug-harness-only sources excluded from the release ROM.
 # telemetry.c IS needed by gameplay (game.c/world.c emit events);

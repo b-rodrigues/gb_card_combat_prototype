@@ -173,13 +173,6 @@ static const WorldActorDefinition g_castle_actors[] = {
         0, 0,
          SPRITE_KIND_ENEMY, 7, 0
     },
-    {
-        6, ENTITY_ID_SLIME_LORD, 10, 5, DIRECTION_DOWN,
-        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
-        'L', "LORD OF SLIMES", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_NONE, AI_NONE, 50, 50, 50, CURRENCY_ID_GOLD,
-        VARIABLE_ID_QUEST_MONSTER_HUNT, 2,
-         SPRITE_KIND_ENEMY, 6, 1
-    },
 };
 
 static const WorldActorDefinition g_south_field_actors[] = {
@@ -206,6 +199,198 @@ static const WorldActorDefinition g_south_field_actors[] = {
     },
 };
 
+static const WorldActorDefinition g_forest_glade_actors[] = {
+    {
+        20, ENTITY_ID_SLIME, 8, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 12, 12, 5, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
+    {
+        21, ENTITY_ID_BAT, 13, 12, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'V', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 8, 8, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 0, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 10, 3, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "HERMIT", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_ADVICE_HERMIT, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+};
+
+static const WorldActorDefinition g_forest_deep_actors[] = {
+    {
+        22, ENTITY_ID_KOBOLD, 5, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'K', "KOBOLD", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_KOBOLD, AI_CHASE, 14, 14, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 3, 0
+    },
+    {
+        23, ENTITY_ID_SPIDER, 14, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+    {
+        24, ENTITY_ID_SLIME, 7, 13, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 20, 20, 10, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
+    {
+        25, ENTITY_ID_BAT, 15, 13, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'V', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 8, 8, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 0, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 12, 15, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "SIGNPOST", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_SIGNPOST, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+};
+
+static const WorldActorDefinition g_forest_grove_actors[] = {
+    {
+        26, ENTITY_ID_MIMIC, 10, 7, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'T', "MIMIC", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_MIMIC, AI_NONE, 30, 30, 0, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 4, 1
+    },
+    {
+        27, ENTITY_ID_SPIDER, 5, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+};
+
+static const WorldActorDefinition g_forest_shrine_actors[] = {
+    {
+        28, ENTITY_ID_SLIME, 10, 8, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 20, 20, 10, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
+    {
+        29, ENTITY_ID_SPIDER, 13, 12, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 16, 16, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 10, 4, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "SIGNPOST", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_ADVICE_SHRINE, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+};
+
+static const WorldActorDefinition g_south_ridge_actors[] = {
+    {
+        30, ENTITY_ID_KOBOLD, 6, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'K', "KOBOLD", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_KOBOLD, AI_CHASE, 16, 16, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 3, 0
+    },
+    {
+        31, ENTITY_ID_BAT, 13, 5, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'V', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 12, 12, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 0, 0
+    },
+    {
+        32, ENTITY_ID_SLIME, 10, 13, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'E', "SLIME", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SLIME, AI_PATROL_CROSS, 20, 20, 10, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 5, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 10, 4, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "SCOUT", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_ADVICE_SCOUT, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+};
+
+static const WorldActorDefinition g_castle_entry_actors[] = {
+    {
+        33, ENTITY_ID_BAT, 7, 10, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'V', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 10, 10, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 0, 0
+    },
+    {
+        34, ENTITY_ID_SPIDER, 13, 10, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 18, 18, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+};
+
+static const WorldActorDefinition g_castle_hall_actors[] = {
+    {
+        35, ENTITY_ID_KOBOLD, 5, 9, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'K', "KOBOLD", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_KOBOLD, AI_CHASE, 18, 18, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 3, 0
+    },
+    {
+        36, ENTITY_ID_SPIDER, 14, 9, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'S', "SPIDER", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_SPIDER, AI_PATROL_VERT, 18, 18, 15, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 7, 0
+    },
+    {
+        37, ENTITY_ID_BAT, 15, 13, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'V', "BAT", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_BAT, AI_PATROL_CIRCLE, 12, 12, 8, CURRENCY_ID_GOLD,
+        0, 0,
+         SPRITE_KIND_ENEMY, 0, 0
+    },
+    {
+        0, ENTITY_ID_SIGNPOST, 6, 13, DIRECTION_DOWN,
+        ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        '?', "KNIGHT", INTERACTION_DIALOGUE, 0, DIALOGUE_ID_ADVICE_KNIGHT, BATTLE_NONE, AI_NONE, 0, 0, 0, 0,
+        0, 0,
+         SPRITE_KIND_ASCII, 0xFF, 0
+    },
+};
+
+static const WorldActorDefinition g_throne_room_actors[] = {
+    {
+        6, ENTITY_ID_SLIME_LORD, 10, 7, DIRECTION_DOWN,
+        ACTOR_FLAG_HOSTILE | ACTOR_FLAG_BLOCKING | ACTOR_FLAG_INTERACTABLE,
+        'L', "LORD OF SLIMES", INTERACTION_COMBAT, 0, DIALOGUE_ID_NONE, BATTLE_NONE, AI_NONE, 50, 50, 50, CURRENCY_ID_GOLD,
+        VARIABLE_ID_QUEST_MONSTER_HUNT, 2,
+         SPRITE_KIND_ENEMY, 6, 1
+    },
+};
+
 const WorldActorTable g_actor_tables[] = {
     { MAP_FIELD,           g_field_actors,
         (uint8_t)(sizeof(g_field_actors) / sizeof(g_field_actors[0])) },
@@ -219,4 +404,20 @@ const WorldActorTable g_actor_tables[] = {
         (uint8_t)(sizeof(g_castle_actors) / sizeof(g_castle_actors[0])) },
     { MAP_SOUTH_FIELD,     g_south_field_actors,
         (uint8_t)(sizeof(g_south_field_actors) / sizeof(g_south_field_actors[0])) },
+    { MAP_FOREST_GLADE,    g_forest_glade_actors,
+        (uint8_t)(sizeof(g_forest_glade_actors) / sizeof(g_forest_glade_actors[0])) },
+    { MAP_FOREST_DEEP,     g_forest_deep_actors,
+        (uint8_t)(sizeof(g_forest_deep_actors) / sizeof(g_forest_deep_actors[0])) },
+    { MAP_FOREST_GROVE,    g_forest_grove_actors,
+        (uint8_t)(sizeof(g_forest_grove_actors) / sizeof(g_forest_grove_actors[0])) },
+    { MAP_FOREST_SHRINE,   g_forest_shrine_actors,
+        (uint8_t)(sizeof(g_forest_shrine_actors) / sizeof(g_forest_shrine_actors[0])) },
+    { MAP_SOUTH_RIDGE,     g_south_ridge_actors,
+        (uint8_t)(sizeof(g_south_ridge_actors) / sizeof(g_south_ridge_actors[0])) },
+    { MAP_CASTLE_ENTRY,    g_castle_entry_actors,
+        (uint8_t)(sizeof(g_castle_entry_actors) / sizeof(g_castle_entry_actors[0])) },
+    { MAP_CASTLE_HALL,     g_castle_hall_actors,
+        (uint8_t)(sizeof(g_castle_hall_actors) / sizeof(g_castle_hall_actors[0])) },
+    { MAP_THRONE_ROOM,     g_throne_room_actors,
+        (uint8_t)(sizeof(g_throne_room_actors) / sizeof(g_throne_room_actors[0])) },
 };

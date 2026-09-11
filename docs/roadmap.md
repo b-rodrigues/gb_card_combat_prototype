@@ -1353,3 +1353,25 @@ feature must plan banked placement (§52.11.1) up front.
 Finally introduce the Baten Kaitos-inspired card mechanics on top of the stable RPG/battle foundation rather than allowing the card system to dictate the architecture.
 
 **Guiding principle for the whole roadmap:** build only the abstractions that the current RPG actually proves it needs, while making every important state deterministic, observable, and testable by an LLM.
+
+## 11. Content expansion (14-level demo)
+
+The demo grew from 6 to 14 connected rooms on the current branch: the
+forest branch (`forest_glade` → `forest_deep` → `forest_grove`,
+`forest_shrine`), a desolate spur (`south_ridge`), and the castle chain
+(`castle_entry` → `castle_hall` → `castle` → `throne_room`, with the
+Lord of Slimes relocated to the throne room).  Reused enemy types with
+per-placement HP/gold variants; advice is carried by signpost `?` NPCs;
+no new entities/quests/assets.
+
+Memory note: the real scene table lives in bank 5 and the actor table in
+bank 2, both of which were nearly full.  To fit the new rooms, the release
+build moves the title-logo tiles + loader to bank 4
+(`src/screens/title_logo_content.c`, `RELEASE_ONLY_SRCS`); the harness
+(debug) build keeps them in bank 5 because moving them flips a
+layout-sensitive SDCC dialogue miscompile (AGENTS.md §52.19 — verified via
+`make verify-oam`).  The fixed title wrapper selects the matching bank at
+compile time.  After this expansion the release bank headroom is small
+(bank 2 ≈57 B, bank 5 ≈138 B); the next large content change needs a real
+bank plan (split banked tables / more ROM banks), not another relocation.
+

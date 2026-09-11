@@ -11,13 +11,21 @@
 #define MAP_MOUNTAIN_PASS 3
 #define MAP_CASTLE 4
 #define MAP_SOUTH_FIELD 5
+#define MAP_FOREST_GLADE 8
+#define MAP_FOREST_DEEP 9
+#define MAP_FOREST_GROVE 10
+#define MAP_FOREST_SHRINE 11
+#define MAP_SOUTH_RIDGE 12
+#define MAP_CASTLE_ENTRY 13
+#define MAP_CASTLE_HALL 14
+#define MAP_THRONE_ROOM 15
 
 /* Real scene table length = max live id + 1.  The table keeps a
  * hole per retired id (scene_table_order), so this is NOT the live
  * count: after a delete, ids are sparse and the old len(scenes)
  * would reject the highest live id at runtime (NULL scene def).
  * Engine guards MUST use this, never a named max id. */
-#define MAP_REAL_COUNT 6
+#define MAP_REAL_COUNT 16
 
 #define SCENE_FIELD 0
 #define SCENE_TOWN 1
@@ -25,6 +33,14 @@
 #define SCENE_MOUNTAIN_PASS 3
 #define SCENE_CASTLE 4
 #define SCENE_SOUTH_FIELD 5
+#define SCENE_FOREST_GLADE 8
+#define SCENE_FOREST_DEEP 9
+#define SCENE_FOREST_GROVE 10
+#define SCENE_FOREST_SHRINE 11
+#define SCENE_SOUTH_RIDGE 12
+#define SCENE_CASTLE_ENTRY 13
+#define SCENE_CASTLE_HALL 14
+#define SCENE_THRONE_ROOM 15
 
 /* Frozen harness-test fixtures (debug build only). Fixed block,
  * never moves: real ids grow upward from 0 and can never reach it. */
