@@ -1,4 +1,4 @@
-# GB Card Combat Prototype — Game Manual
+# KAARTENHELD — Game Manual
 
 A complete, player-facing guide to **KAARTENHELD — BATTLE DEMO**, the
 Game Boy card-combat RPG.
@@ -47,10 +47,10 @@ and the game reaches its ending.
 
 ### 1.2 The villain
 
-Castle is empty except for a bat and, once the Monster Hunt quest is
-complete, the **Lord of Slimes** (50 HP).  He appears **only after** the
-quest is complete (his spawn is gated on the quest variable, see §4.2), so
-"every slime you kill leads to a bigger slime".
+The **Castle** holds a bat, a spider and a solo **Mimic**; beyond it, the
+**Throne Room** is where the **Lord of Slimes** (50 HP) waits.  He appears
+**only after** the Monster Hunt quest is complete (his spawn is gated on the
+quest variable, see §4.2), so "every slime you kill leads to a bigger slime".
 
 ---
 
@@ -159,13 +159,14 @@ The world is rendered as ASCII tiles (`ui.c`):
 ### 3.3 Places
 
 **FIELD** — your starting area (spawn at (4,4), facing down).  A signpost
-near the top (:2,4) teaches the game:
+near the top (2,4) teaches the game:
 
 > East: Town. North: Forest (danger!).
 > ATK: A then SELECT. Shields add to combos (no dmg).
 > DEF: shields block. Combos are poker!
 
-A slime patrols near the middle-east of the field.
+Hostiles patrol the whole width: a slime (14,8), a spider (23,9), a bat
+(8,12) and a kobold (26,14).
 
 **TOWN** — the hub.  Contains (actors at `src/game/actors_content.c`):
 
@@ -175,27 +176,33 @@ A slime patrols near the middle-east of the field.
 | Guard | (10,8) | Flavour dialogue; greets you warmly after you meet the Mayor. |
 | Shopkeeper | (9,3) | Runs the shop (sells the Ring, §9). |
 | Lost Merchant | (11,3) | Runs the Lost Amulet quest, then a bigger shop (§4.3, §9). |
-| Wizard | (6,10) | Let you save the game to one of three slots (§10). |
+| Wizard | (6,10) | Lets you save the game to one of three slots (§10). |
 
-**FOREST** — trees, stumps, a slime (12 HP), a bat (8 HP), and the Lost
-Amulet at (16,10).  An east gate opens onto the forest branch.
+Three fire braziers (4,5), (4,12), (14,5) and two dogs (8,14), (11,8) are
+placed as blocking scenery.
 
-**FOREST BRANCH** — MOSSY GLADE (slime, bat, a hermit's advice), DEEP
-WOODS (kobold, spider, a tougher slime, bat; a signpost), SUNKEN GROVE (a
-solo Mimic guarding treasure), and the OVERGROWN SHRINE (elite slime,
-spider, a shrine signpost).
+**FOREST** — trees, stumps, a slime (12 HP), a bat (8 HP), a kobold
+(12 HP) and a tougher slime (20 HP), plus the Lost Amulet chest at
+(16,10).  An east gate opens onto the forest branch.
 
-**SOUTH FIELD / HOWLING RIDGE** — desolate ground; the ridge east of the
-south field is thick with a kobold, a bat and a tougher slime, plus a
-scout's advice.
+**FOREST BRANCH** — MOSSY GLADE (slime, bat, kobold, tough slime; a
+hermit's advice), DEEP WOODS (kobold, spider, tough slime, bat; a
+signpost), SUNKEN GROVE (a solo Mimic, spider, bat and tough slime), and
+the OVERGROWN SHRINE (elite slime, spider, kobold, bat; a shrine
+signpost).
 
-**MOUNTAIN PASS** — a narrow walled corridor with one tougher slime
-(16 HP).
+**SOUTH FIELD / HOWLING RIDGE** — desolate ground.  The south field
+holds a slime, a bat and a kobold; the ridge east of it is thick with a
+kobold, a bat, a tougher slime and a spider, plus a scout's advice.
 
-**CASTLE CHAIN** — CASTLE ENTRY (bat, spider), the GREAT HALL (kobold,
-spider, bat; a knight's advice), CASTLE (a bat, a spider and the solo
-Mimic), and the THRONE ROOM, where the Lord of Slimes waits once the
-Monster Hunt quest is complete.
+**MOUNTAIN PASS** — a narrow walled corridor with a slime (16 HP), a bat
+(8 HP) and a tougher slime (20 HP).
+
+**CASTLE CHAIN** — CASTLE ENTRY (bat, spider, kobold, tough slime), the
+GREAT HALL (kobold, spider, bat, tough slime; a knight's advice), CASTLE
+(a bat, a spider, a kobold and the solo Mimic), and the THRONE ROOM,
+where the Lord of Slimes waits (with a bat and a spider) once the Monster
+Hunt quest is complete.
 
 ### 3.4 Encounters
 
@@ -207,8 +214,9 @@ Hostiles roam and pat​rol (slimes do a cross pattern, bats a circle
 
 You will also be hit if you try to bump-past a hostile who blocks the
 path.  Every normal encounter engages as a **trio**: the struck monster
-plus two clones with the same HP (bosses stand alone).  See §9.2 for
-enemy statistics and §6.6 for their decks.
+plus two clones with the same HP.  Enemies flagged **solo** — the Mimic
+and the Lord of Slimes — stand alone.  See §9.2 for enemy statistics and
+§6.6 for their decks.
 
 ---
 
@@ -321,7 +329,7 @@ All catalogue cards (`src/game/cards_content.c`):
 | Fire Sword | `F SW` | `SW4` | ATK | 4 | 1 | – | 3 | BURN 128 | — |
 | Poison Dagger | `P DA` | `DA1` | ATK | 1 | 1 | – | 3 | POISON 128 | — |
 | Amulet | `AMULET` | — | SPL | 0 | 0 | – | 1 | — | — |
-| Mythril Bow | `M BO` | `BO10` | ATK | 10 | 2 | – | 1 | — | 30g |
+| Mythril Bow | `M BO` | `BO9` | ATK | 9 | 2 | 2/battle | 1 | — | 30g |
 
 Chances are in 1/255 units: `128` ≈ 50%.  They scale with your combo
 multiplier (§8.4).
@@ -360,17 +368,19 @@ The battle screen (HUD layout fixed in `AGENTS.md §52.11.2`):
 | Row | Content |
 |---|---|
 | 0 | Turn banner, centered (`PLAYER TURN`, `ENEMY ATTACK!`, `DEFENSE TURN`, `VICTORY!`, `DEFEATED!`, `FLED!`, ...). |
-| 2–4 | Enemy rows: name, HP, target caret. Up to 3 of them. |
-| 6 | Hero row: `HERO  HP: n/m`. |
-| 7 | Deck counter: `DECK: n` (cards left in the draw pile). |
-| 13 | Live combo row: `COMBO:` + current hand name while you select. |
-| 14 | Your hand (up to 5 cards). |
+| 2 | Enemy HP line. |
+| 3–4 | Enemy art + target caret. Up to 3 enemies. |
+| 7 | Hero row: `HERO` label + `HP: n/m`. |
+| 8 | Deck counter: `DECK: n` (cards left in the draw pile) + AP. |
+| 9 | Transient gameplay messages (`NO ENERGY!`, `OUT OF USES!`, `ONE RING!`). |
+| 10 | Live combo row: `COMBO:` + current hand name while you select. |
+| 11–14 | Your boxed hand cards (up to 5). |
 | 15 | Selection markers: digits 1–5 in selection order + the `^` cursor. |
 | 16 | Card description of the hovered card. |
 | 17 | Timer bar (window), draining as the turn timer runs. |
 
 An ASCII-converted view of the "YOU FOUND:" loot reveal flips onto rows
-11–12 after a victory.
+10–12 after a victory (banner, synthesized card name, full description).
 
 ### 6.2 Hand, energy, timer
 
@@ -444,10 +454,16 @@ After the enemy telegraphs (`ENEMY ATTACK!`), you defend:
 ### 6.6 Enemy turn details
 
 * The enemy draws **one card per attack turn** from its fixed deck;
-  the card's value is the damage you must block.  Slimes swing for small
-  values (a `SW2/SW3` mix with an occasional heal card worth 2), bats mix
-  bow and sword values up to 4, and team slimes hit for 2–3 each round
-  (see `enemy_deck_content.c`).
+  the card's value is the damage you must block (see
+  `enemy_deck_content.c`):
+  * **Slime** — `SW2/SW3` mix with an occasional heal worth 2.
+  * **Bat** — bow and sword values up to 4; one bow swing carries a
+    poison rider (60/255).
+  * **Kobold** — `SW2/SW2/SW3` plus a heal worth 2.
+  * **Mimic** — `SW2`–`SW4` plus a heal worth 3.
+  * **Spider** — bow/sword up to 3 plus a healer; one webbing bow swing
+    carries a poison rider (70/255).
+  * **Team slimes** (the trio encounter) hit for 2–3 each round.
 * When the enemy deck is exhausted it **reshuffles** and keeps going.
 * Freeze / grey-out can make the enemy skip (see §8.5/§8.7).
 * The boss (no deck) simply telegraphs a flat 3-damage swing.
@@ -653,15 +669,18 @@ selling loot.  Uses: shop purchases.
 ### 9.2 Battle rewards
 
 Defeating a monster grants gold **once per battle** (a trio pays the
-plain reward once, not per clone):
+plain reward once, not per clone).  HP varies by placement; gold depends
+on the enemy type:
 
 | Enemy | HP | Gold |
 |---|---|---|
-| Field Slime | 10 | 5 |
-| Forest Slime | 12 | 5 |
-| Mountain Pass Slime | 16 | 5 |
-| Bat | 8 | 8 |
-| Lord of Slimes | 50 | 50 |
+| Slime | 10–16 | 5 |
+| Elite slime | 20 | 10 |
+| Bat | 8–12 | 8 |
+| Kobold | 12–18 | 8 |
+| Spider | 16–18 | 15 |
+| Mimic (solo) | 30 | 0 |
+| Lord of Slimes (solo boss) | 50 | 50 |
 
 ### 9.3 Shops
 
@@ -771,7 +790,10 @@ above is observable through a deterministic, machine-readable harness:
 | `make test-harness` / `make test-scenario SCENARIO=<name>` | Run all / one scenario against the ROM (`tools/scenarios/tests/*.json`), returning PASS/FAIL. |
 | `make test` | Release ROM validation (link, header, checksum). |
 | `make verify-oam` | mGBA execution checks for VBlank-timed OAM bugs. |
+| `make verify-walkthrough` | Drive the release ROM (real `levels/` content) and assert canonical state. |
+| `make verify-scroll` / `verify-music` / `verify-patrol` / `verify-endurance` | Extra PyBoy regression checks. |
 | `make screenshots` | Deterministic headless walkthrough producing `screenshots/*.png`. |
+| `make gifs` | Regenerate the README demo GIFs (`screenshots/*.gif`). |
 | `make memmap` | Memory-budget reporter (fails on fixed-bank overflow). |
 | `make lint` | `-Wf-Wall` compile-to-asm lint (no warnings allowed). |
 
@@ -794,7 +816,8 @@ scripted scenario page (`docs/dev-harness.md`, `docs/LLM_AGENT_GUIDE.md`).
 * Hero: HP 10, gold 20, deck 12, opening hand `SW SW SH SH SW`.
 * Deck: min 5, max 20 copies; collection cap 12 distinct types.
 * Battle: hand 5, energy 6/round, timer 20s per decision.
-* Enemies: trios for normal monsters, solo boss; HP/gold per §9.2.
+* Enemies: trios for normal monsters; the Mimic and the boss are solo.
+  HP/gold per §9.2.
 * Statuses: POISON/BURN tick 1 × 3 rounds (5/3 max stacks), FREEZE 3
   rounds skip; poison greys 2 cards for 2 rounds.
 * Combos: 10 poker tiers, 100–400%, +25% if suited.
