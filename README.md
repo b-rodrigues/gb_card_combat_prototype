@@ -1,8 +1,8 @@
-# Kaartenheld — Game Boy Demo
+# Kaartenheld
 
 **Kaartenheld** (Luxembourgish for "Card Hero") is an upcoming top-down adventure game for the Nintendo Game Boy by **Gallia Belgica Systems**, a two-person indie team of inexperienced-but-relentless developers.
 
-This repository contains the playable **demo** for Kaartenheld: a top-down adventure with a deck-building card combat system in which you build **poker hands to trigger combos**, explore the world, and grow your deck — with **no traditional RPG mechanics**: no equipment, no levels, no XP. Your power is entirely determined by the cards you carry.
+This repository contains the playable **battle demo** for Kaartenheld: a top-down adventure with a deck-building card combat system in which you build **poker hands to trigger combos**, explore the world, and grow your deck — with **no traditional RPG mechanics**: no equipment, no levels, no XP. Your power is entirely determined by the cards you carry.
 
 Every combat victory rewards you with a **new random card**: add it to your deck, or sell it.
 
